@@ -1,0 +1,2 @@
+from asf.knowledge_substrate.perception.feature import PerceptualFeature
+from asf.knowledge_substrate.perception.entity import PerceptualEntity

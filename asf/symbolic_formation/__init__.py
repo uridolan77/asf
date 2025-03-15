@@ -1,0 +1,16 @@
+from asf.symbolic_formation.enums import NonlinearityOrder, SymbolConfidenceState
+from asf.symbolic_formation.potentials import SymbolicPotential
+from asf.symbolic_formation.symbol import SymbolElement
+from asf.symbolic_formation.network import SparseTensorSymbolNetwork
+from asf.symbolic_formation.autocatalytic import AutocatalyticNetwork, NonlinearityOrderTracker
+from asf.symbolic_formation.operational_closure import OperationalClosure
+from asf.symbolic_formation.recognition import SymbolRecognizer
+from asf.symbolic_formation.symbolic_layer import SymbolicFormationLayer
+
+# Seth's Data Paradox enhancements
+from asf.symbolic_formation.predictive_potentials import PredictiveSymbolicPotential
+from asf.symbolic_formation.predictive_symbol import PredictiveSymbolElement
+from asf.symbolic_formation.predictive_recognition import PredictiveSymbolRecognizer
+from asf.symbolic_formation.counterfactual_network import CounterfactualAutocatalyticNetwork
+from asf.symbolic_formation.predictive_processor import SymbolicPredictiveProcessor
+from asf.symbolic_formation.predictive_layer import PredictiveSymbolicFormationLayer
