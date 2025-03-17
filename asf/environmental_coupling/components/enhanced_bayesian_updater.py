@@ -1,3 +1,5 @@
+# === FILE: asf/environmental_coupling/components/enhanced_bayesian_updater.py ===
+
 import asyncio
 import time
 import uuid

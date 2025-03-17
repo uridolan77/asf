@@ -1,162 +1,364 @@
+# === FILE: asf/environmental_coupling/components/distributed_cache.py ===
 import asyncio
 import time
-import uuid
 import logging
-import numpy as np
-from typing import Dict, List, Any, Optional, Tuple
-from collections import defaultdict
+import random
+from typing import Dict, List, Any, Optional, Tuple, Set
 
 class DistributedCouplingCache:
     """
-    Distributed cache for coupling data with predictive prefetching.
-    Implements multi-tier caching with local LRU and distributed shared cache.
+    Provides distributed caching for coupling data.
+    Optimizes performance through multi-level caching with consistency guarantees.
     """
-    def __init__(self, config=None):
-        self.config = config or {}
-        
-        # Local LRU cache configuration
-        self.local_cache_size = self.config.get('local_cache_size', 10000)
-        self.local_cache = {}  # Maps coupling_id to data
-        self.lru_order = []  # List of coupling_ids in LRU order
-        
-        # Distributed cache configuration
-        self.use_distributed = self.config.get('use_distributed', False)
-        self.distributed_nodes = self.config.get('distributed_nodes', [])
-        self.node_id = self.config.get('node_id', str(uuid.uuid4())[:8])
-        
-        # Predictive prefetching
-        self.prefetch_enabled = self.config.get('prefetch_enabled', True)
-        self.access_patterns = defaultdict(list)  # Maps coupling_id to subsequent accesses
-        self.prefetch_queue = asyncio.Queue()
-        
-        # Performance metrics
-        self.metrics = {
-            'hits': 0,
-            'misses': 0,
-            'evictions': 0,
-            'prefetches': 0,
-            'distributed_hits': 0
+    
+    def __init__(self, cache_config: Dict = None):
+        self.config = cache_config or {
+            'max_local_size': 10000,
+            'max_shared_size': 100000,
+            'default_ttl': 300,  # 5 minutes
+            'consistency_check_interval': 60  # 1 minute
         }
+        
+        # Local cache (per-instance)
+        self.local_cache = {}
+        self.local_expiry = {}
+        
+        # Shared cache (simulated)
+        # In a real implementation, this would use Redis, Memcached, etc.
+        self.shared_cache = {}
+        self.shared_expiry = {}
+        
+        # Tracking for eviction
+        self.access_history = {}
+        self.update_timestamps = {}
+        
+        # Lock for cache operations
+        self.lock = asyncio.Lock()
+        
+        # Background task for maintenance
+        self.maintenance_task = None
+        self.running = False
         
         self.logger = logging.getLogger("ASF.Layer4.DistributedCouplingCache")
         
     async def initialize(self):
-        """Initialize the cache system."""
-        # Start prefetch worker if enabled
-        if self.prefetch_enabled:
-            asyncio.create_task(self._prefetch_worker())
-            
-        # Connect to distributed nodes if configured
-        if self.use_distributed and self.distributed_nodes:
-            await self._connect_to_distributed_nodes()
-            
+        """Initialize the cache service."""
+        self.running = True
+        self.maintenance_task = asyncio.create_task(self._maintenance_loop())
+        self.logger.info(f"Initialized with max local size {self.config['max_local_size']}")
         return True
+    
+    async def get(self, key: str, use_shared: bool = True) -> Optional[Any]:
+        """
+        Get a value from the cache.
+        Checks local cache first, then shared if enabled.
+        """
+        current_time = time.time()
         
-    async def get_coupling(self, coupling_id):
-        """Get a coupling from cache with access pattern tracking."""
         # Check local cache first
-        if coupling_id in self.local_cache:
-            # Update LRU order
-            if coupling_id in self.lru_order:
-                self.lru_order.remove(coupling_id)
-            self.lru_order.append(coupling_id)
+        if key in self.local_cache:
+            expiry = self.local_expiry.get(key, 0)
             
-            # Update metrics
-            self.metrics['hits'] += 1
+            if expiry > current_time:
+                # Update access record
+                self.access_history[key] = current_time
+                return self.local_cache[key]
+            else:
+                # Expired, remove from local cache
+                await self._remove_from_local(key)
+        
+        # If not in local cache and shared cache is enabled, check there
+        if use_shared and key in self.shared_cache:
+            expiry = self.shared_expiry.get(key, 0)
             
-            # Record access pattern
-            self._record_access(coupling_id)
-            
-            return self.local_cache[coupling_id]
-            
-        # Check distributed cache if enabled
-        if self.use_distributed:
-            distributed_result = await self._get_from_distributed(coupling_id)
-            if distributed_result:
-                # Cache locally
-                await self._add_to_local_cache(coupling_id, distributed_result)
-                
-                # Update metrics
-                self.metrics['distributed_hits'] += 1
-                
-                return distributed_result
-                
-        # Cache miss
-        self.metrics['misses'] += 1
+            if expiry > current_time:
+                # Found in shared cache, update local cache
+                value = self.shared_cache[key]
+                await self._add_to_local(key, value, expiry - current_time)
+                return value
+        
+        # Not found or expired
         return None
-        
-    async def update_coupling(self, coupling):
-        """Update a coupling in cache."""
-        # Update local cache
-        await self._add_to_local_cache(coupling.id, coupling)
-        
-        # Update distributed cache if enabled
-        if self.use_distributed:
-            await self._update_in_distributed(coupling.id, coupling)
+    
+    async def set(self, key: str, value: Any, ttl: Optional[int] = None, 
+                use_shared: bool = True) -> bool:
+        """
+        Set a value in the cache with optional time-to-live.
+        Updates both local and shared caches if enabled.
+        """
+        if ttl is None:
+            ttl = self.config['default_ttl']
             
-        return True
+        current_time = time.time()
+        expiry = current_time + ttl
         
-    async def _add_to_local_cache(self, coupling_id, coupling):
-        """Add a coupling to local cache with LRU management."""
-        # Check if we need to evict something
-        if len(self.local_cache) >= self.local_cache_size and coupling_id not in self.local_cache:
-            # Evict least recently used
-            if self.lru_order:
-                evict_id = self.lru_order.pop(0)
-                if evict_id in self.local_cache:
-                    del self.local_cache[evict_id]
-                    self.metrics['evictions'] += 1
+        # Update local cache
+        result = await self._add_to_local(key, value, ttl)
+        
+        # Update shared cache if enabled
+        if use_shared:
+            self.shared_cache[key] = value
+            self.shared_expiry[key] = expiry
+            self.update_timestamps[key] = current_time
+            
+            # Check shared cache size limits
+            if len(self.shared_cache) > self.config['max_shared_size']:
+                await self._evict_from_shared(10)  # Evict 10 items
+        
+        return result
+    
+    async def invalidate(self, key: str, use_shared: bool = True) -> bool:
+        """
+        Invalidate a cache entry.
+        Removes from both local and shared caches if enabled.
+        """
+        result = await self._remove_from_local(key)
+        
+        # Also remove from shared cache if enabled
+        if use_shared and key in self.shared_cache:
+            del self.shared_cache[key]
+            if key in self.shared_expiry:
+                del self.shared_expiry[key]
+            if key in self.update_timestamps:
+                del self.update_timestamps[key]
+                
+            result = True
+        
+        return result
+    
+    async def invalidate_pattern(self, pattern: str, use_shared: bool = True) -> int:
+        """
+        Invalidate all cache entries matching a pattern.
+        Returns the number of entries invalidated.
+        """
+        count = 0
+        
+        # Find matching keys
+        local_matches = [k for k in self.local_cache if pattern in k]
+        
+        # Remove from local cache
+        for key in local_matches:
+            if await self._remove_from_local(key):
+                count += 1
+        
+        # Also remove from shared cache if enabled
+        if use_shared:
+            shared_matches = [k for k in self.shared_cache if pattern in k]
+            
+            for key in shared_matches:
+                if key in self.shared_cache:
+                    del self.shared_cache[key]
+                    if key in self.shared_expiry:
+                        del self.shared_expiry[key]
+                    if key in self.update_timestamps:
+                        del self.update_timestamps[key]
+                    count += 1
+        
+        return count
+    
+    async def _add_to_local(self, key: str, value: Any, ttl: int) -> bool:
+        """Add a value to the local cache with expiration."""
+        async with self.lock:
+            # Check cache size limit
+            if key not in self.local_cache and len(self.local_cache) >= self.config['max_local_size']:
+                await self._evict_from_local(1)  # Make room
+            
+            current_time = time.time()
+            self.local_cache[key] = value
+            self.local_expiry[key] = current_time + ttl
+            self.access_history[key] = current_time
+            
+            return True
+    
+    async def _remove_from_local(self, key: str) -> bool:
+        """Remove a value from the local cache."""
+        async with self.lock:
+            if key in self.local_cache:
+                del self.local_cache[key]
+                if key in self.local_expiry:
+                    del self.local_expiry[key]
+                if key in self.access_history:
+                    del self.access_history[key]
+                return True
+            return False
+    
+    async def _evict_from_local(self, count: int) -> int:
+        """
+        Evict entries from local cache using LRU policy.
+        Returns the number of entries evicted.
+        """
+        if not self.access_history:
+            return 0
+            
+        # Sort by last access time (oldest first)
+        sorted_keys = sorted(
+            self.access_history.keys(),
+            key=lambda k: self.access_history[k]
+        )
+        
+        # Take the oldest entries up to count
+        to_evict = sorted_keys[:count]
+        
+        # Remove them
+        evicted = 0
+        for key in to_evict:
+            if await self._remove_from_local(key):
+                evicted += 1
+                
+        return evicted
+    
+    async def _evict_from_shared(self, count: int) -> int:
+        """
+        Evict entries from shared cache.
+        In a real implementation, this might coordinate with other instances.
+        """
+        if not self.update_timestamps:
+            return 0
+            
+        # Sort by last update time (oldest first)
+        sorted_keys = sorted(
+            self.update_timestamps.keys(),
+            key=lambda k: self.update_timestamps[k]
+        )
+        
+        # Take the oldest entries up to count
+        to_evict = sorted_keys[:count]
+        
+        # Remove them
+        evicted = 0
+        for key in to_evict:
+            if key in self.shared_cache:
+                del self.shared_cache[key]
+                if key in self.shared_expiry:
+                    del self.shared_expiry[key]
+                if key in self.update_timestamps:
+                    del self.update_timestamps[key]
+                evicted += 1
+                
+        return evicted
+    
+    async def _maintenance_loop(self):
+        """Background task for cache maintenance."""
+        try:
+            while self.running:
+                try:
+                    # Clean expired entries from local cache
+                    await self._clean_expired_local()
                     
-        # Add to cache
-        self.local_cache[coupling_id] = coupling
+                    # Clean expired entries from shared cache
+                    await self._clean_expired_shared()
+                    
+                    # Check consistency with shared cache
+                    await self._check_consistency()
+                    
+                    # Wait for next maintenance cycle
+                    await asyncio.sleep(self.config['consistency_check_interval'])
+                    
+                except asyncio.CancelledError:
+                    break
+                except Exception as e:
+                    self.logger.error(f"Error in cache maintenance: {str(e)}")
+                    await asyncio.sleep(5)  # Wait before retry
+                    
+        finally:
+            self.running = False
+    
+    async def _clean_expired_local(self) -> int:
+        """Clean expired entries from local cache."""
+        current_time = time.time()
+        to_remove = []
         
-        # Update LRU order
-        if coupling_id in self.lru_order:
-            self.lru_order.remove(coupling_id)
-        self.lru_order.append(coupling_id)
+        async with self.lock:
+            for key, expiry in self.local_expiry.items():
+                if expiry <= current_time:
+                    to_remove.append(key)
+                    
+            # Remove expired entries
+            for key in to_remove:
+                await self._remove_from_local(key)
+                
+            return len(to_remove)
+    
+    async def _clean_expired_shared(self) -> int:
+        """Clean expired entries from shared cache."""
+        current_time = time.time()
+        to_remove = []
         
-    async def perform_maintenance(self):
-        """Perform cache maintenance."""
-        start_time = time.time()
+        for key, expiry in self.shared_expiry.items():
+            if expiry <= current_time:
+                to_remove.append(key)
+                
+        # Remove expired entries
+        for key in to_remove:
+            if key in self.shared_cache:
+                del self.shared_cache[key]
+            if key in self.shared_expiry:
+                del self.shared_expiry[key]
+            if key in self.update_timestamps:
+                del self.update_timestamps[key]
+                
+        return len(to_remove)
+    
+    async def _check_consistency(self) -> Dict:
+        """
+        Check consistency between local and shared caches.
+        Synchronizes when needed.
+        """
+        # In a real implementation, this would check with a distributed
+        # cache system like Redis for newer versions of locally cached items
         
-        # Clean up expired items
-        # Synchronize with distributed cache
+        # For this simulation, we'll just check a few random keys
+        if not self.local_cache or not self.shared_cache:
+            return {'checked': 0, 'updated': 0}
+            
+        # Select random keys from local cache
+        sample_size = min(10, len(self.local_cache))
+        sample_keys = random.sample(list(self.local_cache.keys()), sample_size)
         
-        return {
-            'cache_size': len(self.local_cache),
-            'hit_ratio': self.metrics['hits'] / max(1, (self.metrics['hits'] + self.metrics['misses'])),
-            'evictions': self.metrics['evictions'],
-            'prefetches': self.metrics['prefetches'],
-            'elapsed_time': time.time() - start_time
-        }
+        updated = 0
         
-    async def get_metrics(self):
+        for key in sample_keys:
+            # Check if key exists in shared cache and is newer
+            if (key in self.shared_cache and key in self.update_timestamps and
+                key in self.local_expiry and 
+                self.update_timestamps[key] > self.access_history.get(key, 0)):
+                
+                # Shared version is newer, update local
+                self.local_cache[key] = self.shared_cache[key]
+                self.local_expiry[key] = self.shared_expiry[key]
+                self.access_history[key] = time.time()
+                updated += 1
+        
+        return {'checked': sample_size, 'updated': updated}
+    
+    async def stop(self):
+        """Stop the cache service."""
+        self.running = False
+        if self.maintenance_task:
+            self.maintenance_task.cancel()
+            try:
+                await self.maintenance_task
+            except asyncio.CancelledError:
+                pass
+                
+        self.logger.info("Cache service stopped")
+        return True
+    
+    async def get_metrics(self) -> Dict:
         """Get cache metrics."""
         return {
-            'local_cache_size': len(self.local_cache),
-            'max_cache_size': self.local_cache_size,
-            'hit_ratio': self.metrics['hits'] / max(1, (self.metrics['hits'] + self.metrics['misses'])),
-            'distributed_hits': self.metrics['distributed_hits'],
-            'prefetches': self.metrics['prefetches']
+            'local_entries': len(self.local_cache),
+            'shared_entries': len(self.shared_cache),
+            'local_hit_ratio': self.local_hit_ratio if hasattr(self, 'local_hit_ratio') else 0,
+            'memory_usage': self._estimate_memory_usage()
         }
+    
+    def _estimate_memory_usage(self) -> int:
+        """Estimate memory usage of the cache in bytes."""
+        # This is a very rough estimation
+        # In a real implementation, you would use sys.getsizeof or similar
         
-    # Additional private methods for prefetching and distributed cache operations
-    async def _prefetch_worker(self):
-        """Background worker that prefetches couplings."""
-        # Implementation for prefetching
+        # Assume average key size of 50 bytes and value size of 500 bytes
+        local_estimate = len(self.local_cache) * 550
         
-    def _record_access(self, coupling_id):
-        """Record access patterns for prefetching."""
-        # Implementation for tracking access patterns
-        
-    async def _connect_to_distributed_nodes(self):
-        """Connect to distributed cache nodes."""
-        # Implementation for connecting to distributed nodes
-        
-    async def _get_from_distributed(self, coupling_id):
-        """Get a coupling from the distributed cache."""
-        # Implementation for distributed cache retrieval
-        
-    async def _update_in_distributed(self, coupling_id, coupling):
-        """Update a coupling in the distributed cache."""
-        # Implementation for distributed cache updates
+        return local_estimate

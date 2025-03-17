@@ -20,7 +20,7 @@ class PredictiveEnvironmentalModeler:
         self.prediction_errors = defaultdict(list)  # Maps entity_id to historical errors
         self.precision = {}  # Maps entity_id to precision (inverse error variance)
         self.logger = logging.getLogger("ASF.Layer4.PredictiveEnvironmentalModeler")
-        
+    
     async def predict_interaction(self, environmental_entity_id, context=None):
         """
         Generate a prediction about an upcoming interaction with an environmental entity.
@@ -49,6 +49,10 @@ class PredictiveEnvironmentalModeler:
         self.predictions[prediction_id] = prediction
         self.entity_predictions[environmental_entity_id].append(prediction_id)
         
+        # Clean up old predictions for this entity
+        await self._cleanup_old_predictions(environmental_entity_id)
+        
+        self.logger.debug(f"Generated prediction {prediction_id} for entity {environmental_entity_id} with confidence {confidence:.2f}")
         return prediction
     
     async def evaluate_prediction(self, prediction_id, actual_data):
@@ -81,117 +85,215 @@ class PredictiveEnvironmentalModeler:
             self.precision[entity_id] = new_precision
             prediction.precision = new_precision
         
+        self.logger.debug(f"Evaluated prediction {prediction_id} with error {error:.4f}, new precision {self.precision.get(entity_id, 1.0):.4f}")
         return {
             'prediction_id': prediction_id,
             'error': error,
             'precision': self.precision.get(entity_id, 1.0)
         }
     
-    async def generate_counterfactual_interactions(self, base_interaction, variations=3):
+    async def get_predictions_for_entity(self, environmental_entity_id, limit=5, future_only=True):
         """
-        Generate alternative versions of an interaction.
-        Implements Seth's counterfactual processing principle.
+        Retrieve recent predictions for an entity.
+        If future_only is True, only return predictions that haven't been verified yet.
         """
-        counterfactuals = []
+        prediction_ids = self.entity_predictions.get(environmental_entity_id, [])
         
-        # Generate variations with different parameters
-        for i in range(variations):
-            counterfactual = self._create_variation(base_interaction, i)
-            counterfactuals.append(counterfactual)
-            
-        return counterfactuals
+        # Get actual prediction objects
+        predictions = []
+        current_time = time.time()
         
+        for pred_id in reversed(prediction_ids):  # Most recent first
+            if pred_id in self.predictions:
+                pred = self.predictions[pred_id]
+                
+                # Filter for future predictions if requested
+                if future_only and pred.verification_time is not None:
+                    continue
+                    
+                predictions.append(pred)
+                
+                if len(predictions) >= limit:
+                    break
+        
+        return predictions
+    
     async def _generate_prediction(self, environmental_entity_id, context):
         """
         Internal method to generate prediction based on historical patterns.
+        In a real implementation, this would use sophisticated ML models.
         """
-        # In a real implementation, this would use sophisticated ML models
-        # For now, use a simple template with randomization
+        # Extract context information that might be useful for prediction
+        interaction_type = context.get('last_interaction_type')
+        
+        # Generate basic prediction structure
         predicted_data = {
-            'entity_id': environmental_entity_id,
-            'predicted_interaction_type': self._predict_interaction_type(environmental_entity_id, context),
-            'predicted_content': self._generate_content_prediction(environmental_entity_id),
-            'predicted_timing': time.time() + np.random.uniform(10, 100),
-            'predicted_valence': np.random.uniform(-1, 1)
+            'predicted_interaction_type': await self._predict_interaction_type(environmental_entity_id, interaction_type),
+            'predicted_content': await self._generate_content_prediction(environmental_entity_id),
+            'predicted_timing': await self._predict_timing(environmental_entity_id),
+            'predicted_response_time': random.uniform(0.1, 2.0),
+            'predicted_confidence': random.uniform(0.5, 0.9)
         }
         
         return predicted_data
     
+    async def _predict_interaction_type(self, entity_id, last_interaction_type=None):
+        """
+        Predict the type of interaction expected from this entity.
+        Uses historical patterns where available.
+        """
+        # If we have prediction errors, check for patterns
+        if entity_id in self.prediction_errors and len(self.prediction_errors[entity_id]) > 0:
+            # This would be more sophisticated in a real implementation
+            interaction_types = ['query', 'update', 'notification', 'request']
+            
+            # If we have last interaction type, use that as a signal
+            if last_interaction_type:
+                # Simple pattern: if last type was query, next might be update
+                if last_interaction_type == 'query':
+                    return 'update'
+                elif last_interaction_type == 'update':
+                    return 'notification'
+                else:
+                    return random.choice(interaction_types)
+            else:
+                return random.choice(interaction_types)
+        else:
+            # No history yet, return a default prediction
+            return 'query'
+    
+    async def _generate_content_prediction(self, entity_id):
+        """
+        Generate predicted content for an interaction.
+        This would use more sophisticated models in a real implementation.
+        """
+        # Simplified content prediction
+        content_types = [
+            {'type': 'text', 'expected_length': random.randint(10, 100)},
+            {'type': 'structured', 'expected_fields': ['id', 'timestamp', 'value']},
+            {'type': 'numeric', 'expected_range': [0, 100]}
+        ]
+        
+        return random.choice(content_types)
+    
+    async def _predict_timing(self, entity_id):
+        """
+        Predict when the next interaction will occur.
+        Uses timing patterns from history where available.
+        """
+        # Start with a default timing (30-60 seconds in the future)
+        base_timing = time.time() + random.uniform(30, 60)
+        
+        # If we have prediction history, refine the timing prediction
+        if entity_id in self.entity_predictions and len(self.entity_predictions[entity_id]) >= 2:
+            # Get the last few predictions to analyze timing patterns
+            recent_pred_ids = self.entity_predictions[entity_id][-5:]
+            recent_predictions = [self.predictions[pid] for pid in recent_pred_ids if pid in self.predictions]
+            
+            if len(recent_predictions) >= 2:
+                # Calculate average time between predictions
+                times = [p.prediction_time for p in recent_predictions]
+                intervals = [times[i] - times[i-1] for i in range(1, len(times))]
+                avg_interval = sum(intervals) / len(intervals)
+                
+                # Predict next interaction based on average interval
+                last_time = max(times)
+                predicted_time = last_time + avg_interval
+                
+                # Add some randomness (±20%)
+                predicted_time += avg_interval * random.uniform(-0.2, 0.2)
+                
+                return predicted_time
+        
+        return base_timing
+    
     def _calculate_confidence(self, entity_id):
-        """Calculate confidence level based on prediction history."""
-        # Base confidence on precision of previous predictions
+        """
+        Calculate confidence level based on prediction history.
+        Higher precision leads to higher confidence.
+        """
+        # Base confidence starts moderate
+        base_confidence = 0.5
+        
+        # Adjust based on precision if available
         precision = self.precision.get(entity_id, 1.0)
         
-        # Scale precision to confidence (0.0-1.0)
-        confidence = min(0.9, 0.3 + (0.6 * min(1.0, precision / 5.0)))
+        # Scale precision to confidence (0.3-0.9 range)
+        # Higher precision = higher confidence
+        precision_factor = min(0.4, (precision - 1.0) * 0.1) if precision > 1.0 else 0
+        confidence = base_confidence + precision_factor
+        
+        # Cap confidence
+        confidence = min(0.9, max(0.3, confidence))
         
         return confidence
-        
-    def _predict_interaction_type(self, entity_id, context):
-        """Predict the type of interaction expected from this entity."""
-        # Simple prediction strategy for demonstration
-        possible_types = ['data_transfer', 'query', 'update', 'notification']
-        # In a real implementation, this would use ML to predict based on history
-        return context.get('expected_type', random.choice(possible_types))
-        
-    def _generate_content_prediction(self, entity_id):
-        """Generate predicted content for an interaction."""
-        # Simplified prediction
-        return {'predicted_fields': ['timestamp', 'source', 'data']}
     
     def _calculate_prediction_error(self, predicted_data, actual_data):
-        """Calculate error between prediction and actual data."""
-        if not isinstance(predicted_data, dict) or not isinstance(actual_data, dict):
-            return 1.0  # Maximum error if types don't match
-            
-        # Simple implementation - calculate percentage of fields predicted correctly
-        # In a real implementation, would use more sophisticated similarity metrics
-        correct_fields = 0
-        total_fields = len(actual_data)
+        """
+        Calculate error between prediction and actual data.
+        Returns a normalized error value between 0.0 (perfect) and 1.0 (completely wrong).
+        """
+        # For simplicity, we'll focus on a few key comparisons
+        error_components = []
         
-        for key, actual_value in actual_data.items():
-            if key in predicted_data:
-                predicted_value = predicted_data[key]
-                if isinstance(actual_value, (int, float)) and isinstance(predicted_value, (int, float)):
-                    # For numeric values, calculate normalized absolute difference
-                    max_val = max(1.0, abs(actual_value))
-                    field_error = min(1.0, abs(actual_value - predicted_value) / max_val)
-                    if field_error < 0.3:  # Consider it correct if within 30%
-                        correct_fields += 1
-                elif actual_value == predicted_value:
-                    correct_fields += 1
+        # Check interaction type prediction if available
+        if 'predicted_interaction_type' in predicted_data and 'interaction_type' in actual_data:
+            type_match = predicted_data['predicted_interaction_type'] == actual_data['interaction_type']
+            error_components.append(0.0 if type_match else 1.0)
         
-        if total_fields == 0:
-            return 1.0
-            
-        return 1.0 - (correct_fields / total_fields)
+        # Check content type prediction if available
+        if 'predicted_content' in predicted_data and 'content_type' in actual_data:
+            if 'type' in predicted_data['predicted_content']:
+                content_match = predicted_data['predicted_content']['type'] == actual_data['content_type']
+                error_components.append(0.0 if content_match else 1.0)
+        
+        # Check timing prediction if available (with a tolerance)
+        if 'predicted_timing' in predicted_data and 'timestamp' in actual_data:
+            timing_diff = abs(predicted_data['predicted_timing'] - actual_data['timestamp'])
+            # Normalize timing error (0.0 for perfect, 1.0 for >60 seconds off)
+            timing_error = min(1.0, timing_diff / 60.0)
+            error_components.append(timing_error)
+        
+        # If we couldn't calculate any components, return a default error
+        if not error_components:
+            return 0.5
+        
+        # Return average error across all components
+        return sum(error_components) / len(error_components)
     
-    def _create_variation(self, base_interaction, variation_index):
-        """Create a variation of an interaction for counterfactual analysis."""
-        # Clone base interaction
-        variation = dict(base_interaction)
+    async def _cleanup_old_predictions(self, entity_id, max_age=3600, max_count=100):
+        """Clean up old predictions to prevent memory issues."""
+        if entity_id not in self.entity_predictions:
+            return
+            
+        # Get prediction IDs for this entity
+        prediction_ids = self.entity_predictions[entity_id]
         
-        # Apply variation logic based on index
-        if variation_index == 0:
-            # Timing variation
-            if 'timestamp' in variation:
-                variation['timestamp'] = variation['timestamp'] + np.random.uniform(60, 300)
-        elif variation_index == 1:
-            # Content variation
-            if 'data' in variation and isinstance(variation['data'], dict):
-                # Modify a random field
-                fields = list(variation['data'].keys())
-                if fields:
-                    field_to_change = random.choice(fields)
-                    if isinstance(variation['data'][field_to_change], (int, float)):
-                        # For numeric values, apply small random change
-                        variation['data'][field_to_change] *= np.random.uniform(0.8, 1.2)
-        elif variation_index == 2:
-            # Source variation
-            if 'source' in variation:
-                variation['source'] = variation['source'] + "_alternative"
+        # If under max count, no need to clean up
+        if len(prediction_ids) <= max_count:
+            return
+            
+        current_time = time.time()
+        predictions_to_remove = []
+        
+        # Identify old predictions to remove
+        for pred_id in prediction_ids:
+            if pred_id in self.predictions:
+                pred = self.predictions[pred_id]
                 
-        variation['is_counterfactual'] = True
-        variation['variation_type'] = f"variation_{variation_index}"
-        
-        return variation
+                # Remove verified predictions older than max_age
+                if pred.verification_time and (current_time - pred.verification_time > max_age):
+                    predictions_to_remove.append(pred_id)
+                    
+                # Remove old unverified predictions
+                elif current_time - pred.prediction_time > max_age * 2:
+                    predictions_to_remove.append(pred_id)
+            else:
+                # ID exists but prediction doesn't (should not happen)
+                predictions_to_remove.append(pred_id)
+                
+        # Remove identified predictions
+        for pred_id in predictions_to_remove:
+            if pred_id in self.predictions:
+                del self.predictions[pred_id]
+            self.entity_predictions[entity_id].remove(pred_id)

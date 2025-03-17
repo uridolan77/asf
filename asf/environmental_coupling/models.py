@@ -3,9 +3,8 @@ import uuid
 from typing import Dict, List, Set, Tuple, Any, Optional, Union
 from dataclasses import dataclass, field
 from collections import defaultdict
-
 from asf.environmental_coupling.enums import (
-    CouplingType, CouplingStrength, CouplingState, 
+    CouplingType, CouplingStrength, CouplingState,
     EventPriority, PredictionState
 )
 
@@ -51,10 +50,10 @@ class EnvironmentalCoupling:
     prediction_precision: float = 1.0  # Inverse variance of prediction errors
     prediction_errors: List[float] = field(default_factory=list)
     expected_interactions: Dict[str, float] = field(default_factory=dict)
-
+    
 @dataclass
 class EnvironmentalPrediction:
-    """NEW: Represents a prediction about an environmental entity or interaction."""
+    """Represents a prediction about an environmental entity or interaction."""
     id: str
     environmental_entity_id: str
     predicted_data: Dict[str, Any]
@@ -67,7 +66,7 @@ class EnvironmentalPrediction:
 
 @dataclass
 class ActiveInferenceTest:
-    """NEW: Represents an active test of a prediction."""
+    """Represents an active test of a prediction."""
     id: str
     coupling_id: str
     prediction_id: Optional[str] = None
