@@ -297,7 +297,7 @@ if initial_state[2] == 0:  # Node C is inactive
     print(f"\nIntegration Result: {result}")
     print(knowledge_base.get_knowledge("entity_1")) """
 
-
+""" 
 # Initialize the layer
 cb_layer = CognitiveBoundaryLayer(config={
     'anticipation_enabled': True,
@@ -332,3 +332,6 @@ result = await cb_layer.execute_semantic_operations([
 # Check status and metrics
 status = await cb_layer.get_status()
 metrics = await cb_layer.get_performance_metrics()
+
+
+ """
