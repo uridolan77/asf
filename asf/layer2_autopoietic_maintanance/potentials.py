@@ -1,55 +1,47 @@
-# potentials.py
+import uuid
+from typing import Dict, Any, Optional
+from .utils import DatabaseDriver
+
 
 class SymbolicPotential:
-    """
-    Base class for symbolic potentials.
-    Represents a symbolic entity with potential for activation in predictive processes.
-    """
+    def __init__(self, activation_value: float,
+                 meaning_potential: Dict[str, Any],
+                 contextual_relevance: float,
+                 potential_id: Optional[str] = None, # Allow ID
+                 db_driver: Optional[DatabaseDriver] = None):
+        self.potential_id = potential_id or str(uuid.uuid4())
+        self.activation_value = activation_value
+        self.meaning_potential = meaning_potential
+        self.contextual_relevance = contextual_relevance
+        self.db_driver = db_driver
 
-    def __init__(self, id: str, strength: float = 1.0):
-        """
-        Initialize a symbolic potential.
 
-        Args:
-            id (str): Unique identifier for the symbolic potential.
-            strength (float): Strength of the potential, default is 1.0.
-        """
-        self.id = id
-        self.strength = strength
-        self.activation_history = []  # Track activation events over time
+    async def save(self, db_driver: Optional[DatabaseDriver] = None):
+        """Saves the potential to the database."""
+        db_driver = db_driver or self.db_driver
+        if not db_driver:
+            raise ValueError("Database driver not set.")
 
-    def activate(self, context: dict) -> float:
-        """
-        Activate the symbolic potential within a given context.
+        potential_data = {
+            "potential_id": self.potential_id,
+            "activation_value": self.activation_value,
+            "meaning_potential": self.meaning_potential,  #  Neo4j handles dictionaries
+            "contextual_relevance": self.contextual_relevance,
+        }
+        await db_driver.add_node("Potential", potential_data)
 
-        Args:
-            context (dict): Contextual information influencing activation.
 
-        Returns:
-            float: Activation value based on context and strength.
-        """
-        activation_value = self.strength * self._evaluate_context(context)
-        self.activation_history.append((context, activation_value))
-        return activation_value
+    @classmethod
+    async def load(cls, potential_id: str, db_driver: DatabaseDriver) -> "SymbolicPotential":
+        """Loads a potential from the database."""
+        potential_data = await db_driver.get_node("Potential", "potential_id", potential_id)
+        if not potential_data:
+            return None
 
-    def _evaluate_context(self, context: dict) -> float:
-        """
-        Evaluate the influence of the context on activation.
-
-        Args:
-            context (dict): Contextual information.
-
-        Returns:
-            float: Context evaluation score (default implementation returns 1.0).
-        """
-        # Placeholder for custom context evaluation logic
-        return 1.0
-
-    def get_activation_history(self) -> list:
-        """
-        Retrieve the history of activations.
-
-        Returns:
-            list: List of tuples containing context and activation values.
-        """
-        return self.activation_history
+        return cls(
+            activation_value=potential_data.get("activation_value"),
+            meaning_potential=potential_data.get("meaning_potential"),
+            contextual_relevance=potential_data.get("contextual_relevance"),
+            potential_id=potential_data.get("potential_id"),
+            db_driver=db_driver,
+        )

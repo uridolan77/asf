@@ -7,7 +7,7 @@ from typing import Dict, List, Any, Optional, Set, Tuple
 from asf.layer2_autopoietic_maintanance.enums import NonlinearityOrder, SymbolConfidenceState
 from asf.layer2_autopoietic_maintanance.symbol import SymbolElement
 from asf.layer2_autopoietic_maintanance.network import SparseTensorSymbolNetwork
-from asf.layer2_autopoietic_maintanance.autocatalytic import NonlinearityOrderTracker, AutocatalyticNetwork
+from asf.layer2_autopoietic_maintanance.autocatalytic_network import NonlinearityOrderTracker, AutocatalyticNetwork
 from asf.layer2_autopoietic_maintanance.operational_closure import OperationalClosure
 from asf.layer2_autopoietic_maintanance.recognition import SymbolRecognizer
 
