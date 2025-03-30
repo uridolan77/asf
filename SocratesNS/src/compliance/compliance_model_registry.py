@@ -1,6 +1,11 @@
 import datetime
 import uuid
-
+import os
+import json
+import torch
+from typing import Dict, Any, List, Optional
+from flask import Flask, request, jsonify
+        
 class ComplianceModelRegistry:
     """
     Registry for managing specialized compliance models for different regulatory domains.
@@ -115,3 +120,73 @@ class ComplianceModelRegistry:
         if domain in self.models:
             return self.models[domain]["metadata"]
         return None
+    
+    def __init__(self, storage_dir=None):
+        self.models = {}
+        self.model_stats = {}
+        self.load_history = {}
+        self.storage_dir = storage_dir
+        
+        # Create storage directory if specified
+        if storage_dir and not os.path.exists(storage_dir):
+            os.makedirs(storage_dir)
+        
+        # Load persisted models if available
+        if storage_dir:
+            self._load_persisted_models()
+    
+    def _persist_model(self, domain, model, metadata):
+        """Persist model to storage"""
+        try:
+            # Save model weights
+            model_path = os.path.join(self.storage_dir, f"{domain}.pt")
+            torch.save(model, model_path)
+            
+            # Update registry metadata
+            registry_path = os.path.join(self.storage_dir, "registry.json")
+            registry_data = {
+                "model_metadata": {},
+                "model_stats": self.model_stats,
+                "load_history": self.load_history
+            }
+            
+            # Add metadata for all models
+            for d, model_entry in self.models.items():
+                registry_data["model_metadata"][d] = model_entry["metadata"]
+            
+            with open(registry_path, 'w') as f:
+                json.dump(registry_data, f, indent=2)
+        except Exception as e:
+            print(f"Error persisting model: {e}")
+    
+    def serve_model_api(self, host="localhost", port=5000):
+        """Serve models via REST API"""
+
+        app = Flask(__name__)
+        
+        @app.route('/api/models', methods=['GET'])
+        def get_available_models():
+            return jsonify({
+                "domains": self.get_available_domains(),
+                "model_stats": self.get_model_stats()
+            })
+        
+        @app.route('/api/models/<domain>/predict', methods=['POST'])
+        def predict(domain):
+            model = self.get_model(domain)
+            if model is None:
+                return jsonify({"error": f"Model for domain {domain} not found"}), 404
+            
+            data = request.json
+            input_text = data.get("input", "")
+            if not input_text:
+                return jsonify({"error": "No input provided"}), 400
+            
+            # Process with model
+            try:
+                result = model(input_text)
+                return jsonify({"result": result})
+            except Exception as e:
+                return jsonify({"error": str(e)}), 500
+        
+        app.run(host=host, port=port)

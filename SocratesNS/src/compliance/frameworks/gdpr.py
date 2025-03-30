@@ -297,62 +297,112 @@ class GDPRComplianceProcessor:
             matches = re.findall(pattern, text, re.IGNORECASE)
             count += len(matches)
         return count
-    
-    def _evaluate_principle_compliance(self, principle, text, context, keyword_matches):
-        """Evaluate compliance with a GDPR principle"""
-        # This is a simplified implementation
-        # A real implementation would have more sophisticated checks
+
+    def _evaluate_principle_compliance(self, text, principle):
+        """
+        Evaluate compliance with GDPR principles
         
-        # Simple heuristic: more keyword matches suggest better compliance
-        # but also depends on text length
-        text_length = len(text.split())
-        keyword_density = keyword_matches / max(1, text_length) * 1000  # keywords per 1000 words
+        Args:
+            text: The text to evaluate
+            principle: The specific GDPR principle to check
+            
+        Returns:
+            Tuple of (compliance_score, reasoning)
+        """
+        if principle == "data_minimization":
+            # Check if text contains unnecessary personal data
+            personal_data_patterns = self.personal_data_patterns
+            found_personal_data = []
+            
+            for pattern_name, pattern in personal_data_patterns.items():
+                matches = re.findall(pattern, text)
+                if matches:
+                    found_personal_data.extend([(pattern_name, match) for match in matches])
+            
+            # Analyze context to determine if personal data is necessary
+            necessary_context_keywords = [
+                "requested", "required", "need", "necessary", 
+                "for the purpose of", "in order to"
+            ]
+            
+            has_necessity_context = any(keyword in text.lower() for keyword in necessary_context_keywords)
+            
+            # Calculate compliance score
+            if not found_personal_data:
+                return 1.0, "No personal data found in text"
+            elif has_necessity_context and len(found_personal_data) <= 3:
+                # Some personal data with justification context
+                return 0.85, f"Limited personal data used with apparent necessity context"
+            else:
+                # Personal data without clear necessity
+                return 0.4, f"Found {len(found_personal_data)} instances of personal data without clear necessity"
         
-        # Simple threshold-based evaluation
-        if principle == 'lawfulness':
-            # Check for legal basis
-            legal_basis_keywords = ['consent', 'contract', 'legal obligation', 
-                                   'vital interests', 'public task', 'legitimate interests']
-            legal_basis_matches = self._check_keywords(text, legal_basis_keywords)
-            if legal_basis_matches > 0:
-                return True, min(1.0, 0.7 + 0.1 * min(3, legal_basis_matches))
+        elif principle == "purpose_limitation":
+            # Check if text adheres to stated purpose
+            purpose_statement = self.get_purpose_statement()
+            if not purpose_statement:
+                return 0.7, "No purpose statement available for comparison"
+            
+            # Extract key concepts from purpose statement
+            purpose_concepts = self._extract_key_concepts(purpose_statement)
+            text_concepts = self._extract_key_concepts(text)
+            
+            # Calculate concept overlap
+            common_concepts = set(purpose_concepts).intersection(set(text_concepts))
+            if not purpose_concepts:
+                return 0.7, "Unable to extract concepts from purpose statement"
+            
+            concept_overlap = len(common_concepts) / len(purpose_concepts)
+            
+            # Check for purpose drift keywords
+            drift_indicators = [
+                "also useful for", "can be used for", "additionally", 
+                "other uses", "alternative uses"
+            ]
+            has_drift_indicators = any(indicator in text.lower() for indicator in drift_indicators)
+            
+            # Calculate compliance score
+            if concept_overlap > 0.8 and not has_drift_indicators:
+                return 0.95, "Text closely aligns with stated purpose"
+            elif concept_overlap > 0.5:
+                return 0.7, "Text partially aligns with stated purpose"
             else:
-                return False, 0.5
-        elif principle == 'purpose_limitation':
-            if keyword_density > 1.0:
-                return True, min(1.0, 0.7 + 0.1 * keyword_density)
-            else:
-                return False, 0.6
-        elif principle == 'data_minimization':
-            if keyword_density > 0.8:
-                return True, min(1.0, 0.7 + 0.15 * keyword_density)
-            else:
-                return False, 0.6
-        elif principle == 'accuracy':
-            if keyword_density > 0.5:
-                return True, min(1.0, 0.8 + 0.1 * keyword_density)
-            else:
-                return False, 0.7
-        elif principle == 'storage_limitation':
-            if keyword_density > 0.8:
-                return True, min(1.0, 0.7 + 0.1 * keyword_density)
-            else:
-                return False, 0.6
-        elif principle == 'integrity_confidentiality':
-            security_keywords = ['security', 'encryption', 'pseudonymization', 'measures']
-            security_matches = self._check_keywords(text, security_keywords)
-            if security_matches > 0:
-                return True, min(1.0, 0.7 + 0.1 * min(3, security_matches))
-            else:
-                return False, 0.5
-        elif principle == 'accountability':
-            if keyword_density > 0.5:
-                return True, min(1.0, 0.8 + 0.1 * keyword_density)
-            else:
-                return False, 0.7
-                
-        # Default
-        return True, 0.8
+                return 0.3, "Text significantly diverges from stated purpose"
+        
+        # Additional principles implementation...
+        else:
+            # Default implementation for other principles
+            return 0.7, f"Basic evaluation for {principle}"
+
+    def _extract_key_concepts(self, text):
+        """
+        Extract key concepts from text for semantic comparison
+        
+        Args:
+            text: Text to analyze
+            
+        Returns:
+            List of key concepts
+        """
+        # Remove stopwords
+        stopwords = ["the", "a", "an", "and", "or", "but", "in", "on", "with", "for", "to", "of"]
+        words = text.lower().split()
+        filtered_words = [word for word in words if word not in stopwords]
+        
+        # Extract noun phrases and entities (simplified version)
+        # In a real implementation, use NLP tools like spaCy for better extraction
+        concepts = []
+        
+        # Simple consecutive capitalized words as concepts (e.g., "Personal Data")
+        import re
+        concept_patterns = re.findall(r'([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)', text)
+        concepts.extend([cp.lower() for cp in concept_patterns])
+        
+        # Add remaining significant words (longer than 4 chars)
+        concepts.extend([w for w in filtered_words if len(w) > 4])
+        
+        # Deduplicate
+        return list(set(concepts))
     
     def _evaluate_right_compliance(self, right, text, context, keyword_matches):
         """Evaluate compliance with a GDPR right"""

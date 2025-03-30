@@ -1,205 +1,423 @@
 import numpy as np
 import logging
 import re
+import torch
+import torch.nn as nn
 from dataclasses import dataclass, field
 from src.core.utils.utils import TokenConfidenceTracker
 from src.core.utils.utils import SensitiveTokenDetector
 
-class TokenLevelComplianceGate:
+class TokenComplianceGate:
     """
-    Filters token probabilities during generation to ensure compliance with
-    regulatory constraints at each generation step.
+    Gate that filters token predictions to ensure compliance
+    by intervening at generation time
     """
-    def __init__(self, compliance_config):
-        self.config = compliance_config
-        self.token_blacklist = set(compliance_config.get("token_blacklist", []))
-        self.special_token_handling = compliance_config.get("special_token_handling", {})
-        self.sensitive_token_detector = SensitiveTokenDetector(compliance_config)
-        self.batch_size = compliance_config.get("batch_size", 128)
-        self.probability_threshold = compliance_config.get("probability_threshold", 0.01)
-        
-        # Initialize pattern detectors for faster matching
-        self.patterns = self._compile_patterns(compliance_config.get("token_patterns", []))
-        
-        # Token confidence tracking for uncertainty-aware filtering
-        self.confidence_tracker = TokenConfidenceTracker(
-            window_size=compliance_config.get("confidence_window", 10)
-        )
-        
-    def filter(self, logits, generated_text, semantic_state, constraints, compliance_mode):
+    
+    def __init__(self, tokenizer, regulatory_framework, rules):
         """
-        Filter token logits based on compliance constraints.
+        Initialize token compliance gate
         
         Args:
-            logits: Token probability logits from language model
-            generated_text: Text generated so far
-            semantic_state: Current semantic compliance state
-            constraints: Applicable compliance constraints
-            compliance_mode: Strictness level for filtering
+            tokenizer: Tokenizer for decoding/encoding tokens
+            regulatory_framework: Regulatory framework to enforce
+            rules: Compliance rules to enforce
+        """
+        self.tokenizer = tokenizer
+        self.framework = regulatory_framework
+        self.rules = rules
+        
+        # Initialize semantic state tracking
+        self.semantic_state = {
+            "entities": {},
+            "contexts": {},
+            "violations": [],
+            "sensitive_tokens": set(),
+            "safe_tokens": set()
+        }
+    
+    def filter_logits(self, logits, generated_tokens=None, context=None):
+        """
+        Filter logits to enforce compliance by masking prohibited tokens
+        
+        Args:
+            logits: Token logits from the model
+            generated_tokens: Previously generated tokens
+            context: Additional context
             
         Returns:
-            Filtered logits with prohibited tokens masked
+            Filtered logits
         """
-        # Clone logits to avoid modifying the original
-        filtered_logits = logits.copy()
+        # Convert to numpy for manipulation
+        logits_np = logits.cpu().numpy() if hasattr(logits, 'cpu') else np.array(logits)
         
-        # Get top tokens for efficient processing (focus on tokens with non-negligible probability)
-        top_tokens = self._get_top_tokens(filtered_logits, threshold=self.probability_threshold)
+        # Update semantic state based on generated tokens
+        if generated_tokens is not None:
+            self._update_semantic_state(generated_tokens)
         
-        # Filter tokens in batches for efficiency
-        for i in range(0, len(top_tokens), self.batch_size):
-            batch = top_tokens[i:i+self.batch_size]
-            batch_results = self._check_token_batch_compliance(
-                batch, generated_text, semantic_state, constraints
-            )
-            
-            # Apply batch results
-            for token_id, is_compliant in batch_results.items():
-                if not is_compliant:
-                    filtered_logits[token_id] = float('-inf')  # Mask prohibited tokens
+        # Get list of token IDs that would violate constraints
+        prohibited_token_ids = self._get_prohibited_token_ids(context)
         
-        # Apply special handling for mode-specific adjustments
-        self._apply_mode_specific_filtering(filtered_logits, compliance_mode, semantic_state)
+        # Create a mask to filter logits
+        if prohibited_token_ids:
+            # Set prohibited tokens to large negative values
+            for token_id in prohibited_token_ids:
+                logits_np[token_id] = -1e9
         
-        # Update token confidence tracking
-        self.confidence_tracker.update(filtered_logits, generated_text)
+        # Convert back to original format
+        if hasattr(logits, 'cpu'):
+            filtered_logits = torch.tensor(logits_np, device=logits.device)
+        else:
+            filtered_logits = logits_np
         
-        # Ensure we haven't blocked all tokens
-        if self._all_tokens_blocked(filtered_logits):
-            # Fallback to allow safe continuation
-            filtered_logits = self._apply_safe_fallback(logits)
-            
         return filtered_logits
     
-    def _check_token_batch_compliance(self, token_batch, generated_text, semantic_state, constraints):
-        """Check compliance for a batch of tokens in parallel"""
-        results = {}
+    def _update_semantic_state(self, tokens):
+        """
+        Update semantic state based on new tokens
         
-        # Check blacklisted tokens (fast path)
-        for token_id in token_batch:
-            if token_id in self.token_blacklist:
-                results[token_id] = False
-                continue
+        Args:
+            tokens: New tokens to analyze
+        """
+        # Decode tokens to text
+        if isinstance(tokens, list):
+            text = self.tokenizer.decode(tokens)
+        else:
+            text = tokens
         
-        # Tokens not immediately rejected need further analysis
-        remaining_tokens = [t for t in token_batch if t not in results]
-        
-        # Check pattern-based constraints
-        for token_id in remaining_tokens:
-            # Generate hypothetical continuations
-            potential_text = generated_text + self._decode_token(token_id)
+        # Extract entities and update state
+        entities = self._extract_entities(text)
+        for entity in entities:
+            entity_type = entity["type"]
+            entity_value = entity["text"]
             
-            # Check against pattern constraints
-            if self._violates_patterns(potential_text):
-                results[token_id] = False
-                continue
-                
-            # Check against semantic constraints by updating hypothetical state
-            hypothetical_state = semantic_state.copy()
-            hypothetical_state = self._update_semantic_state(
-                hypothetical_state,
-                token_id,
-                potential_text
-            )
+            # Track entity in state
+            if entity_type not in self.semantic_state["entities"]:
+                self.semantic_state["entities"][entity_type] = []
             
-            # Check if hypothetical state violates any constraints
-            violates_constraints = False
-            for constraint in constraints:
-                if self._violates_constraint(hypothetical_state, constraint):
-                    violates_constraints = True
-                    break
+            if entity_value not in self.semantic_state["entities"][entity_type]:
+                self.semantic_state["entities"][entity_type].append(entity_value)
+        
+        # Extract context indicators
+        contexts = self._extract_contexts(text)
+        for context_type, context_value in contexts.items():
+            self.semantic_state["contexts"][context_type] = context_value
+        
+        # Update sensitive tokens
+        sensitive_tokens = self._identify_sensitive_tokens(text, entities)
+        self.semantic_state["sensitive_tokens"].update(sensitive_tokens)
+    
+    def _extract_entities(self, text):
+        """
+        Extract entities from text
+        
+        Args:
+            text: Text to analyze
+            
+        Returns:
+            List of extracted entities
+        """
+        # Simple entity extraction
+        entity_patterns = {
+            "PersonalData": {
+                "Email": r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b',
+                "Phone": r'\b(?:\+\d{1,2}\s)?\(?\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}\b',
+                "SSN": r'\b\d{3}-\d{2}-\d{4}\b',
+                "CreditCard": r'\b(?:\d{4}[- ]?){3}\d{4}\b'
+            },
+            "MedicalData": {
+                "Diagnosis": r'\bdiagnosed with\s+([A-Za-z\s]+)\b',
+                "Medication": r'\bprescribed\s+([A-Za-z\s]+)\b',
+                "Treatment": r'\btreatment for\s+([A-Za-z\s]+)\b'
+            },
+            "FinancialData": {
+                "BankAccount": r'\baccount\s+(?:number|#)\s*:?\s*\d{8,12}\b',
+                "Income": r'\bincome of \$[0-9,.]+\b|\b\$[0-9,.]+\s+income\b'
+            }
+        }
+        
+        entities = []
+        
+        for category, patterns in entity_patterns.items():
+            for entity_type, pattern in patterns.items():
+                matches = re.finditer(pattern, text)
+                for match in matches:
+                    entities.append({
+                        "type": entity_type,
+                        "category": category,
+                        "text": match.group(),
+                        "position": (match.start(), match.end())
+                    })
+        
+        return entities
+    
+    def _extract_contexts(self, text):
+        """
+        Extract context indicators from text
+        
+        Args:
+            text: Text to analyze
+            
+        Returns:
+            Dictionary of context types and values
+        """
+        contexts = {}
+        
+        # Context patterns
+        context_patterns = {
+            "consent": {
+                "pattern": r'\b(?:consent|permission|authorize|approval)\b',
+                "default": False
+            },
+            "purpose": {
+                "pattern": r'purpose is to\s+([^.]+)',
+                "default": None
+            },
+            "security": {
+                "pattern": r'\b(?:encrypted|secure|protected)\b',
+                "default": False
+            }
+        }
+        
+        for context_type, config in context_patterns.items():
+            pattern = config["pattern"]
+            default = config["default"]
+            
+            match = re.search(pattern, text.lower())
+            if match:
+                if context_type == "purpose" and match.groups():
+                    contexts[context_type] = match.group(1)
+                else:
+                    contexts[context_type] = True
+            else:
+                contexts[context_type] = default
+        
+        return contexts
+    
+    def _identify_sensitive_tokens(self, text, entities):
+        """
+        Identify sensitive tokens in text
+        
+        Args:
+            text: Text to analyze
+            entities: Extracted entities
+            
+        Returns:
+            Set of sensitive token IDs
+        """
+        sensitive_tokens = set()
+        
+        # Add tokens from sensitive entities
+        for entity in entities:
+            # Tokenize the entity text
+            entity_tokens = self.tokenizer.encode(entity["text"])
+            sensitive_tokens.update(entity_tokens)
+        
+        # Add common sensitive terms
+        sensitive_terms = [
+            "password", "secret", "confidential", "private", 
+            "ssn", "social security", "credit card", "cvv"
+        ]
+        
+        for term in sensitive_terms:
+            if term in text.lower():
+                term_tokens = self.tokenizer.encode(term)
+                sensitive_tokens.update(term_tokens)
+        
+        return sensitive_tokens
+    
+    def _get_prohibited_token_ids(self, context=None):
+        """
+        Get token IDs that would violate compliance constraints
+        
+        Args:
+            context: Additional context for evaluation
+            
+        Returns:
+            List of prohibited token IDs
+        """
+        prohibited_ids = set()
+        
+        # Check each rule
+        for rule in self.rules:
+            rule_type = rule.get("type", "unknown")
+            
+            if rule_type == "token_blacklist":
+                # Direct token blacklist
+                blacklisted_tokens = rule.get("tokens", [])
+                for token in blacklisted_tokens:
+                    token_id = self.tokenizer.convert_tokens_to_ids(token)
+                    prohibited_ids.add(token_id)
+            
+            elif rule_type == "entity_disclosure":
+                # Check if entity disclosure is allowed
+                entity_category = rule.get("entity_category", "")
+                if entity_category in self.semantic_state["entities"]:
+                    # Entity exists in state
                     
-            results[token_id] = not violates_constraints
+                    # Check if disclosure is prohibited
+                    disclosure_prohibited = self._violates_constraint(
+                        entity_category, 
+                        rule.get("conditions", {}),
+                        context
+                    )
+                    
+                    if disclosure_prohibited:
+                        # Add entity tokens to prohibited list
+                        for entity_value in self.semantic_state["entities"][entity_category]:
+                            entity_tokens = self.tokenizer.encode(entity_value)
+                            prohibited_ids.update(entity_tokens)
             
-        return results
-    
-    def _get_top_tokens(self, logits, threshold):
-        """Get tokens with probability above threshold"""
-        # Convert logits to probabilities
-        probs = self._logits_to_probs(logits)
+            elif rule_type == "sensitive_continuation":
+                # Check if continuing with sensitive information
+                if self.semantic_state["sensitive_tokens"]:
+                    # We have sensitive tokens in state
+                    
+                    # Check if sensitive continuation is allowed
+                    continuation_allowed = self._check_continuation_allowed(
+                        rule.get("conditions", {}),
+                        context
+                    )
+                    
+                    if not continuation_allowed:
+                        # Get tokens that would continue sensitive information
+                        sensitive_continuations = self._get_sensitive_continuations()
+                        prohibited_ids.update(sensitive_continuations)
         
-        # Find tokens above threshold
-        top_tokens = [i for i, p in enumerate(probs) if p >= threshold]
+        return list(prohibited_ids)
+    
+    def _violates_constraint(self, entity_category, conditions, context=None):
+        """
+        Check if using an entity category would violate constraints
         
-        return top_tokens
-    
-    def _logits_to_probs(self, logits):
-        """Convert logits to probabilities using softmax"""
-        # Simplified softmax implementation
-        exp_logits = np.exp(logits - np.max(logits))
-        return exp_logits / exp_logits.sum()
-    
-    def _violates_patterns(self, text):
-        """Check if text violates any compiled patterns"""
-        for pattern in self.patterns:
-            if pattern.search(text):
-                return True
+        Args:
+            entity_category: Category of entity to check
+            conditions: Constraint conditions
+            context: Additional context
+            
+        Returns:
+            True if constraint would be violated, False otherwise
+        """
+        # Default to safe approach - assume violation
+        if not conditions:
+            return True
+        
+        # Check context requirements
+        required_contexts = conditions.get("required_contexts", {})
+        for context_type, required_value in required_contexts.items():
+            # Get actual context value
+            actual_value = self.semantic_state["contexts"].get(context_type)
+            
+            # Check if context requirement is satisfied
+            if isinstance(required_value, bool):
+                # Boolean context (e.g., consent)
+                if required_value and not actual_value:
+                    return True  # Violation - required context missing
+            else:
+                # String context (e.g., purpose)
+                if required_value and not actual_value:
+                    return True  # Violation - required context missing
+                elif required_value and required_value not in str(actual_value):
+                    return True  # Violation - wrong context value
+        
+        # Check prohibited combinations
+        prohibited_combinations = conditions.get("prohibited_combinations", [])
+        for combo in prohibited_combinations:
+            # Check if all categories in combo are present
+            if all(category in self.semantic_state["entities"] for category in combo):
+                return True  # Violation - prohibited combination
+        
+        # No violations found
         return False
     
-    def _compile_patterns(self, patterns):
-        """Compile regex patterns for efficient matching"""
-        compiled_patterns = []
-        for pattern in patterns:
-            try:
-                compiled_patterns.append(re.compile(pattern, re.IGNORECASE))
-            except Exception as e:
-                logging.warning(f"Failed to compile pattern '{pattern}': {str(e)}")
-        return compiled_patterns
-    
-    def _update_semantic_state(self, state, token_id, potential_text):
-        """Update semantic state with new token"""
-        # This would integrate with semantic monitoring
-        # Simplified placeholder implementation
-        return state
-    
-    def _violates_constraint(self, state, constraint):
-        """Check if semantic state violates a constraint"""
-        # Simplified placeholder implementation
-        return False
-    
-    def _apply_mode_specific_filtering(self, logits, mode, semantic_state):
-        """Apply mode-specific filtering adjustments"""
-        if mode == "strict":
-            # In strict mode, reduce probabilities of uncertain tokens
-            uncertain_tokens = self.confidence_tracker.get_uncertain_tokens()
-            for token_id in uncertain_tokens:
-                logits[token_id] -= 2.0  # Reduce probability significantly
-                
-        elif mode == "relaxed":
-            # In relaxed mode, allow more tokens through
-            # Only filter definite violations
-            pass
-    
-    def _all_tokens_blocked(self, logits):
-        """Check if all tokens have been blocked"""
-        return np.all(np.isinf(logits)) or np.all(logits == float('-inf'))
-    
-    def _apply_safe_fallback(self, original_logits):
-        """Apply fallback strategy when all tokens are blocked"""
-        # Create a safe subset of tokens to allow generation to continue
-        # This prevents the model from getting stuck
-        safe_logits = original_logits.copy()
+    def _check_continuation_allowed(self, conditions, context=None):
+        """
+        Check if continuation with sensitive information is allowed
         
-        # Allow only very safe tokens like punctuation and common words
-        for i in range(len(safe_logits)):
-            if i not in self.get_safe_token_ids():
-                safe_logits[i] = float('-inf')
-                
-        # If still all blocked, allow top-5 safest tokens
-        if self._all_tokens_blocked(safe_logits):
-            top_5 = np.argsort(original_logits)[-5:]
-            safe_logits = np.full_like(original_logits, float('-inf'))
-            safe_logits[top_5] = original_logits[top_5]
+        Args:
+            conditions: Conditions for allowing continuation
+            context: Additional context
             
-        return safe_logits
+        Returns:
+            True if continuation is allowed, False otherwise
+        """
+        # Check context requirements
+        required_contexts = conditions.get("required_contexts", {})
+        for context_type, required_value in required_contexts.items():
+            # Get actual context value
+            actual_value = self.semantic_state["contexts"].get(context_type)
+            
+            # Check if context requirement is satisfied
+            if isinstance(required_value, bool):
+                # Boolean context (e.g., consent)
+                if required_value and not actual_value:
+                    return False  # Not allowed - required context missing
+            else:
+                # String context (e.g., purpose)
+                if required_value and not actual_value:
+                    return False  # Not allowed - required context missing
+                elif required_value and required_value not in str(actual_value):
+                    return False  # Not allowed - wrong context value
+        
+        # Check custom continuation conditions
+        # ...
+        
+        # Default to allowing continuation if all checks pass
+        return True
     
-    def get_safe_token_ids(self):
-        """Get a set of inherently safe token IDs"""
-        # This would be populated with known safe tokens
-        # Simplified implementation returns a small set of token IDs
-        return {9, 10, 11, 12, 13}  # Example safe token IDs
+    def _get_sensitive_continuations(self):
+        """
+        Get token IDs that would continue sensitive information
+        
+        Returns:
+            Set of token IDs for sensitive continuations
+        """
+        # This would be more sophisticated in a real implementation
+        # For now, return some common continuation tokens
+        continuations = [
+            "is", "for", ":", "=", "-", "/", "\\", "_",
+            "password", "number", "id", "secret", "key"
+        ]
+        
+        continuation_ids = set()
+        for word in continuations:
+            token_ids = self.tokenizer.encode(word)
+            continuation_ids.update(token_ids)
+        
+        return continuation_ids
     
     def _decode_token(self, token_id):
-        """Decode token ID to text (placeholder implementation)"""
-        # In a real implementation, this would use the tokenizer
-        return f"<token_{token_id}>"
+        """
+        Decode token ID to string
+        
+        Args:
+            token_id: Token ID to decode
+            
+        Returns:
+            Decoded token string
+        """
+        if hasattr(self.tokenizer, 'convert_ids_to_tokens'):
+            return self.tokenizer.convert_ids_to_tokens(token_id)
+        else:
+            # Decode full sequence and take first token
+            return self.tokenizer.decode([token_id]).strip()
+    
+    def get_safe_token_ids(self, context=None):
+        """
+        Get token IDs that are safe to use in the current context
+        
+        Args:
+            context: Additional context
+            
+        Returns:
+            List of safe token IDs
+        """
+        # Get prohibited tokens
+        prohibited_ids = set(self._get_prohibited_token_ids(context))
+        
+        # Get all possible token IDs
+        all_token_ids = set(range(self.tokenizer.vocab_size))
+        
+        # Safe tokens are those not prohibited
+        safe_ids = all_token_ids - prohibited_ids
+        
+        return list(safe_ids)

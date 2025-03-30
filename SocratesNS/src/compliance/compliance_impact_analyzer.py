@@ -1,3 +1,5 @@
+import datetime
+from typing import Dict, Any, List, Optional
 
 class ComplianceImpactAnalyzer:
     """
@@ -86,3 +88,51 @@ class ComplianceImpactAnalyzer:
                 })
         
         return suggestions
+    
+
+    def analyze_with_proof(self, text, context, regulatory_extensions, compliance_mode='strict'):
+        """
+        Analyze the compliance impact of text with detailed proof tracing.
+        """
+        # Start proof trace
+        proof_trace = {
+            "input": text[:100] + ("..." if len(text) > 100 else ""),
+            "frameworks": self._get_applicable_frameworks(regulatory_extensions, context),
+            "mode": compliance_mode,
+            "steps": [],
+            "timestamp": datetime.datetime.now().isoformat()
+        }
+        
+        # Get applicable rules
+        applicable_rules = regulatory_extensions.get_applicable_text_rules(
+            text, context, compliance_mode)
+        
+        # Track each step of compliance verification
+        for rule in applicable_rules:
+            # Add rule verification step
+            proof_trace["steps"].append({
+                "step_type": "rule_verification",
+                "rule_id": rule['id'],
+                "rule_text": rule.get('description', f"Rule {rule['id']}"),
+                "framework": rule.get('framework', 'general')
+            })
+            
+            # Analyze rule impact
+            impact = self._analyze_rule_impact_with_proof(text, rule)
+            
+            # Record conclusion
+            conclusion = "violates" if impact['impact_score'] > 0.5 else "complies with"
+            proof_trace["steps"][-1].update({
+                "intermediate_conclusion": f"Text {conclusion} rule {rule['id']}",
+                "impact_score": impact['impact_score'],
+                "justification": impact.get('description', '')
+            })
+        
+        # Generate natural language explanation
+        explanation = self._generate_natural_language_explanation(proof_trace)
+        
+        return {
+            # ... standard analysis results ...
+            'proof_trace': proof_trace,
+            'explanation': explanation
+        }

@@ -2,6 +2,8 @@ import hashlib
 from src.core.utils import LRUCache
 import datetime
 import uuid
+import logging
+import re
 from src.rules.violation_analyzer import ViolationAnalyzer
 from src.core.contextual_rule_interpreter import ContextualRuleInterpreter
 from src.utils.compliance_proof import ComplianceProofNode, ProofTraceNodeType, ProofNodeStatus
@@ -206,3 +208,157 @@ class ComplianceVerifier:
         """Generate cache key for verification results"""
         content_hash = hashlib.md5(content.encode()).hexdigest()
         return f"{content_hash}:{content_type}:{compliance_mode}"
+        
+    def _evaluate_rule(self, content, rule):
+        """
+        Evaluate content against a specific rule with proper policy enforcement
+        
+        Args:
+            content: Input content to evaluate
+            rule: Rule definition to check against
+            
+        Returns:
+            Dict with compliance score and locations of potential violations
+        """
+        rule_type = rule.get("type", "keyword")
+        rule_id = rule.get("id", "unknown")
+        locations = []
+        
+        # Different evaluation strategies based on rule type
+        if rule_type == "regex":
+            # Apply regex pattern matching
+            pattern = rule.get("pattern", "")
+            try:
+                matches = list(re.finditer(pattern, content, re.IGNORECASE))
+                score = 1.0 if not matches else 0.0
+                
+                # Extract match locations
+                for match in matches:
+                    locations.append({
+                        "start": match.start(),
+                        "end": match.end(),
+                        "matched_text": match.group(0)
+                    })
+                    
+            except re.error:
+                logging.error(f"Invalid regex pattern in rule {rule_id}: {pattern}")
+                score = 1.0  # Consider compliant if pattern is invalid
+                
+        elif rule_type == "keyword":
+            # Check for prohibited keywords
+            keywords = rule.get("keywords", [])
+            matches = []
+            
+            for keyword in keywords:
+                # Check for whole word matches if specified
+                if rule.get("whole_word", False):
+                    pattern = r'\b' + re.escape(keyword) + r'\b'
+                    keyword_matches = list(re.finditer(pattern, content, re.IGNORECASE))
+                else:
+                    # Simple substring matching
+                    keyword_lower = keyword.lower()
+                    content_lower = content.lower()
+                    
+                    # Find all occurrences
+                    start = 0
+                    keyword_matches = []
+                    while True:
+                        start = content_lower.find(keyword_lower, start)
+                        if start == -1:
+                            break
+                        keyword_matches.append(type('obj', (object,), {
+                            'start': start,
+                            'end': start + len(keyword_lower),
+                            'group': lambda s=keyword: s
+                        }))
+                        start += 1
+                
+                # Add to overall matches
+                matches.extend(keyword_matches)
+                
+            # Calculate score and locations
+            score = 1.0 if not matches else max(0.0, 1.0 - (len(matches) * 0.2))
+            
+            # Extract match locations
+            for match in matches:
+                locations.append({
+                    "start": match.start,
+                    "end": match.end,
+                    "matched_text": match.group()
+                })
+                
+        elif rule_type == "semantic":
+            # Apply semantic rule evaluation
+            # In a real implementation, this would use embeddings or ML models
+            threshold = rule.get("threshold", 0.7)
+            concept = rule.get("concept", "")
+            
+            # Check if entity extraction is available
+            entities = []
+            if hasattr(self, 'entity_extractor'):
+                extraction_result = self.entity_extractor.extract(content)
+                entities = extraction_result.get('entities', [])
+                
+            # Check for semantic match
+            semantic_match = False
+            for entity in entities:
+                if entity.get('type') == concept:
+                    semantic_match = True
+                    locations.append({
+                        "start": entity.get('start', 0),
+                        "end": entity.get('end', 0),
+                        "matched_text": entity.get('text', ''),
+                        "entity_type": entity.get('type', '')
+                    })
+                    
+            # Assign score based on semantic match
+            score = 0.0 if semantic_match else 1.0
+            
+        elif rule_type == "entity":
+            # Check for specific entity types
+            prohibited_entities = rule.get("prohibited_entities", [])
+            
+            # Check if entity extraction is available
+            entities = []
+            if hasattr(self, 'entity_extractor'):
+                extraction_result = self.entity_extractor.extract(content)
+                entities = extraction_result.get('entities', [])
+            
+            # Check for prohibited entities
+            matches = []
+            for entity in entities:
+                if entity.get('type') in prohibited_entities:
+                    matches.append(entity)
+                    locations.append({
+                        "start": entity.get('start', 0),
+                        "end": entity.get('end', 0),
+                        "matched_text": entity.get('text', ''),
+                        "entity_type": entity.get('type', '')
+                    })
+                    
+            # Calculate score based on entity matches
+            score = 1.0 if not matches else max(0.0, 1.0 - (len(matches) * 0.25))
+        
+        else:
+            # Unknown rule type, default to compliant
+            logging.warning(f"Unknown rule type '{rule_type}' for rule {rule_id}")
+            score = 1.0
+        
+        # Apply rule severity to score
+        severity_factor = self._get_severity_factor(rule.get("severity", "medium"))
+        final_score = score ** severity_factor  # Lower score for higher severity rules
+        
+        return {
+            "score": final_score,
+            "locations": locations
+        }
+
+    def _get_severity_factor(self, severity):
+        """Convert rule severity to numerical factor for score adjustment"""
+        severity_factors = {
+            "low": 0.5,
+            "medium": 1.0,
+            "high": 2.0,
+            "critical": 3.0
+        }
+        return severity_factors.get(severity, 1.0)

@@ -6,6 +6,8 @@ from typing import Dict, List, Any, Optional, Tuple, Set
 import json
 from dataclasses import dataclass
 import time
+import numpy as np
+from sklearn.ensemble import RandomForestClassifier
 
 class ComplianceConstraintOptimizer:
     """
@@ -718,3 +720,42 @@ class ComplianceConstraintOptimizer:
         # Keep history limited
         if len(self.adjustment_history) > 100:
             self.adjustment_history = self.adjustment_history[-100:]
+
+    def _initialize_ml_components(self):
+        """Initialize machine learning components for rule learning"""
+        self.rule_classifiers = {}
+        self.feature_extractors = {
+            "text_features": self._extract_text_features,
+            "context_features": self._extract_context_features,
+            "rule_features": self._extract_rule_features
+        }
+    
+    def _extract_text_features(self, text):
+        """Extract features from text for ML models"""
+        # Feature extraction for text
+        features = {
+            "length": len(text),
+            "word_count": len(text.split()),
+            "uppercase_ratio": sum(1 for c in text if c.isupper()) / max(1, len(text)),
+            "digit_ratio": sum(1 for c in text if c.isdigit()) / max(1, len(text)),
+            "special_char_ratio": sum(1 for c in text if not c.isalnum() and not c.isspace()) / 
+                                 max(1, len(text))
+        }
+        return features
+    
+    def _learn_from_false_positives(self, issues, original_input, is_false_positive=True):
+        """Learn from false positives to improve future constraint adjustments"""
+        if not hasattr(self, 'false_positive_examples'):
+            self.false_positive_examples = []
+        
+        # Record this example for future learning
+        self.false_positive_examples.append({
+            "input": original_input,
+            "issues": issues,
+            "is_false_positive": is_false_positive,
+            "timestamp": time.time()
+        })
+        
+        # Update models if we have enough examples
+        if len(self.false_positive_examples) >= 100:
+            self._update_false_positive_models()

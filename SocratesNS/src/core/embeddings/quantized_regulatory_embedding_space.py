@@ -1,41 +1,79 @@
 import numpy as np
 from sklearn.random_projection import sparse_random_matrix
+import torch
+from torch import nn
 
 class QuantizedRegulatoryEmbeddingSpace:
-    """
-    Memory-efficient embedding space for regulatory compliance that uses
-    quantization to reduce memory footprint while maintaining accuracy.
-    """
-    def __init__(self, embedding_dim, regulatory_knowledge_base, quantization_bits=8):
-        self.embedding_dim = embedding_dim
-        self.regulatory_kb = regulatory_knowledge_base
+    """Memory-efficient quantized embedding space for regulatory concepts"""
+    
+    def __init__(self, original_embeddings, quantization_bits=8, use_mixed_precision=True):
         self.quantization_bits = quantization_bits
+        self.regulatory_dim = original_embeddings.regulatory_dim
+        self.use_mixed_precision = use_mixed_precision
         
-        # Calculate quantization parameters
-        self.quant_min = -(2**(quantization_bits-1))
-        self.quant_max = 2**(quantization_bits-1) - 1
-        self.quant_range = self.quant_max - self.quant_min
+        # Quantize framework vectors
+        self.framework_vectors = self._quantize_embeddings(
+            original_embeddings.framework_vectors,
+            bits=quantization_bits
+        )
         
-        # Initialize embedding space components
-        self.domain_projection_matrices = self._initialize_projection_matrices()
-        self.framework_embeddings = self._initialize_framework_embeddings()
-        self.concept_embeddings = self._initialize_concept_embeddings()
+        # Quantize concept embeddings, potentially with mixed precision
+        if use_mixed_precision:
+            # Use higher precision for critical concepts
+            self.concept_embeddings = {}
+            for concept, embedding in original_embeddings.concept_embeddings.items():
+                if concept in original_embeddings.critical_concepts:
+                    # Use 16-bit for critical concepts
+                    self.concept_embeddings[concept] = self._quantize_embeddings(
+                        {concept: embedding}, bits=16
+                    )[concept]
+                else:
+                    # Use standard bits for other concepts
+                    self.concept_embeddings[concept] = self._quantize_embeddings(
+                        {concept: embedding}, bits=quantization_bits
+                    )[concept]
+        else:
+            # Use uniform quantization
+            self.concept_embeddings = self._quantize_embeddings(
+                original_embeddings.concept_embeddings,
+                bits=quantization_bits
+            )
         
-        # Initialize compliance boundaries
-        self.compliance_boundaries = self._initialize_compliance_boundaries()
+        # Calculate memory savings
+        self.memory_reduction = self._calculate_memory_reduction(original_embeddings)
         
-        # Dimension reduction via random projection for efficiency
-        self.projection_matrix = self._initialize_random_projection()
-        self.regulatory_dim = min(embedding_dim, 128)
+    def _quantize_embeddings(self, embeddings_dict, bits):
+        """Quantize embeddings to specified bit precision"""
+        quantized_dict = {}
         
-        # Statistics for quantization calibration
-        self.embedding_stats = {
-            "mean": 0.0,
-            "std": 1.0,
-            "min": -3.0,
-            "max": 3.0
-        }
-        self._calibrate_quantization()
+        for key, embedding in embeddings_dict.items():
+            # Calculate scaling factor
+            max_val = torch.max(torch.abs(embedding)).item()
+            scale = (2**(bits-1) - 1) / max_val if max_val > 0 else 1.0
+            
+            # Quantize
+            if bits <= 8:
+                # Use int8
+                quantized = torch.round(embedding * scale).to(torch.int8)
+                quantized_dict[key] = {
+                    'quantized': quantized,
+                    'scale': scale,
+                    'bits': bits
+                }
+            elif bits <= 16:
+                # Use int16
+                quantized = torch.round(embedding * scale).to(torch.int16)
+                quantized_dict[key] = {
+                    'quantized': quantized,
+                    'scale': scale,
+                    'bits': bits
+                }
+            else:
+                # No quantization needed
+                quantized_dict[key] = embedding
+                
+        return quantized_dict
+
         
     def project_to_regulatory_space(self, embedding):
         """

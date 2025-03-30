@@ -7,7 +7,10 @@ import re
 import numpy as np
 import pandas as pd
 import spacy
+import benepar
 import stanza
+from transformers import AutoTokenizer, AutoModelForTokenClassification, pipeline
+
 
 class RelationExtractor:
     """
@@ -43,21 +46,18 @@ class RelationExtractor:
                 return None
         else:
             return None
-            
+
+
     def _initialize_srl_model(self):
-        """Initialize semantic role labeling model"""
-        srl_type = self.config.get("srl_model", "none")
-        
-        if srl_type == "allennlp":
-            try:
-                from allennlp.predictors.predictor import Predictor
-                return Predictor.from_path(
-                    "https://storage.googleapis.com/allennlp-public-models/structured-prediction-srl-bert.2020.12.15.tar.gz"
-                )
-            except ImportError:
-                logging.warning("AllenNLP not installed, semantic role labeling not available")
-                return None
-        return None
+        """Initialize semantic role labeling using Hugging Face Transformers"""
+        try:
+            tokenizer = AutoTokenizer.from_pretrained("vblagoje/bert-english-uncased-finetuned-srl")
+            model = AutoModelForTokenClassification.from_pretrained("vblagoje/bert-english-uncased-finetuned-srl")
+            srl_pipeline = pipeline("token-classification", model=model, tokenizer=tokenizer, aggregation_strategy="simple")
+            return srl_pipeline
+        except Exception as e:
+            logging.warning(f"Failed to initialize Hugging Face SRL pipeline: {str(e)}")
+            return None
     
     def _initialize_relation_patterns(self):
         """Initialize relation extraction patterns"""

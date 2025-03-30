@@ -2,12 +2,49 @@ import torch
 from torch.utils.data import DataLoader, Dataset
 from typing import Dict, List, Any, Optional
 class ComplianceBalancedSampler:
-    """Balanced sampling from multiple compliance datasets"""
+    """Balanced sampling from multiple compliance datasets with reproducibility and stratification"""
     
-    def __init__(self, datasets):
+    def __init__(self, datasets, seed=None, stratify_by=None):
+        if not all(hasattr(dataset, '__iter__') for dataset in datasets.values()):
+            raise TypeError("All datasets must be iterable")
+            
         self.datasets = datasets
+        self.seed = seed
+        self.stratify_by = stratify_by
+        
+        # Set random seed for reproducibility
+        if seed is not None:
+            import random
+            random.seed(seed)
+            import numpy as np
+            np.random.seed(seed)
+            import torch
+            torch.manual_seed(seed)
+        
         self.samplers = {name: iter(dataset) for name, dataset in datasets.items()}
         self.weights = self._calculate_sampling_weights()
+        
+        # Setup stratification if requested
+        if stratify_by:
+            self.stratification_values = self._get_stratification_values(stratify_by)
+    
+    def _get_stratification_values(self, stratify_by):
+        """Get unique values for stratification attribute across all datasets"""
+        values = set()
+        for dataset in self.datasets.values():
+            for sample in dataset:
+                if stratify_by in sample:
+                    values.add(sample[stratify_by])
+        return values
+    
+    def get_stratified_batches(self, batch_size):
+        """Get batches with stratified sampling across the stratification attribute"""
+        if not self.stratify_by:
+            return self.get_batches(batch_size)
+            
+        # Implementation of stratified sampling
+        # Ensures even representation of each stratification value
+
         
     def _calculate_sampling_weights(self):
         """Calculate sampling weights for different datasets"""

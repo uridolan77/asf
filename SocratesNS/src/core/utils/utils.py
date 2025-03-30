@@ -94,43 +94,102 @@ class ComplianceBoundaryClassifier:
         
         # Return random violation type for demonstration
         return np.random.choice(boundary["violation_types"])
-
+    
 class LRUCache:
-    """Simple LRU cache implementation"""
-    def __init__(self, maxsize=128):
-        self.cache = collections.OrderedDict()
+    """Enhanced LRU Cache with size tracking and statistics"""
+    
+    def __init__(self, maxsize=128, stats_window=100):
+        self.cache = {}
         self.maxsize = maxsize
-        
-    def get(self, key, default=None):
-        """Get item from cache, refreshing order"""
-        if key not in self.cache:
-            return default
+        self.order = []
+        self.stats = {
+            "hits": 0,
+            "misses": 0,
+            "evictions": 0,
+            "hit_rate": 0.0,
+            "size_bytes": 0
+        }
+        self.access_history = []  # Track last N accesses
+        self.stats_window = stats_window
+    
+    def get(self, key):
+        """Get an item from cache with stats tracking"""
+        if key in self.cache:
+            # Move to end (most recently used)
+            self.order.remove(key)
+            self.order.append(key)
             
-        # Move to end (most recently used)
-        value = self.cache.pop(key)
-        self.cache[key] = value
-        return value
+            # Update stats
+            self.stats["hits"] += 1
+            self._record_access(key, True)
+            
+            return self.cache[key]
+        else:
+            # Update stats
+            self.stats["misses"] += 1
+            self._record_access(key, False)
+            
+            return None
     
     def __setitem__(self, key, value):
-        """Add item to cache"""
+        """Add/update an item in the cache"""
         if key in self.cache:
-            # Remove existing item
-            self.cache.pop(key)
+            # Update existing entry
+            old_size = self._get_item_size(self.cache[key])
+            new_size = self._get_item_size(value)
+            self.stats["size_bytes"] += (new_size - old_size)
             
-        # Add to end (most recently used)
-        self.cache[key] = value
-        
-        # Remove oldest item if over capacity
-        if len(self.cache) > self.maxsize:
-            self.cache.popitem(last=False)
+            # Update
+            self.cache[key] = value
+            self.order.remove(key)
+            self.order.append(key)
+        else:
+            # Add new entry
+            self.cache[key] = value
+            self.order.append(key)
+            self.stats["size_bytes"] += self._get_item_size(value)
+            
+            # Check size limit
+            while len(self.cache) > self.maxsize:
+                # Remove least recently used
+                lru_key = self.order.pop(0)
+                self.stats["size_bytes"] -= self._get_item_size(self.cache[lru_key])
+                del self.cache[lru_key]
+                self.stats["evictions"] += 1
     
-    def clear(self):
-        """Clear the cache"""
-        self.cache.clear()
+    def _record_access(self, key, hit):
+        """Record access for hit rate calculation"""
+        self.access_history.append(hit)
+        if len(self.access_history) > self.stats_window:
+            self.access_history.pop(0)
         
-    def __contains__(self, key):
-        """Check if key is in cache"""
-        return key in self.cache
+        # Update hit rate
+        if self.access_history:
+            self.stats["hit_rate"] = sum(self.access_history) / len(self.access_history)
+    
+    def _get_item_size(self, item):
+        """Estimate memory size of cached item"""
+        import sys
+        
+        # For strings
+        if isinstance(item, str):
+            return len(item) * 2  # Approximate for Python strings
+        
+        # For tensors
+        if hasattr(item, 'element_size') and hasattr(item, 'nelement'):
+            return item.element_size() * item.nelement()
+        
+        # For dictionaries
+        if isinstance(item, dict):
+            return sum(self._get_item_size(k) + self._get_item_size(v) 
+                      for k, v in item.items())
+        
+        # For lists
+        if isinstance(item, list):
+            return sum(self._get_item_size(x) for x in item)
+        
+        # Default approximation
+        return sys.getsizeof(item)
 
 class TokenConfidenceTracker:
     """Tracks confidence levels of token predictions"""
