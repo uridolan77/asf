@@ -6,7 +6,7 @@ from typing import Dict, List, Any, Optional, Tuple, Set
 import json
 from dataclasses import dataclass
 import time
-
+import textblob
 
 @dataclass
 class ViolationSummary:
@@ -549,7 +549,7 @@ class ViolationAnalyzer:
         # Keep only recent trends (last 100 entries)
         if len(self.violation_trends["rule_distribution"]) > 100:
             self.violation_trends["rule_distribution"] = self.violation_trends["rule_distribution"][-100:]
-            
+                
     def _detect_violation_patterns(self, violations, context):
         """Detect patterns in violation data."""
         patterns = {}
@@ -558,9 +558,22 @@ class ViolationAnalyzer:
             pattern_results = matcher(violations, context)
             if pattern_results:
                 patterns[pattern_type] = pattern_results
-                
-        return patterns
         
+        return patterns
+
+    def _initialize_pattern_matchers(self):
+        """Initialize pattern matching functions."""
+        return {
+            "repeated_violations": self._match_repeated_violations,
+            "sequential_violations": self._match_sequential_violations,
+            "contextual_patterns": self._match_contextual_patterns,
+            "content_type_patterns": self._analyze_content_type_patterns,
+            "platform_patterns": self._analyze_platform_patterns,
+            "time_patterns": self._analyze_time_patterns,
+            "location_patterns": self._analyze_location_patterns,
+            "multi_context_patterns": self._analyze_multi_context_patterns
+        }
+            
     def _match_repeated_violations(self, violations, context):
         """Match pattern: repeated violations of the same rule."""
         rule_counts = Counter(v.get("rule_id", "") for v in violations if "rule_id" in v)
@@ -579,9 +592,104 @@ class ViolationAnalyzer:
         return repeated_violations if repeated_violations else None
         
     def _match_sequential_violations(self, violations, context):
-        """Match pattern: violations that follow a sequential pattern."""
-        # This is a placeholder for more sophisticated sequential pattern detection
-        # In a real system, this would analyze sequences of violations
+        """
+        Match pattern: violations that follow a sequential pattern over time or in content.
+        
+        Args:
+            violations: List of compliance violations
+            context: Optional context information
+            
+        Returns:
+            List of sequential violation patterns or None if none found
+        """
+        if not violations or len(violations) < 3:  # Need at least 3 violations for a meaningful sequence
+            return None
+            
+        # Look for sequences in rule IDs, categories, or severity levels
+        sequential_patterns = []
+        
+        # 1. Sort violations by position/timestamp if available
+        sorted_violations = sorted(
+            violations,
+            key=lambda v: v.get("metadata", {}).get("position", 0) 
+            if "metadata" in v and "position" in v.get("metadata", {})
+            else 0
+        )
+        
+        # 2. Check for rule ID sequences
+        rule_sequence = self._extract_sequence([v.get("rule_id", "") for v in sorted_violations])
+        if rule_sequence and len(rule_sequence) >= 3:
+            sequential_patterns.append({
+                "type": "rule_sequence",
+                "sequence": rule_sequence,
+                "confidence": 0.8,
+                "description": f"Sequence of rule violations: {', '.join(rule_sequence)}"
+            })
+        
+        # 3. Check for severity escalation
+        severity_values = {"low": 1, "medium": 2, "high": 3, "critical": 4}
+        severity_sequence = [severity_values.get(v.get("severity", "medium"), 2) for v in sorted_violations]
+        
+        # Check if severities are increasing
+        is_escalating = all(severity_sequence[i] <= severity_sequence[i+1] for i in range(len(severity_sequence)-1))
+        has_significant_change = max(severity_sequence) - min(severity_sequence) >= 2
+        
+        if is_escalating and has_significant_change and len(severity_sequence) >= 3:
+            sequential_patterns.append({
+                "type": "severity_escalation",
+                "starting_severity": sorted_violations[0].get("severity", "medium"),
+                "ending_severity": sorted_violations[-1].get("severity", "medium"),
+                "violation_count": len(sorted_violations),
+                "confidence": 0.7,
+                "description": f"Escalating severity from {sorted_violations[0].get('severity', 'medium')} to {sorted_violations[-1].get('severity', 'medium')}"
+            })
+        
+        # 4. Check for category sequences
+        if hasattr(self, 'rule_metadata'):
+            categories = []
+            for violation in sorted_violations:
+                rule_id = violation.get("rule_id", "")
+                if rule_id in self.rule_metadata:
+                    category = self.rule_metadata[rule_id].get("category", "general")
+                    categories.append(category)
+                else:
+                    categories.append("unknown")
+                    
+            category_sequence = self._extract_sequence(categories)
+            if category_sequence and len(category_sequence) >= 3:
+                sequential_patterns.append({
+                    "type": "category_sequence",
+                    "sequence": category_sequence,
+                    "confidence": 0.6,
+                    "description": f"Sequence of violation categories: {', '.join(category_sequence)}"
+                })
+        
+        return sequential_patterns if sequential_patterns else None
+    
+    def _extract_sequence(self, items):
+        """Extract the longest non-repeating sequence from a list of items"""
+        if not items or len(items) < 3:
+            return None
+            
+        # Find sequences of 3 or more non-repeating items
+        sequences = []
+        current_sequence = [items[0]]
+        
+        for i in range(1, len(items)):
+            if items[i] != items[i-1]:  # Different from previous
+                current_sequence.append(items[i])
+            else:  # Repeating item, end current sequence
+                if len(current_sequence) >= 3:
+                    sequences.append(current_sequence)
+                current_sequence = [items[i]]
+        
+        # Add final sequence if valid
+        if len(current_sequence) >= 3:
+            sequences.append(current_sequence)
+        
+        # Return the longest sequence found
+        if sequences:
+            return max(sequences, key=len)
         return None
         
     def _match_contextual_patterns(self, violations, context):
@@ -909,35 +1017,410 @@ class ViolationAnalyzer:
         
         return role_patterns
 
-    def _analyze_content_type_patterns(self, violations, content_type):
-        """Analyze content type specific violation patterns"""
-        # Implementation for content type patterns
-        # Follow similar pattern as domain patterns
-        return []  # Placeholder - implement similar to domain patterns
+    def _analyze_content_type_patterns(self, violations, context):
+        """
+        Analyze patterns specific to different content types (e.g., text, images, code).
+        
+        Args:
+            violations: List of compliance violations
+            context: Optional context information
+            
+        Returns:
+            List of detected content type patterns
+        """
+        if not violations or not context:
+            return None
+            
+        patterns = []
+        content_type = context.get("content_type", "unknown")
+        
+        # Group violations by content type
+        content_type_violations = defaultdict(list)
+        
+        for violation in violations:
+            metadata = violation.get("metadata", {})
+            violation_content_type = metadata.get("content_type", content_type)
+            content_type_violations[violation_content_type].append(violation)
+        
+        # Analyze patterns for each content type
+        for ct, ct_violations in content_type_violations.items():
+            if len(ct_violations) >= self.min_violations_for_pattern:
+                # Analyze common rules within this content type
+                rule_counts = Counter(v.get("rule_id", "") for v in ct_violations)
+                common_rules = [rule for rule, count in rule_counts.items() 
+                            if count >= 3 and rule]  # At least 3 occurrences
+                
+                if common_rules:
+                    patterns.append({
+                        "type": "content_type_pattern",
+                        "content_type": ct,
+                        "common_rules": common_rules,
+                        "violation_count": len(ct_violations),
+                        "confidence": min(1.0, len(ct_violations) / 10)  # Scale confidence
+                    })
+        
+        return patterns if patterns else None
 
-    def _analyze_platform_patterns(self, violations, platform):
-        """Analyze platform-specific violation patterns"""
-        # Implementation for platform patterns
-        # Follow similar pattern as domain patterns
-        return []  # Placeholder - implement similar to domain patterns
+    def _analyze_platform_patterns(self, violations, context):
+        """
+        Analyze patterns specific to different platforms or environments.
+        
+        Args:
+            violations: List of compliance violations
+            context: Optional context information
+            
+        Returns:
+            List of detected platform patterns
+        """
+        if not violations or not context:
+            return None
+            
+        patterns = []
+        
+        # Extract platform information from context
+        platform = context.get("platform", {})
+        platform_type = platform.get("type") if isinstance(platform, dict) else str(platform)
+        
+        if not platform_type:
+            return None
+        
+        # Group violations by severity for this platform
+        severity_counts = Counter(v.get("severity", "medium") for v in violations)
+        
+        # Check if this platform has a disproportionate number of high-severity violations
+        high_severity_ratio = (severity_counts.get("high", 0) + severity_counts.get("critical", 0)) / \
+                            max(1, len(violations))
+        
+        if high_severity_ratio > 0.4:  # 40% or more are high severity
+            patterns.append({
+                "type": "platform_risk_pattern",
+                "platform": platform_type,
+                "high_severity_ratio": high_severity_ratio,
+                "violation_count": len(violations),
+                "confidence": min(1.0, high_severity_ratio + 0.3)
+            })
+        
+        # Check for platform-specific rule violations
+        platform_specific_rules = self._get_platform_specific_rules(platform_type)
+        if platform_specific_rules:
+            platform_violations = [v for v in violations if v.get("rule_id", "") in platform_specific_rules]
+            
+            if len(platform_violations) >= 2:
+                patterns.append({
+                    "type": "platform_specific_pattern",
+                    "platform": platform_type,
+                    "rules": [v.get("rule_id") for v in platform_violations],
+                    "violation_count": len(platform_violations),
+                    "confidence": min(1.0, len(platform_violations) / len(platform_specific_rules))
+                })
+        
+        return patterns if patterns else None
+        
+    def _get_platform_specific_rules(self, platform_type):
+        """Get rules specific to a platform type"""
+        # This would be populated from configuration or derived from rule metadata
+        platform_rules = {
+            "web": ["web_accessibility", "csrf_protection", "xss_prevention"],
+            "mobile": ["mobile_privacy", "data_collection", "notification_consent"],
+            "desktop": ["local_storage", "system_integration", "update_mechanism"],
+            "iot": ["device_security", "data_transmission", "physical_access"]
+        }
+        
+        return platform_rules.get(platform_type.lower(), [])
+    
+    def _analyze_time_patterns(self, violations, context):
+        """
+        Analyze temporal patterns in violations, identifying time-based trends.
+        
+        Args:
+            violations: List of compliance violations
+            context: Optional context information
+            
+        Returns:
+            List of detected time-based patterns
+        """
+        if not violations:
+            return None
+            
+        patterns = []
+        
+        # Check if we have historical data to work with
+        if not hasattr(self, 'historical_violations') or not self.historical_violations:
+            return None
+        
+        # Get current timestamp
+        current_time = time.time()
+        
+        # Analyze frequency of violations over time
+        time_grouped_violations = defaultdict(list)
+        
+        # Group historical violations by time period (daily, weekly)
+        for rule_id, rule_violations in self.historical_violations.items():
+            for violation in rule_violations:
+                # Group by day (86400 seconds in a day)
+                day_bucket = int(violation.get("timestamp", 0) / 86400)
+                time_grouped_violations[day_bucket].append(violation)
+        
+        # Calculate violation frequency by day
+        day_frequencies = {day: len(violations) for day, violations in time_grouped_violations.items()}
+        
+        # Check for recent spikes in violations
+        recent_days = sorted(day_frequencies.keys())[-7:]  # Last 7 days
+        if recent_days:
+            recent_avg = sum(day_frequencies.get(day, 0) for day in recent_days) / len(recent_days)
+            historical_days = [d for d in day_frequencies.keys() if d not in recent_days]
+            
+            if historical_days:
+                historical_avg = sum(day_frequencies.get(day, 0) for day in historical_days) / len(historical_days)
+                
+                # Detect significant increase
+                if recent_avg > historical_avg * 1.5:
+                    patterns.append({
+                        "type": "time_frequency_pattern",
+                        "pattern": "increasing_violations",
+                        "recent_daily_avg": recent_avg,
+                        "historical_daily_avg": historical_avg,
+                        "increase_factor": recent_avg / historical_avg if historical_avg > 0 else float('inf'),
+                        "confidence": min(1.0, (recent_avg - historical_avg) / max(1, historical_avg))
+                    })
+        
+        # Detect time-of-day patterns if timestamp data is detailed enough
+        hour_violations = defaultdict(int)
+        for bucket, violations in time_grouped_violations.items():
+            for violation in violations:
+                timestamp = violation.get("timestamp", 0)
+                hour = datetime.datetime.fromtimestamp(timestamp).hour
+                hour_violations[hour] += 1
+        
+        # Check for concentrated violations during specific hours
+        total_violations = sum(hour_violations.values())
+        if total_violations > 0:
+            for hour, count in hour_violations.items():
+                ratio = count / total_violations
+                if ratio > 0.25:  # More than 25% of violations happen in this hour
+                    patterns.append({
+                        "type": "time_of_day_pattern",
+                        "hour": hour,
+                        "violation_ratio": ratio,
+                        "violation_count": count,
+                        "confidence": min(1.0, ratio + 0.3)
+                    })
+        
+        return patterns if patterns else None
 
-    def _analyze_time_patterns(self, violations, datetime_obj):
-        """Analyze time-based violation patterns"""
-        # Implementation for time-based patterns
-        # Look for patterns related to time of day, day of week, etc.
-        return []  # Placeholder - implement similar to domain patterns
-
-    def _analyze_location_patterns(self, violations, location):
-        """Analyze location-based violation patterns"""
-        # Implementation for location patterns
-        # Follow similar pattern as domain patterns
-        return []  # Placeholder - implement similar to domain patterns
+    def _analyze_location_patterns(self, violations, context):
+        """
+        Analyze patterns related to geographical or logical locations.
+        
+        Args:
+            violations: List of compliance violations
+            context: Optional context information
+            
+        Returns:
+            List of detected location-based patterns
+        """
+        if not violations or not context:
+            return None
+            
+        patterns = []
+        
+        # Extract location information
+        location_info = context.get("location", {})
+        if not location_info:
+            return None
+        
+        # Normalize location information
+        country = location_info.get("country") if isinstance(location_info, dict) else None
+        region = location_info.get("region") if isinstance(location_info, dict) else None
+        
+        if not country and not region:
+            return None
+        
+        # Get regulatory requirements specific to this location
+        location_specific_rules = self._get_location_specific_rules(country, region)
+        
+        # Check for location-specific violations
+        location_violations = []
+        for violation in violations:
+            rule_id = violation.get("rule_id", "")
+            if rule_id in location_specific_rules:
+                location_violations.append(violation)
+        
+        if location_violations:
+            # Calculate compliance risk for this location
+            location_risk = len(location_violations) / len(location_specific_rules)
+            
+            patterns.append({
+                "type": "location_compliance_pattern",
+                "country": country,
+                "region": region,
+                "violation_count": len(location_violations),
+                "rule_count": len(location_specific_rules),
+                "compliance_risk": location_risk,
+                "rules_violated": [v.get("rule_id") for v in location_violations],
+                "confidence": min(1.0, location_risk + 0.2)
+            })
+        
+        # Check for regional violation clusters
+        if hasattr(self, 'historical_violations') and region:
+            region_violations = self._get_historical_violations_by_region(region)
+            if region_violations:
+                region_rule_counts = Counter(v.get("rule_id", "") for v in region_violations)
+                common_rules = [rule for rule, count in region_rule_counts.items() 
+                            if count >= 3 and rule]  # At least 3 occurrences
+                
+                if common_rules:
+                    patterns.append({
+                        "type": "regional_violation_pattern",
+                        "region": region,
+                        "common_rules": common_rules,
+                        "violation_count": len(region_violations),
+                        "confidence": min(1.0, len(common_rules) / 10 + 0.5)
+                    })
+        
+        return patterns if patterns else None
+            
+    def _get_location_specific_rules(self, country, region):
+        """Get rules specific to a location"""
+        # This would be populated from configuration or derived from rule metadata
+        # In a real implementation, this would look up actual regulatory requirements by region
+        location_rules = {
+            "us": ["us_privacy_law", "ccpa", "coppa"],
+            "eu": ["gdpr", "eprivacy_directive", "dsa"],
+            "uk": ["uk_gdpr", "dpa_2018", "pecr"],
+            "canada": ["pipeda", "casl", "provincial_privacy_laws"],
+            "australia": ["privacy_act", "spam_act", "consumer_law"],
+            "california": ["ccpa", "cpra", "shine_the_light"],
+            "new_york": ["shield_act", "ny_privacy_law"]
+        }
+        
+        # Combine country and region rules
+        rules = set()
+        
+        if country and country.lower() in location_rules:
+            rules.update(location_rules[country.lower()])
+            
+        if region and region.lower() in location_rules:
+            rules.update(location_rules[region.lower()])
+            
+        return list(rules)
+        
+    def _get_historical_violations_by_region(self, region):
+        """Get historical violations for a specific region"""
+        # In a real implementation, this would query stored violation data
+        region_violations = []
+        
+        # Simplified implementation - extract violations with matching region
+        for rule_id, violations in self.historical_violations.items():
+            for violation in violations:
+                violation_context = violation.get("context_info", {})
+                violation_location = violation_context.get("location", {})
+                violation_region = violation_location.get("region", "") if isinstance(violation_location, dict) else ""
+                
+                if violation_region.lower() == region.lower():
+                    region_violations.append(violation)
+        
+        return region_violations
 
     def _analyze_multi_context_patterns(self, violations, context):
-        """Analyze patterns involving multiple context dimensions"""
-        # Implementation for multi-dimensional context patterns
-        # Look for patterns that involve combinations of contexts
-        return []  # Placeholder - implement more sophisticated analysis
+        """
+        Analyze patterns that span multiple context dimensions (e.g., content type + platform + time).
+        
+        Args:
+            violations: List of compliance violations
+            context: Optional context information
+            
+        Returns:
+            List of detected multi-dimensional patterns
+        """
+        if not violations or not context:
+            return None
+            
+        patterns = []
+        
+        # Extract key context dimensions
+        content_type = context.get("content_type", "unknown")
+        platform = context.get("platform", {})
+        platform_type = platform.get("type", "unknown") if isinstance(platform, dict) else "unknown"
+        user_info = context.get("user_info", {})
+        user_role = user_info.get("role", "unknown") if isinstance(user_info, dict) else "unknown"
+        
+        # Group violations by rule ID
+        rule_violations = defaultdict(list)
+        for violation in violations:
+            rule_id = violation.get("rule_id", "")
+            if rule_id:
+                rule_violations[rule_id].append(violation)
+        
+        # Identify rules that appear across different context dimensions
+        cross_context_rules = []
+        
+        for rule_id, rule_viols in rule_violations.items():
+            # Check if we have historical data for this rule
+            if hasattr(self, 'historical_violations') and rule_id in self.historical_violations:
+                historical_viols = self.historical_violations[rule_id]
+                
+                # Count contexts where this rule appears
+                contexts_seen = set()
+                
+                for violation in historical_viols:
+                    violation_context = violation.get("context_info", {})
+                    
+                    ctx_type = violation_context.get("content_type", "unknown")
+                    ctx_platform = violation_context.get("platform", "unknown")
+                    
+                    # Create context signature
+                    context_sig = f"{ctx_type}|{ctx_platform}"
+                    contexts_seen.add(context_sig)
+                
+                # If rule appears across multiple contexts, it's a cross-context pattern
+                if len(contexts_seen) >= 3:  # Appears in at least 3 different contexts
+                    cross_context_rules.append({
+                        "rule_id": rule_id,
+                        "context_count": len(contexts_seen),
+                        "contexts": list(contexts_seen),
+                        "current_violations": len(rule_viols)
+                    })
+        
+        if cross_context_rules:
+            # Sort by number of contexts
+            cross_context_rules.sort(key=lambda x: x["context_count"], reverse=True)
+            
+            patterns.append({
+                "type": "cross_context_pattern",
+                "rules": cross_context_rules,
+                "confidence": min(1.0, len(cross_context_rules) / 5 + 0.4)  # Scale confidence
+            })
+        
+        # Identify patterns related to user roles + content types
+        if hasattr(self, 'historical_violations') and user_role != "unknown":
+            role_content_violations = defaultdict(int)
+            
+            # Analyze historical violations by role and content type
+            for rule_id, historical_viols in self.historical_violations.items():
+                for violation in historical_viols:
+                    violation_context = violation.get("context_info", {})
+                    violation_user = violation_context.get("user_info", {})
+                    violation_role = violation_user.get("role", "") if isinstance(violation_user, dict) else ""
+                    violation_content = violation_context.get("content_type", "")
+                    
+                    if violation_role and violation_content:
+                        role_content_pair = f"{violation_role}|{violation_content}"
+                        role_content_violations[role_content_pair] += 1
+            
+            # Check if current user role + content type has high violation frequency
+            current_pair = f"{user_role}|{content_type}"
+            if current_pair in role_content_violations and role_content_violations[current_pair] >= 5:
+                patterns.append({
+                    "type": "role_content_pattern",
+                    "role": user_role,
+                    "content_type": content_type,
+                    "historical_violations": role_content_violations[current_pair],
+                    "current_violations": len(violations),
+                    "confidence": min(1.0, role_content_violations[current_pair] / 20 + 0.5)
+                })
+        
+        return patterns if patterns else None
 
     def _identify_new_exemptions(self, violations, original_input, context):
         """
@@ -1435,20 +1918,69 @@ class ViolationAnalyzer:
         else:
             return "EXAMPLE_DATA"
 
-    def _generate_data_minimization_alternatives(self, text, rule_id, rule_issues, context):
-        """Generate alternatives for data minimization principles"""
-        # Placeholder - would implement data reduction strategies
-        return []
-
-    def _generate_disclaimer_alternatives(self, text, rule_id, rule_issues, context):
-        """Generate alternatives that add required disclaimers"""
-        # Placeholder - would implement disclaimer addition
-        return []
-
-    def _generate_bias_correction_alternatives(self, text, rule_id, rule_issues, context):
-        """Generate alternatives that correct biased language"""
-        # Placeholder - would implement bias correction
-        return []
+    def _generate_data_minimization_alternatives(self, text, violation, context=None):
+        """
+        Generate alternative text that minimizes the amount of personal or sensitive data.
+        
+        Args:
+            text: Original text containing excessive data
+            violation: The compliance violation
+            context: Optional context information
+            
+        Returns:
+            List of alternative text options that minimize data
+        """
+        alternatives = []
+        
+        # Get violation details
+        violation_metadata = violation.get("metadata", {})
+        severity = violation.get("severity", "medium")
+        
+        # Extract affected segments if available
+        affected_segments = violation_metadata.get("affected_segments", [])
+        
+        # Strategy 1: Replace specific PII with generic terms
+        generic_alternative = self._replace_pii_with_generic_terms(text, affected_segments)
+        if generic_alternative != text:
+            alternatives.append({
+                "text": generic_alternative,
+                "strategy": "generic_replacement",
+                "confidence": 0.85,
+                "description": "Replaced specific personal details with generic terms"
+            })
+        
+        # Strategy 2: Abstract details to higher category levels
+        abstracted_alternative = self._abstract_details(text, affected_segments)
+        if abstracted_alternative != text and abstracted_alternative != generic_alternative:
+            alternatives.append({
+                "text": abstracted_alternative,
+                "strategy": "abstraction",
+                "confidence": 0.75,
+                "description": "Abstracted specific details to higher-level categories"
+            })
+        
+        # Strategy 3: Remove non-essential information
+        if severity == "high":
+            minimal_alternative = self._remove_nonessential_info(text, affected_segments)
+            if minimal_alternative != text:
+                alternatives.append({
+                    "text": minimal_alternative,
+                    "strategy": "information_reduction",
+                    "confidence": 0.9,
+                    "description": "Removed non-essential information to minimize data exposure"
+                })
+        
+        # Strategy 4: Use placeholder references instead of full details
+        placeholder_alternative = self._use_reference_placeholders(text, affected_segments)
+        if placeholder_alternative != text:
+            alternatives.append({
+                "text": placeholder_alternative,
+                "strategy": "reference_placeholders",
+                "confidence": 0.8,
+                "description": "Used placeholder references instead of specific details"
+            })
+        
+        return alternatives
 
     def _generate_embedding_based_alternatives(self, text, rule_id, rule_issues, context):
         """Generate alternatives using embedding-based similarity"""
@@ -1805,6 +2337,7 @@ class ViolationAnalyzer:
         return None
 
     def _apply_paraphrasing(self, text, issues):
+        
         """Apply strategy: Paraphrase content to address issues"""
         # Full paraphrasing requires advanced NLP models
         # This is a placeholder that would use paraphrasing models
@@ -1836,20 +2369,660 @@ class ViolationAnalyzer:
             pass
         
         return None
-
-    def _apply_tone_change(self, text, issues):
-        """Apply strategy: Change tone to be more formal/neutral"""
-        # Tone change requires advanced NLP
-        # This is a placeholder for a more sophisticated implementation
+    def _apply_tone_change(self, text, target_tone, context=None):
+        """
+        Adjust the tone of text while preserving meaning.
         
-        # Return placeholder suggestion
-        return {
-            'text': "[Tone-adjusted version would be generated here - requires NLP model]",
-            'confidence': 0.4,
-            'type': 'tone_change',
-            'description': "Suggested changing tone to be more formal and neutral"
+        Args:
+            text: Original text content
+            target_tone: Desired tone ('formal', 'casual', 'neutral', etc.)
+            context: Optional context information
+                
+        Returns:
+            Text with adjusted tone
+        """
+        if not text:
+            return text
+            
+        # Analyze current tone
+        current_tone = self._analyze_text_tone(text)
+        
+        # If already close to target tone, return original
+        if current_tone == target_tone:
+            return text
+            
+        # Break text into sentences for easier processing
+        sentences = self._split_into_sentences(text)
+        
+        # Process each sentence based on target tone
+        adjusted_sentences = []
+        
+        for sentence in sentences:
+            if target_tone == "formal":
+                adjusted = self._formalize_text(sentence, current_tone)
+            elif target_tone == "casual":
+                adjusted = self._casualize_text(sentence, current_tone)
+            elif target_tone == "neutral":
+                adjusted = self._neutralize_text(sentence, current_tone)
+            elif target_tone == "technical":
+                adjusted = self._technicalize_text(sentence, current_tone)
+            elif target_tone == "simple":
+                adjusted = self._simplify_text(sentence, current_tone)
+            else:
+                adjusted = sentence  # No change for unknown tones
+                
+            adjusted_sentences.append(adjusted)
+        
+        # Reconstruct text with original paragraph structure
+        return self._reconstruct_text(text, sentences, adjusted_sentences)
+        
+    def _analyze_text_tone(self, text):
+        """Analyze the current tone of text"""
+        text_lower = text.lower()
+        
+        # Count tone indicators
+        formal_indicators = self._count_indicators(text_lower, self._get_formal_indicators())
+        casual_indicators = self._count_indicators(text_lower, self._get_casual_indicators())
+        technical_indicators = self._count_indicators(text_lower, self._get_technical_indicators())
+        
+        # Calculate sentence complexity (proxy for formality)
+        avg_sentence_length = self._calculate_avg_sentence_length(text)
+        has_complex_sentences = avg_sentence_length > 20
+        
+        # Determine dominant tone
+        if technical_indicators > 3 or (technical_indicators > 0 and formal_indicators > 2):
+            return "technical"
+        elif formal_indicators > casual_indicators and has_complex_sentences:
+            return "formal"
+        elif casual_indicators > formal_indicators:
+            return "casual"
+        else:
+            return "neutral"
+            
+    def _count_indicators(self, text_lower, indicators):
+        """Count occurrences of tone indicators in text"""
+        count = 0
+        for indicator in indicators:
+            if indicator in text_lower:
+                count += 1
+        return count
+        
+    def _get_formal_indicators(self):
+        """Get indicators of formal tone"""
+        return [
+            "furthermore", "moreover", "thus", "therefore", "consequently",
+            "accordingly", "hereby", "herein", "wherein", "therein",
+            "pursuant to", "in accordance with", "with respect to",
+            "notwithstanding", "nevertheless", "however", "additionally",
+            "subsequently", "shall", "must", "may not", "in conclusion"
+        ]
+        
+    def _get_casual_indicators(self):
+        """Get indicators of casual tone"""
+        return [
+            "yeah", "cool", "awesome", "basically", "kinda", "sorta",
+            "you know", "like", "stuff", "things", "anyway", "anyways",
+            "so", "just", "pretty", "really", "very", "totally", "literally",
+            "actually", "btw", "fyi", "ok", "okay", "guys", "folks",
+            "gonna", "wanna", "gotta", "dunno", "y'all", "yep", "nope"
+        ]
+        
+    def _get_technical_indicators(self):
+        """Get indicators of technical tone"""
+        return [
+            "implementation", "methodology", "functionality", "algorithm",
+            "infrastructure", "architecture", "configuration", "parameters",
+            "optimization", "specification", "interface", "protocol",
+            "component", "module", "system", "framework", "paradigm",
+            "technical", "analytical", "quantitative", "qualitative",
+            "statistical", "empirical", "theoretical", "conceptual"
+        ]
+        
+    def _calculate_avg_sentence_length(self, text):
+        """Calculate average sentence length in words"""
+        sentences = self._split_into_sentences(text)
+        
+        if not sentences:
+            return 0
+            
+        total_words = sum(len(sentence.split()) for sentence in sentences)
+        return total_words / len(sentences)
+        
+    def _split_into_sentences(self, text):
+        """Split text into sentences"""
+        # Simple sentence splitting (could be improved with NLP)
+        sentence_endings = re.compile(r'[.!?][\s)]')
+        
+        # Find all potential sentence endings
+        end_positions = [m.start() + 1 for m in sentence_endings.finditer(text)]
+        
+        if not end_positions:
+            return [text]
+            
+        # Build sentences
+        sentences = []
+        start = 0
+        
+        for end in end_positions:
+            sentences.append(text[start:end].strip())
+            start = end
+            
+        # Add the last sentence if needed
+        if start < len(text):
+            sentences.append(text[start:].strip())
+            
+        return sentences
+        
+    def _formalize_text(self, text, current_tone):
+        """Make text more formal"""
+        if current_tone == "formal":
+            return text
+            
+        # Replace casual phrases with formal alternatives
+        casual_to_formal = {
+            "a lot of": "numerous",
+            "lots of": "numerous",
+            "kind of": "somewhat",
+            "sort of": "somewhat",
+            "really": "significantly",
+            "very": "substantially",
+            "pretty": "fairly",
+            "big": "substantial",
+            "huge": "significant",
+            "get": "obtain",
+            "got": "obtained",
+            "show": "demonstrate",
+            "think": "consider",
+            "use": "utilize",
+            "help": "assist",
+            "start": "commence",
+            "end": "conclude",
+            "make sure": "ensure",
+            "find out": "determine",
+            "look into": "investigate",
+            "deal with": "address",
+            "keep up": "maintain",
+            "set up": "establish",
+            "check": "examine",
+            "okay": "acceptable",
+            "ok": "acceptable",
+            "kids": "children",
+            "guys": "individuals",
+            "stuff": "materials",
+            "things": "items",
+            "a bit": "slightly",
+            "I think": "I believe",
+            "I feel": "I perceive",
+            "can't": "cannot",
+            "won't": "will not",
+            "don't": "do not",
+            "isn't": "is not",
+            "aren't": "are not",
+            "wasn't": "was not",
+            "weren't": "were not",
+            "haven't": "have not",
+            "hasn't": "has not",
+            "wouldn't": "would not",
+            "couldn't": "could not",
+            "shouldn't": "should not",
+            "like": "such as",
+            "maybe": "perhaps",
+            "yeah": "yes",
+            "yep": "yes",
+            "nope": "no"
         }
+        
+        result = text
+        
+        # Replace casual phrases with formal equivalents
+        for casual, formal in casual_to_formal.items():
+            result = re.sub(r'\b' + re.escape(casual) + r'\b', formal, result, flags=re.IGNORECASE)
+        
+        # Remove excessive exclamation marks
+        result = re.sub(r'!+', '.', result)
+        
+        # Fix starting sentences with conjunctions
+        for conjunction in ["And", "But", "So", "Or"]:
+            result = re.sub(r'^\s*' + conjunction + r'\b', "", result)
+            result = re.sub(r'[.!?]\s+' + conjunction + r'\b', ".", result)
+        
+        # Avoid first person (casual) in formal writing
+        if "I " in result or "I'm " in result or "I've " in result:
+            result = result.replace("I ", "One ")
+            result = result.replace("I'm ", "One is ")
+            result = result.replace("I've ", "One has ")
+        
+        # Avoid contractions in formal writing
+        for contraction, expanded in [("I'm", "I am"), ("you're", "you are"), 
+                                    ("we're", "we are"), ("they're", "they are")]:
+            result = result.replace(contraction, expanded)
+            
+        return result
+        
+    def _casualize_text(self, text, current_tone):
+        """Make text more casual"""
+        if current_tone == "casual":
+            return text
+            
+        # Replace formal phrases with casual alternatives
+        formal_to_casual = {
+            "furthermore": "also",
+            "moreover": "plus",
+            "thus": "so",
+            "therefore": "so",
+            "consequently": "so",
+            "however": "but",
+            "nevertheless": "still",
+            "approximately": "about",
+            "obtain": "get",
+            "purchase": "buy",
+            "require": "need",
+            "utilize": "use",
+            "implement": "use",
+            "demonstrate": "show",
+            "determine": "figure out",
+            "sufficient": "enough",
+            "inquire": "ask",
+            "numerous": "lots of",
+            "individuals": "people",
+            "assist": "help",
+            "commence": "start",
+            "conclude": "end",
+            "terminate": "end",
+            "comprehend": "understand",
+            "additional": "more",
+            "adequate": "enough",
+            "subsequently": "later",
+            "facilitate": "help",
+            "initial": "first",
+            "personnel": "people",
+            "regarding": "about",
+            "request": "ask",
+            "attempt": "try",
+            "endeavor": "try",
+            "forward": "send",
+            "in the event that": "if",
+            "regarding": "about",
+            "in the amount of": "for",
+            "with regard to": "about",
+            "despite the fact that": "though",
+            "due to the fact that": "because",
+            "in light of the fact that": "because",
+            "in the event that": "if",
+            "it is necessary that": "must",
+            "it is important that": "should"
+        }
+        
+        result = text
+        
+        # Replace formal phrases with casual equivalents
+        for formal, casual in formal_to_casual.items():
+            result = re.sub(r'\b' + re.escape(formal) + r'\b', casual, result, flags=re.IGNORECASE)
+        
+        # Convert passive voice to active (a more casual style)
+        passive_patterns = [
+            (r'(is|are|was|were) being ([\w]+ed)', "{subject} {tense} {verb}"),
+            (r'(has|have|had) been ([\w]+ed)', "{subject} {tense} {verb}")
+        ]
+        
+        # Add contractions for more casual tone
+        result = result.replace("cannot", "can't")
+        result = result.replace("will not", "won't")
+        result = result.replace("do not", "don't")
+        result = result.replace("is not", "isn't")
+        result = result.replace("are not", "aren't")
+        result = result.replace("was not", "wasn't")
+        result = result.replace("were not", "weren't")
+        result = result.replace("have not", "haven't")
+        result = result.replace("has not", "hasn't")
+        result = result.replace("would not", "wouldn't")
+        result = result.replace("could not", "couldn't")
+        result = result.replace("should not", "shouldn't")
+        
+        # Simplify complex sentences
+        if len(result.split()) > 25:
+            # Very simple sentence splitting - would be better with NLP
+            result = result.replace("; ", ". ")
+            result = result.replace(", which ", ". This ")
+            result = result.replace(", and ", ". And ")
+            
+        # Add a casual opener for very formal text
+        if current_tone == "formal" or current_tone == "technical":
+            if not result.startswith("So ") and not result.startswith("Basically "):
+                result = "Basically, " + result[0].lower() + result[1:]
+                
+        return result
+        
+    def _neutralize_text(self, text, current_tone):
+        """Make text more neutral in tone"""
+        if current_tone == "neutral":
+            return text
+            
+        result = text
+        
+        if current_tone == "formal":
+            # Make formal text more neutral
+            formal_to_neutral = {
+                "furthermore": "also",
+                "moreover": "additionally",
+                "thus": "therefore",
+                "herein": "here",
+                "wherein": "where",
+                "aforementioned": "mentioned",
+                "utilize": "use",
+                "pursuant to": "according to",
+                "in accordance with": "following",
+                "commence": "begin",
+                "terminate": "end"
+            }
+            
+            for formal, neutral in formal_to_neutral.items():
+                result = re.sub(r'\b' + re.escape(formal) + r'\b', neutral, result, flags=re.IGNORECASE)
+                
+        elif current_tone == "casual":
+            # Make casual text more neutral
+            casual_to_neutral = {
+                "really": "",
+                "very": "",
+                "totally": "",
+                "basically": "",
+                "literally": "",
+                "actually": "",
+                "just": "",
+                "kinda": "somewhat",
+                "sorta": "somewhat",
+                "guys": "people",
+                "stuff": "items",
+                "things": "factors",
+                "lots of": "many",
+                "a lot of": "many",
+                "huge": "significant",
+                "awesome": "excellent",
+                "cool": "good",
+                "yeah": "yes",
+                "nope": "no"
+            }
+            
+            for casual, neutral in casual_to_neutral.items():
+                if neutral:
+                    result = re.sub(r'\b' + re.escape(casual) + r'\b', neutral, result, flags=re.IGNORECASE)
+                else:
+                    # For empty replacements (removing words like "really"), be careful with spacing
+                    result = re.sub(r'\b' + re.escape(casual) + r'\s', "", result, flags=re.IGNORECASE)
+                    
+            # Expand contractions
+            result = result.replace("can't", "cannot")
+            result = result.replace("won't", "will not")
+            result = result.replace("don't", "do not")
+            result = result.replace("isn't", "is not")
+            result = result.replace("aren't", "are not")
+            
+        elif current_tone == "technical":
+            # Make technical text more neutral
+            technical_to_neutral = {
+                "implementation": "process",
+                "methodology": "method",
+                "functionality": "function",
+                "algorithm": "procedure",
+                "infrastructure": "structure",
+                "architecture": "design",
+                "configuration": "setup",
+                "parameters": "settings",
+                "optimization": "improvement",
+                "interface": "connection"
+            }
+            
+            for technical, neutral in technical_to_neutral.items():
+                result = re.sub(r'\b' + re.escape(technical) + r'\b', neutral, result, flags=re.IGNORECASE)
+        
+        return result
+        
+    def _technicalize_text(self, text, current_tone):
+        """Make text more technical"""
+        if current_tone == "technical":
+            return text
+            
+        # Replace common terms with technical alternatives
+        common_to_technical = {
+            "use": "utilize",
+            "make": "implement",
+            "do": "execute",
+            "look at": "analyze",
+            "check": "validate",
+            "fix": "resolve",
+            "change": "modify",
+            "improve": "optimize",
+            "increase": "augment",
+            "decrease": "reduce",
+            "show": "demonstrate",
+            "see": "observe",
+            "tell": "communicate",
+            "find": "identify",
+            "help": "facilitate",
+            "stop": "terminate",
+            "start": "initiate",
+            "end": "finalize",
+            "connect": "interface",
+            "need": "require",
+            "problem": "issue",
+            "solution": "resolution",
+            "idea": "concept",
+            "plan": "strategy",
+            "group": "cluster",
+            "part": "component",
+            "tool": "utility",
+            "software": "application",
+            "hardware": "infrastructure",
+            "settings": "configuration",
+            "features": "functionality",
+            "user": "end user",
+            "computer": "system",
+            "network": "infrastructure",
+            "website": "web application",
+            "app": "application",
+            "bug": "defect",
+            "testing": "quality assurance",
+            "update": "upgrade"
+        }
+        
+        result = text
+        
+        # Replace common terms with technical equivalents
+        for common, technical in common_to_technical.items():
+            result = re.sub(r'\b' + re.escape(common) + r'\b', technical, result, flags=re.IGNORECASE)
+        
+        # Add technical phrases for more technical tone
+        if not any(phrase in result.lower() for phrase in ["in order to", "with respect to", "in accordance with"]):
+            # Add a technical phrase if none exists
+            if "for" in result:
+                result = result.replace(" for ", " in order to ")
+            elif "about" in result:
+                result = result.replace(" about ", " with respect to ")
+                
+        # Expand contractions for more formal technical tone
+        result = result.replace("can't", "cannot")
+        result = result.replace("won't", "will not")
+        result = result.replace("don't", "do not")
+        
+        # If sentence doesn't sound technical enough, add a technical opener
+        lower_result = result.lower()
+        technical_phrases = ["therefore", "thus", "consequently", "accordingly", "subsequently"]
+        
+        if not any(phrase in lower_result for phrase in technical_phrases):
+            if result.startswith("This "):
+                result = "Subsequently, this" + result[4:]
+            elif result.startswith("The "):
+                result = "Accordingly, the" + result[3:]
+            elif result.startswith("We "):
+                result = "Consequently, we" + result[2:]
+            elif result.startswith("I "):
+                result = "Based on analysis, I" + result[1:]
+                
+        return result
+        
+    def _simplify_text(self, text, current_tone):
+        """Make text simpler and easier to understand"""
+        if current_tone == "simple":
+            return text
+            
+        # Replace complex terms with simpler alternatives
+        complex_to_simple = {
+            "utilize": "use",
+            "implement": "use",
+            "execute": "do",
+            "facilitate": "help",
+            "sufficient": "enough",
+            "demonstrate": "show",
+            "modify": "change",
+            "optimize": "improve",
+            "augment": "increase",
+            "terminate": "end",
+            "initiate": "start",
+            "subsequently": "later",
+            "previously": "before",
+            "additionally": "also",
+            "consequently": "so",
+            "furthermore": "also",
+            "approximately": "about",
+            "numerous": "many",
+            "obtain": "get",
+            "purchase": "buy",
+            "require": "need",
+            "inquire": "ask",
+            "comprehend": "understand",
+            "endeavor": "try",
+            "attempt": "try",
+            "assist": "help",
+            "regarding": "about",
+            "nevertheless": "still",
+            "notwithstanding": "even though",
+            "accordingly": "so",
+            "therefore": "so",
+            "although": "though",
+            "however": "but",
+            "in addition": "also",
+            "consequently": "so",
+            "despite": "even though",
+            "due to": "because of",
+            "in order to": "to",
+            "in the event that": "if",
+            "prior to": "before",
+            "subsequent to": "after",
+            "with regard to": "about"
+        }
+        
+        result = text
+        
+        # Replace complex words and phrases with simpler alternatives
+        for complex_term, simple_term in complex_to_simple.items():
+            result = re.sub(r'\b' + re.escape(complex_term) + r'\b', simple_term, result, flags=re.IGNORECASE)
+        
+        # Break long sentences
+        sentences = self._split_into_sentences(result)
+        simplified_sentences = []
+        
+        for sentence in sentences:
+            words = sentence.split()
+            if len(words) > 15:
+                # Break long sentences at logical points
+                midpoint = len(words) // 2
+                
+                # Look for logical break points
+                break_points = []
+                for i in range(midpoint - 3, midpoint + 3):
+                    if i > 0 and i < len(words) - 1:
+                        if words[i].lower() in ["and", "but", "or", "because", "however", "so"]:
+                            break_points.append(i)
+                
+                if break_points:
+                    # Use the break point closest to midpoint
+                    break_point = min(break_points, key=lambda x: abs(x - midpoint))
+                    
+                    # Split sentence at break point
+                    first_half = " ".join(words[:break_point])
+                    if not first_half.endswith("."):
+                        first_half += "."
+                        
+                    second_half = words[break_point].capitalize() + " " + " ".join(words[break_point+1:])
+                    
+                    simplified_sentences.append(first_half)
+                    simplified_sentences.append(second_half)
+                else:
+                    simplified_sentences.append(sentence)
+            else:
+                simplified_sentences.append(sentence)
+        
+        # Recombine simplified sentences
+        result = " ".join(simplified_sentences)
+        
+        # Use active voice instead of passive
+        passive_patterns = [
+            (r'(is|are|was|were) ([\w]+ed) by', "SUBJECT VERB"),
+            (r'(has|have|had) been ([\w]+ed)', "SUBJECT VERB")
+        ]
+        
+        # This is a simplified approach - full passive->active conversion would require NLP
+        for pattern, _ in passive_patterns:
+            if re.search(pattern, result):
+                # Flag that passive voice should be reviewed
+                result += " [Simplified version would use active voice instead of passive voice.]"
+                break
+        
+        # Add contractions for more natural simple language
+        result = result.replace("cannot", "can't")
+        result = result.replace("will not", "won't")
+        result = result.replace("do not", "don't")
+        result = result.replace("is not", "isn't")
+        result = result.replace("are not", "aren't")
+        
+        return result
+        
+    def _reconstruct_text(self, original_text, original_sentences, adjusted_sentences):
+        """Reconstruct text preserving original paragraph structure"""
+        if len(original_sentences) != len(adjusted_sentences):
+            # Fallback to simple concatenation if sentence counts don't match
+            return " ".join(adjusted_sentences)
+            
+        # Create mapping of original sentences to their positions in text
+        sentence_positions = []
+        pos = 0
+        
+        for sentence in original_sentences:
+            # Find sentence in original text (handling potential whitespace differences)
+            sentence_stripped = sentence.strip()
+            while pos < len(original_text):
+                if original_text[pos:].strip().startswith(sentence_stripped):
+                    start = pos
+                    end = pos + len(sentence)
+                    sentence_positions.append((start, end))
+                    pos = end
+                    break
+                pos += 1
+        
+        # Reconstruct text by replacing sentences while preserving structure
+        if len(sentence_positions) == len(adjusted_sentences):
+            result = list(original_text)  # Convert to list for char-by-char replacement
+            
+            # Replace sentences in reverse order to avoid index shifting
+            for (start, end), new_sentence in zip(reversed(sentence_positions), reversed(adjusted_sentences)):
+                # Replace while preserving any whitespace at the end
+                old_sentence = original_text[start:end]
+                trailing_whitespace = ""
+                for char in reversed(old_sentence):
+                    if char.isspace():
+                        trailing_whitespace = char + trailing_whitespace
+                    else:
+                        break
+                        
+                replacement = new_sentence + trailing_whitespace
+                result[start:end] = replacement
+                
+            return "".join(result)
+        else:
+            # Fallback to simple concatenation if mapping failed
+            return " ".join(adjusted_sentences)
 
+            
     def _add_clarifying_context(self, text, issues):
         """Apply strategy: Add clarifying context to address issues"""
         # This would add explanatory context based on the issues
@@ -1896,3 +3069,1578 @@ class ViolationAnalyzer:
             'type': 'sentence_restructuring',
             'description': "Suggested restructuring sentences to address compliance issues"
         }
+        
+    def _replace_pii_with_generic_terms(self, text, affected_segments=None):
+        """Replace specific PII with generic terms"""
+        # If we have specific affected segments, focus on those
+        if affected_segments and len(affected_segments) > 0:
+            modified_text = text
+            # Process segments in reverse order to avoid index shifting
+            for segment in sorted(affected_segments, key=lambda x: x.get("start", 0), reverse=True):
+                start = segment.get("start", 0)
+                end = segment.get("end", 0)
+                pii_type = segment.get("type", "").lower()
+                
+                if start < end and end <= len(modified_text):
+                    replacement = self._get_generic_term_for_pii(pii_type)
+                    modified_text = modified_text[:start] + replacement + modified_text[end:]
+            
+            return modified_text
+        
+        # Without specific segments, use pattern-based replacement
+        modified_text = text
+        
+        # Replace email addresses
+        modified_text = re.sub(
+            r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b',
+            "[EMAIL ADDRESS]",
+            modified_text
+        )
+        
+        # Replace phone numbers
+        modified_text = re.sub(
+            r'\b(?:\+\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b',
+            "[PHONE NUMBER]",
+            modified_text
+        )
+        
+        # Replace dates of birth
+        modified_text = re.sub(
+            r'\b\d{1,2}[-/]\d{1,2}[-/]\d{2,4}\b',
+            "[DATE]",
+            modified_text
+        )
+        
+        # Replace addresses (basic pattern)
+        modified_text = re.sub(
+            r'\b\d+\s+[A-Za-z0-9\s,]+(St|Street|Rd|Road|Ave|Avenue|Blvd|Boulevard)[,\s]+[A-Za-z\s]+(AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY)(?:\s+\d{5}(?:-\d{4})?)?\b',
+            "[ADDRESS]",
+            modified_text,
+            flags=re.IGNORECASE
+        )
+        
+        # Replace SSNs
+        modified_text = re.sub(
+            r'\b\d{3}[-.\s]?\d{2}[-.\s]?\d{4}\b',
+            "[SOCIAL SECURITY NUMBER]",
+            modified_text
+        )
+        
+        return modified_text
+
+    def _get_generic_term_for_pii(self, pii_type):
+        """Get appropriate generic term based on PII type"""
+        generic_terms = {
+            "email": "[EMAIL ADDRESS]",
+            "phone": "[PHONE NUMBER]",
+            "address": "[ADDRESS]",
+            "ssn": "[SOCIAL SECURITY NUMBER]",
+            "dob": "[DATE OF BIRTH]",
+            "date_of_birth": "[DATE OF BIRTH]",
+            "credit_card": "[PAYMENT INFORMATION]",
+            "name": "[NAME]",
+            "person": "[PERSON]",
+            "location": "[LOCATION]",
+            "age": "[AGE]",
+            "id": "[ID]",
+            "identification": "[ID NUMBER]",
+            "account": "[ACCOUNT NUMBER]",
+            "license": "[LICENSE NUMBER]",
+            "passport": "[PASSPORT NUMBER]",
+            "patient": "[PATIENT]",
+            "medical": "[MEDICAL INFORMATION]",
+            "health": "[HEALTH INFORMATION]",
+            "financial": "[FINANCIAL INFORMATION]",
+            "salary": "[INCOME INFORMATION]",
+            "income": "[INCOME INFORMATION]",
+            # Default catch-all
+            "default": "[PERSONAL DATA]"
+        }
+        
+        return generic_terms.get(pii_type, generic_terms["default"])
+
+    def _abstract_details(self, text, affected_segments=None):
+        """Abstract specific details to higher-level categories"""
+        # If we have specific affected segments, focus on those
+        if affected_segments and len(affected_segments) > 0:
+            modified_text = text
+            # Process segments in reverse order to avoid index shifting
+            for segment in sorted(affected_segments, key=lambda x: x.get("start", 0), reverse=True):
+                start = segment.get("start", 0)
+                end = segment.get("end", 0)
+                pii_type = segment.get("type", "").lower()
+                original_text = text[start:end] if (start < end and end <= len(text)) else ""
+                
+                if original_text:
+                    abstraction = self._get_abstraction_for_detail(original_text, pii_type)
+                    modified_text = modified_text[:start] + abstraction + modified_text[end:]
+            
+            return modified_text
+        
+        # Without specific segments, use heuristic-based abstraction
+        # This implementation would use more advanced NLP techniques in production
+        modified_text = text
+        
+        # Abstract names to roles where contextually appropriate
+        name_patterns = [
+            (r'\b(Dr\.|Mr\.|Mrs\.|Ms\.) [A-Z][a-z]+ [A-Z][a-z]+\b', "the individual"),
+            (r'\b[A-Z][a-z]+ [A-Z][a-z]+\b', "the person")
+        ]
+        
+        for pattern, replacement in name_patterns:
+            modified_text = re.sub(pattern, replacement, modified_text)
+        
+        # Abstract specific ages to age ranges
+        modified_text = re.sub(r'\b(\d{1,2}) years old\b', "in their age group", modified_text)
+        modified_text = re.sub(r'\bage (\d{1,2})\b', "in their age group", modified_text)
+        
+        # Abstract specific locations to regional areas
+        # (A more comprehensive implementation would use gazetteer lookups)
+        city_state_pattern = r'\b[A-Z][a-z]+(?: [A-Z][a-z]+)?, [A-Z]{2}\b'
+        modified_text = re.sub(city_state_pattern, "in the region", modified_text)
+        
+        return modified_text
+    
+    def _get_abstraction_for_detail(self, detail_text, detail_type=None):
+        """Get appropriate abstraction based on the type of detail"""
+        # Detect type if not provided
+        if not detail_type:
+            detail_type = self._infer_detail_type(detail_text)
+        
+        # Apply appropriate abstraction based on type
+        if detail_type in ["name", "person"]:
+            return "the individual"
+        elif detail_type in ["address", "location"]:
+            return "the location"
+        elif detail_type in ["dob", "date_of_birth", "age"]:
+            return "their age"
+        elif detail_type in ["email"]:
+            return "their contact information"
+        elif detail_type in ["phone"]:
+            return "their contact information"
+        elif detail_type in ["medical", "health"]:
+            return "their health status"
+        elif detail_type in ["financial", "salary", "income"]:
+            return "their financial information"
+        else:
+            return "the information"
+
+    def _infer_detail_type(self, text):
+        """Infer the type of detail from text"""
+        # Simple rule-based inference
+        text_lower = text.lower()
+        
+        if re.search(r'@', text):
+            return "email"
+        elif re.search(r'\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b', text):
+            return "phone"
+        elif re.search(r'\b\d{1,2}[-/]\d{1,2}[-/]\d{2,4}\b', text):
+            return "date"
+        elif re.search(r'\b\d+ .*(St|Road|Avenue|Blvd)\b', text, re.IGNORECASE):
+            return "address"
+        elif re.search(r'\b\d{3}[-.\s]?\d{2}[-.\s]?\d{4}\b', text):
+            return "ssn"
+        elif re.search(r'\b\d{1,2}\b', text) and ("age" in text_lower or "year" in text_lower):
+            return "age"
+        else:
+            return "default"
+        
+        if re.search(r'@', text):
+            return "email"
+        elif re.search(r'\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b', text):
+            return "phone"
+        elif re.search(r'\b\d{1,2}[-/]\d{1,2}[-/]\d{2,4}\b', text):
+            return "date"
+        elif re.search(r'\b\d+ .*(St|Road|Avenue|Blvd)\b', text, re.IGNORECASE):
+            return "address"
+        elif re.search(r'\b\d{3}[-.\s]?\d{2}[-.\s]?\d{4}\b', text):
+            return "ssn"
+        elif re.search(r'\b\d{1,2}\b', text) and ("age" in text_lower or "year" in text_lower):
+            return "age"
+        else:
+            return "default"
+
+
+    def _remove_nonessential_info(self, text, affected_segments=None):
+        """Remove non-essential information to minimize data"""
+        if affected_segments and len(affected_segments) > 0:
+            modified_text = text
+            # Process segments in reverse order to avoid index shifting
+            for segment in sorted(affected_segments, key=lambda x: x.get("start", 0), reverse=True):
+                start = segment.get("start", 0)
+                end = segment.get("end", 0)
+                
+                if start < end and end <= len(modified_text):
+                    # For highly sensitive information, complete removal might be appropriate
+                    modified_text = modified_text[:start] + modified_text[end:]
+            
+            return modified_text
+        
+        # Without specific segments, use sentence-level analysis
+        # In a production system, this would use NLP to identify non-essential sentences
+        sentences = text.split(". ")
+        essential_sentences = []
+        
+        for sentence in sentences:
+            # Skip sentences with obvious PII patterns
+            if (re.search(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', sentence) or  # email
+                re.search(r'\b\d{3}[-.\s]?\d{2}[-.\s]?\d{4}\b', sentence) or  # SSN
+                re.search(r'\b(?:\+\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b', sentence) or  # phone
+                re.search(r'\b\d{1,2}[-/]\d{1,2}[-/]\d{2,4}\b', sentence)):  # date
+                continue
+            
+            essential_sentences.append(sentence)
+        
+        return ". ".join(essential_sentences) + ("." if essential_sentences else "")
+
+
+    def _use_reference_placeholders(self, text, affected_segments=None):
+        """Use reference placeholders instead of specific details"""
+        if affected_segments and len(affected_segments) > 0:
+            modified_text = text
+            placeholder_map = {}
+            
+            # Process segments in reverse order to avoid index shifting
+            for i, segment in enumerate(sorted(affected_segments, key=lambda x: x.get("start", 0), reverse=True)):
+                start = segment.get("start", 0)
+                end = segment.get("end", 0)
+                pii_type = segment.get("type", "").lower()
+                
+                if start < end and end <= len(modified_text):
+                    # Create reference placeholder
+                    placeholder_id = f"{pii_type.upper()}_{i+1}" if pii_type else f"REF_{i+1}"
+                    placeholder = f"[{placeholder_id}]"
+                    
+                    # Store original for reference
+                    placeholder_map[placeholder] = text[start:end]
+                    
+                    # Replace in text
+                    modified_text = modified_text[:start] + placeholder + modified_text[end:]
+            
+            return modified_text
+        
+        # Without specific segments, use pattern-based placeholders
+        modified_text = text
+        placeholder_count = 1
+        
+        # Replace emails
+        email_matches = list(re.finditer(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', modified_text))
+        for match in reversed(email_matches):
+            placeholder = f"[EMAIL_{placeholder_count}]"
+            modified_text = modified_text[:match.start()] + placeholder + modified_text[match.end():]
+            placeholder_count += 1
+        
+        # Replace phone numbers
+        phone_matches = list(re.finditer(r'\b(?:\+\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b', modified_text))
+        for match in reversed(phone_matches):
+            placeholder = f"[PHONE_{placeholder_count}]"
+            modified_text = modified_text[:match.start()] + placeholder + modified_text[match.end():]
+            placeholder_count += 1
+        
+        # Additional patterns would follow the same approach
+        
+        return modified_text
+
+    def _generate_disclaimer_alternatives(self, text, violation, context=None):
+        """
+        Generate alternative text that includes appropriate disclaimers.
+        
+        Args:
+            text: Original text requiring disclaimers
+            violation: The compliance violation
+            context: Optional context information
+            
+        Returns:
+            List of alternatives with appropriate disclaimers
+        """
+        alternatives = []
+        violation_type = violation.get("type", "")
+        violation_metadata = violation.get("metadata", {})
+        severity = violation.get("severity", "medium")
+        framework = violation_metadata.get("framework", "")
+        
+        # Determine disclaimer type based on violation
+        disclaimer_types = []
+        
+        if "financial" in violation_type.lower():
+            disclaimer_types.append("financial")
+        if "health" in violation_type.lower() or "medical" in violation_type.lower():
+            disclaimer_types.append("health")
+        if "personal_data" in violation_type.lower() or "privacy" in violation_type.lower():
+            disclaimer_types.append("privacy")
+        if "security" in violation_type.lower():
+            disclaimer_types.append("security")
+        if "legal" in violation_type.lower() or "advice" in violation_type.lower():
+            disclaimer_types.append("legal")
+        
+        # If we couldn't infer specific types, use a general disclaimer
+        if not disclaimer_types:
+            disclaimer_types.append("general")
+        
+        # Generate alternatives with different disclaimer placements
+        
+        # Option 1: Disclaimer at the beginning
+        prefix_disclaimer = self._get_disclaimer_text(disclaimer_types, framework, placement="prefix")
+        prefix_alternative = prefix_disclaimer + "\n\n" + text
+        alternatives.append({
+            "text": prefix_alternative,
+            "strategy": "prefix_disclaimer",
+            "confidence": 0.9,
+            "description": "Added disclaimer at the beginning of the text"
+        })
+        
+        # Option 2: Disclaimer at the end
+        suffix_disclaimer = self._get_disclaimer_text(disclaimer_types, framework, placement="suffix")
+        suffix_alternative = text + "\n\n" + suffix_disclaimer
+        alternatives.append({
+            "text": suffix_alternative,
+            "strategy": "suffix_disclaimer",
+            "confidence": 0.85,
+            "description": "Added disclaimer at the end of the text"
+        })
+        
+        # Option 3: Integrated disclaimer (for shorter content)
+        if len(text.split()) < 100:  # Only for relatively short text
+            integrated_disclaimer = self._get_disclaimer_text(disclaimer_types, framework, placement="integrated")
+            
+            # Try to add after the first paragraph
+            paragraphs = text.split("\n\n")
+            if len(paragraphs) > 1:
+                paragraphs.insert(1, integrated_disclaimer)
+                integrated_alternative = "\n\n".join(paragraphs)
+            else:
+                sentences = text.split(". ")
+                if len(sentences) > 1:
+                    # Insert after first sentence
+                    sentences[0] = sentences[0] + ". " + integrated_disclaimer
+                    integrated_alternative = ". ".join(sentences)
+                else:
+                    integrated_alternative = text + " " + integrated_disclaimer
+            
+            alternatives.append({
+                "text": integrated_alternative,
+                "strategy": "integrated_disclaimer",
+                "confidence": 0.75,
+                "description": "Integrated disclaimer within the text content"
+            })
+        
+        # Option 4: Framed disclaimer (before and after) for high severity violations
+        if severity == "high":
+            framed_disclaimer_prefix = self._get_disclaimer_text(disclaimer_types, framework, placement="framed_prefix")
+            framed_disclaimer_suffix = self._get_disclaimer_text(disclaimer_types, framework, placement="framed_suffix")
+            framed_alternative = framed_disclaimer_prefix + "\n\n" + text + "\n\n" + framed_disclaimer_suffix
+            
+            alternatives.append({
+                "text": framed_alternative,
+                "strategy": "framed_disclaimer",
+                "confidence": 0.95,
+                "description": "Added disclaimers both before and after the content"
+            })
+        
+        return alternatives
+
+
+    def _get_disclaimer_text(self, disclaimer_types, framework=None, placement="suffix"):
+        """Get appropriate disclaimer text based on types and placement"""
+        # Base disclaimers by type
+        disclaimer_templates = {
+            "general": {
+                "prefix": "DISCLAIMER: The following content is provided for informational purposes only.",
+                "suffix": "This information is provided as-is without any warranties or guarantees of accuracy.",
+                "integrated": "Please note that this information is provided for informational purposes only.",
+                "framed_prefix": "⚠️ IMPORTANT DISCLAIMER: The following content is provided for informational purposes only and should not be considered as professional advice.",
+                "framed_suffix": "Remember: This information is provided as-is without any warranties. Always consult with appropriate professionals before making decisions."
+            },
+            "financial": {
+                "prefix": "FINANCIAL DISCLAIMER: The following content does not constitute financial advice.",
+                "suffix": "This information should not be considered financial advice. Consult with a financial professional before making investment decisions.",
+                "integrated": "Note that this information does not constitute financial advice.",
+                "framed_prefix": "⚠️ FINANCIAL DISCLAIMER: The following content is for informational purposes only and does not constitute financial advice.",
+                "framed_suffix": "IMPORTANT: Past performance does not guarantee future results. Always consult with a qualified financial advisor before making investment decisions."
+            },
+            "health": {
+                "prefix": "HEALTH DISCLAIMER: The following content is not medical advice.",
+                "suffix": "This information is not a substitute for professional medical advice, diagnosis, or treatment. Always seek the advice of your physician or other qualified health provider.",
+                "integrated": "Please note that this information is not medical advice.",
+                "framed_prefix": "⚠️ HEALTH DISCLAIMER: The following information is not medical advice and should not be used to diagnose or treat any health condition.",
+                "framed_suffix": "IMPORTANT: Always consult with a qualified healthcare provider regarding any medical conditions or treatments."
+            },
+            "privacy": {
+                "prefix": "PRIVACY NOTICE: The following content discusses personal information handling.",
+                "suffix": "Always ensure appropriate data protection measures when handling personal information in accordance with applicable laws.",
+                "integrated": "Note that handling of personal data should comply with applicable privacy regulations.",
+                "framed_prefix": "⚠️ PRIVACY NOTICE: The following content discusses handling of personal information, which is subject to privacy regulations.",
+                "framed_suffix": "IMPORTANT: Ensure all personal data processing complies with applicable privacy laws such as GDPR, CCPA, or other relevant regulations."
+            },
+            "security": {
+                "prefix": "SECURITY NOTICE: The following content discusses security concepts.",
+                "suffix": "Ensure proper security measures are implemented to protect systems and data.",
+                "integrated": "Note that proper security measures should always be implemented.",
+                "framed_prefix": "⚠️ SECURITY NOTICE: The following content discusses security concepts that should be implemented with care.",
+                "framed_suffix": "IMPORTANT: Always follow security best practices and consult with security professionals when implementing security measures."
+            },
+            "legal": {
+                "prefix": "LEGAL DISCLAIMER: The following content is not legal advice.",
+                "suffix": "This information is not a substitute for professional legal advice. Consult with a qualified legal professional for advice on specific situations.",
+                "integrated": "Please note that this information is not legal advice.",
+                "framed_prefix": "⚠️ LEGAL DISCLAIMER: The following content is for informational purposes only and does not constitute legal advice.",
+                "framed_suffix": "IMPORTANT: Laws and regulations vary by jurisdiction. Always consult with a qualified legal professional regarding your specific circumstances."
+            }
+        }
+        
+        # Framework-specific modifications
+        framework_additions = {
+            "GDPR": {
+                "privacy": {
+                    "suffix": "Ensure all personal data processing complies with GDPR principles, including lawfulness, fairness, and transparency."
+                }
+            },
+            "HIPAA": {
+                "health": {
+                    "suffix": "Ensure all protected health information (PHI) is handled in accordance with HIPAA regulations."
+                }
+            },
+            "FINREG": {
+                "financial": {
+                    "suffix": "Ensure compliance with applicable financial regulations and reporting requirements."
+                }
+            }
+        }
+        
+        # Start with the most relevant disclaimer type
+        primary_type = disclaimer_types[0] if disclaimer_types else "general"
+        disclaimer_text = disclaimer_templates.get(primary_type, disclaimer_templates["general"]).get(placement, "")
+        
+        # Add framework-specific text if applicable
+        if framework and framework in framework_additions:
+            if primary_type in framework_additions[framework]:
+                framework_text = framework_additions[framework][primary_type].get(placement)
+                if framework_text and placement == "suffix":
+                    disclaimer_text += " " + framework_text
+        
+        # For multiple disclaimer types, add additional context
+        if len(disclaimer_types) > 1:
+            additional_types = [t for t in disclaimer_types[1:] if t != primary_type]
+            for add_type in additional_types:
+                add_text = disclaimer_templates.get(add_type, {}).get("integrated", "")
+                if add_text and "integrated" not in placement:
+                    disclaimer_text += " " + add_text
+        
+        return disclaimer_text
+
+    def _generate_disclaimer_alternatives(self, text, issues, context=None):
+        """
+        Generate alternative disclaimers for content based on compliance issues.
+        
+        Args:
+            text: Original text content
+            issues: Compliance issues detected
+            context: Optional context information
+                
+        Returns:
+            List of disclaimer alternatives with varying levels of detail
+        """
+        if not issues:
+            return []
+            
+        alternatives = []
+        
+        # Group issues by category/type
+        issue_categories = self._categorize_issues(issues)
+        
+        # Generate different disclaimer types (brief, standard, detailed)
+        for detail_level in ["brief", "standard", "detailed"]:
+            disclaimer = self._create_disclaimer(issue_categories, detail_level, context)
+            if disclaimer:
+                alternatives.append({
+                    "text": disclaimer,
+                    "type": "disclaimer",
+                    "detail_level": detail_level,
+                    "placement": "beginning",  # Default placement
+                    "confidence": self._calculate_disclaimer_confidence(issues, detail_level)
+                })
+                
+        # Generate framework-specific disclaimers if applicable
+        framework_disclaimers = self._generate_framework_specific_disclaimers(issues, context)
+        if framework_disclaimers:
+            alternatives.extend(framework_disclaimers)
+            
+        # Generate placement variations (beginning, end, inline)
+        placement_variations = self._generate_placement_variations(alternatives[0] if alternatives else None)
+        if placement_variations:
+            alternatives.extend(placement_variations)
+            
+        return alternatives
+        
+    def _categorize_issues(self, issues):
+        """Categorize compliance issues for disclaimer generation"""
+        categories = {
+            "privacy": [],
+            "financial": [],
+            "health": [],
+            "security": [],
+            "legal": [],
+            "ethical": [],
+            "general": []
+        }
+        
+        # Map issues to categories based on rule ID or metadata
+        for issue in issues:
+            rule_id = issue.get("rule_id", "")
+            description = issue.get("description", "")
+            severity = issue.get("severity", "medium")
+            
+            # Determine category from rule ID prefixes or keywords in description
+            category = "general"
+            
+            if any(p in rule_id.lower() for p in ["pii", "gdpr", "ccpa", "privacy", "data_"]):
+                category = "privacy"
+            elif any(p in rule_id.lower() for p in ["hipaa", "phi", "health", "medical"]):
+                category = "health"
+            elif any(p in rule_id.lower() for p in ["finreg", "financial", "payment"]):
+                category = "financial"
+            elif any(p in rule_id.lower() for p in ["security", "secure", "auth"]):
+                category = "security"
+            elif any(p in rule_id.lower() for p in ["legal", "compliance", "regulatory"]):
+                category = "legal"
+            elif any(p in rule_id.lower() for p in ["bias", "fairness", "ethical"]):
+                category = "ethical"
+                
+            # Also check description keywords
+            if category == "general":
+                lower_desc = description.lower()
+                if any(k in lower_desc for k in ["personal data", "privacy", "consent"]):
+                    category = "privacy"
+                elif any(k in lower_desc for k in ["health", "medical", "patient"]):
+                    category = "health"
+                elif any(k in lower_desc for k in ["financial", "payment", "transaction"]):
+                    category = "financial"
+                elif any(k in lower_desc for k in ["security", "secure", "protection"]):
+                    category = "security"
+                elif any(k in lower_desc for k in ["legal", "law", "regulation"]):
+                    category = "legal"
+                elif any(k in lower_desc for k in ["bias", "fairness", "ethical"]):
+                    category = "ethical"
+                    
+            # Add to appropriate category with severity
+            categories[category].append({
+                "issue": issue,
+                "severity": severity
+            })
+        
+        # Remove empty categories
+        return {k: v for k, v in categories.items() if v}
+        
+    def _create_disclaimer(self, issue_categories, detail_level, context=None):
+        """Create a disclaimer based on issue categories and detail level"""
+        if not issue_categories:
+            return None
+            
+        # Get domain/industry from context if available
+        domain = "general"
+        if context and "domain" in context:
+            domain = context["domain"]
+            
+        # Templates for different detail levels
+        templates = {
+            "brief": {
+                "privacy": "This content contains information related to personal data. {additional_note}",
+                "financial": "This content contains financial information. {additional_note}",
+                "health": "This content contains health-related information. {additional_note}",
+                "security": "This content contains security-related information. {additional_note}",
+                "legal": "This content contains legal information. {additional_note}",
+                "ethical": "This content may contain subjective viewpoints. {additional_note}",
+                "general": "Disclaimer: This content may require regulatory compliance consideration. {additional_note}"
+            },
+            "standard": {
+                "privacy": "PRIVACY NOTICE: This content contains references to personal data that may be subject to privacy regulations. Please ensure all data handling complies with applicable laws including {laws}. {additional_note}",
+                "financial": "FINANCIAL NOTICE: This content contains financial information that may be subject to regulatory requirements. This is not financial advice. {additional_note}",
+                "health": "HEALTH INFORMATION NOTICE: This content contains health-related information. This is not medical advice. Please consult qualified healthcare professionals for medical decisions. {additional_note}",
+                "security": "SECURITY NOTICE: This content contains security-related information. Implementation of security measures should be verified by qualified professionals. {additional_note}",
+                "legal": "LEGAL NOTICE: This content contains legal information. This is not legal advice. Please consult qualified legal professionals for legal decisions. {additional_note}",
+                "ethical": "NOTICE: This content may contain subjective viewpoints and should be evaluated critically. Ensure fair and unbiased implementation in all contexts. {additional_note}",
+                "general": "REGULATORY NOTICE: This content may be subject to regulatory requirements. Please verify compliance with all applicable regulations before use. {additional_note}"
+            },
+            "detailed": {
+                "privacy": "IMPORTANT PRIVACY NOTICE: This content references personal data that is subject to privacy regulations including {laws}. Organizations processing such data must: (1) establish a legal basis for processing, (2) implement appropriate security measures, (3) honor data subject rights, and (4) maintain required documentation. Failure to comply may result in significant penalties. {specific_requirements}",
+                "financial": "IMPORTANT FINANCIAL REGULATORY NOTICE: This content contains financial information subject to regulatory oversight. This is not financial advice and should not be relied upon for financial decisions. Organizations handling such information must adhere to applicable financial regulations including reporting requirements, disclosure obligations, and security standards. {specific_requirements}",
+                "health": "IMPORTANT HEALTH INFORMATION NOTICE: This content contains health-related information protected under health privacy laws including {laws}. This is not medical advice. Any use, disclosure, or transmission of this information must comply with applicable health information privacy and security requirements. Specifically: {specific_requirements}",
+                "security": "IMPORTANT SECURITY NOTICE: This content contains security-related information. Implementation of security measures should follow industry best practices and be verified by qualified professionals. Organizations should: (1) regularly assess security risks, (2) implement appropriate controls, (3) test security measures, and (4) maintain security documentation. {specific_requirements}",
+                "legal": "IMPORTANT LEGAL NOTICE: This content contains legal information, not legal advice. The applicability of laws varies by jurisdiction and circumstance. Organizations should: (1) consult qualified legal professionals, (2) verify requirements in relevant jurisdictions, (3) maintain required documentation, and (4) implement appropriate compliance measures. {specific_requirements}",
+                "ethical": "IMPORTANT ETHICAL CONSIDERATION NOTICE: This content may contain subjective viewpoints that should be evaluated critically to ensure fair and unbiased implementation. Organizations should: (1) review for potential bias, (2) consider diverse perspectives, (3) implement oversight mechanisms, and (4) regularly evaluate outcomes for fairness. {specific_requirements}",
+                "general": "IMPORTANT REGULATORY NOTICE: This content may be subject to regulatory requirements. Organizations should: (1) identify applicable regulations, (2) implement required compliance measures, (3) maintain appropriate documentation, and (4) regularly review compliance status. Please verify compliance with all applicable regulations before use. {specific_requirements}"
+            }
+        }
+        
+        # Get the highest priority category (privacy, health, financial, etc.)
+        category_priorities = {
+            "health": 10, 
+            "privacy": 9, 
+            "financial": 8, 
+            "security": 7, 
+            "legal": 6, 
+            "ethical": 5, 
+            "general": 1
+        }
+        
+        # Get applicable regulations based on categories
+        regulations = set()
+        specific_requirements = []
+        high_severity_issues = False
+        
+        for category, issues in issue_categories.items():
+            # Add category-specific regulations
+            if category == "privacy":
+                regulations.update(["GDPR", "CCPA", "CPRA"])
+            elif category == "health":
+                regulations.update(["HIPAA", "HITECH"])
+            elif category == "financial":
+                regulations.update(["GLBA", "PCI DSS"])
+                
+            # Check for high severity issues
+            for issue_info in issues:
+                if issue_info["severity"] in ["high", "critical"]:
+                    high_severity_issues = True
+                    
+                # Add specific requirements based on issue
+                issue = issue_info["issue"]
+                if "description" in issue:
+                    requirement = issue["description"].replace("Detected ", "").replace("Found ", "")
+                    specific_requirements.append(requirement)
+        
+        # Limit specific requirements to top 3
+        specific_requirements = specific_requirements[:3]
+        
+        # Select primary category based on priority
+        primary_category = max(issue_categories.keys(), key=lambda k: category_priorities.get(k, 0))
+        
+        # Get template for primary category and detail level
+        template = templates.get(detail_level, {}).get(primary_category, templates[detail_level]["general"])
+        
+        # Fill in template placeholders
+        laws_text = ", ".join(regulations) if regulations else "applicable regulations"
+        specific_requirements_text = ""
+        
+        if specific_requirements and detail_level == "detailed":
+            specific_requirements_text = " Specific considerations include: " + "; ".join(specific_requirements) + "."
+            
+        additional_note = ""
+        if high_severity_issues:
+            additional_note = "Special attention required due to critical compliance considerations."
+            
+        disclaimer = template.format(
+            laws=laws_text,
+            specific_requirements=specific_requirements_text,
+            additional_note=additional_note
+        )
+        
+        return disclaimer
+        
+    def _generate_framework_specific_disclaimers(self, issues, context):
+        """Generate framework-specific disclaimers for major regulatory frameworks"""
+        framework_disclaimers = []
+        
+        # Detect frameworks from issues
+        frameworks = set()
+        for issue in issues:
+            rule_id = issue.get("rule_id", "").lower()
+            
+            if "gdpr" in rule_id:
+                frameworks.add("GDPR")
+            elif "hipaa" in rule_id:
+                frameworks.add("HIPAA")
+            elif "ccpa" in rule_id or "cpra" in rule_id:
+                frameworks.add("CCPA/CPRA")
+            elif any(f in rule_id for f in ["glba", "pci", "finreg"]):
+                frameworks.add("Financial")
+                
+        # Framework-specific templates
+        for framework in frameworks:
+            if framework == "GDPR":
+                disclaimer = (
+                    "GDPR COMPLIANCE NOTICE: This content involves personal data processing subject to the "
+                    "General Data Protection Regulation. Processing requires a legal basis such as consent, "
+                    "contract, legal obligation, vital interests, public task, or legitimate interests. "
+                    "Data subjects have rights to access, rectification, erasure, restriction, portability, "
+                    "and objection. Appropriate technical and organizational measures must be implemented to "
+                    "ensure data security."
+                )
+                framework_disclaimers.append({
+                    "text": disclaimer,
+                    "type": "disclaimer",
+                    "detail_level": "framework-specific",
+                    "framework": "GDPR",
+                    "placement": "beginning",
+                    "confidence": 0.9
+                })
+                
+            elif framework == "HIPAA":
+                disclaimer = (
+                    "HIPAA COMPLIANCE NOTICE: This content contains protected health information (PHI) "
+                    "subject to the Health Insurance Portability and Accountability Act. Use and disclosure "
+                    "of this information is restricted to permitted purposes. Appropriate safeguards must be "
+                    "implemented to protect confidentiality, integrity, and availability of PHI. Unauthorized "
+                    "use or disclosure may result in civil and criminal penalties."
+                )
+                framework_disclaimers.append({
+                    "text": disclaimer,
+                    "type": "disclaimer",
+                    "detail_level": "framework-specific",
+                    "framework": "HIPAA",
+                    "placement": "beginning",
+                    "confidence": 0.9
+                })
+                
+            elif framework == "CCPA/CPRA":
+                disclaimer = (
+                    "CALIFORNIA PRIVACY NOTICE: This content involves personal information subject to the "
+                    "California Consumer Privacy Act (CCPA) and California Privacy Rights Act (CPRA). "
+                    "Consumers have rights to know, delete, correct, and limit use and disclosure of their "
+                    "personal information. Businesses must provide privacy notices and honor consumer rights "
+                    "requests. Sale or sharing of personal information requires opt-out mechanisms."
+                )
+                framework_disclaimers.append({
+                    "text": disclaimer,
+                    "type": "disclaimer",
+                    "detail_level": "framework-specific",
+                    "framework": "CCPA/CPRA",
+                    "placement": "beginning",
+                    "confidence": 0.9
+                })
+                
+            elif framework == "Financial":
+                disclaimer = (
+                    "FINANCIAL REGULATORY NOTICE: This content involves financial information subject to "
+                    "regulations such as Gramm-Leach-Bliley Act (GLBA) and Payment Card Industry Data "
+                    "Security Standard (PCI DSS). Financial institutions must provide privacy notices, "
+                    "implement information security programs, and protect nonpublic personal information. "
+                    "This is not financial advice; consult qualified professionals for financial decisions."
+                )
+                framework_disclaimers.append({
+                    "text": disclaimer,
+                    "type": "disclaimer",
+                    "detail_level": "framework-specific",
+                    "framework": "Financial",
+                    "placement": "beginning",
+                    "confidence": 0.9
+                })
+        
+        return framework_disclaimers
+        
+    def _generate_placement_variations(self, base_disclaimer):
+        """Generate placement variations of a disclaimer"""
+        if not base_disclaimer:
+            return []
+            
+        variations = []
+        
+        # End placement
+        end_variation = base_disclaimer.copy()
+        end_variation["placement"] = "end"
+        variations.append(end_variation)
+        
+        # Inline/boxed placement
+        boxed_variation = base_disclaimer.copy()
+        boxed_variation["placement"] = "boxed"
+        boxed_variation["text"] = f"===== NOTICE =====\n{base_disclaimer['text']}\n==================="
+        variations.append(boxed_variation)
+        
+        return variations
+        
+    def _calculate_disclaimer_confidence(self, issues, detail_level):
+        """Calculate confidence score for a disclaimer"""
+        # Base confidence by detail level
+        detail_confidence = {
+            "brief": 0.7,
+            "standard": 0.8,
+            "detailed": 0.9,
+            "framework-specific": 0.95
+        }
+        
+        # Adjust based on issue severity
+        severity_count = {
+            "low": 0,
+            "medium": 0,
+            "high": 0,
+            "critical": 0
+        }
+        
+        for issue in issues:
+            severity = issue.get("severity", "medium")
+            severity_count[severity] = severity_count.get(severity, 0) + 1
+        
+        # Calculate severity adjustment
+        severity_factor = (
+            severity_count["critical"] * 0.1 + 
+            severity_count["high"] * 0.05 + 
+            severity_count["medium"] * 0.02
+        )
+        
+        # Cap at reasonable range
+        final_confidence = min(0.99, detail_confidence.get(detail_level, 0.8) + severity_factor)
+        
+        return final_confidence
+
+
+    def _generate_bias_correction_alternatives(self, text, issues, context=None):
+        """
+        Generate alternative text suggestions to correct potential bias.
+        
+        Args:
+            text: Original text content
+            issues: Compliance issues detected
+            context: Optional context information
+                
+        Returns:
+            List of bias correction alternatives
+        """
+        if not issues or not text:
+            return []
+            
+        # Find bias-related issues
+        bias_issues = [issue for issue in issues if self._is_bias_related(issue)]
+        
+        if not bias_issues:
+            return []
+            
+        alternatives = []
+        
+        # Extract potentially biased segments
+        biased_segments = self._extract_biased_segments(text, bias_issues)
+        
+        # Generate alternatives for each biased segment
+        for segment in biased_segments:
+            segment_alternatives = self._generate_segment_alternatives(segment, context)
+            
+            for alt in segment_alternatives:
+                # Create modified text with this alternative
+                modified_text = text.replace(segment["text"], alt["replacement"])
+                
+                alternatives.append({
+                    "text": modified_text,
+                    "type": "bias_correction",
+                    "original_segment": segment["text"],
+                    "replacement": alt["replacement"],
+                    "bias_type": alt["bias_type"],
+                    "explanation": alt["explanation"],
+                    "confidence": alt["confidence"],
+                    "segment_position": segment.get("position")
+                })
+        
+        # If alternatives were generated, add a "minimal changes" option
+        if alternatives and len(alternatives) > 1:
+            # Find alternative with highest confidence
+            best_alt = max(alternatives, key=lambda x: x["confidence"])
+            
+            # Create minimal changes version that only addresses the most confident fix
+            alternatives.append({
+                "text": best_alt["text"],
+                "type": "bias_correction_minimal",
+                "original_segment": best_alt["original_segment"],
+                "replacement": best_alt["replacement"],
+                "bias_type": best_alt["bias_type"],
+                "explanation": f"Minimal change addressing {best_alt['bias_type']} bias",
+                "confidence": best_alt["confidence"] - 0.05  # Slightly lower confidence for minimal approach
+            })
+        
+        return alternatives
+        
+    def _is_bias_related(self, issue):
+        """Check if an issue is related to bias"""
+        # Check rule ID for bias-related keywords
+        rule_id = issue.get("rule_id", "").lower()
+        if any(term in rule_id for term in ["bias", "fairness", "inclusive", "gender", "stereotype", "discriminat"]):
+            return True
+            
+        # Check description for bias-related keywords
+        description = issue.get("description", "").lower()
+        bias_terms = [
+            "bias", "gender", "racial", "stereotype", "discriminatory", "inclusive", "fairness", 
+            "prejudice", "ageism", "sexism", "racism", "ethnic", "neutral", "offensive"
+        ]
+        
+        if any(term in description for term in bias_terms):
+            return True
+            
+        return False
+        
+    def _extract_biased_segments(self, text, bias_issues):
+        """Extract potentially biased segments from text based on issues"""
+        segments = []
+        
+        for issue in bias_issues:
+            # If issue contains location information, use it
+            metadata = issue.get("metadata", {})
+            location = issue.get("location")
+            
+            if location and "start" in location and "end" in location:
+                start = location["start"]
+                end = location["end"]
+                if 0 <= start < end and end <= len(text):
+                    segments.append({
+                        "text": text[start:end],
+                        "position": {"start": start, "end": end},
+                        "issue": issue
+                    })
+                    continue
+                    
+            # If no location, try to find using rule-specific patterns
+            rule_id = issue.get("rule_id", "")
+            description = issue.get("description", "")
+            
+            # Extract potential problematic terms from description
+            terms = self._extract_terms_from_description(description)
+            
+            for term in terms:
+                if term in text:
+                    # Find all occurrences
+                    for match in re.finditer(re.escape(term), text):
+                        start = match.start()
+                        end = match.end()
+                        
+                        # Get context around the term (up to 100 chars)
+                        context_start = max(0, start - 50)
+                        context_end = min(len(text), end + 50)
+                        context_text = text[context_start:context_end]
+                        
+                        segments.append({
+                            "text": term,
+                            "context": context_text,
+                            "position": {"start": start, "end": end},
+                            "issue": issue
+                        })
+        
+        # Merge overlapping segments
+        return self._merge_overlapping_segments(segments)
+        
+    def _extract_terms_from_description(self, description):
+        """Extract potentially problematic terms from issue description"""
+        terms = []
+        
+        # Check for quoted terms
+        quoted_terms = re.findall(r'"([^"]+)"', description)
+        if quoted_terms:
+            terms.extend(quoted_terms)
+            
+        # Check for specific patterns like "term X is biased"
+        pattern_matches = re.findall(r'([\w\s-]+) (is|may be|could be) (biased|discriminatory|stereotyping)', description)
+        if pattern_matches:
+            terms.extend([match[0].strip() for match in pattern_matches])
+            
+        return terms
+        
+    def _merge_overlapping_segments(self, segments):
+        """Merge overlapping text segments"""
+        if not segments:
+            return []
+            
+        # Sort by start position
+        sorted_segments = sorted(segments, key=lambda s: s.get("position", {}).get("start", 0))
+        
+        merged = [sorted_segments[0]]
+        
+        for current in sorted_segments[1:]:
+            previous = merged[-1]
+            
+            # Check if segments overlap
+            prev_end = previous.get("position", {}).get("end", 0)
+            curr_start = current.get("position", {}).get("start", 0)
+            
+            if curr_start <= prev_end:
+                # Merge segments
+                prev_start = previous.get("position", {}).get("start", 0)
+                curr_end = current.get("position", {}).get("end", 0)
+                
+                # Use the larger segment
+                if curr_end > prev_end:
+                    merged[-1]["position"] = {"start": prev_start, "end": curr_end}
+                    merged[-1]["text"] = text[prev_start:curr_end]
+                    
+                    # Merge issues
+                    if "issue" in current and "issue" in previous:
+                        merged[-1]["issues"] = [previous["issue"], current["issue"]]
+                    else:
+                        merged[-1]["issues"] = [previous.get("issue"), current.get("issue")]
+            else:
+                # No overlap, add as new segment
+                merged.append(current)
+        
+        return merged
+        
+    def _generate_segment_alternatives(self, segment, context):
+        """Generate alternative text for a potentially biased segment"""
+        original_text = segment["text"]
+        bias_issue = segment.get("issue")
+        
+        alternatives = []
+        
+        # Identify bias type from issue
+        bias_type = self._identify_bias_type(bias_issue)
+        
+        # Use appropriate correction strategy based on bias type
+        if bias_type == "gender_bias":
+            alternatives.extend(self._correct_gender_bias(original_text, bias_issue))
+        elif bias_type == "racial_bias":
+            alternatives.extend(self._correct_racial_bias(original_text, bias_issue))
+        elif bias_type == "age_bias":
+            alternatives.extend(self._correct_age_bias(original_text, bias_issue))
+        elif bias_type == "disability_bias":
+            alternatives.extend(self._correct_disability_bias(original_text, bias_issue))
+        elif bias_type == "cultural_bias":
+            alternatives.extend(self._correct_cultural_bias(original_text, bias_issue))
+        else:
+            # Generic bias correction for other types
+            alternatives.extend(self._correct_generic_bias(original_text, bias_issue))
+        
+        return alternatives
+        
+    def _identify_bias_type(self, issue):
+        """Identify the type of bias from an issue"""
+        if not issue:
+            return "general_bias"
+            
+        rule_id = issue.get("rule_id", "").lower()
+        description = issue.get("description", "").lower()
+        
+        # Check for specific bias types
+        if any(term in rule_id or term in description for term in ["gender", "sexist", "sexism", "man", "woman", "male", "female"]):
+            return "gender_bias"
+        elif any(term in rule_id or term in description for term in ["race", "racial", "ethnic", "racism"]):
+            return "racial_bias"
+        elif any(term in rule_id or term in description for term in ["age", "ageism", "elderly", "young", "old"]):
+            return "age_bias"
+        elif any(term in rule_id or term in description for term in ["disab", "handicap", "impair"]):
+            return "disability_bias"
+        elif any(term in rule_id or term in description for term in ["cultur", "religious", "nationality"]):
+            return "cultural_bias"
+        else:
+            return "general_bias"
+            
+    def _correct_gender_bias(self, text, issue):
+        """Generate alternatives to correct gender bias"""
+        alternatives = []
+        text_lower = text.lower()
+        
+        # Common gender-biased terms and alternatives
+        gender_term_replacements = {
+            "mankind": ["humanity", "humankind", "people"],
+            "manpower": ["workforce", "staff", "personnel", "human resources"],
+            "chairman": ["chairperson", "chair", "head"],
+            "businessman": ["businessperson", "professional", "executive"],
+            "policeman": ["police officer", "officer"],
+            "stewardess": ["flight attendant"],
+            "fireman": ["firefighter"],
+            "mailman": ["mail carrier", "postal worker"],
+            "salesman": ["salesperson", "sales representative"],
+            "actress": ["actor"],
+            "waitress": ["server", "wait staff"],
+            "hostess": ["host"],
+            "he or she": ["they"],
+            "he/she": ["they"],
+            "him or her": ["them"],
+            "him/her": ["them"],
+            "his or her": ["their"],
+            "his/her": ["their"],
+            "man": ["person", "individual"],
+            "men": ["people", "individuals"],
+            "manmade": ["artificial", "manufactured", "synthetic"],
+            "guys": ["folks", "everyone", "people", "team"]
+        }
+        
+        # Check for gender-specific terms
+        for term, replacements in gender_term_replacements.items():
+            if term in text_lower:
+                for replacement in replacements:
+                    # Attempt to preserve original capitalization
+                    if text.isupper():
+                        final_replacement = replacement.upper()
+                    elif text[0].isupper():
+                        final_replacement = replacement.capitalize()
+                    else:
+                        final_replacement = replacement
+                    
+                    alternatives.append({
+                        "replacement": final_replacement,
+                        "bias_type": "gender_bias",
+                        "explanation": f"'{term}' may contain gender bias. '{replacement}' is gender-neutral.",
+                        "confidence": 0.85
+                    })
+        
+        # Check for gendered pronouns
+        pronoun_patterns = [
+            (r'\b(he|him|his)\b', "they/them/their", "The gendered pronoun may be replaced with a gender-neutral alternative."),
+            (r'\b(she|her|hers)\b', "they/them/their", "The gendered pronoun may be replaced with a gender-neutral alternative.")
+        ]
+        
+        for pattern, replacement, explanation in pronoun_patterns:
+            if re.search(pattern, text_lower):
+                # Replace all instances in the text
+                replaced_text = re.sub(pattern, lambda m: "they" if m.group(0) in ["he", "she"] 
+                                                else "them" if m.group(0) in ["him", "her"] 
+                                                else "their", text, flags=re.IGNORECASE)
+                
+                alternatives.append({
+                    "replacement": replaced_text,
+                    "bias_type": "gender_bias",
+                    "explanation": explanation,
+                    "confidence": 0.8
+                })
+        
+        # If no specific replacements were found but this is a gender bias issue
+        if not alternatives:
+            alternatives.append({
+                "replacement": text,  # No automatic replacement available
+                "bias_type": "gender_bias",
+                "explanation": "This text may contain subtle gender bias that requires manual review.",
+                "confidence": 0.5
+            })
+        
+        return alternatives
+        
+    def _correct_racial_bias(self, text, issue):
+        """Generate alternatives to correct racial bias"""
+        alternatives = []
+        text_lower = text.lower()
+        
+        # Check for problematic terms and phrases
+        racial_term_replacements = {
+            "colored people": ["people of color", "people", "individuals"],
+            "oriental": ["Asian", "East Asian"],
+            "indian": ["Native American", "Indigenous person"],
+            "illegal alien": ["undocumented immigrant", "unauthorized immigrant"],
+            "illegal immigrant": ["undocumented immigrant", "unauthorized immigrant"],
+            "tribe": ["community", "group", "people"],
+            "primitive": ["traditional", "indigenous", "early"],
+            "third world": ["developing regions", "low-income countries"],
+            "ghetto": ["underserved neighborhood", "economically disadvantaged area"],
+            "ethnic food": ["[specific cuisine] food", "regional cuisine"],
+            "urban": ["metropolitan", "city", "densely populated"]
+        }
+        
+        # Check for potentially biased terms
+        for term, replacements in racial_term_replacements.items():
+            if term in text_lower:
+                for replacement in replacements:
+                    if replacement.startswith("[specific"):
+                        # This requires manual intervention
+                        alternatives.append({
+                            "replacement": text,  # No automatic replacement
+                            "bias_type": "racial_bias",
+                            "explanation": f"'{term}' may contain racial bias. Consider specifying the actual cuisine instead of using generic terms.",
+                            "confidence": 0.7
+                        })
+                    else:
+                        alternatives.append({
+                            "replacement": text.replace(term, replacement),
+                            "bias_type": "racial_bias",
+                            "explanation": f"'{term}' may contain racial bias. '{replacement}' is a more neutral alternative.",
+                            "confidence": 0.85
+                        })
+        
+        # Check for stereotypical characterizations
+        stereotype_patterns = [
+            (r'all (asian|african|hispanic|latino|black|white) people', "Some {0} people", "Avoid generalizations about racial or ethnic groups"),
+            (r'(asians|africans|hispanics|latinos|blacks|whites) are', "{0} may have diverse characteristics", "Avoid generalizations about racial or ethnic groups")
+        ]
+        
+        for pattern, replacement_template, explanation in stereotype_patterns:
+            matches = re.finditer(pattern, text_lower)
+            for match in matches:
+                group = match.group(1)
+                replacement = replacement_template.format(group.capitalize())
+                alternatives.append({
+                    "replacement": text.replace(match.group(0), replacement),
+                    "bias_type": "racial_bias",
+                    "explanation": explanation,
+                    "confidence": 0.9
+                })
+        
+        # If no specific replacements were found but this is a racial bias issue
+        if not alternatives:
+            alternatives.append({
+                "replacement": text,  # No automatic replacement available
+                "bias_type": "racial_bias",
+                "explanation": "This text may contain subtle racial bias that requires manual review.",
+                "confidence": 0.5
+            })
+        
+        return alternatives
+        
+    def _correct_age_bias(self, text, issue):
+        """Generate alternatives to correct age bias"""
+        alternatives = []
+        text_lower = text.lower()
+        
+        # Common age-biased terms and alternatives
+        age_term_replacements = {
+            "senior citizen": ["older adult", "older person"],
+            "elderly": ["older adult", "older person"],
+            "young person": ["person", "individual"],
+            "old person": ["older adult", "older individual"],
+            "geriatric": ["older", "senior"],
+            "senile": ["having cognitive impairment", "experiencing memory issues"],
+            "millennial": ["young adult", "person in their 20s/30s"],
+            "boomer": ["older adult", "person born between 1946-1964"],
+            "gen z": ["young person", "person born after 1996"],
+            "old-fashioned": ["traditional", "classic"],
+            "too old": ["experienced", "seasoned"],
+            "too young": ["early in their career", "developing"]
+        }
+        
+        # Check for potentially biased terms
+        for term, replacements in age_term_replacements.items():
+            if term in text_lower:
+                for replacement in replacements:
+                    alternatives.append({
+                        "replacement": text.replace(term, replacement),
+                        "bias_type": "age_bias",
+                        "explanation": f"'{term}' may contain age bias. '{replacement}' is a more neutral alternative.",
+                        "confidence": 0.8
+                    })
+        
+        # Check for age-based stereotypes
+        stereotype_patterns = [
+            (r'(old|older) people (can\'t|cannot|don\'t|do not|are unable to)', "Some older individuals may have difficulty with", "Avoid generalizations about capabilities based on age"),
+            (r'(young|younger) people (are all|all|always)', "Some younger individuals may", "Avoid generalizations about behavior based on age")
+        ]
+        
+        for pattern, replacement_prefix, explanation in stereotype_patterns:
+            matches = re.finditer(pattern, text_lower)
+            for match in matches:
+                action = text[match.end():].strip().split(" ")[0]  # Get the action being stereotyped
+                replacement = f"{replacement_prefix} {action}"
+                alternatives.append({
+                    "replacement": text.replace(match.group(0), replacement),
+                    "bias_type": "age_bias",
+                    "explanation": explanation,
+                    "confidence": 0.85
+                })
+        
+        # If no specific replacements were found but this is an age bias issue
+        if not alternatives:
+            alternatives.append({
+                "replacement": text,  # No automatic replacement available
+                "bias_type": "age_bias",
+                "explanation": "This text may contain subtle age bias that requires manual review.",
+                "confidence": 0.5
+            })
+        
+        return alternatives
+        
+    def _correct_disability_bias(self, text, issue):
+        """Generate alternatives to correct disability bias"""
+        alternatives = []
+        text_lower = text.lower()
+        
+        # Common disability-biased terms and alternatives
+        disability_term_replacements = {
+            "handicapped": ["person with a disability", "disabled person"],
+            "disabled": ["person with a disability", "person with disabilities"],
+            "crippled": ["person with mobility impairment", "person with physical disability"],
+            "wheelchair-bound": ["wheelchair user", "person who uses a wheelchair"],
+            "retarded": ["person with cognitive disability", "person with intellectual disability"],
+            "mentally ill": ["person with mental health condition", "person with psychiatric disability"],
+            "crazy": ["person with mental health condition"],
+            "insane": ["person with mental health condition"],
+            "deaf and dumb": ["deaf", "person who is deaf"],
+            "blind": ["person who is blind", "person with visual impairment"],
+            "suffers from": ["has", "lives with"],
+            "confined to a wheelchair": ["wheelchair user", "person who uses a wheelchair"],
+            "special needs": ["specific needs", "support needs", "disability-related needs"]
+        }
+        
+        # Check for potentially biased terms
+        for term, replacements in disability_term_replacements.items():
+            if term in text_lower:
+                for replacement in replacements:
+                    alternatives.append({
+                        "replacement": text.replace(term, replacement),
+                        "bias_type": "disability_bias",
+                        "explanation": f"'{term}' may contain disability bias. '{replacement}' uses person-first or identity-first language that respects dignity.",
+                        "confidence": 0.9
+                    })
+        
+        # Check for inspiration-based objectification ("inspiration porn")
+        inspiration_patterns = [
+            (r'(inspire|inspiring|inspiration|brave|courage|courageous|despite) (disability|handicap|wheelchair|condition)', 
+            "living with a disability", 
+            "Avoid portraying people with disabilities as inspirational merely for living with a disability")
+        ]
+        
+        for pattern, replacement, explanation in inspiration_patterns:
+            if re.search(pattern, text_lower):
+                alternatives.append({
+                    "replacement": text,  # This requires careful rewording
+                    "bias_type": "disability_bias",
+                    "explanation": explanation,
+                    "confidence": 0.7
+                })
+        
+        # If no specific replacements were found but this is a disability bias issue
+        if not alternatives:
+            alternatives.append({
+                "replacement": text,  # No automatic replacement available
+                "bias_type": "disability_bias",
+                "explanation": "This text may contain subtle disability bias that requires manual review.",
+                "confidence": 0.5
+            })
+        
+        return alternatives
+        
+    def _correct_cultural_bias(self, text, issue):
+        """Generate alternatives to correct cultural or religious bias"""
+        alternatives = []
+        text_lower = text.lower()
+        
+        # Common cultural bias terms and alternatives
+        cultural_term_replacements = {
+            "third world country": ["developing nation", "low-income country"],
+            "illegal alien": ["undocumented immigrant", "unauthorized immigrant"],
+            "exotic": ["unique", "distinctive", "different"],
+            "backwards culture": ["different cultural practices", "cultural tradition"],
+            "primitive culture": ["indigenous culture", "traditional society"],
+            "savage": ["indigenous person", "traditional"],
+            "uncivilized": ["non-Western", "traditional"],
+            "shaman": ["spiritual leader", "traditional healer", "indigenous spiritual practitioner"],
+            "normal food": ["typical Western food", "common American/European food"],
+            "normal dress": ["typical Western dress", "common American/European clothing"]
+        }
+        
+        # Check for potentially biased terms
+        for term, replacements in cultural_term_replacements.items():
+            if term in text_lower:
+                for replacement in replacements:
+                    alternatives.append({
+                        "replacement": text.replace(term, replacement),
+                        "bias_type": "cultural_bias",
+                        "explanation": f"'{term}' may contain cultural bias. '{replacement}' is a more culturally sensitive alternative.",
+                        "confidence": 0.85
+                    })
+        
+        # Check for religious generalizations
+        religion_patterns = [
+            (r'all (muslims|christians|jews|hindus|buddhists|atheists) (are|believe)', 
+            "Many {0} may", 
+            "Avoid generalizations about religious groups; respect diversity within traditions"),
+            (r'(islam|christianity|judaism|hinduism|buddhism|atheism) teaches that', 
+            "Some interpretations of {0} suggest that", 
+            "Acknowledge diversity of interpretation within religious traditions")
+        ]
+        
+        for pattern, replacement_template, explanation in religion_patterns:
+            matches = re.finditer(pattern, text_lower)
+            for match in matches:
+                group = match.group(1)
+                replacement = replacement_template.format(group.capitalize())
+                alternatives.append({
+                    "replacement": text.replace(match.group(0), replacement),
+                    "bias_type": "cultural_bias",
+                    "explanation": explanation,
+                    "confidence": 0.85
+                })
+        
+        # If no specific replacements were found but this is a cultural bias issue
+        if not alternatives:
+            alternatives.append({
+                "replacement": text,  # No automatic replacement available
+                "bias_type": "cultural_bias",
+                "explanation": "This text may contain subtle cultural bias that requires manual review.",
+                "confidence": 0.5
+            })
+        
+        return alternatives
+        
+    def _correct_generic_bias(self, text, issue):
+        """Generate alternatives for general bias issues"""
+        alternatives = []
+        
+        # Extract potentially problematic phrases from issue description
+        description = issue.get("description", "")
+        terms = self._extract_terms_from_description(description)
+        
+        if terms:
+            for term in terms:
+                if term in text:
+                    # Suggest removing or revising the term
+                    alternatives.append({
+                        "replacement": text.replace(term, "[revised text]"),
+                        "bias_type": "general_bias",
+                        "explanation": f"The phrase '{term}' may contain bias and should be reviewed or replaced.",
+                        "confidence": 0.6
+                    })
+        
+        # If no specific terms identified, suggest general review
+        if not alternatives:
+            alternatives.append({
+                "replacement": text,  # No automatic replacement
+                "bias_type": "general_bias",
+                "explanation": "This text may contain subtle bias that requires manual review.",
+                "confidence": 0.5
+            })
+        
+        return alternatives
+    def _generate_bias_correction_alternatives(self, text, violation, context=None):
+        """
+        Generate alternative text with reduced bias.
+        
+        Args:
+            text: Original text containing potential bias
+            violation: The compliance violation
+            context: Optional context information
+            
+        Returns:
+            List of alternative text options with reduced bias
+        """
+        alternatives = []
+        violation_metadata = violation.get("metadata", {})
+        bias_type = violation_metadata.get("bias_type", "")
+        severity = violation.get("severity", "medium")
+        affected_segments = violation_metadata.get("affected_segments", [])
+        
+        # Identify bias type if not explicitly provided
+        if not bias_type:
+            bias_type = self._detect_bias_type(text, affected_segments)
+        
+        # Gender bias correction
+        if bias_type == "gender" or not bias_type:
+            gender_neutral = self._apply_gender_neutral_language(text, affected_segments)
+            if gender_neutral != text:
+                alternatives.append({
+                    "text": gender_neutral,
+                    "strategy": "gender_neutral_language",
+                    "confidence": 0.85,
+                    "description": "Applied gender-neutral language to reduce gender bias"
+                })
+        
+        # Age bias correction
+        if bias_type == "age" or not bias_type:
+            age_neutral = self._apply_age_neutral_language(text, affected_segments)
+            if age_neutral != text:
+                alternatives.append({
+                    "text": age_neutral,
+                    "strategy": "age_neutral_language",
+                    "confidence": 0.8,
+                    "description": "Applied age-neutral language to reduce age bias"
+                })
+        
+        # Cultural/ethnic bias correction
+        if bias_type == "cultural" or bias_type == "ethnic" or not bias_type:
+            culturally_neutral = self._apply_culturally_neutral_language(text, affected_segments)
+            if culturally_neutral != text:
+                alternatives.append({
+                    "text": culturally_neutral,
+                    "strategy": "culturally_neutral_language",
+                    "confidence": 0.85,
+                    "description": "Applied culturally neutral language to reduce cultural bias"
+                })
+        
+        # Socioeconomic bias correction
+        if bias_type == "socioeconomic" or not bias_type:
+            socioeconomic_neutral = self._apply_socioeconomic_neutral_language(text, affected_segments)
+            if socioeconomic_neutral != text:
+                alternatives.append({
+                    "text": socioeconomic_neutral,
+                    "strategy": "socioeconomic_neutral_language",
+                    "confidence": 0.8,
+                    "description": "Applied socioeconomic neutral language to reduce class bias"
+                })
+        
+        # Ability/disability bias correction
+        if bias_type == "ability" or not bias_type:
+            ability_neutral = self._apply_ability_neutral_language(text, affected_segments)
+            if ability_neutral != text:
+                alternatives.append({
+                    "text": ability_neutral,
+                    "strategy": "ability_neutral_language",
+                    "confidence": 0.85,
+                    "description": "Applied ability-neutral language to reduce ableism"
+                })
+        
+        # For high severity cases, apply comprehensive rewriting
+        if severity == "high" and affected_segments:
+            comprehensive_rewrite = self._comprehensive_bias_reduction(text, affected_segments, bias_type)
+            if comprehensive_rewrite != text:
+                alternatives.append({
+                    "text": comprehensive_rewrite,
+                    "strategy": "comprehensive_rewrite",
+                    "confidence": 0.9,
+                    "description": "Comprehensively rewrote content to address multiple forms of bias"
+                })
+        
+        return alternatives
+
+
+    def _detect_bias_type(self, text, affected_segments=None):
+        """Detect the type of bias present in text"""
+        text_lower = text.lower()
+        
+        # If we have affected segments, focus analysis there
+        if affected_segments:
+            segment_texts = []
+            for segment in affected_segments:
+                start = segment.get("start", 0)
+                end = segment.get("end", 0)
+                if start < end and end <= len(text):
+                    segment_texts.append(text[start:end].lower())
+            
+            # Analyze the segments if available
+            if segment_texts:
+                text_to_analyze = " ".join(segment_texts)
+            else:
+                text_to_analyze = text_lower
+        else:
+            text_to_analyze = text_lower
+        
+        # Simple rule-based bias detection
+        # Gender bias indicators
+        gender_terms = ['he', 'she', 'his', 'her', 'him', 'hers', 'himself', 'herself', 
+                    'man', 'woman', 'men', 'women', 'male', 'female',
+                    'chairman', 'chairwoman', 'policeman', 'policewoman',
+                    'businessman', 'businesswoman', 'salesman', 'saleswoman',
+                    'steward', 'stewardess', 'waiter', 'waitress']
+        
+        gender_bias_count = sum(text_to_analyze.count(' ' + term + ' ') for term in gender_terms)
+        
+        # Age bias indicators
+        age_terms = ['old', 'young', 'elderly', 'senior', 'junior', 'millennial', 'boomer',
+                    'generation', 'retirement', 'retiree', 'aged', 'youthful', 'geriatric']
+        
+        age_bias_count = sum(text_to_analyze.count(' ' + term + ' ') for term in age_terms)
+        
+        # Cultural/ethnic bias indicators - simplified approach
+        cultural_terms = ['foreign', 'immigrant', 'ethnic', 'culture', 'cultural', 
+                        'western', 'eastern', 'oriental', 'exotic', 'traditional',
+                        'developing', 'developed', 'third world', 'first world']
+        
+        cultural_bias_count = sum(text_to_analyze.count(' ' + term + ' ') for term in cultural_terms)
+        
+        # Socioeconomic bias indicators
+        socioeconomic_terms = ['poor', 'rich', 'wealthy', 'low-income', 'high-income',
+                            'privileged', 'underprivileged', 'disadvantaged', 'affluent',
+                            'poverty', 'wealth', 'class', 'elite', 'ghetto', 'blue-collar',
+                            'white-collar', 'welfare']
+        
+        socioeconomic_bias_count = sum(text_to_analyze.count(' ' + term + ' ') for term in socioeconomic_terms)
+        
+        # Ability/disability bias indicators
+        ability_terms = ['disabled', 'handicapped', 'special needs', 'differently abled',
+                        'blind', 'deaf', 'dumb', 'crippled', 'wheelchair', 'mental illness',
+                        'crazy', 'insane', 'retarded', 'normal', 'abnormal', 'lame']
+        
+        ability_bias_count = sum(text_to_analyze.count(' ' + term + ' ') for term in ability_terms)
+        
+        # Determine the most prevalent bias type
+        bias_counts = {
+            "gender": gender_bias_count,
+            "age": age_bias_count,
+            "cultural": cultural_bias_count,
+            "socioeconomic": socioeconomic_bias_count,
+            "ability": ability_bias_count
+        }
+        
+        # Return the bias type with the highest count, or None if all counts are 0
+        max_bias_type = max(bias_counts.items(), key=lambda x: x[1])
+        if max_bias_type[1] > 0:
+            return max_bias_type[0]
+        else:
+            return None

@@ -1,429 +1,758 @@
-import hashlib
-import numpy as np
-from src.core.utils import LRUCache
-from src.core.utils.utils import EntityTracker, TopicDetector
-from src.core.utils.utils import OptimizedSemanticAnalyzer
-from src.core.utils.utils import ComplianceFramework, ComplianceState
-class OptimizedSemanticComplianceMonitor:
+class SemanticComplianceMonitor:
     """
-    Optimized semantic monitoring system that efficiently tracks compliance
-    state during text generation.
+    Monitors semantic compliance during text generation and evaluation
+    by tracking entity relationships, context, and regulatory requirements.
     """
     def __init__(self, compliance_config):
         self.config = compliance_config
+        self.entity_patterns = self._initialize_entity_patterns()
+        self.sensitive_topics = self._initialize_sensitive_topics()
+        self.relationship_rules = self._initialize_relationship_rules()
+        self.domain_specific_rules = self._initialize_domain_specific_rules()
         
-        # Initialize semantic analysis components
-        self.semantic_analyzer = OptimizedSemanticAnalyzer(compliance_config)
-        self.entity_tracker = EntityTracker(compliance_config)
-        self.topic_detector = TopicDetector(compliance_config)
+        # Tracking state
+        self.detected_entities = {}
+        self.topic_scores = {}
+        self.semantic_state = {}
         
-        # Configure semantic state management
-        self.state_dim = compliance_config.get("semantic_state_dim", 64)
-        self.sliding_window_size = compliance_config.get("sliding_window", 200)
-        
-        # Initialize concept sensitivity mapping
-        self.concept_sensitivity = compliance_config.get("concept_sensitivity", {})
-        
-        # Caching and optimization
-        self.update_trigger_words = set(compliance_config.get("update_trigger_words", []))
-        self.full_update_interval = compliance_config.get("full_update_interval", 20)
-        self.state_cache = LRUCache(maxsize=100)
-        
-    def initialize_optimized(self, prompt, frameworks):
-        """
-        Initialize semantic state with optimized analysis
-        
-        Args:
-            prompt: Input prompt text
-            frameworks: Applicable regulatory frameworks
-            
-        Returns:
-            Initial semantic state
-        """
-        # Get semantic representation of prompt
-        semantic_analysis = self.semantic_analyzer.analyze(prompt)
-        
-        # Extract topics with optimized detector
-        topics = self.topic_detector.detect_topics(prompt)
-        
-        # Track relevant entities
-        entities = self.entity_tracker.extract_entities(prompt)
-        
-        # Get sensitive concepts from frameworks
-        sensitive_concepts = self._get_framework_sensitive_concepts(frameworks)
-        
-        # Create initial state with optimized structure
-        state = {
-            "semantic_embedding": semantic_analysis["embedding"],
-            "text_fingerprint": self._get_text_fingerprint(prompt),
-            "topics": {topic: score for topic, score in topics.items() if score > 0.1},
-            "entities": entities,
-            "sensitive_concepts": sensitive_concepts,
-            "concept_scores": self._score_concepts(semantic_analysis, sensitive_concepts),
-            "token_count": len(prompt.split()),
-            "text_buffer": prompt[-self.sliding_window_size:] if len(prompt) > self.sliding_window_size else prompt,
-            "risk_score": self._calculate_initial_risk(semantic_analysis, frameworks, topics),
-            "frameworks": [f.id for f in frameworks],
-            "last_full_update": 0,
-            "warnings": []
+    def _initialize_entity_patterns(self):
+        """Initialize patterns for entity detection"""
+        # In a production system, this would be loaded from a database or config
+        return {
+            "PII": {
+                "patterns": [
+                    r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b',  # Email
+                    r'\b\d{3}[-.\s]?\d{2}[-.\s]?\d{4}\b',  # SSN
+                    r'\b\d{4}[- ]?\d{4}[- ]?\d{4}[- ]?\d{4}\b'  # Credit card
+                ],
+                "sensitivity": "high"
+            },
+            "PHI": {
+                "patterns": [
+                    r'\b(?:patient|medical|health)\s+(?:record|data|information)\b',
+                    r'\bdiagnosis\b',
+                    r'\btreatment\s+plan\b'
+                ],
+                "sensitivity": "high"
+            },
+            "LOCATION": {
+                "patterns": [
+                    r'\b\d{5}(?:-\d{4})?\b',  # ZIP code
+                    r'\b\d+\s+[A-Za-z0-9\s,]+(?:Road|Street|Avenue|Blvd)\b'  # Address
+                ],
+                "sensitivity": "medium"
+            }
         }
-        
-        # Cache initial state
-        state_key = self._get_state_key(prompt, frameworks)
-        self.state_cache[state_key] = state
-        
-        return state
-        
-    def update_optimized(self, state, token_text, generated_text, frameworks):
+    
+    def _initialize_sensitive_topics(self):
+        """Initialize sensitive topic detection patterns"""
+        return {
+            "violence": {
+                "keywords": ["kill", "attack", "weapon", "violent", "bomb", "explosive"],
+                "threshold": 0.6,
+                "severity": "high"
+            },
+            "hate_speech": {
+                "keywords": ["hate", "slur", "racist", "discrimination"],
+                "threshold": 0.5,
+                "severity": "high"
+            },
+            "financial_advice": {
+                "keywords": ["invest", "stock", "financial advice", "buy shares", "securities"],
+                "threshold": 0.7,
+                "severity": "medium"
+            },
+            "medical_advice": {
+                "keywords": ["treatment", "cure", "diagnose", "prescription", "medical advice"],
+                "threshold": 0.7,
+                "severity": "medium"
+            }
+        }
+    
+    def _initialize_relationship_rules(self):
+        """Initialize rules for entity relationships"""
+        return {
+            "PII_disclosure": {
+                "description": "PII should not be disclosed with specific identifiable context",
+                "trigger_entities": ["PII", "LOCATION"],
+                "condition": "co-occurrence",
+                "max_distance": 200,  # characters
+                "severity": "high"
+            },
+            "medical_advice_with_disclaimer": {
+                "description": "Medical information should include appropriate disclaimers",
+                "trigger_entities": ["PHI"],
+                "condition": "requires_disclaimer",
+                "disclaimer_pattern": r'(?:not medical advice|consult|healthcare professional)',
+                "severity": "medium"
+            }
+        }
+    
+    def _initialize_domain_specific_rules(self):
+        """Initialize domain-specific compliance rules"""
+        return {
+            "finance": {
+                "disclaimers_required": True,
+                "disclaimer_pattern": r'(?:not financial advice|for informational purposes|consult financial advisor)',
+                "prohibited_phrases": [
+                    "guaranteed returns", "risk-free investment", "certain profit"
+                ]
+            },
+            "healthcare": {
+                "disclaimers_required": True,
+                "disclaimer_pattern": r'(?:not medical advice|consult healthcare professional|talk to your doctor)',
+                "prohibited_phrases": [
+                    "guaranteed cure", "miracle treatment", "100% effective"
+                ]
+            }
+        }
+    
+    def evaluate_output(self, text, context=None, framework_ids=None):
         """
-        Update semantic state with optimized processing
+        Evaluate compliance of generated text output.
+        
+        Note: In a production system, entity extraction would be done using
+        sophisticated NLP techniques. This implementation uses simple
+        pattern matching as a placeholder.
         
         Args:
-            state: Current semantic state
-            token_text: New token text
-            generated_text: Full generated text
-            frameworks: Applicable frameworks
+            text: Generated text to evaluate
+            context: Optional context information
+            framework_ids: Optional specific regulatory frameworks to check
             
         Returns:
-            Updated semantic state
+            Dict with compliance evaluation results
         """
-        # Create copy of state to avoid modifying original
-        updated_state = state.copy()
+        # Reset state for new evaluation
+        self.detected_entities = {}
+        self.topic_scores = {}
         
-        # Update token count and text buffer
-        updated_state["token_count"] += 1
-        updated_state["text_buffer"] += token_text
-        if len(updated_state["text_buffer"]) > self.sliding_window_size:
-            updated_state["text_buffer"] = updated_state["text_buffer"][-self.sliding_window_size:]
+        # Extract entities (simplified implementation)
+        self._extract_entities(text)
         
-        # Check if full update is needed
-        needs_full_update = self._needs_full_update(
-            token_text, 
-            updated_state["token_count"], 
-            updated_state["last_full_update"]
-        )
+        # Detect sensitive topics
+        self._detect_sensitive_topics(text)
         
-        if needs_full_update:
-            # Perform full semantic update
-            updated_state = self._perform_full_update(
-                updated_state,
-                generated_text,
-                frameworks
-            )
+        # Check entity relationships
+        relationship_violations = self._check_entity_relationships(text)
+        
+        # Check domain-specific rules
+        domain = context.get('domain') if context else None
+        domain_violations = self._check_domain_specific_rules(text, domain)
+        
+        # Check framework-specific rules if provided
+        framework_violations = []
+        if framework_ids:
+            framework_violations = self._check_framework_rules(text, framework_ids, context)
+        
+        # Combine all violations
+        all_violations = relationship_violations + domain_violations + framework_violations
+        
+        # Calculate compliance score
+        compliance_score = self._calculate_compliance_score(all_violations)
+        
+        # Determine overall compliance
+        strict_mode = self.config.get('strict_mode', False)
+        if strict_mode:
+            is_compliant = len(all_violations) == 0
         else:
-            # Perform lightweight update for efficiency
-            updated_state = self._perform_lightweight_update(
-                updated_state,
-                token_text,
-                generated_text
-            )
+            # In non-strict mode, only high/critical severity violations cause non-compliance
+            is_compliant = not any(v.get('severity') in ['high', 'critical'] for v in all_violations)
         
-        return updated_state
+        return {
+            'is_compliant': is_compliant,
+            'compliance_score': compliance_score,
+            'violations': all_violations,
+            'entities': self.detected_entities,
+            'topics': self.topic_scores
+        }
+    
+    def _extract_entities(self, text):
+        """
+        Extract entities from text using pattern matching.
         
-    def get_fingerprint(self, state):
-        """Get compact fingerprint of semantic state for caching"""
-        risk_fp = f"{state['risk_score']:.2f}"
-        topics_fp = "-".join(sorted(state["topics"].keys()))
-        return f"{risk_fp}|{topics_fp}"
+        Note: A production implementation would use NER models or other
+        NLP techniques for more accurate entity extraction.
+        """
+        import re
         
-    def _get_framework_sensitive_concepts(self, frameworks):
-        """Extract sensitive concepts from frameworks"""
-        sensitive_concepts = {}
+        for entity_type, config in self.entity_patterns.items():
+            self.detected_entities[entity_type] = []
+            
+            for pattern in config["patterns"]:
+                matches = list(re.finditer(pattern, text))
+                for match in matches:
+                    self.detected_entities[entity_type].append({
+                        "text": match.group(),
+                        "start": match.start(),
+                        "end": match.end(),
+                        "sensitivity": config["sensitivity"]
+                    })
+    
+    def _detect_sensitive_topics(self, text):
+        """
+        Detect sensitive topics in text using keyword matching.
         
-        for framework in frameworks:
-            # Get framework-specific concepts
-            if hasattr(framework, "get_sensitive_concepts"):
-                framework_concepts = framework.get_sensitive_concepts()
+        Note: A production implementation would use more sophisticated
+        topic modeling or classification techniques.
+        """
+        text_lower = text.lower()
+        
+        for topic, config in self.sensitive_topics.items():
+            # Count keyword occurrences
+            keyword_count = sum(text_lower.count(k.lower()) for k in config["keywords"])
+            
+            # Calculate topic score (simple heuristic)
+            text_length = len(text.split())
+            topic_score = min(1.0, keyword_count / max(1, text_length / 50))
+            
+            self.topic_scores[topic] = {
+                "score": topic_score,
+                "threshold": config["threshold"],
+                "severity": config["severity"],
+                "exceeds_threshold": topic_score >= config["threshold"]
+            }
+    
+    def _check_entity_relationships(self, text):
+        """Check for problematic entity relationships"""
+        violations = []
+        
+        for rule_id, rule in self.relationship_rules.items():
+            trigger_entities = rule["trigger_entities"]
+            
+            # Get all instances of trigger entities
+            entity_instances = []
+            for entity_type in trigger_entities:
+                if entity_type in self.detected_entities:
+                    entity_instances.extend(self.detected_entities[entity_type])
+            
+            if not entity_instances:
+                continue
                 
-                # Add to overall concept map with framework attribution
-                for concept, data in framework_concepts.items():
-                    if concept not in sensitive_concepts:
-                        sensitive_concepts[concept] = {
-                            "frameworks": [framework.id],
-                            "severity": data.get("severity", "medium"),
-                            "threshold": data.get("threshold", 0.7)
-                        }
-                    else:
-                        # Add framework to existing concept
-                        sensitive_concepts[concept]["frameworks"].append(framework.id)
-                        
-                        # Use highest severity if multiple frameworks define it
-                        if self._severity_rank(data.get("severity")) > self._severity_rank(sensitive_concepts[concept]["severity"]):
-                            sensitive_concepts[concept]["severity"] = data.get("severity")
-                            
-                        # Use lowest threshold (most conservative)
-                        if data.get("threshold", 1.0) < sensitive_concepts[concept]["threshold"]:
-                            sensitive_concepts[concept]["threshold"] = data.get("threshold")
-        
-        return sensitive_concepts
-        
-    def _score_concepts(self, semantic_analysis, sensitive_concepts):
-        """Score content against sensitive concepts"""
-        scores = {}
-        
-        for concept in sensitive_concepts:
-            # Use topic scores if concept matches a topic
-            if concept in semantic_analysis.get("topics", {}):
-                scores[concept] = semantic_analysis["topics"][concept]
-            else:
-                # Use embedding similarity for concepts not directly in topics
-                # This is a placeholder - would use real concept embeddings
-                scores[concept] = 0.1
+            # Check relationship conditions
+            if rule["condition"] == "co-occurrence" and len(entity_instances) >= 2:
+                # Check if entities are within max_distance
+                max_distance = rule.get("max_distance", float("inf"))
                 
-        return scores
-        
-    def _calculate_initial_risk(self, semantics, frameworks, topics):
-        """Calculate initial risk based on semantics and frameworks"""
-        # Base risk from topics
-        topic_risk = sum(
-            score * self.concept_sensitivity.get(topic, 0.5)
-            for topic, score in topics.items()
-        ) / max(len(topics), 1)
-        
-        # Risk from framework-specific factors
-        framework_risk = 0.0
-        for framework in frameworks:
-            if hasattr(framework, "calculate_risk"):
-                framework_risk = max(framework_risk, framework.calculate_risk(semantics))
-        
-        # Combine risks (weighted average)
-        combined_risk = 0.7 * topic_risk + 0.3 * framework_risk
-        
-        # Ensure in valid range
-        return max(0.0, min(combined_risk, 1.0))
-        
-    def _needs_full_update(self, token_text, token_count, last_full_update):
-        """Determine if full semantic update is needed"""
-        # Update on regular intervals
-        if token_count - last_full_update >= self.full_update_interval:
-            return True
+                # Sort entities by position
+                sorted_entities = sorted(entity_instances, key=lambda e: e["start"])
+                
+                # Check distances between consecutive entities
+                for i in range(len(sorted_entities) - 1):
+                    distance = sorted_entities[i+1]["start"] - sorted_entities[i]["end"]
+                    if distance <= max_distance:
+                        violations.append({
+                            "rule_id": rule_id,
+                            "description": rule["description"],
+                            "severity": rule["severity"],
+                            "entities": [sorted_entities[i], sorted_entities[i+1]],
+                            "type": "entity_relationship"
+                        })
             
-        # Update on sentence boundaries
-        if any(p in token_text for p in ['.', '!', '?', '\n']):
-            return True
-            
-        # Update on trigger words
-        if token_text.lower().strip() in self.update_trigger_words:
-            return True
-            
-        # Otherwise, no full update needed
-        return False
+            elif rule["condition"] == "requires_disclaimer":
+                import re
+                # Check if disclaimer is present
+                disclaimer_pattern = rule.get("disclaimer_pattern", "")
+                if disclaimer_pattern and not re.search(disclaimer_pattern, text, re.IGNORECASE):
+                    # If entities present but no disclaimer
+                    if entity_instances:
+                        violations.append({
+                            "rule_id": rule_id,
+                            "description": rule["description"],
+                            "severity": rule["severity"],
+                            "entity_count": len(entity_instances),
+                            "type": "missing_disclaimer"
+                        })
         
-    def _perform_full_update(self, state, generated_text, frameworks):
-        """Perform full semantic state update"""
-        # Update text fingerprint
-        state["text_fingerprint"] = self._get_text_fingerprint(state["text_buffer"])
+        return violations
+    
+    def _check_domain_specific_rules(self, text, domain=None):
+        """Check domain-specific compliance rules"""
+        violations = []
         
-        # Perform semantic analysis on current buffer
-        semantic_analysis = self.semantic_analyzer.analyze(state["text_buffer"])
+        if not domain or domain not in self.domain_specific_rules:
+            return violations
         
-        # Update semantic embedding with weighted average
-        alpha = 0.7  # Weight for new information
-        state["semantic_embedding"] = self._weighted_combine(
-            state["semantic_embedding"],
-            semantic_analysis["embedding"],
-            alpha
-        )
+        domain_rules = self.domain_specific_rules[domain]
         
-        # Update topics
-        new_topics = self.topic_detector.detect_topics(state["text_buffer"])
-        state["topics"] = self._update_topics(state["topics"], new_topics)
-        
-        # Update entities
-        new_entities = self.entity_tracker.extract_entities(state["text_buffer"])
-        state["entities"] = self._merge_entities(state["entities"], new_entities)
-        
-        # Update concept scores
-        state["concept_scores"] = self._score_concepts(
-            semantic_analysis, state["sensitive_concepts"]
-        )
-        
-        # Update risk score
-        state["risk_score"] = self._calculate_updated_risk(state, frameworks)
-        
-        # Add warnings if needed
-        self._update_warnings(state, generated_text)
-        
-        # Update last full update counter
-        state["last_full_update"] = state["token_count"]
-        
-        return state
-        
-    def _perform_lightweight_update(self, state, token_text, generated_text):
-        """Perform lightweight semantic update"""
-        # Update risk score with minimal computation
-        if token_text.strip():  # Non-whitespace token
-            # Simple approximation based on token
-            risk_adjustment = self._estimate_token_risk(token_text, state["topics"])
-            state["risk_score"] = min(1.0, max(0.0, state["risk_score"] + risk_adjustment))
-            
-            # Check if risk crossed threshold and add warning if so
-            if state["risk_score"] > 0.8 and not any(w["type"] == "high_risk" for w in state["warnings"]):
-                state["warnings"].append({
-                    "type": "high_risk",
-                    "message": "Content is approaching compliance boundaries",
-                    "position": len(generated_text)
+        # Check for required disclaimers
+        if domain_rules.get("disclaimers_required", False):
+            import re
+            disclaimer_pattern = domain_rules.get("disclaimer_pattern", "")
+            if disclaimer_pattern and not re.search(disclaimer_pattern, text, re.IGNORECASE):
+                violations.append({
+                    "rule_id": f"{domain}_disclaimer_required",
+                    "description": f"Content in {domain} domain requires appropriate disclaimers",
+                    "severity": "medium",
+                    "type": "domain_requirement"
                 })
-                
-        return state
         
-    def _weighted_combine(self, old_embedding, new_embedding, alpha):
-        """Combine embeddings with weighted average"""
-        if not isinstance(old_embedding, np.ndarray):
-            old_embedding = np.array(old_embedding)
-        if not isinstance(new_embedding, np.ndarray):
-            new_embedding = np.array(new_embedding)
-            
-        # Weighted combination
-        combined = (1 - alpha) * old_embedding + alpha * new_embedding
+        # Check for prohibited phrases
+        prohibited_phrases = domain_rules.get("prohibited_phrases", [])
+        for phrase in prohibited_phrases:
+            if phrase.lower() in text.lower():
+                violations.append({
+                    "rule_id": f"{domain}_prohibited_phrase",
+                    "description": f"Content contains prohibited phrase: '{phrase}'",
+                    "severity": "high",
+                    "type": "prohibited_content",
+                    "phrase": phrase
+                })
         
-        # Normalize
-        norm = np.linalg.norm(combined)
-        if norm > 0:
-            combined = combined / norm
-            
-        return combined
+        return violations
+    
+    def _check_framework_rules(self, text, framework_ids, context=None):
+        """Check compliance against specific regulatory frameworks"""
+        # In a production system, this would query framework-specific rules
+        # This is a placeholder implementation
+        return []
+    
+    def _calculate_compliance_score(self, violations):
+        """Calculate compliance score based on violations"""
+        if not violations:
+            return 1.0
         
-    def _update_topics(self, old_topics, new_topics):
-        """Update topic scores with new information"""
-        updated_topics = old_topics.copy()
-        
-        # Update existing topics with exponential moving average
-        for topic, score in new_topics.items():
-            if score > 0.1:  # Filter low-confidence topics
-                if topic in updated_topics:
-                    updated_topics[topic] = 0.7 * updated_topics[topic] + 0.3 * score
-                else:
-                    updated_topics[topic] = score
-                    
-        # Remove topics with very low scores
-        updated_topics = {k: v for k, v in updated_topics.items() if v > 0.05}
-        
-        return updated_topics
-        
-    def _merge_entities(self, old_entities, new_entities):
-        """Merge entity lists with deduplication"""
-        merged = old_entities.copy()
-        
-        # Index existing entities by ID or name
-        entity_map = {
-            e.get("id", e.get("name", "")): e
-            for e in merged
+        # Calculate weighted score based on violation severity
+        severity_weights = {
+            "low": 0.1,
+            "medium": 0.3,
+            "high": 0.6,
+            "critical": 1.0
         }
         
-        # Add or update entities
-        for entity in new_entities:
-            entity_id = entity.get("id", entity.get("name", ""))
+        total_penalty = sum(severity_weights.get(v.get("severity", "medium"), 0.3) for v in violations)
+        
+        # Cap the penalty at 1.0
+        total_penalty = min(1.0, total_penalty)
+        
+        return 1.0 - total_penalty
+
+
+class CompliantLanguageModelProcessor:
+    """
+    Compliant Language Model Processor that extends language models
+    with integrated regulatory compliance enforcement.
+    """
+    def __init__(self, language_model, compliance_monitor, compliance_config):
+        self.language_model = language_model
+        self.compliance_monitor = compliance_monitor
+        self.config = compliance_config
+        
+        # Initialize token-level compliance gate
+        self.token_gate = self._initialize_token_gate()
+        
+        # Initialize performance tracking
+        self.metrics = {
+            "requests_processed": 0,
+            "compliant_responses": 0,
+            "rejected_requests": 0,
+            "avg_response_time": 0.0
+        }
+    
+    def _initialize_token_gate(self):
+        """Initialize token-level compliance gate"""
+        # In a real implementation, this would instantiate a token filtering component
+        return TokenLevelComplianceGate(self.config)
+    
+    async def _get_llm_response(self, prompt, max_tokens=100, temperature=0.7):
+        """
+        Get response from language model.
+        
+        Note: This is a placeholder implementation. A real implementation would
+        call an actual LLM API (e.g., OpenAI, Anthropic, or a local model).
+        
+        Args:
+            prompt: Input prompt
+            max_tokens: Maximum tokens to generate
+            temperature: Temperature parameter for generation
             
-            if entity_id in entity_map:
-                # Update existing entity
-                entity_map[entity_id].update(entity)
-            else:
-                # Add new entity
-                merged.append(entity)
-                
-        return merged
+        Returns:
+            Generated text from LLM
+        """
+        import random
+        import asyncio
         
-    def _calculate_updated_risk(self, state, frameworks):
-        """Calculate updated risk score"""
-        # Factor in sensitive concept scores
-        concept_risk = 0.0
-        num_concepts = 0
+        # Simulate API latency
+        await asyncio.sleep(0.5 + random.random())
         
-        for concept, score in state["concept_scores"].items():
-            threshold = state["sensitive_concepts"][concept]["threshold"]
-            if score > threshold:
-                # Weight by concept severity
-                severity_weight = self._severity_weight(state["sensitive_concepts"][concept]["severity"])
-                concept_risk += (score - threshold) * severity_weight
-                num_concepts += 1
-                
-        # Normalize concept risk
-        if num_concepts > 0:
-            concept_risk /= num_concepts
+        # In a real implementation, this would be an API call like:
+        # response = await openai.Completion.acreate(
+        #     engine="text-davinci-003",
+        #     prompt=prompt,
+        #     max_tokens=max_tokens,
+        #     temperature=temperature
+        # )
+        # return response.choices[0].text
+        
+        # Simulated response based on prompt
+        if "financial advice" in prompt.lower():
+            return "Investing in stocks can be beneficial. Consider diversification and long-term strategies. However, all investments carry risk and past performance doesn't guarantee future results."
+        elif "medical" in prompt.lower():
+            return "Some common symptoms of the cold include coughing, sneezing, and a runny nose. It's important to rest and stay hydrated. Remember, this is general information, not medical advice."
+        elif "personal information" in prompt.lower():
+            return "Personal information should be handled carefully. I can't provide specific individuals' data. Instead, here are best practices for data privacy..."
+        else:
+            return "I understand you're asking about this topic. Here's some general information that might be helpful. The key considerations include various factors that should be taken into account."
+    
+    async def generate_compliant_text(self, prompt, context=None, max_tokens=100, compliance_mode="strict"):
+        """
+        Generate text that complies with applicable regulatory frameworks.
+        
+        Note: A real implementation would stream tokens and apply the
+        compliance gate iteratively to each token during generation.
+        
+        Args:
+            prompt: Input text to initiate generation
+            context: Additional context information
+            max_tokens: Maximum number of tokens to generate
+            compliance_mode: 'strict' or 'relaxed' enforcement
             
-        # Apply decay to current risk (risk diminishes if no new issues)
-        decay_factor = 0.95
-        decayed_risk = state["risk_score"] * decay_factor
+        Returns:
+            Dict containing generated text and compliance information
+        """
+        import time
+        start_time = time.time()
         
-        # Combine risks
-        topic_weight = 0.3
-        concept_weight = 0.4
-        prev_weight = 0.3
+        # Update metrics
+        self.metrics["requests_processed"] += 1
         
-        # Get topic risk
-        topic_risk = sum(
-            score * self.concept_sensitivity.get(topic, 0.5)
-            for topic, score in state["topics"].items()
-        ) / max(len(state["topics"]), 1)
+        # Step 1: Pre-generation compliance check
+        pre_check_result = self._pre_generation_compliance_check(prompt, context, compliance_mode)
         
-        # Combine component risks
-        updated_risk = (
-            prev_weight * decayed_risk +
-            topic_weight * topic_risk +
-            concept_weight * concept_risk
+        if not pre_check_result["is_compliant"]:
+            self.metrics["rejected_requests"] += 1
+            return {
+                "text": None,
+                "is_compliant": False,
+                "compliance_error": pre_check_result["error"],
+                "prompt_violations": pre_check_result["violations"],
+                "generation_time": time.time() - start_time
+            }
+        
+        # Step 2: Get applicable frameworks and constraints
+        frameworks, constraints = self._get_frameworks_and_constraints(pre_check_result, context)
+        
+        # Step 3: Generate content with compliance enforced
+        # Note: In a production system, this would stream tokens and apply
+        # the compliance gate to each token during generation
+        try:
+            # Get raw response from language model
+            raw_response = await self._get_llm_response(
+                prompt=prompt,
+                max_tokens=max_tokens,
+                temperature=self.config.get("temperature", 0.7)
+            )
+            
+            # Stream and filter tokens (simulated here)
+            filtered_response = self._simulate_token_streaming(raw_response, constraints, compliance_mode)
+            
+        except Exception as e:
+            return {
+                "text": None,
+                "is_compliant": False,
+                "compliance_error": f"Error during generation: {str(e)}",
+                "generation_time": time.time() - start_time
+            }
+        
+        # Step 4: Post-generation compliance verification
+        verification_result = self.compliance_monitor.evaluate_output(
+            filtered_response, 
+            context=context, 
+            framework_ids=[f.id for f in frameworks]
         )
         
-        # Ensure in valid range
-        return max(0.0, min(updated_risk, 1.0))
+        # Step 5: Apply post-processing if necessary
+        final_text, was_modified = self._apply_post_processing(
+            filtered_response,
+            verification_result,
+            compliance_mode
+        )
         
-    def _estimate_token_risk(self, token, topics):
-        """Estimate risk contribution from a single token"""
-        # Simple heuristic for token risk
-        token_lower = token.lower()
+        # Determine if the final text is compliant
+        is_compliant = verification_result["is_compliant"]
         
-        # Check if token is related to sensitive topics
-        for topic in topics:
-            if topic in self.concept_sensitivity and token_lower in topic:
-                return 0.01 * self.concept_sensitivity[topic]
-                
-        # Default small adjustment
-        return 0.001
+        if is_compliant:
+            self.metrics["compliant_responses"] += 1
         
-    def _update_warnings(self, state, generated_text):
-        """Update warnings based on current state"""
-        # Check risk thresholds
-        if state["risk_score"] > 0.8 and not any(w["type"] == "high_risk" for w in state["warnings"]):
-            state["warnings"].append({
-                "type": "high_risk",
-                "message": "Content is approaching compliance boundaries",
-                "position": len(generated_text)
-            })
+        # Update timing metrics
+        generation_time = time.time() - start_time
+        self._update_timing_metrics(generation_time)
+        
+        return {
+            "text": final_text if is_compliant else None,
+            "is_compliant": is_compliant,
+            "compliance_score": verification_result["compliance_score"],
+            "modified": was_modified,
+            "violations": verification_result.get("violations", []),
+            "frameworks": [f.id for f in frameworks],
+            "generation_time": generation_time
+        }
+    
+    def _pre_generation_compliance_check(self, prompt, context, compliance_mode):
+        """Check prompt for compliance issues before generation"""
+        # Simple check for prohibited content
+        prohibited_terms = self.config.get("prohibited_prompt_terms", [])
+        violations = []
+        
+        for term in prohibited_terms:
+            if term.lower() in prompt.lower():
+                violations.append({
+                    "rule_id": "prohibited_prompt_term",
+                    "description": f"Prompt contains prohibited term: '{term}'",
+                    "severity": "high",
+                    "term": term
+                })
+        
+        # Determine if prompt is compliant
+        is_compliant = len(violations) == 0
+        if not is_compliant:
+            error = "Prompt contains prohibited content"
+        else:
+            error = None
+        
+        return {
+            "is_compliant": is_compliant,
+            "error": error,
+            "violations": violations
+        }
+    
+    def _get_frameworks_and_constraints(self, pre_check_result, context):
+        """Get applicable frameworks and constraints based on context"""
+        # In a real implementation, this would query a regulatory knowledge base
+        # This is a simplified placeholder implementation
+        
+        # Determine domain from context
+        domain = context.get("domain", "general") if context else "general"
+        
+        # Get applicable frameworks (placeholder)
+        frameworks = []
+        if domain == "finance":
+            frameworks.append(Framework("FINREG", "Financial Regulations"))
+        elif domain == "healthcare":
+            frameworks.append(Framework("HIPAA", "Health Insurance Portability and Accountability Act"))
+        elif domain == "general":
+            frameworks.append(Framework("GENERAL", "General Content Guidelines"))
+        
+        # Get constraints from frameworks (placeholder)
+        constraints = []
+        for framework in frameworks:
+            framework_constraints = framework.get_constraints(context)
+            constraints.extend(framework_constraints)
+        
+        return frameworks, constraints
+    
+    def _simulate_token_streaming(self, text, constraints, compliance_mode):
+        """
+        Simulate token-by-token streaming and filtering.
+        
+        Note: In a real implementation, this would stream tokens from the
+        language model and apply the compliance gate to each token.
+        """
+        # Simplified token filtering simulation
+        filtered_text = text
+        
+        # Apply basic filtering based on constraints
+        for constraint in constraints:
+            if constraint.get("type") == "prohibited_content":
+                prohibited_terms = constraint.get("terms", [])
+                for term in prohibited_terms:
+                    # Simple term replacement (a real implementation would be more sophisticated)
+                    if term.lower() in filtered_text.lower():
+                        filtered_text = filtered_text.replace(term, "[REDACTED]")
+        
+        return filtered_text
+    
+    def _apply_post_processing(self, text, verification_result, compliance_mode):
+        """Apply post-processing to address compliance issues"""
+        modified_text = text
+        was_modified = False
+        
+        # Only apply modifications if there are violations but the mode allows it
+        if not verification_result["is_compliant"] and compliance_mode != "strict":
+            violations = verification_result.get("violations", [])
             
-        # Check concept thresholds
-        for concept, score in state["concept_scores"].items():
-            threshold = state["sensitive_concepts"][concept]["threshold"]
-            if score > threshold:
-                concept_warning = {
-                    "type": "concept_threshold",
-                    "concept": concept,
-                    "message": f"Content contains sensitive concept: {concept}",
-                    "severity": state["sensitive_concepts"][concept]["severity"],
-                    "position": len(generated_text)
+            for violation in violations:
+                # Apply fixes based on violation type
+                if violation.get("type") == "missing_disclaimer":
+                    # Add appropriate disclaimer
+                    domain = violation.get("domain", "general")
+                    disclaimer = self._get_disclaimer_for_domain(domain)
+                    if disclaimer:
+                        modified_text += f"\n\n{disclaimer}"
+                        was_modified = True
+                        
+                elif violation.get("type") == "prohibited_content":
+                    # Replace prohibited phrase
+                    phrase = violation.get("phrase", "")
+                    if phrase and phrase in modified_text:
+                        modified_text = modified_text.replace(phrase, "[REMOVED]")
+                        was_modified = True
+        
+        return modified_text, was_modified
+    
+    def _get_disclaimer_for_domain(self, domain):
+        """Get appropriate disclaimer for domain"""
+        disclaimers = {
+            "finance": "Disclaimer: This information is for educational purposes only and not financial advice. Consult a financial professional before making investment decisions.",
+            "healthcare": "Disclaimer: This information is not medical advice. Consult a healthcare professional for medical concerns.",
+            "general": "Note: This information is provided for general purposes only."
+        }
+        return disclaimers.get(domain, disclaimers["general"])
+    
+    def _update_timing_metrics(self, generation_time):
+        """Update timing metrics with exponential moving average"""
+        current_avg = self.metrics["avg_response_time"]
+        request_count = self.metrics["requests_processed"]
+        
+        if request_count > 1:
+            # Exponential moving average with 0.1 weight for new sample
+            self.metrics["avg_response_time"] = 0.9 * current_avg + 0.1 * generation_time
+        else:
+            # First request
+            self.metrics["avg_response_time"] = generation_time
+
+
+class TokenLevelComplianceGate:
+    """Simplified token-level compliance gate implementation"""
+    def __init__(self, config):
+        self.config = config
+        # This would include token filtering logic in a real implementation
+
+
+class Framework:
+    """Simple framework implementation for example purposes"""
+    def __init__(self, id, name):
+        self.id = id
+        self.name = name
+    
+    def get_constraints(self, context=None):
+        """Get constraints from this framework"""
+        # Placeholder constraints
+        if self.id == "FINREG":
+            return [
+                {
+                    "id": "financial_advice_disclaimer",
+                    "type": "required_disclaimer",
+                    "description": "Financial content requires appropriate disclaimers",
+                    "severity": "medium"
+                },
+                {
+                    "id": "investment_claims",
+                    "type": "prohibited_content",
+                    "description": "Avoid guarantees about investment returns",
+                    "terms": ["guaranteed returns", "risk-free investment"],
+                    "severity": "high"
                 }
-                
-                # Add warning if not already present
-                if not any(w["type"] == "concept_threshold" and w["concept"] == concept for w in state["warnings"]):
-                    state["warnings"].append(concept_warning)
-                    
-        return state
+            ]
+        elif self.id == "HIPAA":
+            return [
+                {
+                    "id": "phi_protection",
+                    "type": "entity_protection",
+                    "description": "Protected health information must be safeguarded",
+                    "entities": ["PHI"],
+                    "severity": "high"
+                },
+                {
+                    "id": "medical_advice_disclaimer",
+                    "type": "required_disclaimer",
+                    "description": "Medical content requires appropriate disclaimers",
+                    "severity": "medium"
+                }
+            ]
+        else:
+            return [
+                {
+                    "id": "harmful_content",
+                    "type": "prohibited_content",
+                    "description": "Content must not include harmful instructions",
+                    "terms": ["how to hack", "how to steal"],
+                    "severity": "high"
+                }
+            ]
+
+
+async def example_usage():
+    """
+    Example usage of the compliant language model processor.
+    
+    This demonstrates how to set up and use the compliance components
+    to generate text that adheres to regulatory requirements.
+    """
+    # Configure compliance components
+    compliance_config = {
+        "strict_mode": True,
+        "temperature": 0.7,
+        "prohibited_prompt_terms": ["pornography", "illegal activities", "hacking instructions"],
+        "entity_sensitivity": {
+            "PII": "high",
+            "PHI": "high",
+            "LOCATION": "medium"
+        }
+    }
+    
+    # Initialize compliance monitor
+    compliance_monitor = SemanticComplianceMonitor(compliance_config)
+    
+    # Initialize language model (placeholder)
+    language_model = "gpt-4"  # In a real implementation, this would be a model instance
+    
+    # Initialize processor
+    processor = CompliantLanguageModelProcessor(
+        language_model=language_model,
+        compliance_monitor=compliance_monitor,
+        compliance_config=compliance_config
+    )
+    
+    # Example prompts
+    prompts = [
+        "Can you give me financial advice about the best stocks to invest in?",
+        "Tell me about common symptoms of the cold and what to do about them.",
+        "Write a story about a person who lives in New York and their daily routine."
+    ]
+    
+    # Process each prompt with different contexts
+    contexts = [
+        {"domain": "finance"},
+        {"domain": "healthcare"},
+        {"domain": "general"}
+    ]
+    
+    # Generate compliant responses
+    for prompt, context in zip(prompts, contexts):
+        print(f"\nProcessing prompt in {context['domain']} domain:")
+        print(f"Prompt: {prompt}")
         
-    def _get_text_fingerprint(self, text):
-        """Generate fingerprint of text for efficient comparison"""
-        return hashlib.md5(text.encode()).hexdigest()
+        result = await processor.generate_compliant_text(
+            prompt=prompt,
+            context=context,
+            max_tokens=100,
+            compliance_mode="relaxed"  # Allow post-processing fixes
+        )
         
-    def _get_state_key(self, text, frameworks):
-        """Generate key for state caching"""
-        text_prefix = text[:50] if len(text) > 50 else text
-        frameworks_str = "-".join(sorted(f.id for f in frameworks))
-        return f"{text_prefix}|{frameworks_str}"
+        if result["is_compliant"]:
+            print(f"Generated compliant text (score: {result['compliance_score']:.2f}):")
+            print(result["text"])
+            if result.get("modified", False):
+                print("Note: Text was modified to ensure compliance")
+        else:
+            print("Failed to generate compliant text:")
+            print(f"Compliance error: {result.get('compliance_error', 'Unknown error')}")
+            if "violations" in result:
+                print("Violations:")
+                for violation in result["violations"]:
+                    print(f"- {violation.get('description', 'Unknown violation')}")
         
-    def _severity_rank(self, severity):
-        """Convert severity to numeric rank"""
-        ranks = {"low": 1, "medium": 2, "high": 3}
-        return ranks.get(severity, 1)
-        
-    def _severity_weight(self, severity):
-        """Convert severity to weight factor"""
-        weights = {"low": 0.5, "medium": 1.0, "high": 2.0}
-        return weights.get(severity, 1.0)
+        print(f"Generation time: {result['generation_time']:.2f}s")
+    
+    # Print performance metrics
+    print("\nPerformance Metrics:")
+    print(f"Requests processed: {processor.metrics['requests_processed']}")
+    print(f"Compliant responses: {processor.metrics['compliant_responses']}")
+    print(f"Rejected requests: {processor.metrics['rejected_requests']}")
+    print(f"Average response time: {processor.metrics['avg_response_time']:.2f}s")
+
+
+# Run the example
+import asyncio
+asyncio.run(example_usage())
