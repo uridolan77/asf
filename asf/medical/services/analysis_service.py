@@ -16,7 +16,7 @@ from asf.medical.core.exceptions import (
     ExternalServiceError, DatabaseError, ModelError
 )
 
-from asf.medical.ml.services.contradiction_service import ContradictionService
+from asf.medical.ml.services.enhanced_contradiction_service import EnhancedContradictionService
 from asf.medical.ml.services.temporal_service import TemporalService
 from asf.medical.services.search_service import SearchService
 from asf.medical.storage.repositories.result_repository import ResultRepository
@@ -31,7 +31,7 @@ class AnalysisService:
 
     def __init__(
         self,
-        contradiction_service: ContradictionService,
+        contradiction_service: EnhancedContradictionService,
         temporal_service: TemporalService,
         search_service: SearchService,
         result_repository: ResultRepository
@@ -119,13 +119,11 @@ class AnalysisService:
         articles = search_result['results']
 
         try:
-            # Detect contradictions
-            contradictions = await self.contradiction_service.detect_contradictions(
+            # Detect contradictions using enhanced service
+            contradictions = await self.contradiction_service.detect_contradictions_in_articles(
                 articles,
                 threshold=threshold,
-                use_biomedlm=use_biomedlm,
-                use_tsmixer=use_tsmixer,
-                use_lorentz=use_lorentz
+                use_all_methods=use_biomedlm or use_tsmixer or use_lorentz
             )
 
             # Determine detection method

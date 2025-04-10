@@ -14,8 +14,8 @@ The ASF Medical Research Synthesizer API has been consolidated to improve mainta
 
 The authentication system has been consolidated into a single, comprehensive system:
 
-- **auth_unified.py**: Unified authentication module with service-based approach
-- **routers/auth_unified.py**: Unified authentication router with consistent endpoints
+- **auth.py**: Unified authentication module with service-based approach
+- **routers/auth.py**: Unified authentication router with consistent endpoints
 
 ### Key Features
 
@@ -29,7 +29,7 @@ The authentication system has been consolidated into a single, comprehensive sys
 ### Usage
 
 ```python
-from asf.medical.api.auth_unified import (
+from asf.medical.api.auth import (
     get_current_active_user, get_admin_user, has_role, has_any_role
 )
 
@@ -62,7 +62,7 @@ async def multi_role_endpoint(
 
 The API layer has been standardized to use a single, comprehensive FastAPI application:
 
-- **main_unified.py**: Unified FastAPI application with all routers
+- **main.py**: Unified FastAPI application with all routers
 
 ### Key Features
 
@@ -77,7 +77,7 @@ The API layer has been standardized to use a single, comprehensive FastAPI appli
 
 ```bash
 # Run the API
-uvicorn asf.medical.api.main_unified:app --reload
+uvicorn asf.medical.api.main:app --reload
 
 # Access the API
 curl http://localhost:8000/
@@ -124,7 +124,7 @@ async def example_endpoint():
 async def paginated_endpoint(page: int = 1, page_size: int = 10):
     data, total = your_service.get_paginated_data(page, page_size)
     total_pages = (total + page_size - 1) // page_size
-    
+
     return PaginatedResponse(
         success=True,
         message="Data retrieved successfully",
@@ -144,19 +144,19 @@ To migrate to the consolidated API:
 1. Update imports to use the unified authentication module:
    ```python
    # Old
-   from asf.medical.api.auth import get_current_user
-   
+   from asf.medical.api.old_auth import get_current_user
+
    # New
-   from asf.medical.api.auth_unified import get_current_active_user
+   from asf.medical.api.auth import get_current_active_user
    ```
 
 2. Update API entry point:
    ```bash
    # Old
-   uvicorn asf.medical.api.main:app --reload
-   
+   uvicorn asf.medical.api.old_main:app --reload
+
    # New
-   uvicorn asf.medical.api.main_unified:app --reload
+   uvicorn asf.medical.api.main:app --reload
    ```
 
 3. Update response models:
@@ -165,10 +165,10 @@ To migrate to the consolidated API:
    @router.get("/example")
    async def example_endpoint():
        return {"data": your_data}
-   
+
    # New
    from asf.medical.api.models.base import APIResponse
-   
+
    @router.get("/example", response_model=APIResponse[YourModel])
    async def example_endpoint():
        return APIResponse(

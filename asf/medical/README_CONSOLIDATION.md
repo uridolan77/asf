@@ -52,16 +52,13 @@ A comprehensive client library was created for interacting with the unified API:
 
 Comprehensive tests were added for the unified authentication and API:
 
-- **tests/unit/test_auth_unified.py**: Unit tests for the authentication service and dependencies
-- **tests/integration/test_api_unified.py**: Integration tests for the API endpoints
-- **tests/integration/test_unified_api.py**: Comprehensive integration tests for the unified API
-- **run_unified_tests.py**: Script to run the tests with options for test type, verbosity, and coverage
+- **tests/unit/test_auth.py**: Unit tests for the authentication service and dependencies
+- **tests/integration/test_api.py**: Integration tests for the API endpoints
 
 ## Cleanup
 
 The old code was cleaned up to remove redundant implementations:
 
-- **cleanup_old_code.py**: Script to remove old code and rename unified files
 - Old router files were removed
 - Old authentication implementations were removed
 - Old main files were removed
@@ -71,7 +68,7 @@ The old code was cleaned up to remove redundant implementations:
 
 The consolidated file structure is as follows:
 
-```
+```bash
 asf/medical/
 ├── api/
 │   ├── auth.py                  # Unified authentication module
@@ -87,14 +84,14 @@ asf/medical/
 │       ├── __init__.py          # Router initialization
 │       ├── auth.py              # Authentication router
 │       ├── search.py            # Search router
-│       ├── contradiction.py     # Contradiction router
+│       ├── enhanced_contradiction.py  # Enhanced contradiction router
+│       ├── contradiction_resolution.py  # Contradiction resolution router
 │       ├── screening.py         # Screening router
 │       ├── export.py            # Export router
 │       ├── analysis.py          # Analysis router
 │       └── knowledge_base.py    # Knowledge base router
 ├── client/
 │   ├── api_client.py            # Client library
-│   ├── MIGRATION_GUIDE.md       # Migration guide
 │   ├── README.md                # Client library documentation
 │   ├── examples/
 │   │   ├── search_example.py    # Search example
@@ -102,30 +99,12 @@ asf/medical/
 │   │   ├── knowledge_base_example.py  # Knowledge base example
 │   │   ├── screening_example.py  # Screening example
 │   │   └── export_example.py    # Export example
-│   └── migration_helper.py      # Migration helper script
 ├── tests/
 │   ├── unit/
-│   │   └── test_auth_unified.py  # Authentication unit tests
+│   │   └── test_auth.py         # Authentication unit tests
 │   └── integration/
-│       ├── test_api_unified.py  # API integration tests
-│       └── test_unified_api.py  # Comprehensive API tests
-├── run_unified_tests.py         # Test runner script
-├── cleanup_old_code.py          # Cleanup script
+│       └── test_api.py         # API integration tests
 └── README_CONSOLIDATION.md      # This file
-```
-
-## Running the Cleanup Script
-
-To clean up the old code:
-
-```bash
-python -m asf.medical.cleanup_old_code
-```
-
-To perform a dry run without making changes:
-
-```bash
-python -m asf.medical.cleanup_old_code --dry-run
 ```
 
 ## Running the Tests
@@ -133,21 +112,20 @@ python -m asf.medical.cleanup_old_code --dry-run
 To run the tests:
 
 ```bash
-python -m asf.medical.run_unified_tests
+pytest asf/medical/tests
 ```
 
 To run specific tests:
 
 ```bash
-python -m asf.medical.run_unified_tests --type unit
-python -m asf.medical.run_unified_tests --type integration
-python -m asf.medical.run_unified_tests --type auth
+pytest asf/medical/tests/unit
+pytest asf/medical/tests/integration
 ```
 
 To generate a coverage report:
 
 ```bash
-python -m asf.medical.run_unified_tests --coverage
+pytest asf/medical/tests --cov=asf.medical
 ```
 
 ## Using the Client Library
@@ -160,18 +138,18 @@ from asf.medical.client.api_client import MedicalResearchSynthesizerClient
 
 async def main():
     client = MedicalResearchSynthesizerClient()
-    
+
     try:
         # Login
         login_response = await client.login("user@example.com", "password")
-        
+
         # Search
         search_response = await client.search("statin therapy cardiovascular")
-        
+
         # Process results
         results = search_response.data["results"]
         print(f"Found {len(results)} results")
-        
+
     finally:
         # Close client
         await client.close()

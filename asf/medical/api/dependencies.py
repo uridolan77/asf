@@ -5,16 +5,13 @@ This module provides dependencies that can be injected into API endpoints
 using FastAPI's dependency injection system.
 """
 
-import os
 import logging
-from typing import Optional, Dict, Any, AsyncGenerator
+from typing import Optional
 
-from fastapi import Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import Depends
 
-from asf.medical.api.auth import get_current_user, get_current_active_user, get_admin_user, has_role, has_any_role
-from asf.medical.storage.models import User
-from asf.medical.storage.database import get_db_session
+# Import only what we need
+from asf.medical.api.auth import get_current_user
 from asf.medical.storage.repositories.user_repository import UserRepository
 from asf.medical.storage.repositories.query_repository import QueryRepository
 from asf.medical.storage.repositories.result_repository import ResultRepository
@@ -25,7 +22,7 @@ from asf.medical.ml.models.biomedlm import BioMedLMService
 from asf.medical.ml.models.tsmixer import TSMixerService
 from asf.medical.ml.models.lorentz_embeddings import LorentzEmbeddingService
 from asf.medical.ml.models.shap_explainer import SHAPExplainer
-from asf.medical.ml.services.contradiction_service import ContradictionService
+# Removed old contradiction service import
 from asf.medical.ml.services.enhanced_contradiction_service import EnhancedContradictionService
 from asf.medical.ml.services.temporal_service import TemporalService
 from asf.medical.ml.services.prisma_screening_service import PRISMAScreeningService
@@ -36,7 +33,8 @@ from asf.medical.services.knowledge_base_service import KnowledgeBaseService
 from asf.medical.services.export_service import ExportService
 from asf.medical.core.config import settings
 from asf.medical.ml.model_registry import model_registry
-from asf.medical.core.cache import cache_manager
+# Import only if needed
+# from asf.medical.core.cache import cache_manager
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -170,30 +168,7 @@ async def get_shap_explainer() -> SHAPExplainer:
     return model_registry.get_model("shap_explainer")
 
 # ML service dependencies
-async def get_contradiction_service(
-    biomedlm_service: BioMedLMService = Depends(get_biomedlm_service),
-    tsmixer_service: TSMixerService = Depends(get_tsmixer_service),
-    lorentz_embedding_service: LorentzEmbeddingService = Depends(get_lorentz_embedding_service),
-    shap_explainer: SHAPExplainer = Depends(get_shap_explainer)
-) -> ContradictionService:
-    """
-    Get the contradiction service.
-
-    Args:
-        biomedlm_service: BioMedLM service
-        tsmixer_service: TSMixer service
-        lorentz_embedding_service: Lorentz embedding service
-        shap_explainer: SHAP explainer
-
-    Returns:
-        ContradictionService: The contradiction service
-    """
-    return ContradictionService(
-        biomedlm_service=biomedlm_service,
-        tsmixer_service=tsmixer_service,
-        lorentz_embedding_service=lorentz_embedding_service,
-        shap_explainer=shap_explainer
-    )
+# Removed old contradiction service dependency
 
 async def get_temporal_service(
     tsmixer_service: TSMixerService = Depends(get_tsmixer_service)
@@ -289,7 +264,7 @@ async def get_search_service(
     )
 
 async def get_analysis_service(
-    contradiction_service: ContradictionService = Depends(get_contradiction_service),
+    enhanced_contradiction_service: EnhancedContradictionService = Depends(get_enhanced_contradiction_service),
     temporal_service: TemporalService = Depends(get_temporal_service),
     search_service: SearchService = Depends(get_search_service),
     result_repository: ResultRepository = Depends(get_result_repository)
@@ -298,7 +273,7 @@ async def get_analysis_service(
     Get the analysis service.
 
     Args:
-        contradiction_service: Contradiction service
+        enhanced_contradiction_service: Enhanced contradiction service
         temporal_service: Temporal service
         search_service: Search service
         result_repository: Result repository
@@ -307,7 +282,7 @@ async def get_analysis_service(
         AnalysisService: The analysis service
     """
     return AnalysisService(
-        contradiction_service=contradiction_service,
+        contradiction_service=enhanced_contradiction_service,  # Use enhanced service instead
         temporal_service=temporal_service,
         search_service=search_service,
         result_repository=result_repository

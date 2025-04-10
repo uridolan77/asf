@@ -10,8 +10,8 @@ The ASF Medical Research Synthesizer API provides a comprehensive set of endpoin
 
 The API is organized into the following components:
 
-- **Main Application**: `main_unified.py` - The main FastAPI application
-- **Authentication**: `auth_unified.py` - Unified authentication system
+- **Main Application**: `main.py` - The main FastAPI application
+- **Authentication**: `auth.py` - Unified authentication system
 - **Routers**: `routers/` - API endpoints organized by functionality
 - **Models**: `models/` - Request and response models
 - **Dependencies**: `dependencies.py` - Dependency injection
@@ -19,7 +19,7 @@ The API is organized into the following components:
 
 ## Authentication
 
-The API uses JWT-based authentication with role-based access control. The authentication system is implemented in `auth_unified.py` and provides the following features:
+The API uses JWT-based authentication with role-based access control. The authentication system is implemented in `auth.py` and provides the following features:
 
 - User registration and management
 - Token generation and validation
@@ -45,7 +45,7 @@ The API provides the following endpoint categories:
 To run the API, use the following command:
 
 ```bash
-uvicorn asf.medical.api.main_unified:app --reload
+uvicorn asf.medical.api.main:app --reload
 ```
 
 ## API Documentation
@@ -64,7 +64,7 @@ The API has been consolidated to improve maintainability, security, and consiste
 
 To contribute to the API, follow these guidelines:
 
-1. Use the unified authentication system in `auth_unified.py`
+1. Use the unified authentication system in `auth.py`
 2. Add new endpoints to the appropriate router in `routers/`
 3. Define request and response models in `models/`
 4. Use dependency injection for services and repositories

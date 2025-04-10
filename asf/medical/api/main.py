@@ -18,7 +18,9 @@ from asf.medical.core.monitoring import setup_monitoring, get_metrics, run_healt
 
 from asf.medical.api.routers.auth import router as auth_router
 from asf.medical.api.routers.search import router as search_router
-from asf.medical.api.routers.contradiction import router as contradiction_router
+# Removed old contradiction router import
+from asf.medical.api.routers.enhanced_contradiction import router as enhanced_contradiction_router
+from asf.medical.api.routers.contradiction_resolution import router as contradiction_resolution_router
 from asf.medical.api.routers.screening import router as screening_router
 from asf.medical.api.routers.export import router as export_router
 from asf.medical.api.routers.analysis import router as analysis_router
@@ -110,7 +112,9 @@ app.add_middleware(MonitoringMiddleware)
 # Include routers
 app.include_router(auth_router)
 app.include_router(search_router, prefix=settings.API_V1_STR, tags=["search"])
-app.include_router(contradiction_router, prefix=settings.API_V1_STR, tags=["contradiction"])
+# Removed old contradiction router
+app.include_router(enhanced_contradiction_router, prefix=settings.API_V1_STR, tags=["enhanced-contradiction"])
+app.include_router(contradiction_resolution_router, prefix=settings.API_V1_STR, tags=["contradiction-resolution"])
 app.include_router(screening_router, prefix=settings.API_V1_STR, tags=["screening"])
 app.include_router(export_router, prefix=settings.API_V1_STR, tags=["export"])
 app.include_router(analysis_router, prefix=settings.API_V1_STR, tags=["analysis"])
@@ -206,13 +210,15 @@ async def get_open_api_endpoint():
             {"name": "knowledge_base", "description": "Knowledge base management endpoints"},
             {"name": "export", "description": "Export endpoints for data export"},
             {"name": "screening", "description": "PRISMA-guided screening and bias assessment endpoints"},
-            {"name": "contradiction", "description": "Enhanced contradiction detection endpoints"},
+            # Removed old contradiction endpoints
+            {"name": "enhanced-contradiction", "description": "Enhanced multi-dimensional contradiction classification endpoints"},
+            {"name": "contradiction-resolution", "description": "Evidence-based contradiction resolution endpoints"},
             {"name": "status", "description": "Status endpoints"},
             {"name": "admin", "description": "Admin endpoints"}
         ]
     )
 
-# Run with: uvicorn asf.medical.api.main_unified:app --reload
+# Run with: uvicorn asf.medical.api.main:app --reload
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("asf.medical.api.main_unified:app", host="0.0.0.0", port=8000, reload=settings.DEBUG)
+    uvicorn.run("asf.medical.api.main:app", host="0.0.0.0", port=8000, reload=settings.DEBUG)

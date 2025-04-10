@@ -12,26 +12,23 @@ The tests are organized into the following directories:
 
 ## Running Tests
 
-You can run the tests using the `run_tests.py` script:
+You can run the tests using the `scripts/run_tests.py` script:
 
 ```bash
 # Run all tests
-python run_tests.py
+python -m asf.medical.scripts.run_tests
 
 # Run unit tests only
-python run_tests.py --type unit
+python -m asf.medical.scripts.run_tests --unit
 
 # Run integration tests only
-python run_tests.py --type integration
-
-# Run performance tests only
-python run_tests.py --type performance
+python -m asf.medical.scripts.run_tests --integration
 
 # Run tests with verbose output
-python run_tests.py --verbose
+python -m asf.medical.scripts.run_tests --verbose
 
 # Run tests with coverage report
-python run_tests.py --coverage
+python -m asf.medical.scripts.run_tests --coverage
 ```
 
 ## Test Configuration
@@ -91,7 +88,7 @@ class TestBiasAssessmentService:
         """Test bias assessment with a sample text."""
         # Sample text with randomization but no blinding
         result = await bias_assessment_service.assess_study(sample_study_text)
-        
+
         # Assertions
         assert result["randomization"]["risk"] == "low"
         assert result["blinding"]["risk"] == "high"
@@ -124,10 +121,10 @@ class TestScreeningAPI:
                 "exclude": ["animal study", "in vitro"]
             }
         }
-        
+
         # Make request
         response = client.post("/api/v1/screening/prisma", json=data)
-        
+
         # Assertions
         assert response.status_code == 200
         assert "query" in response.json()
@@ -158,19 +155,19 @@ class TestServicePerformance:
         """Test performance of bias assessment."""
         # Warm-up
         await bias_assessment_service.assess_study(sample_study_text)
-        
+
         # Measure performance
         start_time = time.time()
         iterations = 10
-        
+
         for _ in range(iterations):
             await bias_assessment_service.assess_study(sample_study_text)
-        
+
         elapsed_time = time.time() - start_time
         average_time = elapsed_time / iterations
-        
+
         logger.info(f"Bias assessment performance: {average_time:.4f} seconds per assessment")
-        
+
         # Assertion (adjust threshold as needed)
         assert average_time < 1.0, f"Bias assessment is too slow: {average_time:.4f} seconds per assessment"
 ```
