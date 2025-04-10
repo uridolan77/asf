@@ -22,7 +22,7 @@ class BioMedLMScorer:
     Wrapper for Microsoft's BioMedLM model to score contradictions between medical claims.
     """
 
-    def __init__(self, model_name: str = "microsoft/BioMedLM-2024", use_negation_detection: bool = True, use_multimodal_fusion: bool = True, use_shap_explainer: bool = True, use_tsmixer: bool = True, use_lorentz: bool = True, use_temporal_confidence: bool = True):
+    def __init__(self, model_name: str = "microsoft/BioMedLM-2024", use_negation_detection: bool = True, use_multimodal_fusion: bool = True, use_shap_explainer: bool = True, use_tsmixer: bool = True, use_lorentz: bool = True, use_temporal_confidence: bool = True, use_entity_linking: bool = True):
         """
         Initialize the BioMedLM scorer.
 
@@ -34,6 +34,7 @@ class BioMedLMScorer:
             use_tsmixer: Whether to use TSMixer for temporal analysis
             use_lorentz: Whether to use Lorentz embeddings for hierarchical analysis
             use_temporal_confidence: Whether to use temporal confidence scoring
+            use_entity_linking: Whether to use entity linking for related claims
         """
         self.model_name = model_name
         self.use_negation_detection = use_negation_detection
@@ -42,6 +43,7 @@ class BioMedLMScorer:
         self.use_tsmixer = use_tsmixer
         self.use_lorentz = use_lorentz
         self.use_temporal_confidence = use_temporal_confidence
+        self.use_entity_linking = use_entity_linking
         self.negation_detector = None
         self.contradiction_detector = None
         self.multimodal_detector = None
@@ -49,6 +51,7 @@ class BioMedLMScorer:
         self.tsmixer_detector = None
         self.lorentz_detector = None
         self.temporal_confidence_scorer = None
+        self.entity_linking_detector = None
 
         try:
             from transformers import AutoModelForSequenceClassification, AutoTokenizer
@@ -176,6 +179,24 @@ class BioMedLMScorer:
                 except Exception as e:
                     logger.warning(f"Failed to initialize temporal confidence scorer: {e}. Continuing without temporal confidence scoring.")
                     self.use_temporal_confidence = False
+
+            # Initialize entity linking detector if requested
+            if self.use_entity_linking:
+                try:
+                    from asf.medical.models.entity_linking_detector import EntityLinkingDetector
+
+                    self.entity_linking_detector = EntityLinkingDetector(
+                        biomedlm_scorer=self,
+                        device=self.device
+                    )
+
+                    logger.info("Entity linking detector initialized successfully")
+                except ImportError as e:
+                    logger.warning(f"Failed to import entity linking detector: {e}. Continuing without entity linking.")
+                    self.use_entity_linking = False
+                except Exception as e:
+                    logger.warning(f"Failed to initialize entity linking detector: {e}. Continuing without entity linking.")
+                    self.use_entity_linking = False
         except ImportError as e:
             logger.error(f"Failed to import required libraries: {e}")
             raise ImportError(
@@ -491,6 +512,28 @@ class BioMedLMScorer:
                 result["methods_used"].append("temporal_confidence")
             except Exception as e:
                 logger.error(f"Error applying temporal confidence weighting: {e}")
+
+        # Apply entity linking if available
+        if self.use_entity_linking and self.entity_linking_detector is not None:
+            try:
+                # Detect contradictions using entity linking
+                entity_linking_result = self.entity_linking_detector.detect_contradiction(claim1, claim2)
+
+                # Add entity linking information to result
+                result["entity_linking"] = {
+                    "entities1": entity_linking_result.get("entity_analysis", {}).get("entities1", []),
+                    "entities2": entity_linking_result.get("entity_analysis", {}).get("entities2", []),
+                    "linked_pairs": entity_linking_result.get("entity_analysis", {}).get("linked_pairs", []),
+                    "contradictions": entity_linking_result.get("entity_analysis", {}).get("contradictions", [])
+                }
+
+                # Update contradiction score if entity linking found a higher score
+                entity_linking_score = entity_linking_result.get("contradiction_score", 0.0)
+                if entity_linking_score > result["contradiction_score"]:
+                    result["contradiction_score"] = entity_linking_score
+                    result["methods_used"].append("entity_linking")
+            except Exception as e:
+                logger.error(f"Error applying entity linking: {e}")
 
         # Determine if contradiction is detected
         result["has_contradiction"] = result["contradiction_score"] > 0.7

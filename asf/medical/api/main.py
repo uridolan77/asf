@@ -20,6 +20,10 @@ from asf.medical.data_ingestion_layer.enhanced_medical_research_synthesizer impo
 from asf.medical.api.export_utils import export_to_csv, export_to_excel, export_to_pdf, export_to_json
 from asf.medical.data_ingestion_layer.query_builder import MedicalCondition, MedicalIntervention, OutcomeMetric, StudyDesign
 
+# Import our new API components
+from asf.medical.api.ray_orchestrator_api import router as ray_router
+from asf.medical.api.temporal_rollback_api import router as temporal_router
+
 # Initialize the API
 app = FastAPI(
     title="Medical Research Synthesizer API",
@@ -35,6 +39,10 @@ app.add_middleware(
     allow_methods=["*"],  # Allows all methods
     allow_headers=["*"],  # Allows all headers
 )
+
+# Include our routers
+app.include_router(ray_router)
+app.include_router(temporal_router)
 
 # Initialize our synthesizer
 synthesizer = EnhancedMedicalResearchSynthesizer(
