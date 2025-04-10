@@ -19,7 +19,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install flake8 black isort
+          pip install flake8 black isort safety mypy
           pip install -r requirements.txt
       - name: Lint with flake8
         run: |
@@ -31,6 +31,12 @@ jobs:
       - name: Check imports with isort
         run: |
           isort --check-only --profile black asf/medical
+      - name: Check type hints with mypy
+        run: |
+          mypy asf/medical
+      - name: Check for vulnerabilities
+        run: |
+          safety check -r requirements.txt
 
   test:
     runs-on: ubuntu-latest
@@ -75,7 +81,7 @@ jobs:
           REDIS_URL: redis://localhost:6379/0
           ENVIRONMENT: test
         run: |
-          pytest --cov=asf/medical --cov-report=xml
+          pytest --cov=asf/medical --cov-report=xml --cov-report=term --cov-fail-under=80
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:

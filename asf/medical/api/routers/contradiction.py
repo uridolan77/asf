@@ -17,7 +17,7 @@ from asf.medical.api.models.contradiction import (
 )
 from asf.medical.api.auth import get_current_active_user
 from asf.medical.storage.models import User
-from asf.medical.ml.services.contradiction_service import ContradictionService
+from asf.medical.ml.services.enhanced_contradiction_service import EnhancedContradictionService
 from asf.medical.core.monitoring import async_timed, log_error
 from asf.medical.api.dependencies import get_contradiction_service
 
@@ -34,7 +34,7 @@ async def detect_contradiction(
     req: Request = None,
     res: Response = None,
     current_user: User = Depends(get_current_active_user),
-    contradiction_service: ContradictionService = Depends(get_contradiction_service)
+    contradiction_service: EnhancedContradictionService = Depends(get_contradiction_service)
 ):
     """
     Detect contradiction between two claims.
@@ -101,7 +101,7 @@ async def analyze_batch_contradictions(
     req: Request = None,
     res: Response = None,
     current_user: User = Depends(get_current_active_user),
-    contradiction_service: ContradictionService = Depends(get_contradiction_service)
+    contradiction_service: EnhancedContradictionService = Depends(get_contradiction_service)
 ):
     """
     Analyze contradictions in a batch of articles.

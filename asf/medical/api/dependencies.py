@@ -6,7 +6,7 @@ using FastAPI's dependency injection system.
 """
 
 import logging
-from typing import Optional
+from typing import Optional, Dict, Any
 
 from fastapi import Depends
 
@@ -22,9 +22,8 @@ from asf.medical.ml.models.biomedlm import BioMedLMService
 from asf.medical.ml.models.tsmixer import TSMixerService
 from asf.medical.ml.models.lorentz_embeddings import LorentzEmbeddingService
 from asf.medical.ml.models.shap_explainer import SHAPExplainer
-# Removed old contradiction service import
+# Use only the enhanced contradiction service
 from asf.medical.ml.services.enhanced_contradiction_service import EnhancedContradictionService
-from asf.medical.ml.services.contradiction_service import ContradictionService
 from asf.medical.ml.services.temporal_service import TemporalService
 from asf.medical.data_ingestion_layer.enhanced_medical_research_synthesizer import EnhancedMedicalResearchSynthesizer
 from asf.medical.ml.services.prisma_screening_service import PRISMAScreeningService
@@ -33,6 +32,8 @@ from asf.medical.services.search_service import SearchService
 from asf.medical.services.analysis_service import AnalysisService
 from asf.medical.services.knowledge_base_service import KnowledgeBaseService
 from asf.medical.services.export_service import ExportService
+from asf.medical.graph.graph_rag import GraphRAG
+from asf.medical.graph.graph_service import GraphService
 from asf.medical.core.config import settings
 from asf.medical.ml.model_registry import model_registry
 # Import only if needed
@@ -183,19 +184,25 @@ async def get_temporal_service_basic() -> TemporalService:
 
 async def get_contradiction_service(
     biomedlm_service: BioMedLMService = Depends(get_biomedlm_service),
-    temporal_service: TemporalService = Depends(get_temporal_service_basic)
-) -> ContradictionService:
+    temporal_service: TemporalService = Depends(get_temporal_service_basic),
+    shap_explainer: SHAPExplainer = Depends(get_shap_explainer)
+) -> EnhancedContradictionService:
     """
-    Get the contradiction service.
+    Get the enhanced contradiction service.
 
     Args:
         biomedlm_service: BioMedLM service for semantic analysis
         temporal_service: Temporal service for temporal analysis
+        shap_explainer: SHAP explainer for explainability
 
     Returns:
-        ContradictionService: The contradiction service
+        EnhancedContradictionService: The enhanced contradiction service
     """
-    return ContradictionService(biomedlm_service=biomedlm_service, temporal_service=temporal_service)
+    return EnhancedContradictionService(
+        biomedlm_service=biomedlm_service,
+        temporal_service=temporal_service,
+        shap_explainer=shap_explainer
+    )
 
 async def get_temporal_service(
     tsmixer_service: TSMixerService = Depends(get_tsmixer_service)
@@ -264,12 +271,52 @@ async def get_bias_assessment_service() -> BiasAssessmentService:
 
     return BiasAssessmentService(nlp_model=nlp)
 
+# Graph services
+async def get_graph_service() -> GraphService:
+    """
+    Get the graph service.
+
+    Returns:
+        GraphService: The graph service
+    """
+    return GraphService()
+
+async def get_graph_rag(
+    graph_service: GraphService = Depends(get_graph_service),
+    biomedlm_service: Optional[BioMedLMService] = None
+) -> GraphRAG:
+    """
+    Get the GraphRAG service.
+
+    Args:
+        graph_service: The graph service
+        biomedlm_service: The BioMedLM service (optional)
+
+    Returns:
+        GraphRAG: The GraphRAG service
+    """
+    # Try to get BioMedLM service if not provided
+    if biomedlm_service is None:
+        try:
+            from asf.medical.ml.models.biomedlm import BioMedLMService
+            biomedlm_service = BioMedLMService()
+        except ImportError:
+            logger.warning("BioMedLM service not available")
+            return None
+
+    try:
+        return GraphRAG(graph_service=graph_service, biomedlm_service=biomedlm_service)
+    except Exception as e:
+        logger.warning(f"Error initializing GraphRAG: {str(e)}")
+        return None
+
 # Business service dependencies
 async def get_search_service(
     ncbi_client: NCBIClient = Depends(get_ncbi_client),
     clinical_trials_client: ClinicalTrialsClient = Depends(get_clinical_trials_client),
     query_repository: QueryRepository = Depends(get_query_repository),
-    result_repository: ResultRepository = Depends(get_result_repository)
+    result_repository: ResultRepository = Depends(get_result_repository),
+    graph_rag: Optional[GraphRAG] = Depends(get_graph_rag)
 ) -> SearchService:
     """
     Get the search service.
@@ -279,6 +326,7 @@ async def get_search_service(
         clinical_trials_client: ClinicalTrials.gov client
         query_repository: Query repository
         result_repository: Result repository
+        graph_rag: GraphRAG service (optional)
 
     Returns:
         SearchService: The search service
@@ -287,7 +335,8 @@ async def get_search_service(
         ncbi_client=ncbi_client,
         clinical_trials_client=clinical_trials_client,
         query_repository=query_repository,
-        result_repository=result_repository
+        result_repository=result_repository,
+        graph_rag=graph_rag
     )
 
 async def get_analysis_service(

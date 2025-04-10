@@ -2,12 +2,28 @@
 Configuration module for the Medical Research Synthesizer.
 
 This module provides a centralized configuration using Pydantic.
+It supports loading configuration from environment variables, .env files,
+and external configuration sources.
 """
 
 import os
 import secrets
-from typing import Optional, Dict, Any, List, Union
+import logging
+from typing import Optional, Dict, Any, List, Union, Callable
+from functools import lru_cache
+from pathlib import Path
+
 from pydantic import BaseSettings, EmailStr, SecretStr, validator, Field, AnyHttpUrl, PostgresDsn
+from dotenv import load_dotenv
+
+# Configure logging
+logger = logging.getLogger(__name__)
+
+# Load .env file if it exists
+env_file = Path(os.environ.get("ENV_FILE", ".env"))
+if env_file.exists():
+    logger.info(f"Loading environment variables from {env_file}")
+    load_dotenv(env_file)
 
 class Settings(BaseSettings):
     """
@@ -79,11 +95,19 @@ class Settings(BaseSettings):
         env_file_encoding = "utf-8"
         case_sensitive = True
 
-# Create settings instance
-settings = Settings()
+# Create settings instance with caching
+@lru_cache()
+def get_settings() -> Settings:
+    """Get the settings instance."""
+    settings = Settings()
 
-# Create required directories
-os.makedirs(settings.KB_DIR, exist_ok=True)
+    # Create required directories
+    os.makedirs(settings.KB_DIR, exist_ok=True)
+
+    return settings
+
+# Create a singleton instance for backward compatibility
+settings = get_settings()
 
 # Export settings
-__all__ = ["settings"]
+__all__ = ["settings", "get_settings"]

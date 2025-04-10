@@ -17,6 +17,10 @@ class QueryRequest(BaseModel):
     query: str = Field(..., description="The search query")
     max_results: int = Field(100, description="Maximum number of results to return", ge=1, le=500)
     pagination: PaginationParams = Field(default_factory=PaginationParams, description="Pagination parameters")
+    search_method: str = Field("pubmed", description="Search method to use (pubmed, clinical_trials, or graph_rag)")
+    use_graph_rag: bool = Field(False, description="Whether to use GraphRAG for search (overrides search_method if True)")
+    use_vector_search: bool = Field(True, description="Whether to use vector search with GraphRAG")
+    use_graph_search: bool = Field(True, description="Whether to use graph search with GraphRAG")
 
 class PaginationMetadata(BaseModel):
     """Pagination metadata for search responses."""

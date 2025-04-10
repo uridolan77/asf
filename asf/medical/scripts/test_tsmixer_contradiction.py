@@ -41,7 +41,7 @@ class ContradictionConfidence:
 
 # Try to import the real services, but use mocks if they're not available
 try:
-    from asf.medical.ml.services.contradiction_service import ContradictionService
+    from asf.medical.ml.services.enhanced_contradiction_service import EnhancedContradictionService
     from asf.medical.ml.services.temporal_service import TemporalService
     from asf.medical.ml.models.biomedlm import BioMedLMService
     USING_REAL_SERVICES = True
@@ -476,7 +476,7 @@ async def test_tsmixer_contradiction_detection():
 
     # Use the real ContradictionService if available, otherwise use the mock
     if USING_REAL_SERVICES:
-        contradiction_service = ContradictionService(
+        contradiction_service = EnhancedContradictionService(
             biomedlm_service=biomedlm_service,
             temporal_service=temporal_service
         )

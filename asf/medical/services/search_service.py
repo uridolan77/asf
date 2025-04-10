@@ -8,7 +8,8 @@ import logging
 import uuid
 import hashlib
 from datetime import datetime
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Union
+from enum import Enum
 
 from asf.medical.core.cache import cached, cache_manager
 from asf.medical.core.exceptions import (
@@ -20,9 +21,16 @@ from asf.medical.clients.ncbi_client import NCBIClient
 from asf.medical.clients.clinical_trials_client import ClinicalTrialsClient
 from asf.medical.storage.repositories.result_repository import ResultRepository
 from asf.medical.storage.repositories.query_repository import QueryRepository
+from asf.medical.graph.graph_rag import GraphRAG
 from asf.medical.data_ingestion_layer.query_builder import (
     MedicalQueryBuilder, MedicalCondition, MedicalIntervention, OutcomeMetric, StudyDesign
 )
+
+class SearchMethod(str, Enum):
+    """Search method enum."""
+    PUBMED = "pubmed"
+    CLINICAL_TRIALS = "clinical_trials"
+    GRAPH_RAG = "graph_rag"
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -37,7 +45,8 @@ class SearchService:
         ncbi_client: NCBIClient,
         clinical_trials_client: ClinicalTrialsClient,
         query_repository: QueryRepository,
-        result_repository: ResultRepository
+        result_repository: ResultRepository,
+        graph_rag: Optional[GraphRAG] = None
     ):
         """
         Initialize the search service.
@@ -47,18 +56,22 @@ class SearchService:
             clinical_trials_client: ClinicalTrials.gov client
             query_repository: Query repository
             result_repository: Result repository
+            graph_rag: GraphRAG service (optional)
         """
         self.ncbi_client = ncbi_client
         self.clinical_trials_client = clinical_trials_client
         self.query_repository = query_repository
         self.result_repository = result_repository
+        self.graph_rag = graph_rag
 
     @cached(prefix="search", data_type="search")
     async def search(
-        self, query: str, max_results: int = 100, page: int = 1, page_size: int = 20, user_id: Optional[int] = None
+        self, query: str, max_results: int = 100, page: int = 1, page_size: int = 20,
+        user_id: Optional[int] = None, search_method: Union[str, SearchMethod] = SearchMethod.PUBMED,
+        use_graph_rag: bool = False, use_vector_search: bool = True, use_graph_search: bool = True
     ) -> Dict[str, Any]:
         """
-        Search PubMed with the given query and return enriched results with pagination.
+        Search for medical literature with the given query and return enriched results with pagination.
 
         Args:
             query: Search query
@@ -66,13 +79,17 @@ class SearchService:
             page: Page number (1-based)
             page_size: Number of results per page
             user_id: User ID for storing the query and results
+            search_method: Search method to use (pubmed, clinical_trials, or graph_rag)
+            use_graph_rag: Whether to use GraphRAG for search (overrides search_method if True)
+            use_vector_search: Whether to use vector search with GraphRAG
+            use_graph_search: Whether to use graph search with GraphRAG
 
         Returns:
             Search results with pagination metadata
 
         Raises:
             ValidationError: If the query is invalid
-            ExternalServiceError: If the NCBI API fails
+            ExternalServiceError: If the external API fails
             DatabaseError: If there's an error storing the results
         """
         if not query or not query.strip():
@@ -87,11 +104,75 @@ class SearchService:
         if page_size < 1 or page_size > 100:
             raise ValidationError("page_size must be between 1 and 100")
 
-        logger.info(f"Executing search: {query} (max_results={max_results})")
+        # Convert search_method to enum if it's a string
+        if isinstance(search_method, str):
+            try:
+                search_method = SearchMethod(search_method.lower())
+            except ValueError:
+                logger.warning(f"Invalid search method: {search_method}, using default")
+                search_method = SearchMethod.PUBMED
+
+        # Override search_method if use_graph_rag is True
+        if use_graph_rag:
+            search_method = SearchMethod.GRAPH_RAG
+
+        logger.info(f"Executing search: {query} (max_results={max_results}, method={search_method})")
 
         try:
-            # Search PubMed
-            search_results = await self.ncbi_client.search_pubmed(query, max_results=max_results)
+            # Use the appropriate search method
+            if search_method == SearchMethod.GRAPH_RAG:
+                if self.graph_rag is None:
+                    logger.warning("GraphRAG not available, falling back to PubMed search")
+                    search_results = await self.ncbi_client.search_pubmed(query, max_results=max_results)
+                else:
+                    # Search using GraphRAG
+                    logger.info(f"Using GraphRAG for search (vector_search={use_vector_search}, graph_search={use_graph_search})")
+                    graph_results = await self.graph_rag.search(
+                        query,
+                        max_results=max_results,
+                        use_vector_search=use_vector_search,
+                        use_graph_search=use_graph_search
+                    )
+
+                    # Convert GraphRAG results to the same format as PubMed results
+                    search_results = {
+                        'esearchresult': {
+                            'count': str(graph_results.get('result_count', 0)),
+                            'idlist': [result.get('pmid', '') for result in graph_results.get('results', [])],
+                            'translationset': [],
+                            'querytranslation': query,
+                            'retmax': str(max_results),
+                            'retstart': '0',
+                            'querykey': '1',
+                            'webenv': '',
+                        }
+                    }
+
+                    # Store the original GraphRAG results for later use
+                    search_results['graph_rag_results'] = graph_results
+            elif search_method == SearchMethod.CLINICAL_TRIALS:
+                # Search ClinicalTrials.gov
+                clinical_trials_results = await self.clinical_trials_client.search(query, max_results=max_results)
+
+                # Convert ClinicalTrials.gov results to the same format as PubMed results
+                search_results = {
+                    'esearchresult': {
+                        'count': str(len(clinical_trials_results)),
+                        'idlist': [trial.get('nct_id', '') for trial in clinical_trials_results],
+                        'translationset': [],
+                        'querytranslation': query,
+                        'retmax': str(max_results),
+                        'retstart': '0',
+                        'querykey': '1',
+                        'webenv': '',
+                    }
+                }
+
+                # Store the original ClinicalTrials.gov results for later use
+                search_results['clinical_trials_results'] = clinical_trials_results
+            else:  # Default to PubMed
+                # Search PubMed
+                search_results = await self.ncbi_client.search_pubmed(query, max_results=max_results)
 
             if not search_results or 'esearchresult' not in search_results:
                 logger.warning(f"No results found for query: {query}")

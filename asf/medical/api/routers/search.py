@@ -53,7 +53,11 @@ async def search(
             max_results=request.max_results,
             page=request.pagination.page,
             page_size=request.pagination.page_size,
-            user_id=current_user.id
+            user_id=current_user.id,
+            search_method=request.search_method,
+            use_graph_rag=request.use_graph_rag,
+            use_vector_search=request.use_vector_search,
+            use_graph_search=request.use_graph_search
         )
 
         # Log the result

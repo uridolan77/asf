@@ -26,7 +26,7 @@ try:
 except ImportError:
     logger.warning("BioMedLM service not available, using mock implementation")
     from asf.medical.ml.models.mock_biomedlm import MockBioMedLMService as BioMedLMService
-from asf.medical.ml.services.contradiction_service import ContradictionService
+from asf.medical.ml.services.enhanced_contradiction_service import EnhancedContradictionService
 
 # Initialize logger
 logger = logging.getLogger(__name__)
@@ -114,7 +114,7 @@ async def test_contradiction_service_with_biomedlm():
 
     # Initialize services
     biomedlm_service = BioMedLMService()
-    contradiction_service = ContradictionService(biomedlm_service=biomedlm_service)
+    contradiction_service = EnhancedContradictionService(biomedlm_service=biomedlm_service)
 
     # Test each claim pair
     for i, test_case in enumerate(TEST_CLAIMS):

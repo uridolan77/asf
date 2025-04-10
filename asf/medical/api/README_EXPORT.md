@@ -127,9 +127,11 @@ The following export formats are supported:
 - **Excel**: Returns an Excel file with the search results or analysis
 - **PDF**: Returns a PDF file with the search results or analysis
 
-### Consolidated Export Utilities
+### Export Utilities
 
-The export utilities have been consolidated into a single module (`export_utils_consolidated.py`) to eliminate code duplication and ensure consistent behavior across all export formats.
+The export utilities are implemented in a single module (`export_utils_consolidated.py`) to ensure consistent behavior across all export formats. This module provides functions for exporting data in various formats (JSON, CSV, Excel, PDF) with consistent interfaces and error handling.
+
+**Note**: The original `export_utils.py` has been removed as part of the codebase consolidation effort, and all functionality has been migrated to `export_utils_consolidated.py`.
 
 ## Usage Examples
 
@@ -146,7 +148,7 @@ async def export_search_results():
                 "query": "covid-19 treatment"
             }
         )
-        
+
         data = response.json()
         print(f"Export successful: {data['data']['file_url']}")
 ```
@@ -166,38 +168,38 @@ async def export_with_background_tasks():
                 "query": "covid-19 treatment"
             }
         )
-        
+
         data = response.json()
-        
+
         if data['data'].get('status') == 'processing':
             # Check the status periodically
             file_path = data['data']['file_path']
-            
+
             while True:
                 status_response = await client.get(
                     f"http://localhost:8000/export/status/{file_path}"
                 )
-                
+
                 status_data = status_response.json()
-                
+
                 if status_data['data']['status'] == 'completed':
                     # Download the file
                     file_url = status_data['data']['file_url']
                     download_response = await client.get(
                         f"http://localhost:8000{file_url}"
                     )
-                    
+
                     # Save the file
                     with open("export.pdf", "wb") as f:
                         f.write(download_response.content)
-                    
+
                     print("Export downloaded successfully")
                     break
-                
+
                 elif status_data['data']['status'] == 'failed':
                     print(f"Export failed: {status_data['data'].get('error')}")
                     break
-                
+
                 # Wait before checking again
                 time.sleep(1)
         else:

@@ -14,7 +14,7 @@ from pathlib import Path
 # Add the parent directory to the path so we can import our modules
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
-from asf.medical.ml.services.contradiction_service import ContradictionService
+from asf.medical.ml.services.enhanced_contradiction_service import EnhancedContradictionService
 
 # Set up logging
 logging.basicConfig(
@@ -133,7 +133,7 @@ async def test_contradiction_service():
     logger.info("Testing contradiction service...")
 
     # Initialize service
-    service = ContradictionService()
+    service = EnhancedContradictionService()
 
     # Test each claim pair
     for i, test_case in enumerate(TEST_CLAIMS):
