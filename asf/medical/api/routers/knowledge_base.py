@@ -4,232 +4,320 @@ Knowledge Base router for the Medical Research Synthesizer API.
 This module provides endpoints for creating and managing knowledge bases.
 """
 
-import os
-import uuid
-import json
 import logging
-from datetime import datetime
-from typing import Dict, Any, List
-from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
+from typing import Dict, Any, List, Optional
+from fastapi import APIRouter, Depends, HTTPException, status, Request, Response, BackgroundTasks
 
-from asf.medical.api.models import KnowledgeBaseRequest, KnowledgeBaseResponse
-from asf.medical.api.dependencies import get_synthesizer, get_current_user
-from asf.medical.api.auth_unified import User
-from asf.medical.data_ingestion_layer.enhanced_medical_research_synthesizer import EnhancedMedicalResearchSynthesizer
+from asf.medical.api.models.base import APIResponse, ErrorResponse
+from asf.medical.api.models.knowledge_base import (
+    KnowledgeBaseRequest, 
+    KnowledgeBaseResponse
+)
+from asf.medical.api.dependencies import get_knowledge_base_service
+from asf.medical.api.auth import get_current_active_user, get_admin_user
+from asf.medical.services.knowledge_base_service import KnowledgeBaseService
+from asf.medical.storage.models import User
+from asf.medical.core.monitoring import async_timed, log_error
 
 # Initialize router
-router = APIRouter(prefix="/v1/knowledge-base", tags=["Knowledge Base"])
-
-# In-memory storage for knowledge bases (will be replaced with database in Phase 2)
-kb_storage: Dict[str, Any] = {}
+router = APIRouter(prefix="/knowledge-base", tags=["knowledge_base"])
 
 # Set up logging
 logger = logging.getLogger(__name__)
 
-@router.post("/", response_model=KnowledgeBaseResponse)
+@router.post("", response_model=APIResponse[KnowledgeBaseResponse])
+@async_timed("create_knowledge_base_endpoint")
 async def create_knowledge_base(
     request: KnowledgeBaseRequest,
-    background_tasks: BackgroundTasks,
-    synthesizer: EnhancedMedicalResearchSynthesizer = Depends(get_synthesizer),
-    current_user: User = Depends(get_current_user)
+    kb_service: KnowledgeBaseService = Depends(get_knowledge_base_service),
+    current_user: User = Depends(get_current_active_user),
+    req: Request = None,
+    res: Response = None
 ):
     """
-    Create and schedule updates for a knowledge base.
-
-    This endpoint creates a new knowledge base for tracking publications on a
-    specific topic and schedules regular updates to keep it current.
+    Create a new knowledge base.
+    
+    This endpoint creates a new knowledge base with the given name and query,
+    which can be updated automatically on a schedule.
     """
     try:
-        logger.info(f"Creating knowledge base: {request.name} (query={request.query})")
+        # Add request ID to response headers for tracing
+        request_id = req.headers.get("X-Request-ID") if req else None
+        if request_id and res:
+            res.headers["X-Request-ID"] = request_id
         
-        # Create knowledge base
-        kb_info = synthesizer.create_and_update_knowledge_base(
+        # Log the request
+        logger.info(f"Create knowledge base request: name='{request.name}', query='{request.query}', user_id={current_user.id}")
+        
+        # Create the knowledge base
+        result = await kb_service.create_knowledge_base(
             name=request.name,
             query=request.query,
-            schedule=request.schedule,
-            max_results=request.max_results
+            update_schedule=request.update_schedule,
+            user_id=current_user.id
         )
         
-        # Store KB info
-        kb_id = str(uuid.uuid4())
-        kb_storage[kb_id] = {
-            'kb_info': kb_info,
-            'created_at': datetime.now().isoformat(),
-            'user': current_user.email
-        }
+        # Log the result
+        logger.info(f"Knowledge base created: {result['kb_id']} (name='{result['name']}')")
         
-        logger.info(f"Knowledge base created: {request.name} (kb_id={kb_id})")
-        
-        return kb_info
+        return APIResponse(
+            success=True,
+            message="Knowledge base created successfully",
+            data=result,
+            meta={
+                "name": request.name,
+                "query": request.query,
+                "update_schedule": request.update_schedule,
+                "user_id": current_user.id
+            }
+        )
+    except ValueError as e:
+        # Handle validation errors
+        log_error(e, {"name": request.name, "query": request.query, "user_id": current_user.id})
+        logger.warning(f"Validation error in knowledge base creation: {str(e)}")
+        return ErrorResponse(
+            message="Invalid knowledge base parameters",
+            errors=[{"detail": str(e)}],
+            code="VALIDATION_ERROR"
+        )
     except Exception as e:
+        # Handle unexpected errors
+        log_error(e, {"name": request.name, "query": request.query, "user_id": current_user.id})
         logger.error(f"Error creating knowledge base: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.get("/{name}")
-async def get_knowledge_base(
-    name: str,
-    synthesizer: EnhancedMedicalResearchSynthesizer = Depends(get_synthesizer),
-    current_user: User = Depends(get_current_user)
-):
-    """
-    Get articles from a knowledge base.
-
-    This endpoint retrieves all articles stored in a specific knowledge base.
-    """
-    try:
-        logger.info(f"Retrieving knowledge base: {name}")
-        
-        articles = synthesizer.get_knowledge_base(name)
-        
-        logger.info(f"Knowledge base retrieved: {name} ({len(articles)} articles)")
-        
-        return {
-            "name": name,
-            "articles": articles,
-            "count": len(articles)
-        }
-    except Exception as e:
-        logger.error(f"Error getting knowledge base: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.get("/")
-async def list_knowledge_bases(
-    synthesizer: EnhancedMedicalResearchSynthesizer = Depends(get_synthesizer),
-    current_user: User = Depends(get_current_user)
-):
-    """
-    List all available knowledge bases.
-
-    This endpoint returns a list of all knowledge bases that have been created.
-    """
-    try:
-        logger.info("Listing knowledge bases")
-        
-        # First check in-memory storage
-        kb_list = []
-        for kb_id, kb_data in kb_storage.items():
-            kb_info = kb_data['kb_info']
-            kb_list.append({
-                'kb_id': kb_id,
-                'name': kb_info['name'],
-                'query': kb_info['query'],
-                'initial_results': kb_info['initial_results'],
-                'update_schedule': kb_info['update_schedule'],
-                'created_date': kb_info['created_date']
-            })
-        
-        # Then check file system
-        kb_dir = synthesizer.kb_dir
-        file_knowledge_bases = []
-        
-        if os.path.exists(kb_dir):
-            for filename in os.listdir(kb_dir):
-                if filename.endswith('.json'):
-                    kb_name = filename.replace('.json', '')
-                    
-                    # Skip if already in memory
-                    if any(kb['name'] == kb_name for kb in kb_list):
-                        continue
-
-                    # Get basic stats
-                    kb_path = os.path.join(kb_dir, filename)
-                    stat = os.stat(kb_path)
-
-                    kb_info = {
-                        "name": kb_name,
-                        "file": kb_path,
-                        "size": stat.st_size,
-                        "last_modified": datetime.fromtimestamp(stat.st_mtime).isoformat()
-                    }
-
-                    # Try to get more details
-                    try:
-                        articles = synthesizer.get_knowledge_base(kb_name)
-                        kb_info["article_count"] = len(articles)
-                    except:
-                        kb_info["article_count"] = "unknown"
-
-                    file_knowledge_bases.append(kb_info)
-        
-        logger.info(f"Knowledge bases listed: {len(kb_list)} in memory, {len(file_knowledge_bases)} in file system")
-        
-        return {
-            "in_memory_knowledge_bases": kb_list,
-            "file_knowledge_bases": file_knowledge_bases,
-            "total_count": len(kb_list) + len(file_knowledge_bases)
-        }
-    except Exception as e:
-        logger.error(f"Error listing knowledge bases: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.post("/{name}/update")
-async def update_knowledge_base(
-    name: str,
-    synthesizer: EnhancedMedicalResearchSynthesizer = Depends(get_synthesizer),
-    current_user: User = Depends(get_current_user)
-):
-    """
-    Manually update a knowledge base.
-    
-    This endpoint triggers an immediate update of the specified knowledge base.
-    """
-    try:
-        logger.info(f"Updating knowledge base: {name}")
-        
-        # Find the KB in storage
-        kb_id = None
-        kb_data = None
-        kb_query = None
-        
-        for id, data in kb_storage.items():
-            if data['kb_info']['name'] == name:
-                kb_id = id
-                kb_data = data
-                kb_query = data['kb_info']['query']
-                break
-        
-        if not kb_query:
-            # Try to find in file system
-            kb_path = os.path.join(synthesizer.kb_dir, f"{name}.json")
-            if not os.path.exists(kb_path):
-                logger.error(f"Knowledge base not found: {name}")
-                raise HTTPException(status_code=404, detail=f"Knowledge base '{name}' not found")
-            
-            # Get query from file
-            try:
-                with open(kb_path, 'r') as f:
-                    kb_data = json.load(f)
-                    kb_query = kb_data.get('query', '')
-            except Exception as e:
-                logger.error(f"Error reading knowledge base file: {str(e)}")
-                raise HTTPException(status_code=500, detail=f"Error reading knowledge base file")
-            
-            if not kb_query:
-                logger.error(f"Knowledge base query not found: {name}")
-                raise HTTPException(status_code=500, detail=f"Knowledge base query not found")
-            
-            kb_file = kb_path
-        else:
-            kb_file = kb_data['kb_info']['kb_file']
-        
-        # Update the KB
-        result = synthesizer.incremental_client.search_and_update_knowledge_base(
-            kb_query,
-            kb_file,
-            max_results=100
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error creating knowledge base: {str(e)}"
         )
+
+@router.get("", response_model=APIResponse[List[KnowledgeBaseResponse]])
+@async_timed("list_knowledge_bases_endpoint")
+async def list_knowledge_bases(
+    kb_service: KnowledgeBaseService = Depends(get_knowledge_base_service),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    List all knowledge bases.
+    
+    This endpoint returns a list of all knowledge bases accessible to the current user.
+    """
+    try:
+        # Log the request
+        logger.info(f"List knowledge bases request: user_id={current_user.id}")
         
-        logger.info(f"Knowledge base updated: {name} (new_count={result['new_count']})")
+        # Get the knowledge bases
+        result = await kb_service.list_knowledge_bases(user_id=current_user.id)
         
-        return {
-            'name': name,
-            'query': kb_query,
-            'total_count': result['total_count'],
-            'new_count': result['new_count'],
-            'update_time': result['update_time']
-        }
-    except HTTPException:
-        raise
+        # Log the result
+        logger.info(f"Knowledge bases listed: {len(result)} found")
+        
+        return APIResponse(
+            success=True,
+            message="Knowledge bases listed successfully",
+            data=result,
+            meta={
+                "count": len(result),
+                "user_id": current_user.id
+            }
+        )
     except Exception as e:
+        # Handle unexpected errors
+        log_error(e, {"user_id": current_user.id})
+        logger.error(f"Error listing knowledge bases: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error listing knowledge bases: {str(e)}"
+        )
+
+@router.get("/{kb_id}", response_model=APIResponse[KnowledgeBaseResponse])
+@async_timed("get_knowledge_base_endpoint")
+async def get_knowledge_base(
+    kb_id: str,
+    kb_service: KnowledgeBaseService = Depends(get_knowledge_base_service),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Get a knowledge base by ID.
+    
+    This endpoint retrieves a knowledge base by its ID.
+    """
+    try:
+        # Log the request
+        logger.info(f"Get knowledge base request: kb_id={kb_id}, user_id={current_user.id}")
+        
+        # Get the knowledge base
+        result = await kb_service.get_knowledge_base_by_id(kb_id)
+        
+        if not result:
+            logger.warning(f"Knowledge base not found: kb_id={kb_id}")
+            return ErrorResponse(
+                message="Knowledge base not found",
+                errors=[{"detail": f"No knowledge base found with ID {kb_id}"}],
+                code="NOT_FOUND"
+            )
+        
+        # Check if the user has access to this knowledge base
+        if result.get("user_id") != current_user.id and current_user.role != "admin":
+            logger.warning(f"User {current_user.id} does not have access to knowledge base {kb_id}")
+            return ErrorResponse(
+                message="Access denied",
+                errors=[{"detail": "You do not have access to this knowledge base"}],
+                code="ACCESS_DENIED"
+            )
+        
+        # Log the result
+        logger.info(f"Knowledge base retrieved: kb_id={kb_id}")
+        
+        return APIResponse(
+            success=True,
+            message="Knowledge base retrieved successfully",
+            data=result,
+            meta={
+                "kb_id": kb_id,
+                "user_id": current_user.id
+            }
+        )
+    except Exception as e:
+        # Handle unexpected errors
+        log_error(e, {"kb_id": kb_id, "user_id": current_user.id})
+        logger.error(f"Error retrieving knowledge base: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error retrieving knowledge base: {str(e)}"
+        )
+
+@router.post("/{kb_id}/update", response_model=APIResponse[Dict[str, Any]])
+@async_timed("update_knowledge_base_endpoint")
+async def update_knowledge_base(
+    kb_id: str,
+    background_tasks: BackgroundTasks,
+    kb_service: KnowledgeBaseService = Depends(get_knowledge_base_service),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Update a knowledge base.
+    
+    This endpoint updates a knowledge base with new articles matching the original query.
+    """
+    try:
+        # Log the request
+        logger.info(f"Update knowledge base request: kb_id={kb_id}, user_id={current_user.id}")
+        
+        # Get the knowledge base
+        kb = await kb_service.get_knowledge_base_by_id(kb_id)
+        
+        if not kb:
+            logger.warning(f"Knowledge base not found: kb_id={kb_id}")
+            return ErrorResponse(
+                message="Knowledge base not found",
+                errors=[{"detail": f"No knowledge base found with ID {kb_id}"}],
+                code="NOT_FOUND"
+            )
+        
+        # Check if the user has access to this knowledge base
+        if kb.get("user_id") != current_user.id and current_user.role != "admin":
+            logger.warning(f"User {current_user.id} does not have access to knowledge base {kb_id}")
+            return ErrorResponse(
+                message="Access denied",
+                errors=[{"detail": "You do not have access to this knowledge base"}],
+                code="ACCESS_DENIED"
+            )
+        
+        # Update the knowledge base in the background
+        background_tasks.add_task(kb_service.update_knowledge_base, kb_id)
+        
+        # Log the result
+        logger.info(f"Knowledge base update started: kb_id={kb_id}")
+        
+        return APIResponse(
+            success=True,
+            message="Knowledge base update started",
+            data={
+                "kb_id": kb_id,
+                "name": kb["name"],
+                "status": "updating"
+            },
+            meta={
+                "kb_id": kb_id,
+                "user_id": current_user.id
+            }
+        )
+    except Exception as e:
+        # Handle unexpected errors
+        log_error(e, {"kb_id": kb_id, "user_id": current_user.id})
         logger.error(f"Error updating knowledge base: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error updating knowledge base: {str(e)}"
+        )
+
+@router.delete("/{kb_id}", response_model=APIResponse[Dict[str, Any]])
+@async_timed("delete_knowledge_base_endpoint")
+async def delete_knowledge_base(
+    kb_id: str,
+    kb_service: KnowledgeBaseService = Depends(get_knowledge_base_service),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Delete a knowledge base.
+    
+    This endpoint deletes a knowledge base by its ID.
+    """
+    try:
+        # Log the request
+        logger.info(f"Delete knowledge base request: kb_id={kb_id}, user_id={current_user.id}")
+        
+        # Get the knowledge base
+        kb = await kb_service.get_knowledge_base_by_id(kb_id)
+        
+        if not kb:
+            logger.warning(f"Knowledge base not found: kb_id={kb_id}")
+            return ErrorResponse(
+                message="Knowledge base not found",
+                errors=[{"detail": f"No knowledge base found with ID {kb_id}"}],
+                code="NOT_FOUND"
+            )
+        
+        # Check if the user has access to this knowledge base
+        if kb.get("user_id") != current_user.id and current_user.role != "admin":
+            logger.warning(f"User {current_user.id} does not have access to knowledge base {kb_id}")
+            return ErrorResponse(
+                message="Access denied",
+                errors=[{"detail": "You do not have access to this knowledge base"}],
+                code="ACCESS_DENIED"
+            )
+        
+        # Delete the knowledge base
+        success = await kb_service.delete_knowledge_base(kb_id)
+        
+        if not success:
+            logger.warning(f"Failed to delete knowledge base: kb_id={kb_id}")
+            return ErrorResponse(
+                message="Failed to delete knowledge base",
+                errors=[{"detail": "An error occurred while deleting the knowledge base"}],
+                code="DELETE_ERROR"
+            )
+        
+        # Log the result
+        logger.info(f"Knowledge base deleted: kb_id={kb_id}")
+        
+        return APIResponse(
+            success=True,
+            message="Knowledge base deleted successfully",
+            data={
+                "kb_id": kb_id,
+                "name": kb["name"],
+                "status": "deleted"
+            },
+            meta={
+                "kb_id": kb_id,
+                "user_id": current_user.id
+            }
+        )
+    except Exception as e:
+        # Handle unexpected errors
+        log_error(e, {"kb_id": kb_id, "user_id": current_user.id})
+        logger.error(f"Error deleting knowledge base: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error deleting knowledge base: {str(e)}"
+        )

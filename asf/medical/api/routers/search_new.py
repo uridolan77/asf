@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Request, Response
 
 from asf.medical.api.models.search import QueryRequest, SearchResponse, PICORequest
 from asf.medical.api.dependencies import get_search_service
-from asf.medical.api.auth_unified import get_current_active_user
+from asf.medical.api.auth import get_current_active_user
 from asf.medical.services.search_service import SearchService
 from asf.medical.storage.models import User
 

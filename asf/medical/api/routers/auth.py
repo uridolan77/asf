@@ -12,7 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from asf.medical.api.auth_unified import (
+from asf.medical.api.auth import (
     Token, User, UserCreate, UserUpdate, AuthService, 
     get_auth_service, get_current_active_user, get_admin_user
 )

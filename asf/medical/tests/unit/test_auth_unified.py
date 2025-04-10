@@ -12,7 +12,7 @@ from unittest.mock import MagicMock, AsyncMock
 from fastapi import HTTPException
 from jose import jwt
 
-from asf.medical.api.auth_unified import (
+from asf.medical.api.auth import (
     AuthService, get_current_user, get_current_active_user, get_admin_user,
     has_role, has_any_role, Token, TokenData, User, UserCreate, UserUpdate
 )

@@ -72,9 +72,9 @@ def suggest_replacements(import_analysis: Dict[str, List[Tuple[str, int]]]) -> D
         Dictionary mapping old imports to new imports
     """
     replacements = {
-        r"from asf\.medical\.api\.auth import (.*)": r"from asf.medical.api.auth_unified import \1",
-        r"from asf\.medical\.api\.auth_v2 import (.*)": r"from asf.medical.api.auth_unified import \1",
-        r"from asf\.medical\.api\.auth_service import (.*)": r"from asf.medical.api.auth_unified import \1",
+        r"from asf\.medical\.api\.auth import (.*)": r"from asf.medical.api.auth import \1",
+        r"from asf\.medical\.api\.auth_v2 import (.*)": r"from asf.medical.api.auth import \1",
+        r"from asf\.medical\.api\.auth_service import (.*)": r"from asf.medical.api.auth import \1",
         r"from asf\.medical\.api\.main import (.*)": r"from asf.medical.api.main_unified import \1",
         r"from asf\.medical\.api\.main_v2 import (.*)": r"from asf.medical.api.main_unified import \1",
         r"from asf\.medical\.api\.consolidated_main import (.*)": r"from asf.medical.api.main_unified import \1",

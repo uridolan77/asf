@@ -14,7 +14,7 @@ from asf.medical.api.models.analysis import (
     CAPAnalysisResponse
 )
 from asf.medical.api.dependencies import get_analysis_service
-from asf.medical.api.auth_unified import get_current_active_user
+from asf.medical.api.auth import get_current_active_user
 from asf.medical.services.analysis_service import AnalysisService
 from asf.medical.storage.models import User
 

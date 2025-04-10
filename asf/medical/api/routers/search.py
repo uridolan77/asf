@@ -4,33 +4,32 @@ Search router for the Medical Research Synthesizer API.
 This module provides endpoints for searching medical literature.
 """
 
-import uuid
 import logging
-from datetime import datetime
-from typing import Dict, Any
-from fastapi import APIRouter, Depends, HTTPException, status
+from typing import Dict, Any, Optional
+from fastapi import APIRouter, Depends, HTTPException, status, Request, Response
 
-from asf.medical.api.models import QueryRequest, SearchResponse, PICORequest
-from asf.medical.api.dependencies import get_synthesizer, get_current_user
-from asf.medical.api.auth_unified import User
-from asf.medical.data_ingestion_layer.enhanced_medical_research_synthesizer import EnhancedMedicalResearchSynthesizer
-from asf.medical.data_ingestion_layer.query_builder import MedicalCondition, MedicalIntervention, OutcomeMetric, StudyDesign
+from asf.medical.api.models.search import QueryRequest, PICORequest
+from asf.medical.api.models.base import APIResponse, ErrorResponse
+from asf.medical.api.dependencies import get_search_service
+from asf.medical.api.auth import get_current_active_user
+from asf.medical.services.search_service import SearchService
+from asf.medical.storage.models import User
+from asf.medical.core.monitoring import async_timed, log_error
 
 # Initialize router
-router = APIRouter(prefix="/v1/search", tags=["Search"])
-
-# In-memory storage for results (will be replaced with database in Phase 2)
-result_storage: Dict[str, Any] = {}
-query_storage: Dict[str, Any] = {}
+router = APIRouter(prefix="/search", tags=["search"])
 
 # Set up logging
 logger = logging.getLogger(__name__)
 
-@router.post("/", response_model=SearchResponse)
+@router.post("", response_model=APIResponse[Dict[str, Any]])
+@async_timed("search_endpoint")
 async def search(
     request: QueryRequest,
-    synthesizer: EnhancedMedicalResearchSynthesizer = Depends(get_synthesizer),
-    current_user: User = Depends(get_current_user)
+    search_service: SearchService = Depends(get_search_service),
+    current_user: User = Depends(get_current_active_user),
+    req: Request = None,
+    res: Response = None
 ):
     """
     Search PubMed with the given query and return enriched results.
@@ -40,145 +39,168 @@ async def search(
     and standardized dates.
     """
     try:
-        logger.info(f"Executing search: {request.query} (max_results={request.max_results})")
-        results = synthesizer.search_and_enrich(query=request.query, max_results=request.max_results)
+        # Add request ID to response headers for tracing
+        request_id = req.headers.get("X-Request-ID") if req else None
+        if request_id and res:
+            res.headers["X-Request-ID"] = request_id
         
-        # Store results for later use
-        result_id = str(uuid.uuid4())
-        result_storage[result_id] = {
-            'query': request.query,
-            'results': results,
-            'timestamp': datetime.now().isoformat(),
-            'user': current_user.email
-        }
+        # Log the request
+        logger.info(f"Search request: query='{request.query}', max_results={request.max_results}, user_id={current_user.id}")
         
-        logger.info(f"Search completed: {len(results)} results found (result_id={result_id})")
-        
-        return {
-            "query": request.query,
-            "total_count": len(results),
-            "results": results,
-            "result_id": result_id
-        }
-    except Exception as e:
-        logger.error(f"Error executing search: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.post("/pico", response_model=SearchResponse)
-async def pico_search(
-    request: PICORequest,
-    synthesizer: EnhancedMedicalResearchSynthesizer = Depends(get_synthesizer),
-    current_user: User = Depends(get_current_user)
-):
-    """
-    Search using PICO (Population, Intervention, Comparison, Outcome) framework.
-
-    This endpoint builds a structured query using the PICO framework and returns
-    enriched search results.
-    """
-    try:
-        logger.info(f"Executing PICO search: condition={request.condition}, interventions={request.interventions}")
-        
-        # Create condition
-        condition = MedicalCondition(request.condition)
-        
-        # Create interventions
-        interventions = [MedicalIntervention(i) for i in request.interventions]
-        
-        # Create outcomes
-        outcomes = [OutcomeMetric(o) for o in request.outcomes]
-        
-        # Create population and study design if provided
-        population = None
-        if request.population:
-            population = request.population
-            
-        study_design = None
-        if request.study_design:
-            study_design = StudyDesign(request.study_design)
-        
-        # Build query
-        builder = synthesizer.create_pico_query(
-            condition=condition,
-            interventions=interventions,
-            outcomes=outcomes,
-            population=population,
-            study_design=study_design,
-            years=request.years
+        # Execute the search
+        result = await search_service.search(
+            query=request.query,
+            max_results=request.max_results,
+            user_id=current_user.id
         )
         
-        # Store the query and builder
-        query_id = str(uuid.uuid4())
-        query = builder.build_pico_query(use_mesh=True)
-        query_storage[query_id] = {
-            'query': query,
-            'builder': builder,
-            'created_at': datetime.now().isoformat(),
-            'user': current_user.email
-        }
+        # Log the result
+        logger.info(f"Search completed: {len(result.get('results', []))} results found")
         
-        # Execute search
-        results = synthesizer.search_and_enrich(query_builder=builder, max_results=request.max_results)
-        
-        # Store results
-        result_id = str(uuid.uuid4())
-        result_storage[result_id] = {
-            'query': query,
-            'results': results,
-            'timestamp': datetime.now().isoformat(),
-            'user': current_user.email
-        }
-        
-        logger.info(f"PICO search completed: {len(results)} results found (result_id={result_id})")
-        
-        return {
-            "query": query,
-            "total_count": len(results),
-            "results": results,
-            "result_id": result_id
-        }
+        return APIResponse(
+            success=True,
+            message="Search completed successfully",
+            data=result,
+            meta={
+                "query": request.query,
+                "max_results": request.max_results,
+                "user_id": current_user.id
+            }
+        )
+    except ValueError as e:
+        # Handle validation errors
+        log_error(e, {"query": request.query, "user_id": current_user.id})
+        logger.warning(f"Validation error in search: {str(e)}")
+        return ErrorResponse(
+            message="Invalid search parameters",
+            errors=[{"detail": str(e)}],
+            code="VALIDATION_ERROR"
+        )
     except Exception as e:
-        logger.error(f"Error executing PICO search: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        # Handle unexpected errors
+        log_error(e, {"query": request.query, "user_id": current_user.id})
+        logger.error(f"Error executing search: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error executing search: {str(e)}"
+        )
 
-@router.get("/template/{template_id}")
-async def get_query_from_template(
-    template_id: str,
-    synthesizer: EnhancedMedicalResearchSynthesizer = Depends(get_synthesizer),
-    current_user: User = Depends(get_current_user)
+@router.post("/pico", response_model=APIResponse[Dict[str, Any]])
+@async_timed("search_pico_endpoint")
+async def search_pico(
+    request: PICORequest,
+    search_service: SearchService = Depends(get_search_service),
+    current_user: User = Depends(get_current_active_user),
+    req: Request = None,
+    res: Response = None
 ):
     """
-    Create a query from a template.
-    
-    This endpoint creates a structured query from a predefined template.
+    Search PubMed using the PICO framework.
+
+    This endpoint builds a structured query using the PICO framework
+    (Population, Intervention, Comparison, Outcome) and returns enriched results.
     """
     try:
-        logger.info(f"Creating query from template: {template_id}")
-        builder = synthesizer.create_query_from_template(template_id)
+        # Add request ID to response headers for tracing
+        request_id = req.headers.get("X-Request-ID") if req else None
+        if request_id and res:
+            res.headers["X-Request-ID"] = request_id
         
-        # Build the query
-        query = builder.build_pico_query(use_mesh=True)
+        # Log the request
+        logger.info(f"PICO search request: condition='{request.condition}', interventions={request.interventions}, outcomes={request.outcomes}, user_id={current_user.id}")
         
-        # Store the query and builder
-        query_id = str(uuid.uuid4())
-        query_storage[query_id] = {
-            'query': query,
-            'builder': builder,
-            'created_at': datetime.now().isoformat(),
-            'user': current_user.email,
-            'template': template_id
-        }
+        # Validate inputs
+        if not request.condition:
+            raise ValueError("Condition is required for PICO search")
         
-        # Get explanation for this query
-        explanation = synthesizer.query_interface.explain_query(query_type='pico', use_mesh=True)
+        # Execute the search
+        result = await search_service.search_pico(
+            condition=request.condition,
+            interventions=request.interventions,
+            outcomes=request.outcomes,
+            population=request.population,
+            study_design=request.study_design,
+            years=request.years,
+            max_results=request.max_results,
+            user_id=current_user.id
+        )
         
-        logger.info(f"Query created from template: {template_id} (query_id={query_id})")
+        # Log the result
+        logger.info(f"PICO search completed: {len(result.get('results', []))} results found")
         
-        return {
-            'query_id': query_id,
-            'query': query,
-            'components': explanation['components']
-        }
+        return APIResponse(
+            success=True,
+            message="PICO search completed successfully",
+            data=result,
+            meta={
+                "condition": request.condition,
+                "interventions": request.interventions,
+                "outcomes": request.outcomes,
+                "user_id": current_user.id
+            }
+        )
+    except ValueError as e:
+        # Handle validation errors
+        log_error(e, {"condition": request.condition, "user_id": current_user.id})
+        logger.warning(f"Validation error in PICO search: {str(e)}")
+        return ErrorResponse(
+            message="Invalid PICO search parameters",
+            errors=[{"detail": str(e)}],
+            code="VALIDATION_ERROR"
+        )
     except Exception as e:
-        logger.error(f"Error creating query from template: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        # Handle unexpected errors
+        log_error(e, {"condition": request.condition, "user_id": current_user.id})
+        logger.error(f"Error executing PICO search: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error executing PICO search: {str(e)}"
+        )
+
+@router.get("/{result_id}", response_model=APIResponse[Dict[str, Any]])
+@async_timed("get_search_result_endpoint")
+async def get_search_result(
+    result_id: str,
+    search_service: SearchService = Depends(get_search_service),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Get a stored search result by ID.
+
+    This endpoint retrieves a previously stored search result by its ID.
+    """
+    try:
+        # Log the request
+        logger.info(f"Get search result request: result_id={result_id}, user_id={current_user.id}")
+        
+        # Get the result
+        result = await search_service.get_result(result_id, current_user.id)
+        
+        if not result:
+            logger.warning(f"Search result not found: result_id={result_id}, user_id={current_user.id}")
+            return ErrorResponse(
+                message="Search result not found",
+                errors=[{"detail": f"No result found with ID {result_id}"}],
+                code="NOT_FOUND"
+            )
+        
+        # Log the result
+        logger.info(f"Search result retrieved: result_id={result_id}, user_id={current_user.id}")
+        
+        return APIResponse(
+            success=True,
+            message="Search result retrieved successfully",
+            data=result,
+            meta={
+                "result_id": result_id,
+                "user_id": current_user.id
+            }
+        )
+    except Exception as e:
+        # Handle unexpected errors
+        log_error(e, {"result_id": result_id, "user_id": current_user.id})
+        logger.error(f"Error retrieving search result: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error retrieving search result: {str(e)}"
+        )

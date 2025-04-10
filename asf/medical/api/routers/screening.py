@@ -9,6 +9,7 @@ from typing import List, Dict, Any, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
+from asf.medical.api.models.base import APIResponse, ErrorResponse
 from asf.medical.api.dependencies import (
     get_search_service, get_prisma_screening_service, get_bias_assessment_service,
     get_current_active_user
@@ -21,6 +22,7 @@ from asf.medical.ml.services.bias_assessment_service import (
 )
 from asf.medical.services.search_service import SearchService
 from asf.medical.storage.models import User
+from asf.medical.core.monitoring import async_timed, log_error
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -52,28 +54,8 @@ class BiasAssessmentRequest(BaseModel):
     max_results: int = Field(20, description="Maximum number of results to assess")
     domains: Optional[List[BiasDomain]] = Field(None, description="Bias domains to assess")
 
-class ScreeningResult(BaseModel):
-    """PRISMA screening result."""
-    query: str = Field(..., description="Search query")
-    stage: ScreeningStage = Field(..., description="Screening stage")
-    total_articles: int = Field(..., description="Total number of articles")
-    included: int = Field(..., description="Number of included articles")
-    excluded: int = Field(..., description="Number of excluded articles")
-    uncertain: int = Field(..., description="Number of uncertain articles")
-    results: List[Dict[str, Any]] = Field(..., description="Screening results")
-    flow_data: Dict[str, Any] = Field(..., description="PRISMA flow data")
-
-class BiasAssessmentResult(BaseModel):
-    """Bias assessment result."""
-    query: str = Field(..., description="Search query")
-    total_articles: int = Field(..., description="Total number of articles")
-    low_risk: int = Field(..., description="Number of articles with low risk of bias")
-    moderate_risk: int = Field(..., description="Number of articles with moderate risk of bias")
-    high_risk: int = Field(..., description="Number of articles with high risk of bias")
-    unclear_risk: int = Field(..., description="Number of articles with unclear risk of bias")
-    results: List[Dict[str, Any]] = Field(..., description="Bias assessment results")
-
-@router.post("/prisma", response_model=ScreeningResult)
+@router.post("/prisma", response_model=APIResponse[Dict[str, Any]])
+@async_timed("screen_articles_endpoint")
 async def screen_articles(
     request: ScreeningRequest,
     search_service: SearchService = Depends(get_search_service),
@@ -100,16 +82,25 @@ async def screen_articles(
         
         if not articles:
             logger.warning(f"No articles found for query: {request.query}")
-            return {
-                "query": request.query,
-                "stage": request.stage,
-                "total_articles": 0,
-                "included": 0,
-                "excluded": 0,
-                "uncertain": 0,
-                "results": [],
-                "flow_data": screening_service.get_flow_data()
-            }
+            return APIResponse(
+                success=True,
+                message="No articles found for the given query",
+                data={
+                    "query": request.query,
+                    "stage": request.stage,
+                    "total_articles": 0,
+                    "included": 0,
+                    "excluded": 0,
+                    "uncertain": 0,
+                    "results": [],
+                    "flow_data": screening_service.get_flow_data()
+                },
+                meta={
+                    "query": request.query,
+                    "max_results": request.max_results,
+                    "stage": request.stage
+                }
+            )
         
         # Set custom criteria if provided
         if request.criteria:
@@ -135,30 +126,44 @@ async def screen_articles(
         
         logger.info(f"Screening completed: {included} included, {excluded} excluded, {uncertain} uncertain")
         
-        return {
-            "query": request.query,
-            "stage": request.stage,
-            "total_articles": len(articles),
-            "included": included,
-            "excluded": excluded,
-            "uncertain": uncertain,
-            "results": screening_results,
-            "flow_data": flow_data
-        }
+        return APIResponse(
+            success=True,
+            message="Screening completed successfully",
+            data={
+                "query": request.query,
+                "stage": request.stage,
+                "total_articles": len(articles),
+                "included": included,
+                "excluded": excluded,
+                "uncertain": uncertain,
+                "results": screening_results,
+                "flow_data": flow_data
+            },
+            meta={
+                "query": request.query,
+                "max_results": request.max_results,
+                "stage": request.stage,
+                "criteria": request.criteria.dict() if request.criteria else None
+            }
+        )
     except ValueError as e:
+        log_error(e, {"query": request.query, "user_id": current_user.id})
         logger.warning(f"Validation error in screening: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
+        return ErrorResponse(
+            message="Invalid screening parameters",
+            errors=[{"detail": str(e)}],
+            code="VALIDATION_ERROR"
         )
     except Exception as e:
+        log_error(e, {"query": request.query, "user_id": current_user.id})
         logger.error(f"Error screening articles: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to screen articles: {str(e)}"
         )
 
-@router.post("/bias-assessment", response_model=BiasAssessmentResult)
+@router.post("/bias-assessment", response_model=APIResponse[Dict[str, Any]])
+@async_timed("assess_bias_endpoint")
 async def assess_bias(
     request: BiasAssessmentRequest,
     search_service: SearchService = Depends(get_search_service),
@@ -185,15 +190,24 @@ async def assess_bias(
         
         if not articles:
             logger.warning(f"No articles found for query: {request.query}")
-            return {
-                "query": request.query,
-                "total_articles": 0,
-                "low_risk": 0,
-                "moderate_risk": 0,
-                "high_risk": 0,
-                "unclear_risk": 0,
-                "results": []
-            }
+            return APIResponse(
+                success=True,
+                message="No articles found for the given query",
+                data={
+                    "query": request.query,
+                    "total_articles": 0,
+                    "low_risk": 0,
+                    "moderate_risk": 0,
+                    "high_risk": 0,
+                    "unclear_risk": 0,
+                    "results": []
+                },
+                meta={
+                    "query": request.query,
+                    "max_results": request.max_results,
+                    "domains": [domain.value for domain in request.domains] if request.domains else None
+                }
+            )
         
         # Assess bias
         assessment_results = await bias_service.assess_studies(articles)
@@ -210,29 +224,42 @@ async def assess_bias(
         
         logger.info(f"Bias assessment completed: {low_risk} low risk, {moderate_risk} moderate risk, {high_risk} high risk, {unclear_risk} unclear risk")
         
-        return {
-            "query": request.query,
-            "total_articles": len(articles),
-            "low_risk": low_risk,
-            "moderate_risk": moderate_risk,
-            "high_risk": high_risk,
-            "unclear_risk": unclear_risk,
-            "results": assessment_results
-        }
+        return APIResponse(
+            success=True,
+            message="Bias assessment completed successfully",
+            data={
+                "query": request.query,
+                "total_articles": len(articles),
+                "low_risk": low_risk,
+                "moderate_risk": moderate_risk,
+                "high_risk": high_risk,
+                "unclear_risk": unclear_risk,
+                "results": assessment_results
+            },
+            meta={
+                "query": request.query,
+                "max_results": request.max_results,
+                "domains": [domain.value for domain in request.domains] if request.domains else None
+            }
+        )
     except ValueError as e:
+        log_error(e, {"query": request.query, "user_id": current_user.id})
         logger.warning(f"Validation error in bias assessment: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
+        return ErrorResponse(
+            message="Invalid bias assessment parameters",
+            errors=[{"detail": str(e)}],
+            code="VALIDATION_ERROR"
         )
     except Exception as e:
+        log_error(e, {"query": request.query, "user_id": current_user.id})
         logger.error(f"Error assessing bias: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to assess bias: {str(e)}"
         )
 
-@router.get("/flow-diagram")
+@router.get("/flow-diagram", response_model=APIResponse[Dict[str, Any]])
+@async_timed("get_flow_diagram_endpoint")
 async def get_flow_diagram(
     screening_service: PRISMAScreeningService = Depends(get_prisma_screening_service),
     current_user: User = Depends(get_current_active_user)
@@ -248,8 +275,16 @@ async def get_flow_diagram(
         # Generate flow diagram data
         diagram_data = screening_service.generate_flow_diagram()
         
-        return diagram_data
+        return APIResponse(
+            success=True,
+            message="Flow diagram data retrieved successfully",
+            data=diagram_data,
+            meta={
+                "user_id": current_user.id
+            }
+        )
     except Exception as e:
+        log_error(e, {"user_id": current_user.id})
         logger.error(f"Error getting flow diagram data: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

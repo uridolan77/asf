@@ -7,136 +7,178 @@ including contradiction detection and specialized analyses.
 
 import uuid
 import logging
-from datetime import datetime
-from typing import Dict, Any
-from fastapi import APIRouter, Depends, HTTPException, status
+from typing import Dict, Any, Optional
+from fastapi import APIRouter, Depends, HTTPException, status, Request, Response
 
-from asf.medical.api.models import ContradictionAnalysisRequest, ContradictionAnalysisResponse
-from asf.medical.api.dependencies import get_synthesizer, get_current_user
-from asf.medical.api.auth_unified import User
-from asf.medical.data_ingestion_layer.enhanced_medical_research_synthesizer import EnhancedMedicalResearchSynthesizer
+from asf.medical.api.models.base import APIResponse, ErrorResponse
+from asf.medical.api.models.analysis import (
+    ContradictionAnalysisRequest, 
+    CAPAnalysisResponse
+)
+from asf.medical.api.dependencies import get_analysis_service
+from asf.medical.api.auth import get_current_active_user
+from asf.medical.services.analysis_service import AnalysisService
+from asf.medical.storage.models import User
+from asf.medical.core.monitoring import async_timed, log_error
 
 # Initialize router
-router = APIRouter(prefix="/v1/analysis", tags=["Analysis"])
-
-# In-memory storage for results (will be replaced with database in Phase 2)
-result_storage: Dict[str, Any] = {}
+router = APIRouter(prefix="/analysis", tags=["analysis"])
 
 # Set up logging
 logger = logging.getLogger(__name__)
 
-@router.post("/contradictions", response_model=ContradictionAnalysisResponse)
+@router.post("/contradictions", response_model=APIResponse[Dict[str, Any]])
+@async_timed("analyze_contradictions_endpoint")
 async def analyze_contradictions(
     request: ContradictionAnalysisRequest,
-    synthesizer: EnhancedMedicalResearchSynthesizer = Depends(get_synthesizer),
-    current_user: User = Depends(get_current_user)
+    analysis_service: AnalysisService = Depends(get_analysis_service),
+    current_user: User = Depends(get_current_active_user),
+    req: Request = None,
+    res: Response = None
 ):
     """
-    Analyze contradictions in literature matching the query.
-
-    This endpoint searches for and identifies potential contradictions in the
-    medical literature, comparing the authority of contradictory findings.
-
-    It can use BioMedLM for more accurate contradiction detection if enabled.
+    Analyze contradictions in medical literature.
+    
+    This endpoint searches for articles and analyzes contradictions between them,
+    using various contradiction detection methods.
     """
     try:
-        logger.info(f"Analyzing contradictions: {request.query} (max_results={request.max_results}, use_biomedlm={request.use_biomedlm})")
+        # Add request ID to response headers for tracing
+        request_id = req.headers.get("X-Request-ID") if req else None
+        if request_id and res:
+            res.headers["X-Request-ID"] = request_id
         
-        analysis = synthesizer.search_and_analyze_contradictions(
+        # Log the request
+        logger.info(f"Contradiction analysis request: query='{request.query}', max_results={request.max_results}, user_id={current_user.id}")
+        
+        # Execute the analysis
+        result = await analysis_service.analyze_contradictions(
             query=request.query,
             max_results=request.max_results,
+            threshold=request.threshold,
             use_biomedlm=request.use_biomedlm,
-            threshold=request.threshold
+            use_tsmixer=request.use_tsmixer,
+            use_lorentz=request.use_lorentz,
+            user_id=current_user.id
         )
         
-        # Store the analysis
-        analysis_id = str(uuid.uuid4())
-        result_storage[analysis_id] = {
-            'query': request.query,
-            'analysis': analysis,
-            'timestamp': datetime.now().isoformat(),
-            'user': current_user.email
-        }
+        # Log the result
+        logger.info(f"Contradiction analysis completed: {len(result.get('contradictions', []))} contradictions found")
         
-        logger.info(f"Contradiction analysis completed: {analysis['num_contradictions']} contradictions found (analysis_id={analysis_id})")
-        
-        # Add analysis_id to the response
-        analysis['analysis_id'] = analysis_id
-        
-        return analysis
+        return APIResponse(
+            success=True,
+            message="Contradiction analysis completed successfully",
+            data=result,
+            meta={
+                "query": request.query,
+                "max_results": request.max_results,
+                "threshold": request.threshold,
+                "use_biomedlm": request.use_biomedlm,
+                "use_tsmixer": request.use_tsmixer,
+                "use_lorentz": request.use_lorentz
+            }
+        )
+    except ValueError as e:
+        # Handle validation errors
+        log_error(e, {"query": request.query, "user_id": current_user.id})
+        logger.warning(f"Validation error in contradiction analysis: {str(e)}")
+        return ErrorResponse(
+            message="Invalid contradiction analysis parameters",
+            errors=[{"detail": str(e)}],
+            code="VALIDATION_ERROR"
+        )
     except Exception as e:
+        # Handle unexpected errors
+        log_error(e, {"query": request.query, "user_id": current_user.id})
         logger.error(f"Error analyzing contradictions: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error analyzing contradictions: {str(e)}"
+        )
 
-@router.get("/cap")
-async def cap_analysis(
-    synthesizer: EnhancedMedicalResearchSynthesizer = Depends(get_synthesizer),
-    current_user: User = Depends(get_current_user)
+@router.get("/cap", response_model=APIResponse[Dict[str, Any]])
+@async_timed("analyze_cap_endpoint")
+async def analyze_cap(
+    analysis_service: AnalysisService = Depends(get_analysis_service),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
-    Perform specialized analysis of CAP literature.
-
-    This endpoint executes a predefined analysis of contradictions in
-    Community-Acquired Pneumonia treatment literature.
+    Analyze Community-Acquired Pneumonia (CAP) literature.
+    
+    This endpoint performs a specialized analysis of the CAP literature,
+    focusing on treatment approaches, patient populations, and outcomes.
     """
     try:
-        logger.info("Executing CAP analysis")
+        # Log the request
+        logger.info(f"CAP analysis request: user_id={current_user.id}")
         
-        analysis = synthesizer.search_cap_contradictory_treatments()
+        # Execute the analysis
+        result = await analysis_service.analyze_cap(user_id=current_user.id)
         
-        # Store the analysis
-        analysis_id = str(uuid.uuid4())
-        result_storage[analysis_id] = {
-            'analysis': analysis,
-            'timestamp': datetime.now().isoformat(),
-            'user': current_user.email
-        }
+        # Log the result
+        logger.info(f"CAP analysis completed")
         
-        logger.info(f"CAP analysis completed: {analysis['num_contradictions']} contradictions found (analysis_id={analysis_id})")
-        
-        return {
-            'analysis_id': analysis_id,
-            'total_articles': analysis['total_articles'],
-            'num_contradictions': analysis['num_contradictions'],
-            'contradictions_by_intervention': {k: len(v) for k, v in analysis['contradictions_by_intervention'].items()},
-            'authority_analysis': analysis['authority_analysis']
-        }
+        return APIResponse(
+            success=True,
+            message="CAP analysis completed successfully",
+            data=result,
+            meta={
+                "user_id": current_user.id
+            }
+        )
     except Exception as e:
-        logger.error(f"Error analyzing CAP treatments: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        # Handle unexpected errors
+        log_error(e, {"user_id": current_user.id})
+        logger.error(f"Error executing CAP analysis: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error executing CAP analysis: {str(e)}"
+        )
 
-@router.get("/cap/detailed")
-async def cap_analysis_detailed(
-    synthesizer: EnhancedMedicalResearchSynthesizer = Depends(get_synthesizer),
-    current_user: User = Depends(get_current_user)
+@router.get("/{analysis_id}", response_model=APIResponse[Dict[str, Any]])
+@async_timed("get_analysis_endpoint")
+async def get_analysis(
+    analysis_id: str,
+    analysis_service: AnalysisService = Depends(get_analysis_service),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
-    Detailed analysis of CAP treatment duration vs agent.
-
-    This endpoint performs a specialized analysis comparing treatment duration
-    and agent effectiveness for Community-Acquired Pneumonia.
+    Get a stored analysis by ID.
+    
+    This endpoint retrieves a previously stored analysis by its ID.
     """
     try:
-        logger.info("Executing detailed CAP analysis")
+        # Log the request
+        logger.info(f"Get analysis request: analysis_id={analysis_id}, user_id={current_user.id}")
         
-        analysis = synthesizer.cap_duration_vs_agent_analysis()
+        # Get the analysis
+        result = await analysis_service.get_analysis(analysis_id)
         
-        # Store the analysis
-        analysis_id = str(uuid.uuid4())
-        result_storage[analysis_id] = {
-            'analysis': analysis,
-            'timestamp': datetime.now().isoformat(),
-            'user': current_user.email
-        }
+        if not result:
+            logger.warning(f"Analysis not found: analysis_id={analysis_id}")
+            return ErrorResponse(
+                message="Analysis not found",
+                errors=[{"detail": f"No analysis found with ID {analysis_id}"}],
+                code="NOT_FOUND"
+            )
         
-        logger.info(f"Detailed CAP analysis completed (analysis_id={analysis_id})")
+        # Log the result
+        logger.info(f"Analysis retrieved: analysis_id={analysis_id}")
         
-        return {
-            'analysis_id': analysis_id,
-            'duration_analysis': analysis['duration_analysis'],
-            'agent_analysis': analysis['agent_analysis'],
-            'cross_analysis': analysis['cross_analysis']
-        }
+        return APIResponse(
+            success=True,
+            message="Analysis retrieved successfully",
+            data=result,
+            meta={
+                "analysis_id": analysis_id,
+                "user_id": current_user.id
+            }
+        )
     except Exception as e:
-        logger.error(f"Error performing detailed CAP analysis: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        # Handle unexpected errors
+        log_error(e, {"analysis_id": analysis_id, "user_id": current_user.id})
+        logger.error(f"Error retrieving analysis: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error retrieving analysis: {str(e)}"
+        )
