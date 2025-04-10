@@ -24,6 +24,7 @@ from asf.medical.ml.models.lorentz_embeddings import LorentzEmbeddingService
 from asf.medical.ml.models.shap_explainer import SHAPExplainer
 # Removed old contradiction service import
 from asf.medical.ml.services.enhanced_contradiction_service import EnhancedContradictionService
+from asf.medical.data_ingestion_layer.enhanced_medical_research_synthesizer import EnhancedMedicalResearchSynthesizer
 from asf.medical.ml.services.temporal_service import TemporalService
 from asf.medical.ml.services.prisma_screening_service import PRISMAScreeningService
 from asf.medical.ml.services.bias_assessment_service import BiasAssessmentService
@@ -315,3 +316,21 @@ async def get_export_service() -> ExportService:
         ExportService: The export service
     """
     return ExportService()
+
+async def get_synthesizer(
+    ncbi_client: NCBIClient = Depends(get_ncbi_client)
+) -> EnhancedMedicalResearchSynthesizer:
+    """
+    Get the enhanced medical research synthesizer.
+
+    Args:
+        ncbi_client: NCBI client
+
+    Returns:
+        EnhancedMedicalResearchSynthesizer: The enhanced medical research synthesizer
+    """
+    return EnhancedMedicalResearchSynthesizer(
+        email=settings.NCBI_EMAIL,
+        api_key=settings.NCBI_API_KEY.get_secret_value() if settings.NCBI_API_KEY else None,
+        impact_factor_source=settings.IMPACT_FACTOR_SOURCE
+    )

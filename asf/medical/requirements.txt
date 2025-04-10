@@ -47,6 +47,8 @@ pymemgraph>=0.1.0
 
 # Distributed computing
 ray>=2.3.1
+dramatiq>=1.14.2
+dramatiq[redis]>=1.14.2  # Redis broker support
 
 # Utilities
 python-dotenv>=1.0.0

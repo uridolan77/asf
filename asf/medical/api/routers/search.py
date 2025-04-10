@@ -5,7 +5,7 @@ This module provides endpoints for searching medical literature.
 """
 
 import logging
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, status, Request, Response
 
 from asf.medical.api.models.search import QueryRequest, PICORequest
@@ -43,20 +43,22 @@ async def search(
         request_id = req.headers.get("X-Request-ID") if req else None
         if request_id and res:
             res.headers["X-Request-ID"] = request_id
-        
+
         # Log the request
         logger.info(f"Search request: query='{request.query}', max_results={request.max_results}, user_id={current_user.id}")
-        
+
         # Execute the search
         result = await search_service.search(
             query=request.query,
             max_results=request.max_results,
+            page=request.pagination.page,
+            page_size=request.pagination.page_size,
             user_id=current_user.id
         )
-        
+
         # Log the result
         logger.info(f"Search completed: {len(result.get('results', []))} results found")
-        
+
         return APIResponse(
             success=True,
             message="Search completed successfully",
@@ -64,6 +66,12 @@ async def search(
             meta={
                 "query": request.query,
                 "max_results": request.max_results,
+                "pagination": {
+                    "page": request.pagination.page,
+                    "page_size": request.pagination.page_size,
+                    "total_pages": result.get("pagination", {}).get("total_pages", 1),
+                    "total_count": result.get("total_count", 0)
+                },
                 "user_id": current_user.id
             }
         )
@@ -105,14 +113,14 @@ async def search_pico(
         request_id = req.headers.get("X-Request-ID") if req else None
         if request_id and res:
             res.headers["X-Request-ID"] = request_id
-        
+
         # Log the request
         logger.info(f"PICO search request: condition='{request.condition}', interventions={request.interventions}, outcomes={request.outcomes}, user_id={current_user.id}")
-        
+
         # Validate inputs
         if not request.condition:
             raise ValueError("Condition is required for PICO search")
-        
+
         # Execute the search
         result = await search_service.search_pico(
             condition=request.condition,
@@ -122,12 +130,14 @@ async def search_pico(
             study_design=request.study_design,
             years=request.years,
             max_results=request.max_results,
+            page=request.pagination.page,
+            page_size=request.pagination.page_size,
             user_id=current_user.id
         )
-        
+
         # Log the result
         logger.info(f"PICO search completed: {len(result.get('results', []))} results found")
-        
+
         return APIResponse(
             success=True,
             message="PICO search completed successfully",
@@ -136,6 +146,16 @@ async def search_pico(
                 "condition": request.condition,
                 "interventions": request.interventions,
                 "outcomes": request.outcomes,
+                "population": request.population,
+                "study_design": request.study_design,
+                "years": request.years,
+                "max_results": request.max_results,
+                "pagination": {
+                    "page": request.pagination.page,
+                    "page_size": request.pagination.page_size,
+                    "total_pages": result.get("pagination", {}).get("total_pages", 1),
+                    "total_count": result.get("total_count", 0)
+                },
                 "user_id": current_user.id
             }
         )
@@ -172,10 +192,10 @@ async def get_search_result(
     try:
         # Log the request
         logger.info(f"Get search result request: result_id={result_id}, user_id={current_user.id}")
-        
+
         # Get the result
         result = await search_service.get_result(result_id, current_user.id)
-        
+
         if not result:
             logger.warning(f"Search result not found: result_id={result_id}, user_id={current_user.id}")
             return ErrorResponse(
@@ -183,10 +203,10 @@ async def get_search_result(
                 errors=[{"detail": f"No result found with ID {result_id}"}],
                 code="NOT_FOUND"
             )
-        
+
         # Log the result
         logger.info(f"Search result retrieved: result_id={result_id}, user_id={current_user.id}")
-        
+
         return APIResponse(
             success=True,
             message="Search result retrieved successfully",

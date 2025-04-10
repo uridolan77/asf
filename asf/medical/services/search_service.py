@@ -12,7 +12,7 @@ from typing import Dict, List, Any, Optional
 
 from asf.medical.core.cache import cached, cache_manager
 from asf.medical.core.exceptions import (
-    SearchError, ResourceNotFoundError, ValidationError,
+    SearchError, ValidationError,
     ExternalServiceError, DatabaseError
 )
 
@@ -55,18 +55,20 @@ class SearchService:
 
     @cached(prefix="search", data_type="search")
     async def search(
-        self, query: str, max_results: int = 20, user_id: Optional[int] = None
+        self, query: str, max_results: int = 100, page: int = 1, page_size: int = 20, user_id: Optional[int] = None
     ) -> Dict[str, Any]:
         """
-        Search PubMed with the given query and return enriched results.
+        Search PubMed with the given query and return enriched results with pagination.
 
         Args:
             query: Search query
-            max_results: Maximum number of results to return
+            max_results: Maximum number of results to return from the API
+            page: Page number (1-based)
+            page_size: Number of results per page
             user_id: User ID for storing the query and results
 
         Returns:
-            Search results
+            Search results with pagination metadata
 
         Raises:
             ValidationError: If the query is invalid
@@ -76,8 +78,14 @@ class SearchService:
         if not query or not query.strip():
             raise ValidationError("Search query cannot be empty")
 
-        if max_results < 1 or max_results > 100:
-            raise ValidationError("max_results must be between 1 and 100")
+        if max_results < 1 or max_results > 500:
+            raise ValidationError("max_results must be between 1 and 500")
+
+        if page < 1:
+            raise ValidationError("page must be at least 1")
+
+        if page_size < 1 or page_size > 100:
+            raise ValidationError("page_size must be between 1 and 100")
 
         logger.info(f"Executing search: {query} (max_results={max_results})")
 
@@ -178,11 +186,33 @@ class SearchService:
 
         logger.info(f"Search completed: {len(enriched_articles)} results found (result_id={result_id})")
 
+        # Apply pagination
+        total_count = len(enriched_articles)
+        total_pages = (total_count + page_size - 1) // page_size  # Ceiling division
+
+        # Calculate start and end indices for the current page
+        start_idx = (page - 1) * page_size
+        end_idx = min(start_idx + page_size, total_count)
+
+        # Get the results for the current page
+        paged_results = enriched_articles[start_idx:end_idx]
+
+        # Create pagination metadata
+        pagination_metadata = {
+            "page": page,
+            "page_size": page_size,
+            "total_pages": total_pages,
+            "total_count": total_count,
+            "has_previous": page > 1,
+            "has_next": page < total_pages
+        }
+
         return {
             "query": query,
-            "total_count": len(enriched_articles),
-            "results": enriched_articles,
-            "result_id": result_id
+            "total_count": total_count,
+            "results": paged_results,
+            "result_id": result_id,
+            "pagination": pagination_metadata
         }
 
     @cached(prefix="search_pico", data_type="search")
@@ -194,11 +224,13 @@ class SearchService:
         population: Optional[str] = None,
         study_design: Optional[str] = None,
         years: int = 5,
-        max_results: int = 20,
+        max_results: int = 100,
+        page: int = 1,
+        page_size: int = 20,
         user_id: Optional[int] = None
     ) -> Dict[str, Any]:
         """
-        Search PubMed using the PICO framework.
+        Search PubMed using the PICO framework with pagination.
 
         Args:
             condition: Medical condition
@@ -207,11 +239,13 @@ class SearchService:
             population: Target population
             study_design: Study design
             years: Number of years to search back
-            max_results: Maximum number of results to return
+            max_results: Maximum number of results to return from the API
+            page: Page number (1-based)
+            page_size: Number of results per page
             user_id: User ID for storing the query and results
 
         Returns:
-            Search results
+            Search results with pagination metadata
 
         Raises:
             ValidationError: If the condition is invalid or missing
@@ -225,8 +259,14 @@ class SearchService:
         if years < 1 or years > 50:
             raise ValidationError("Years must be between 1 and 50")
 
-        if max_results < 1 or max_results > 100:
-            raise ValidationError("max_results must be between 1 and 100")
+        if max_results < 1 or max_results > 500:
+            raise ValidationError("max_results must be between 1 and 500")
+
+        if page < 1:
+            raise ValidationError("page must be at least 1")
+
+        if page_size < 1 or page_size > 100:
+            raise ValidationError("page_size must be between 1 and 100")
 
         logger.info(f"Executing PICO search: {condition} (max_results={max_results})")
         logger.debug(f"PICO search parameters: interventions={interventions}, outcomes={outcomes}, population={population}, study_design={study_design}, years={years}")
@@ -264,7 +304,7 @@ class SearchService:
             logger.info(f"Built PICO query: {query}")
 
             # Execute the search
-            return await self.search(query, max_results, user_id)
+            return await self.search(query, max_results, page, page_size, user_id)
         except ValidationError:
             # Re-raise validation errors
             raise

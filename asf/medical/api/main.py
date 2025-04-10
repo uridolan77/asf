@@ -25,6 +25,7 @@ from asf.medical.api.routers.screening import router as screening_router
 from asf.medical.api.routers.export import router as export_router
 from asf.medical.api.routers.analysis import router as analysis_router
 from asf.medical.api.routers.knowledge_base import router as knowledge_base_router
+from asf.medical.api.routers.async_ml import router as async_ml_router
 from asf.medical.core.config import settings
 from asf.medical.core.cache import cache_manager
 from asf.medical.storage.database import init_db
@@ -119,6 +120,7 @@ app.include_router(screening_router, prefix=settings.API_V1_STR, tags=["screenin
 app.include_router(export_router, prefix=settings.API_V1_STR, tags=["export"])
 app.include_router(analysis_router, prefix=settings.API_V1_STR, tags=["analysis"])
 app.include_router(knowledge_base_router, prefix=settings.API_V1_STR, tags=["knowledge_base"])
+app.include_router(async_ml_router, prefix=settings.API_V1_STR, tags=["async-ml"])
 
 # Root endpoint
 @app.get("/", tags=["status"])
@@ -213,6 +215,7 @@ async def get_open_api_endpoint():
             # Removed old contradiction endpoints
             {"name": "enhanced-contradiction", "description": "Enhanced multi-dimensional contradiction classification endpoints"},
             {"name": "contradiction-resolution", "description": "Evidence-based contradiction resolution endpoints"},
+            {"name": "async-ml", "description": "Asynchronous ML model inference endpoints"},
             {"name": "status", "description": "Status endpoints"},
             {"name": "admin", "description": "Admin endpoints"}
         ]

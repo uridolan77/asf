@@ -7,10 +7,25 @@ This module defines the Pydantic models for search requests and responses.
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel, Field
 
+class PaginationParams(BaseModel):
+    """Pagination parameters for search requests."""
+    page: int = Field(1, description="Page number (1-based)", ge=1)
+    page_size: int = Field(20, description="Number of results per page", ge=1, le=100)
+
 class QueryRequest(BaseModel):
     """Request model for the search endpoint."""
     query: str = Field(..., description="The search query")
-    max_results: int = Field(20, description="Maximum number of results to return", ge=1, le=100)
+    max_results: int = Field(100, description="Maximum number of results to return", ge=1, le=500)
+    pagination: PaginationParams = Field(default_factory=PaginationParams, description="Pagination parameters")
+
+class PaginationMetadata(BaseModel):
+    """Pagination metadata for search responses."""
+    page: int = Field(..., description="Current page number")
+    page_size: int = Field(..., description="Number of results per page")
+    total_pages: int = Field(..., description="Total number of pages")
+    total_count: int = Field(..., description="Total number of results")
+    has_previous: bool = Field(..., description="Whether there is a previous page")
+    has_next: bool = Field(..., description="Whether there is a next page")
 
 class SearchResponse(BaseModel):
     """Response model for the search endpoint."""
@@ -18,6 +33,7 @@ class SearchResponse(BaseModel):
     total_count: int = Field(..., description="Total number of results")
     results: List[Dict[str, Any]] = Field(..., description="Search results")
     result_id: str = Field(..., description="Unique ID for this search result")
+    pagination: PaginationMetadata = Field(..., description="Pagination metadata")
 
 class PICORequest(BaseModel):
     """Request model for the PICO search endpoint."""
@@ -27,4 +43,5 @@ class PICORequest(BaseModel):
     population: Optional[str] = Field(None, description="Target population")
     study_design: Optional[str] = Field(None, description="Study design")
     years: int = Field(5, description="Number of years to search back", ge=1, le=50)
-    max_results: int = Field(20, description="Maximum number of results to return", ge=1, le=100)
+    max_results: int = Field(100, description="Maximum number of results to return", ge=1, le=500)
+    pagination: PaginationParams = Field(default_factory=PaginationParams, description="Pagination parameters")
