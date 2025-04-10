@@ -18,17 +18,17 @@ from torch_geometric.nn import SAGEConv
 from torch_geometric_temporal import TemporalConv
 
 # Import Temporal Graph Network
-from asf.layer1_knowledge_substrate.temporal.temporal_graph_network import (
+from asf.medical.layer1_knowledge_substrate.temporal.temporal_graph_network import (
     TemporalGraphNetwork, DynamicAuthorityScorer, TemporalCitationAnalyzer
 )
 
 # Import TSMixer
-from asf.layer1_knowledge_substrate.temporal.tsmixer import (
+from asf.medical.layer1_knowledge_substrate.temporal.tsmixer import (
     TSMixer, TSMixerEncoder, AdaptiveTSMixer
 )
 
 # Import Lorentz embeddings
-from asf.layer1_knowledge_substrate.embeddings.lorentz_embeddings import (
+from asf.medical.layer1_knowledge_substrate.embeddings.lorentz_embeddings import (
     LorentzEmbedding, LorentzLinear, LorentzDistance, LorentzFusion,
     HybridLorentzEuclideanEmbedding, HybridLorentzEuclideanDistance
 )
@@ -38,7 +38,7 @@ import asyncpg
 from neo4j import AsyncGraphDatabase
 
 # Import Memgraph manager
-from asf.layer1_knowledge_substrate.memgraph_manager import MemgraphManager, MemgraphConfig
+from asf.medical.layer1_knowledge_substrate.memgraph_manager import MemgraphManager, MemgraphConfig
 
 # Constants (from previous example, adjust as needed)
 RETRY_BACKOFF_SECONDS = 1

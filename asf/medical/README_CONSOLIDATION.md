@@ -34,7 +34,8 @@ Consistent interfaces were created for API requests and responses:
 - **models/base.py**: Base models for consistent API responses with success/error handling and metadata
 - **Updated Routers**: All routers were updated to use the consistent interfaces:
   - **search.py**: Unified search router
-  - **contradiction.py**: Unified contradiction router
+  - **enhanced_contradiction.py**: Enhanced contradiction router
+  - **contradiction_resolution.py**: Contradiction resolution router
   - **screening.py**: Unified screening router
   - **export.py**: Unified export router
   - **analysis.py**: Unified analysis router
@@ -46,7 +47,6 @@ A comprehensive client library was created for interacting with the unified API:
 
 - **client/api_client.py**: A client library with methods for all API endpoints
 - **client/examples/**: Example scripts demonstrating how to use the client library
-- **client/MIGRATION_GUIDE.md**: Documentation for migrating existing client code
 
 ## Testing
 

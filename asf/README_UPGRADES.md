@@ -22,7 +22,7 @@ TSMixer is a state-of-the-art architecture for time series forecasting that uses
 
 ### Implementation
 
-- Created a complete TSMixer implementation in `asf/layer1_knowledge_substrate/temporal/tsmixer.py`
+- Created a complete TSMixer implementation in `asf/medical/layer1_knowledge_substrate/temporal/tsmixer.py`
 - Updated the TemporalEncoder to use TSMixer instead of TCN
 - Added configuration options to switch between TSMixer and legacy TCN
 - Integrated TSMixer with the contradiction detection system
@@ -30,7 +30,7 @@ TSMixer is a state-of-the-art architecture for time series forecasting that uses
 ### Usage
 
 ```python
-from asf.layer1_knowledge_substrate.temporal.tsmixer import TSMixer
+from asf.medical.layer1_knowledge_substrate.temporal.tsmixer import TSMixer
 
 # Create TSMixer model
 model = TSMixer(
@@ -55,7 +55,7 @@ Lorentz manifold embeddings provide improved numerical stability and better repr
 
 ### Implementation
 
-- Implemented Lorentz embeddings in `asf/layer1_knowledge_substrate/embeddings/lorentz_embeddings.py`
+- Implemented Lorentz embeddings in `asf/medical/layer1_knowledge_substrate/embeddings/lorentz_embeddings.py`
 - Updated the HybridSpaceTransformer to use Lorentz manifolds
 - Added configuration options to switch between Lorentz and Poincaré embeddings
 - Integrated Lorentz embeddings with the contradiction detection system
@@ -63,7 +63,7 @@ Lorentz manifold embeddings provide improved numerical stability and better repr
 ### Usage
 
 ```python
-from asf.layer1_knowledge_substrate.embeddings.lorentz_embeddings import LorentzEmbedding
+from asf.medical.layer1_knowledge_substrate.embeddings.lorentz_embeddings import LorentzEmbedding
 
 # Create Lorentz embedding
 embedding = LorentzEmbedding(
@@ -88,7 +88,7 @@ Ray is a distributed computing framework that enables parallel execution of task
 
 ### Implementation
 
-- Created a complete Ray orchestration framework in `asf/orchestration/ray_orchestrator.py`
+- Created a complete Ray orchestration framework in `asf/medical/orchestration/ray_orchestrator.py`
 - Implemented task scheduling, dependency management, and fault tolerance
 - Added support for both synchronous and asynchronous execution
 - Integrated Ray with the medical API for distributed processing
@@ -96,7 +96,7 @@ Ray is a distributed computing framework that enables parallel execution of task
 ### Usage
 
 ```python
-from asf.orchestration.ray_orchestrator import RayOrchestrator, RayConfig
+from asf.medical.orchestration.ray_orchestrator import RayOrchestrator, RayConfig
 
 # Create orchestrator
 config = RayConfig(use_ray=True)

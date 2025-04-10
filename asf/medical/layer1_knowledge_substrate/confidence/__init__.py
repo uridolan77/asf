@@ -1,1 +1,1 @@
-from asf.layer1_knowledge_substrate.confidence.bayesian_updater import BayesianConfidenceUpdater
+from asf.medical.layer1_knowledge_substrate.confidence.bayesian_updater import BayesianConfidenceUpdater
