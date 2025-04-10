@@ -1,0 +1,195 @@
+"""
+RESTful API for Medical Research Synthesizer
+
+This module provides a comprehensive API for accessing all features of the
+enhanced medical research synthesizer with proper caching and dependency injection.
+"""
+
+import logging
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from fastapi.openapi.docs import get_swagger_ui_html, get_redoc_html
+from fastapi.openapi.utils import get_openapi
+from contextlib import asynccontextmanager
+
+from asf.medical.api.middleware import MonitoringMiddleware
+from asf.medical.core.monitoring import setup_monitoring, get_metrics, run_health_checks, export_metrics_to_json
+
+from asf.medical.api.routers import search, analysis, knowledge_base, export, auth, screening, contradiction
+from asf.medical.core.config import settings
+from asf.medical.core.cache import cache_manager
+from asf.medical.storage.database import init_db
+from asf.medical.ml.model_registry import model_registry
+
+# Set up logging
+logging.basicConfig(
+    level=getattr(logging, settings.LOG_LEVEL),
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.FileHandler("medical_api.log"),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
+
+# Define lifespan context manager
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    # Initialize database
+    init_db()
+    logger.info("Database initialized")
+
+    # Initialize cache manager with Redis if configured
+    if settings.REDIS_URL:
+        # Re-initialize cache manager with Redis URL
+        cache_manager.__init__(
+            max_size=10000,  # Increase cache size for production
+            redis_url=settings.REDIS_URL,
+            default_ttl=settings.CACHE_TTL,
+            namespace="asf:medical:"
+        )
+        logger.info(f"Cache manager initialized with Redis: {settings.REDIS_URL}")
+    else:
+        logger.info("Cache manager initialized with local LRU cache only")
+
+    # Initialize model registry
+    model_registry.initialize(use_gpu=settings.USE_GPU)
+    logger.info("Model registry initialized")
+
+    # Set up monitoring
+    setup_monitoring()
+    logger.info("Monitoring initialized")
+
+    yield
+
+    # Shutdown
+    # Clear cache
+    await cache_manager.clear()
+    logger.info("Cache cleared")
+
+    # Unload models
+    model_registry.unload_all()
+    logger.info("Models unloaded")
+
+# Initialize the API
+app = FastAPI(
+    title="Medical Research Synthesizer API",
+    description="API for searching, analyzing and synthesizing medical research literature",
+    version="1.0.0",
+    docs_url=None,  # Disable default docs
+    redoc_url=None,  # Disable default redoc
+    openapi_url="/openapi.json",
+    lifespan=lifespan
+)
+
+# Add middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Add monitoring middleware
+app.add_middleware(MonitoringMiddleware)
+
+# Include routers
+app.include_router(auth.router, tags=["auth"])
+app.include_router(search.router, prefix=settings.API_V1_STR, tags=["search"])
+app.include_router(analysis.router, prefix=settings.API_V1_STR, tags=["analysis"])
+app.include_router(knowledge_base.router, prefix=settings.API_V1_STR, tags=["knowledge_base"])
+app.include_router(export.router, prefix=settings.API_V1_STR, tags=["export"])
+app.include_router(screening.router, prefix=settings.API_V1_STR, tags=["screening"])
+app.include_router(contradiction.router, prefix=settings.API_V1_STR, tags=["contradiction"])
+
+
+
+@app.get("/", tags=["status"])
+async def root():
+    """Root endpoint for health check."""
+    return {"status": "ok", "message": "Medical Research Synthesizer API is running"}
+
+@app.get("/health", tags=["status"])
+async def health():
+    """Health check endpoint."""
+    return {"status": "ok"}
+
+@app.get("/cache/stats", tags=["admin"])
+async def cache_stats():
+    """Get cache statistics."""
+    return await cache_manager.get_stats()
+
+@app.post("/cache/clear", tags=["admin"])
+async def clear_cache(namespace: str = None):
+    """Clear the cache."""
+    await cache_manager.clear(namespace)
+    return {"status": "ok", "message": f"Cache cleared for namespace: {namespace if namespace else 'all'}"}
+
+@app.get("/metrics", tags=["admin"])
+async def metrics():
+    """Get metrics."""
+    return get_metrics()
+
+@app.get("/health", tags=["admin"])
+async def health():
+    """Get health status."""
+    health_checks = run_health_checks()
+    all_ok = all(check.get("status") == "ok" for check in health_checks.values())
+
+    if all_ok:
+        return {"status": "ok", "checks": health_checks}
+    else:
+        return JSONResponse(
+            status_code=503,
+            content={"status": "error", "checks": health_checks}
+        )
+
+@app.post("/metrics/export", tags=["admin"])
+async def export_metrics(file_path: str = "logs/metrics.json"):
+    """Export metrics to a JSON file."""
+    export_metrics_to_json(file_path)
+    return {"status": "ok", "message": f"Metrics exported to {file_path}"}
+
+@app.get("/docs", include_in_schema=False)
+async def custom_swagger_ui_html():
+    """Custom Swagger UI."""
+    return get_swagger_ui_html(
+        openapi_url=app.openapi_url,
+        title=f"{app.title} - Swagger UI",
+        oauth2_redirect_url=app.swagger_ui_oauth2_redirect_url,
+        swagger_js_url="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.9.0/swagger-ui-bundle.js",
+        swagger_css_url="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.9.0/swagger-ui.css",
+    )
+
+@app.get("/redoc", include_in_schema=False)
+async def redoc_html():
+    """ReDoc UI."""
+    return get_redoc_html(
+        openapi_url=app.openapi_url,
+        title=f"{app.title} - ReDoc",
+        redoc_js_url="https://cdn.jsdelivr.net/npm/redoc@next/bundles/redoc.standalone.js",
+    )
+
+@app.get("/openapi.json", include_in_schema=False)
+async def get_open_api_endpoint():
+    """Custom OpenAPI schema."""
+    return get_openapi(
+        title=app.title,
+        version=app.version,
+        description=app.description,
+        routes=app.routes,
+        tags=[
+            {"name": "auth", "description": "Authentication endpoints"},
+            {"name": "search", "description": "Search endpoints for medical literature"},
+            {"name": "analysis", "description": "Analysis endpoints for medical literature"},
+            {"name": "knowledge_base", "description": "Knowledge base management endpoints"},
+            {"name": "export", "description": "Export endpoints for data export"},
+            {"name": "screening", "description": "PRISMA-guided screening and bias assessment endpoints"},
+            {"name": "contradiction", "description": "Enhanced contradiction detection endpoints"},
+            {"name": "status", "description": "Status endpoints"},
+            {"name": "admin", "description": "Admin endpoints"}
+        ]
+    )

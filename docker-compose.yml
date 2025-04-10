@@ -7,6 +7,8 @@ services:
       - "8000:8000"
     environment:
       - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/medical_research_synthesizer
+      - REDIS_URL=redis://redis:6379/0
+      - CACHE_TTL=3600
       - NCBI_EMAIL=${NCBI_EMAIL:-your.email@example.com}
       - NCBI_API_KEY=${NCBI_API_KEY}
       - GRAPH_DB_TYPE=memgraph
@@ -18,6 +20,7 @@ services:
       - ./knowledge_bases:/app/knowledge_bases
     depends_on:
       - db
+      - redis
       - memgraph
       - ray-head
     networks:
@@ -78,6 +81,16 @@ services:
     networks:
       - medical-network
 
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    networks:
+      - medical-network
+
   memgraph:
     image: memgraph/memgraph:latest
     ports:
@@ -112,5 +125,6 @@ networks:
 
 volumes:
   postgres-data:
+  redis-data:
   memgraph-data:
   knowledge_bases:

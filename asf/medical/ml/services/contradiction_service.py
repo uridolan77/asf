@@ -11,6 +11,7 @@ import numpy as np
 from typing import Dict, List, Optional, Any, Union, Tuple
 
 from asf.medical.ml.models import BioMedLMService, TSMixerService, LorentzEmbeddingService, SHAPExplainer
+from asf.medical.ml.model_registry import model_registry
 from asf.medical.core.config import settings
 
 # Set up logging
@@ -19,84 +20,117 @@ logger = logging.getLogger(__name__)
 class ContradictionService:
     """
     Service for detecting contradictions in medical literature.
-    
+
     This service provides methods for detecting and explaining contradictions.
     """
-    
-    _instance = None
-    
-    def __new__(cls):
+
+    def __init__(self,
+                 biomedlm_service: Optional[BioMedLMService] = None,
+                 tsmixer_service: Optional[TSMixerService] = None,
+                 lorentz_service: Optional[LorentzEmbeddingService] = None,
+                 shap_explainer: Optional[SHAPExplainer] = None):
         """
-        Create a singleton instance of the contradiction service.
-        
-        Returns:
-            ContradictionService: The singleton instance
+        Initialize the contradiction service.
+
+        Args:
+            biomedlm_service: BioMedLM service (optional)
+            tsmixer_service: TSMixer service (optional)
+            lorentz_service: Lorentz embedding service (optional)
+            shap_explainer: SHAP explainer (optional)
         """
-        if cls._instance is None:
-            cls._instance = super(ContradictionService, cls).__new__(cls)
-        return cls._instance
-    
-    def __init__(self):
-        """Initialize the contradiction service."""
-        self.biomedlm_service = None
-        self.tsmixer_service = None
-        self.lorentz_service = None
-        self.shap_explainer = None
-        
+        # Store provided services or register factories for lazy loading
+        self.biomedlm_service = biomedlm_service
+        self.tsmixer_service = tsmixer_service
+        self.lorentz_service = lorentz_service
+        self.shap_explainer = shap_explainer
+
+        # Register model factories if not already registered
+        if not model_registry.is_model_registered("biomedlm"):
+            model_registry.register_model_factory(
+                "biomedlm",
+                lambda: BioMedLMService(model_name=settings.BIOMEDLM_MODEL),
+                BioMedLMService
+            )
+
+        if not model_registry.is_model_registered("tsmixer"):
+            model_registry.register_model_factory(
+                "tsmixer",
+                lambda: TSMixerService(),
+                TSMixerService
+            )
+
+        if not model_registry.is_model_registered("lorentz"):
+            model_registry.register_model_factory(
+                "lorentz",
+                lambda: LorentzEmbeddingService(),
+                LorentzEmbeddingService
+            )
+
+        if not model_registry.is_model_registered("shap_explainer"):
+            model_registry.register_model_factory(
+                "shap_explainer",
+                lambda: SHAPExplainer(),
+                SHAPExplainer
+            )
+
         logger.info("Contradiction service initialized")
-    
+
     def _get_biomedlm_service(self) -> BioMedLMService:
         """
         Get the BioMedLM service.
-        
+
         Returns:
             BioMedLMService: The BioMedLM service
         """
         if self.biomedlm_service is None:
-            logger.info("Initializing BioMedLM service")
-            self.biomedlm_service = BioMedLMService()
+            logger.info("Loading BioMedLM service from registry")
+            self.biomedlm_service = model_registry.get_model("biomedlm")
         return self.biomedlm_service
-    
+
     def _get_tsmixer_service(self) -> TSMixerService:
         """
         Get the TSMixer service.
-        
+
         Returns:
             TSMixerService: The TSMixer service
         """
         if self.tsmixer_service is None:
-            logger.info("Initializing TSMixer service")
-            self.tsmixer_service = TSMixerService()
+            logger.info("Loading TSMixer service from registry")
+            self.tsmixer_service = model_registry.get_model("tsmixer")
         return self.tsmixer_service
-    
+
     def _get_lorentz_service(self) -> LorentzEmbeddingService:
         """
         Get the Lorentz embedding service.
-        
+
         Returns:
             LorentzEmbeddingService: The Lorentz embedding service
         """
         if self.lorentz_service is None:
-            logger.info("Initializing Lorentz embedding service")
-            self.lorentz_service = LorentzEmbeddingService()
+            logger.info("Loading Lorentz embedding service from registry")
+            self.lorentz_service = model_registry.get_model("lorentz")
         return self.lorentz_service
-    
+
     def _get_shap_explainer(self) -> SHAPExplainer:
         """
         Get the SHAP explainer.
-        
+
         Returns:
             SHAPExplainer: The SHAP explainer
         """
         if self.shap_explainer is None:
-            logger.info("Initializing SHAP explainer")
-            biomedlm_service = self._get_biomedlm_service()
-            self.shap_explainer = SHAPExplainer(
-                model_fn=lambda x: np.array([biomedlm_service.detect_contradiction(text, text)[1] for text in x]),
-                tokenizer=biomedlm_service.tokenizer
-            )
+            logger.info("Loading SHAP explainer from registry")
+            self.shap_explainer = model_registry.get_model("shap_explainer")
+
+            # Initialize with BioMedLM if needed
+            if not self.shap_explainer.is_initialized():
+                biomedlm_service = self._get_biomedlm_service()
+                self.shap_explainer.initialize(
+                    model_fn=lambda x: np.array([biomedlm_service.detect_contradiction(text, text)[1] for text in x]),
+                    tokenizer=biomedlm_service.tokenizer
+                )
         return self.shap_explainer
-    
+
     def detect_contradiction(
         self,
         claim1: str,
@@ -108,7 +142,7 @@ class ContradictionService:
     ) -> Dict[str, Any]:
         """
         Detect contradiction between two claims.
-        
+
         Args:
             claim1: First claim
             claim2: Second claim
@@ -116,12 +150,12 @@ class ContradictionService:
             use_tsmixer: Whether to use TSMixer
             use_lorentz: Whether to use Lorentz embeddings
             threshold: Threshold for contradiction detection
-            
+
         Returns:
             Contradiction detection result
         """
         logger.info(f"Detecting contradiction between '{claim1}' and '{claim2}'")
-        
+
         # Initialize result
         result = {
             "claim1": claim1,
@@ -131,69 +165,69 @@ class ContradictionService:
             "confidence": "low",
             "methods_used": []
         }
-        
+
         # Use BioMedLM
         if use_biomedlm:
             logger.info("Using BioMedLM for contradiction detection")
             biomedlm_service = self._get_biomedlm_service()
             is_contradiction, score = biomedlm_service.detect_contradiction(claim1, claim2)
-            
+
             result["methods_used"].append("biomedlm")
             result["biomedlm_score"] = float(score)
-            
+
             # Update result
             result["contradiction_score"] = float(score)
             result["is_contradiction"] = score > threshold
-        
+
         # Use TSMixer
         if use_tsmixer:
             logger.info("Using TSMixer for contradiction detection")
             tsmixer_service = self._get_tsmixer_service()
-            
+
             # Create a simple temporal sequence
             sequence = [
                 {"claim": claim1, "timestamp": 0},
                 {"claim": claim2, "timestamp": 1}
             ]
-            
+
             # Get BioMedLM embeddings
             biomedlm_service = self._get_biomedlm_service()
             embedding_fn = biomedlm_service.encode
-            
+
             # Analyze sequence
             analysis = tsmixer_service.analyze_temporal_sequence(sequence, embedding_fn)
-            
+
             result["methods_used"].append("tsmixer")
             result["tsmixer_score"] = float(analysis["contradiction_scores"][1])
-            
+
             # Update result if not using BioMedLM
             if not use_biomedlm:
                 result["contradiction_score"] = float(analysis["contradiction_scores"][1])
                 result["is_contradiction"] = analysis["contradiction_scores"][1] > threshold
-        
+
         # Use Lorentz embeddings
         if use_lorentz:
             logger.info("Using Lorentz embeddings for contradiction detection")
             lorentz_service = self._get_lorentz_service()
-            
+
             # Initialize with claims if not already initialized
             if lorentz_service._entity_to_idx is None or len(lorentz_service._entity_to_idx) == 0:
                 lorentz_service.initialize_model(["claim1", "claim2"])
-            
+
             # Get distance
             distance = lorentz_service.get_distance("claim1", "claim2")
-            
+
             # Normalize distance to [0, 1]
             normalized_distance = 1.0 - np.exp(-distance)
-            
+
             result["methods_used"].append("lorentz")
             result["lorentz_score"] = float(normalized_distance)
-            
+
             # Update result if not using BioMedLM or TSMixer
             if not use_biomedlm and not use_tsmixer:
                 result["contradiction_score"] = float(normalized_distance)
                 result["is_contradiction"] = normalized_distance > threshold
-        
+
         # Set confidence based on score
         if result["contradiction_score"] > 0.8:
             result["confidence"] = "high"
@@ -201,11 +235,11 @@ class ContradictionService:
             result["confidence"] = "medium"
         else:
             result["confidence"] = "low"
-        
+
         logger.info(f"Contradiction detection result: {result['is_contradiction']} (score: {result['contradiction_score']}, confidence: {result['confidence']})")
-        
+
         return result
-    
+
     def explain_contradiction(
         self,
         claim1: str,
@@ -214,39 +248,42 @@ class ContradictionService:
     ) -> Dict[str, Any]:
         """
         Explain a contradiction.
-        
+
         Args:
             claim1: First claim
             claim2: Second claim
             contradiction_score: Contradiction score
-            
+
         Returns:
             Explanation
         """
         logger.info(f"Explaining contradiction between '{claim1}' and '{claim2}'")
-        
+
         # Get SHAP explainer
         shap_explainer = self._get_shap_explainer()
-        
+
         # Get explanation
         explanation = shap_explainer.explain_contradiction(claim1, claim2)
-        
+
         # Add contradiction score
         explanation["contradiction_score"] = contradiction_score
-        
+
         logger.info("Contradiction explanation generated")
-        
+
         return explanation
-    
+
     def unload_models(self):
         """Unload all models from memory."""
-        if self.biomedlm_service is not None:
-            self.biomedlm_service.unload_model()
-        
-        if self.tsmixer_service is not None:
-            self.tsmixer_service.unload_model()
-        
-        if self.lorentz_service is not None:
-            self.lorentz_service.unload_model()
-        
+        # Unload models from the registry
+        model_registry.unload_model("biomedlm")
+        model_registry.unload_model("tsmixer")
+        model_registry.unload_model("lorentz")
+        model_registry.unload_model("shap_explainer")
+
+        # Reset instance variables
+        self.biomedlm_service = None
+        self.tsmixer_service = None
+        self.lorentz_service = None
+        self.shap_explainer = None
+
         logger.info("All models unloaded")

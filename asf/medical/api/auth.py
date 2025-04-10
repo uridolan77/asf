@@ -123,3 +123,4 @@ def register_user(email: str, password: str, role: str = "user"):
         "role": role
     }
     return True
+

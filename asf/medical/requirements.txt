@@ -13,6 +13,9 @@ alembic>=1.10.3
 psycopg2-binary>=2.9.6  # For PostgreSQL
 asyncpg>=0.27.0  # For async PostgreSQL
 
+# Cache
+redis>=4.5.4  # For Redis caching
+
 # External APIs
 httpx>=0.24.0
 requests>=2.28.2
@@ -34,6 +37,9 @@ transformers>=4.28.1
 shap>=0.41.0
 geoopt>=0.5.0
 faiss-cpu>=1.7.3  # Use faiss-gpu for GPU support
+spacy>=3.5.3
+# Run: python -m spacy download en_core_sci_md
+scispacy>=0.5.2
 
 # Graph databases
 neo4j>=5.7.0

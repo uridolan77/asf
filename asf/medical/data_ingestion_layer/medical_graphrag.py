@@ -17,7 +17,7 @@ import spacy
 from transformers import AutoTokenizer, AutoModelForTokenClassification, pipeline
 
 # For embeddings and vector store
-import faiss
+import faiss_cpu as faiss
 from langchain_openai import OpenAIEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
