@@ -729,17 +729,40 @@ class ContradictionService:
                 domain1 = metadata1.get("domain", "default")
                 domain2 = metadata2.get("domain", "default")
 
-                # Calculate temporal confidence for each claim
+                # Calculate temporal confidence for each claim with detailed information
                 if self.temporal_service:
-                    confidence1 = self.temporal_service.calculate_temporal_confidence(
-                        str(pub_date1.date()), domain1
+                    # Get detailed confidence information for domain-specific insights
+                    confidence_details1 = self.temporal_service.calculate_temporal_confidence(
+                        str(pub_date1.date()), domain1, include_details=True
                     )
-                    confidence2 = self.temporal_service.calculate_temporal_confidence(
-                        str(pub_date2.date()), domain2
+                    confidence_details2 = self.temporal_service.calculate_temporal_confidence(
+                        str(pub_date2.date()), domain2, include_details=True
                     )
+
+                    # Extract confidence values
+                    confidence1 = confidence_details1["confidence"] if isinstance(confidence_details1, dict) else confidence_details1
+                    confidence2 = confidence_details2["confidence"] if isinstance(confidence_details2, dict) else confidence_details2
 
                     # Calculate confidence difference
                     confidence_diff = abs(confidence1 - confidence2)
+
+                    # Store domain-specific information for explanation generation
+                    domain_info = {
+                        "claim1": {
+                            "domain": domain1,
+                            "confidence": confidence1,
+                            "publication_date": str(pub_date1.date()),
+                            "details": confidence_details1 if isinstance(confidence_details1, dict) else None
+                        },
+                        "claim2": {
+                            "domain": domain2,
+                            "confidence": confidence2,
+                            "publication_date": str(pub_date2.date()),
+                            "details": confidence_details2 if isinstance(confidence_details2, dict) else None
+                        },
+                        "time_diff_days": time_diff,
+                        "time_diff_years": time_diff / 365.0
+                    }
                 else:
                     # Simple time-based confidence calculation if temporal service is not available
                     # Older publications have lower confidence
@@ -751,6 +774,22 @@ class ContradictionService:
                     confidence1 = 1.0 - (years_diff1 / max_years)
                     confidence2 = 1.0 - (years_diff2 / max_years)
                     confidence_diff = abs(confidence1 - confidence2)
+
+                    # Create basic domain info without detailed explanations
+                    domain_info = {
+                        "claim1": {
+                            "domain": domain1,
+                            "confidence": confidence1,
+                            "publication_date": str(pub_date1.date())
+                        },
+                        "claim2": {
+                            "domain": domain2,
+                            "confidence": confidence2,
+                            "publication_date": str(pub_date2.date())
+                        },
+                        "time_diff_days": time_diff,
+                        "time_diff_years": time_diff / 365.0
+                    }
 
                 # Calculate contradiction score based on confidence difference and time difference
                 # Normalize time difference to a score between 0 and 1
@@ -795,17 +834,106 @@ class ContradictionService:
                     else:
                         result["confidence"] = ContradictionConfidence.LOW
 
-                    # Generate explanation
-                    newer_date = max(pub_date1, pub_date2).strftime("%Y-%m-%d")
-                    older_date = min(pub_date1, pub_date2).strftime("%Y-%m-%d")
-                    time_diff_years = time_diff / 365.0
+                    # Generate domain-specific explanation
+                    result["explanation"] = self._generate_temporal_contradiction_explanation(
+                        claim1, claim2, domain_info, has_different_numbers, is_subset
+                    )
 
-                    result["explanation"] = f"Temporal contradiction detected: Claims are similar but published {time_diff_years:.1f} years apart ({older_date} vs {newer_date}). The more recent publication may reflect updated evidence or changing medical knowledge."
+                    # Add domain-specific details to the result
+                    result["details"]["domain_info"] = domain_info
 
             return result
         except Exception as e:
             logger.error(f"Error detecting temporal contradiction: {str(e)}")
             return result
+
+    def _generate_temporal_contradiction_explanation(
+        self,
+        claim1: str,
+        claim2: str,
+        domain_info: Dict[str, Any],
+        has_different_numbers: bool = False,
+        is_subset: bool = False
+    ) -> str:
+        """
+        Generate a detailed explanation for temporal contradiction with domain-specific insights.
+
+        Args:
+            claim1: First claim
+            claim2: Second claim
+            domain_info: Domain-specific information
+            has_different_numbers: Whether the claims have different numerical values
+            is_subset: Whether one claim is a subset of the other
+
+        Returns:
+            Detailed explanation
+        """
+        # Extract information
+        domain1 = domain_info["claim1"]["domain"]
+        domain2 = domain_info["claim2"]["domain"]
+        pub_date1 = domain_info["claim1"]["publication_date"]
+        pub_date2 = domain_info["claim2"]["publication_date"]
+        time_diff_years = domain_info["time_diff_years"]
+
+        # Get detailed explanations if available
+        details1 = domain_info["claim1"].get("details", {})
+        details2 = domain_info["claim2"].get("details", {})
+
+        # Base explanation
+        explanation = f"Temporal contradiction detected: Claims are similar but published {time_diff_years:.1f} years apart ({pub_date1} vs {pub_date2}). "
+
+        # Add domain-specific insights if available
+        if details1 and details2 and isinstance(details1, dict) and isinstance(details2, dict):
+            # Get domain characteristics
+            domain1_chars = details1.get("domain_characteristics", {})
+            domain2_chars = details2.get("domain_characteristics", {})
+
+            # Add domain-specific explanation
+            if domain1 == domain2:
+                # Same domain
+                domain_desc = domain1_chars.get("description", "")
+                evolution_rate = domain1_chars.get("evolution_rate", "moderate")
+                half_life_years = domain1_chars.get("half_life", 365 * 2.5) / 365.0
+
+                # Evolution rate description
+                if evolution_rate == "very_rapid":
+                    evolution_desc = "very rapidly evolving"
+                    rate_explanation = "knowledge can change significantly even within a few years"
+                elif evolution_rate == "rapid":
+                    evolution_desc = "rapidly evolving"
+                    rate_explanation = "significant advances occur frequently"
+                elif evolution_rate == "moderate":
+                    evolution_desc = "moderately evolving"
+                    rate_explanation = "knowledge evolves steadily over time"
+                elif evolution_rate == "slow":
+                    evolution_desc = "slowly evolving"
+                    rate_explanation = "fundamental principles remain stable for many years"
+                else:  # very_slow
+                    evolution_desc = "very slowly evolving"
+                    rate_explanation = "core knowledge remains stable for decades"
+
+                explanation += f"In {evolution_desc} {domain1} medicine, {rate_explanation}. "
+                explanation += f"Evidence typically has a half-life of {half_life_years:.1f} years. "
+
+                if domain_desc:
+                    explanation += f"{domain_desc}. "
+            else:
+                # Different domains
+                explanation += f"The claims come from different medical domains ({domain1} vs {domain2}), "
+                explanation += "which may have different rates of knowledge evolution. "
+
+        # Add explanation based on claim characteristics
+        if has_different_numbers:
+            explanation += "The claims contain different numerical values, which likely reflect updated statistics or findings. "
+        elif is_subset:
+            explanation += "One claim appears to be an extension of the other, suggesting additional information has been discovered over time. "
+        elif claim1 == claim2:
+            explanation += "Despite identical wording, the significant time difference suggests the validity of this claim has been reconfirmed over time. "
+
+        # Add recommendation
+        explanation += "The more recent publication likely reflects updated evidence or changing medical knowledge."
+
+        return explanation
 
     def _parse_date(self, date_str: Optional[str]) -> Optional[datetime.datetime]:
         """
