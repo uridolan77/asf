@@ -1,0 +1,129 @@
+"""
+Database models for the Medical Research Synthesizer.
+
+This module defines the SQLAlchemy ORM models for the database.
+"""
+
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Boolean, JSON, Text
+from sqlalchemy.orm import relationship
+import datetime
+
+from asf.medical.storage.database import Base
+
+class User(Base):
+    """
+    User model for authentication and authorization.
+    """
+    __tablename__ = "users"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String, unique=True, index=True, nullable=False)
+    hashed_password = Column(String, nullable=False)
+    role = Column(String, default="user", nullable=False)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
+    last_login = Column(DateTime, nullable=True)
+    is_active = Column(Boolean, default=True, nullable=False)
+    
+    # Relationships
+    queries = relationship("Query", back_populates="user")
+    results = relationship("Result", back_populates="user")
+    knowledge_bases = relationship("KnowledgeBase", back_populates="user")
+
+class Query(Base):
+    """
+    Query model for storing search queries.
+    """
+    __tablename__ = "queries"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    query_text = Column(String, nullable=False)
+    query_type = Column(String, default="text", nullable=False)  # text, pico, template
+    parameters = Column(JSON, nullable=True)  # For PICO parameters
+    created_at = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
+    
+    # Relationships
+    user = relationship("User", back_populates="queries")
+    results = relationship("Result", back_populates="query")
+
+class Result(Base):
+    """
+    Result model for storing search results and analyses.
+    """
+    __tablename__ = "results"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    result_id = Column(String, unique=True, index=True, nullable=False)  # UUID for API reference
+    query_id = Column(Integer, ForeignKey("queries.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    result_type = Column(String, nullable=False)  # search, analysis
+    result_data = Column(JSON, nullable=False)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
+    
+    # Relationships
+    query = relationship("Query", back_populates="results")
+    user = relationship("User", back_populates="results")
+
+class KnowledgeBase(Base):
+    """
+    KnowledgeBase model for storing knowledge base metadata.
+    """
+    __tablename__ = "knowledge_bases"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    kb_id = Column(String, unique=True, index=True, nullable=False)  # UUID for API reference
+    name = Column(String, unique=True, index=True, nullable=False)
+    query = Column(String, nullable=False)
+    file_path = Column(String, nullable=False)
+    update_schedule = Column(String, nullable=False)  # daily, weekly, monthly
+    last_updated = Column(DateTime, nullable=True)
+    next_update = Column(DateTime, nullable=True)
+    initial_results = Column(Integer, nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
+    
+    # Relationships
+    user = relationship("User", back_populates="knowledge_bases")
+    updates = relationship("KnowledgeBaseUpdate", back_populates="knowledge_base")
+
+class KnowledgeBaseUpdate(Base):
+    """
+    KnowledgeBaseUpdate model for tracking knowledge base updates.
+    """
+    __tablename__ = "knowledge_base_updates"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    kb_id = Column(Integer, ForeignKey("knowledge_bases.id"), nullable=False)
+    update_time = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
+    new_results = Column(Integer, nullable=False)
+    total_results = Column(Integer, nullable=False)
+    status = Column(String, nullable=False)  # success, failure
+    error_message = Column(Text, nullable=True)
+    
+    # Relationships
+    knowledge_base = relationship("KnowledgeBase", back_populates="updates")
+
+class Contradiction(Base):
+    """
+    Contradiction model for storing detected contradictions.
+    """
+    __tablename__ = "contradictions"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    result_id = Column(Integer, ForeignKey("results.id"), nullable=False)
+    publication1_pmid = Column(String, nullable=False)
+    publication2_pmid = Column(String, nullable=False)
+    contradiction_score = Column(Float, nullable=False)
+    confidence = Column(String, nullable=False)  # high, medium, low
+    detection_method = Column(String, nullable=False)  # keyword, biomedlm, tsmixer
+    topic = Column(String, nullable=True)
+    explanation = Column(JSON, nullable=True)  # SHAP explanation
+    created_at = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
+    
+    # Unique constraint to prevent duplicate contradictions
+    __table_args__ = (
+        # Ensure we don't store the same contradiction twice (regardless of order)
+        # This is a simplification; in reality, we might want to allow multiple contradictions
+        # between the same publications if they're on different topics
+        # UniqueConstraint('publication1_pmid', 'publication2_pmid', 'result_id'),
+    )

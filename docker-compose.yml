@@ -1,0 +1,116 @@
+version: '3.8'
+
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/medical_research_synthesizer
+      - NCBI_EMAIL=${NCBI_EMAIL:-your.email@example.com}
+      - NCBI_API_KEY=${NCBI_API_KEY}
+      - GRAPH_DB_TYPE=memgraph
+      - MEMGRAPH_HOST=memgraph
+      - MEMGRAPH_PORT=7687
+      - RAY_ADDRESS=ray://ray-head:10001
+    volumes:
+      - ./asf:/app/asf
+      - ./knowledge_bases:/app/knowledge_bases
+    depends_on:
+      - db
+      - memgraph
+      - ray-head
+    networks:
+      - medical-network
+
+  scheduler:
+    build: .
+    command: python -m asf.medical.scripts.run_app --scheduler-only
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/medical_research_synthesizer
+      - NCBI_EMAIL=${NCBI_EMAIL:-your.email@example.com}
+      - NCBI_API_KEY=${NCBI_API_KEY}
+      - GRAPH_DB_TYPE=memgraph
+      - MEMGRAPH_HOST=memgraph
+      - MEMGRAPH_PORT=7687
+      - RAY_ADDRESS=ray://ray-head:10001
+    volumes:
+      - ./asf:/app/asf
+      - ./knowledge_bases:/app/knowledge_bases
+    depends_on:
+      - db
+      - memgraph
+      - ray-head
+    networks:
+      - medical-network
+
+  kb-updater:
+    build: .
+    command: python -m asf.medical.scripts.run_app --kb-updater-only
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/medical_research_synthesizer
+      - NCBI_EMAIL=${NCBI_EMAIL:-your.email@example.com}
+      - NCBI_API_KEY=${NCBI_API_KEY}
+      - GRAPH_DB_TYPE=memgraph
+      - MEMGRAPH_HOST=memgraph
+      - MEMGRAPH_PORT=7687
+      - RAY_ADDRESS=ray://ray-head:10001
+    volumes:
+      - ./asf:/app/asf
+      - ./knowledge_bases:/app/knowledge_bases
+    depends_on:
+      - db
+      - memgraph
+      - ray-head
+    networks:
+      - medical-network
+
+  db:
+    image: postgres:14
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=medical_research_synthesizer
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - medical-network
+
+  memgraph:
+    image: memgraph/memgraph:latest
+    ports:
+      - "7687:7687"
+    volumes:
+      - memgraph-data:/var/lib/memgraph
+    networks:
+      - medical-network
+
+  ray-head:
+    image: rayproject/ray:latest
+    ports:
+      - "8265:8265"  # Ray dashboard
+      - "10001:10001"  # Ray client server
+    command: ray start --head --port=6379 --dashboard-host=0.0.0.0 --dashboard-port=8265 --ray-client-server-port=10001
+    networks:
+      - medical-network
+
+  ray-worker:
+    image: rayproject/ray:latest
+    command: ray start --address=ray-head:6379
+    depends_on:
+      - ray-head
+    deploy:
+      replicas: 2
+    networks:
+      - medical-network
+
+networks:
+  medical-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
+  memgraph-data:
+  knowledge_bases:
