@@ -27,12 +27,37 @@ The Medical Research Synthesizer is built with a modular architecture:
 
 ### Prerequisites
 
-- Python 3.9+
-- PostgreSQL (optional, SQLite is used by default)
-- Memgraph or Neo4j (optional)
+- Docker and Docker Compose
+- Python 3.10+ (for local development without Docker)
+- Git
 - NVIDIA GPU (optional, for faster model inference)
 
-### Installation
+### Docker Development Environment (Recommended)
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/medical-research-synthesizer.git
+   cd medical-research-synthesizer
+   ```
+
+2. Start the development environment using Docker Compose:
+   ```bash
+   cd asf/medical
+   docker-compose up -d
+   ```
+
+   This will start:
+   - FastAPI application on http://localhost:8000
+   - PostgreSQL database on localhost:5432
+   - Redis on localhost:6379
+   - Prometheus on http://localhost:9090
+   - Grafana on http://localhost:3000 (admin/admin)
+
+3. Access the API documentation:
+   - Swagger UI: http://localhost:8000/docs
+   - ReDoc: http://localhost:8000/redoc
+
+### Manual Installation (Alternative)
 
 1. Clone the repository:
    ```bash
@@ -62,13 +87,51 @@ The Medical Research Synthesizer is built with a modular architecture:
    python -m asf.medical.scripts.init_db
    ```
 
-### Running the API
+### Running the API (Manual Installation)
 
 ```bash
 python -m asf.medical.scripts.run_api
 ```
 
 The API will be available at http://localhost:8000. You can access the API documentation at http://localhost:8000/docs.
+
+### Running Tests
+
+Run the test suite using pytest:
+
+```bash
+# Inside the Docker container
+docker exec -it asf-medical-api-1 pytest
+
+# Or locally with a running database and Redis
+pytest
+```
+
+Generate a coverage report:
+
+```bash
+pytest --cov=asf/medical --cov-report=html
+```
+
+### Code Style and Linting
+
+Format code using Black:
+
+```bash
+black asf/medical
+```
+
+Check imports with isort:
+
+```bash
+isort asf/medical
+```
+
+Run linting with flake8:
+
+```bash
+flake8 asf/medical
+```
 
 ## API Endpoints
 

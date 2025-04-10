@@ -9,3 +9,8 @@ from asf.medical.api.models.search import QueryRequest, SearchResponse, PICORequ
 from asf.medical.api.models.analysis import ContradictionAnalysisRequest, ContradictionAnalysisResponse
 from asf.medical.api.models.knowledge_base import KnowledgeBaseRequest, KnowledgeBaseResponse
 from asf.medical.api.models.export import ExportRequest, ExportResponse
+from asf.medical.api.models.contradiction import (
+    ContradictionRequest, ContradictionResponse,
+    BatchContradictionRequest, BatchContradictionResponse,
+    ContradictionDetail, ArticleContradiction
+)

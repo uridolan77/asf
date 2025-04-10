@@ -24,8 +24,9 @@ from asf.medical.ml.models.lorentz_embeddings import LorentzEmbeddingService
 from asf.medical.ml.models.shap_explainer import SHAPExplainer
 # Removed old contradiction service import
 from asf.medical.ml.services.enhanced_contradiction_service import EnhancedContradictionService
-from asf.medical.data_ingestion_layer.enhanced_medical_research_synthesizer import EnhancedMedicalResearchSynthesizer
+from asf.medical.ml.services.contradiction_service import ContradictionService
 from asf.medical.ml.services.temporal_service import TemporalService
+from asf.medical.data_ingestion_layer.enhanced_medical_research_synthesizer import EnhancedMedicalResearchSynthesizer
 from asf.medical.ml.services.prisma_screening_service import PRISMAScreeningService
 from asf.medical.ml.services.bias_assessment_service import BiasAssessmentService
 from asf.medical.services.search_service import SearchService
@@ -170,6 +171,31 @@ async def get_shap_explainer() -> SHAPExplainer:
 
 # ML service dependencies
 # Removed old contradiction service dependency
+
+async def get_temporal_service_basic() -> TemporalService:
+    """
+    Get the basic temporal service without dependencies.
+
+    Returns:
+        TemporalService: The temporal service
+    """
+    return TemporalService()
+
+async def get_contradiction_service(
+    biomedlm_service: BioMedLMService = Depends(get_biomedlm_service),
+    temporal_service: TemporalService = Depends(get_temporal_service_basic)
+) -> ContradictionService:
+    """
+    Get the contradiction service.
+
+    Args:
+        biomedlm_service: BioMedLM service for semantic analysis
+        temporal_service: Temporal service for temporal analysis
+
+    Returns:
+        ContradictionService: The contradiction service
+    """
+    return ContradictionService(biomedlm_service=biomedlm_service, temporal_service=temporal_service)
 
 async def get_temporal_service(
     tsmixer_service: TSMixerService = Depends(get_tsmixer_service)
