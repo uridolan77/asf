@@ -14,7 +14,7 @@ from fastapi.responses import JSONResponse, FileResponse
 
 from asf.medical.api.models import ExportRequest
 from asf.medical.api.dependencies import get_synthesizer, get_current_user
-from asf.medical.api.auth import User
+from asf.medical.api.auth_unified import User
 from asf.medical.data_ingestion_layer.enhanced_medical_research_synthesizer import EnhancedMedicalResearchSynthesizer
 from asf.medical.api.export_utils import (
     export_to_json, export_to_csv, export_to_excel, export_to_pdf,

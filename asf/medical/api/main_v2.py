@@ -12,7 +12,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.staticfiles import StaticFiles
 
-from asf.medical.api.auth import (
+from asf.medical.api.auth_unified import (
     Token, User, authenticate_user, create_access_token, 
     get_current_active_user, register_user, users_db,
     ACCESS_TOKEN_EXPIRE_MINUTES

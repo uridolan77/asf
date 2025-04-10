@@ -14,7 +14,7 @@ from asf.medical.api.models.kb import (
     KnowledgeBaseListResponse
 )
 from asf.medical.api.dependencies import get_knowledge_base_service
-from asf.medical.api.auth_service import get_current_active_user, get_admin_user
+from asf.medical.api.auth_unified import get_current_active_user, get_admin_user
 from asf.medical.services.knowledge_base_service import KnowledgeBaseService
 from asf.medical.storage.models import User
 

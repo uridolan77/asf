@@ -30,7 +30,7 @@ from asf.medical.data_ingestion_layer.query_builder import MedicalCondition, Med
 # Import our API components
 from asf.medical.api.ray_orchestrator_api import router as ray_router
 from asf.medical.api.temporal_rollback_api import router as temporal_router
-from asf.medical.api.auth import (
+from asf.medical.api.auth_unified import (
     Token, User, authenticate_user, create_access_token, 
     get_current_active_user, register_user, users_db,
     ACCESS_TOKEN_EXPIRE_MINUTES

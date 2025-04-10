@@ -12,7 +12,7 @@ from typing import Optional, Dict, Any, AsyncGenerator
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from asf.medical.api.auth_service import get_current_user, get_admin_user
+from asf.medical.api.auth_unified import get_current_user, get_current_active_user, get_admin_user, has_role, has_any_role
 from asf.medical.storage.models import User
 from asf.medical.storage.database import get_db_session
 from asf.medical.storage.repositories.user_repository import UserRepository

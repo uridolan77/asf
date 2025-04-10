@@ -13,7 +13,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from asf.medical.api.models import ContradictionAnalysisRequest, ContradictionAnalysisResponse
 from asf.medical.api.dependencies import get_synthesizer, get_current_user
-from asf.medical.api.auth import User
+from asf.medical.api.auth_unified import User
 from asf.medical.data_ingestion_layer.enhanced_medical_research_synthesizer import EnhancedMedicalResearchSynthesizer
 
 # Initialize router
