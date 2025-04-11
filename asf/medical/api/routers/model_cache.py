@@ -10,7 +10,7 @@ from typing import Dict, Any, List
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 
-from asf.medical.api.auth import get_current_user
+from asf.medical.api.dependencies import get_admin_user
 from asf.medical.ml.model_cache import model_cache
 
 # Configure logging
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(
     prefix="/v1/model-cache",
     tags=["model-cache"],
-    dependencies=[Depends(get_current_user)],
+    dependencies=[Depends(get_admin_user)],
     responses={404: {"description": "Not found"}},
 )
 
@@ -43,7 +43,7 @@ class ModelCacheResponse(BaseModel):
 async def get_model_cache_stats():
     """
     Get model cache statistics.
-    
+
     Returns:
         Model cache statistics
     """
@@ -61,10 +61,10 @@ async def get_model_cache_stats():
 async def remove_model(model_id: str):
     """
     Remove a model from the cache.
-    
+
     Args:
         model_id: Model ID
-        
+
     Returns:
         Response with status and message
     """
@@ -85,7 +85,7 @@ async def remove_model(model_id: str):
 async def clear_model_cache():
     """
     Clear all models from the cache.
-    
+
     Returns:
         Response with status and message
     """

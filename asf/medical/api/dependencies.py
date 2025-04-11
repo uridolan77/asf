@@ -9,11 +9,11 @@ import logging
 import traceback
 from typing import Optional
 
-from fastapi import Depends
+from fastapi import Depends, HTTPException, status
+from asf.medical.api.auth import get_current_user
+from asf.medical.storage.models import User
 
 # Import only what we need
-# Uncomment when needed
-# from asf.medical.api.auth import get_current_user
 from asf.medical.storage.repositories.user_repository import UserRepository
 from asf.medical.storage.repositories.query_repository import QueryRepository
 from asf.medical.storage.repositories.result_repository import ResultRepository
@@ -48,6 +48,30 @@ from asf.medical.ml.model_registry import model_registry
 
 # Set up logging
 logger = logging.getLogger(__name__)
+
+# Admin user dependency
+async def get_admin_user(
+    current_user: User = Depends(get_current_user),
+) -> User:
+    """
+    Get the current admin user.
+
+    Args:
+        current_user: Current active user
+
+    Returns:
+        Current admin user
+
+    Raises:
+        HTTPException: If the user is not an admin
+    """
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not enough permissions"
+        )
+
+    return current_user
 
 # Repository dependencies
 async def get_user_repository() -> UserRepository:

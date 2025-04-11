@@ -6,16 +6,22 @@ It provides a comprehensive API for searching, analyzing, and synthesizing medic
 """
 
 import logging
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.openapi.docs import get_swagger_ui_html, get_redoc_html
 from fastapi.openapi.utils import get_openapi
 from contextlib import asynccontextmanager
 
+from asf.medical.storage.models import User
+from asf.medical.api.dependencies import get_admin_user
+
 from asf.medical.core.logging_config import get_logger
 
 from asf.medical.api.middleware import MonitoringMiddleware
+from asf.medical.api.middleware.admin_middleware import add_admin_middleware
+from asf.medical.api.middleware.login_rate_limit_middleware import add_login_rate_limit_middleware
+from asf.medical.api.middleware.csrf_middleware import add_csrf_middleware
 from asf.medical.core.monitoring import setup_monitoring, get_metrics, run_health_checks, export_metrics_to_json
 
 from asf.medical.api.routers.auth import router as auth_router
@@ -210,6 +216,41 @@ app.add_middleware(
 # Add monitoring middleware
 app.add_middleware(MonitoringMiddleware)
 
+# Add admin middleware
+add_admin_middleware(app, admin_path_patterns=[
+    "/cache/",
+    "/metrics",
+    "/model-cache/",
+    "/task-management/"
+])
+
+# Add login rate limiting middleware
+add_login_rate_limit_middleware(
+    app,
+    login_path="/v1/auth/token",
+    rate=5,  # 5 attempts per minute
+    burst=3,  # 3 attempts in a burst
+    window=60,  # 1 minute window
+    block_time=300  # 5 minutes block time after too many attempts
+)
+
+# Add CSRF protection middleware
+add_csrf_middleware(
+    app,
+    cookie_name="csrf_token",
+    header_name="X-CSRF-Token",
+    cookie_secure=not settings.DEBUG,  # Secure in production, not in development
+    cookie_httponly=False,  # Must be accessible by JavaScript
+    cookie_samesite="lax",
+    exempt_paths=[
+        "/docs",
+        "/redoc",
+        "/openapi.json",
+        "/health",
+        "/v1/auth/token"  # Exempt login endpoint
+    ]
+)
+
 # Include routers
 app.include_router(auth_router)
 app.include_router(search_router, prefix=settings.API_V1_STR, tags=["search"])
@@ -254,27 +295,27 @@ async def health():
 
 # Cache stats endpoint
 @app.get("/cache/stats", tags=["admin"])
-async def cache_stats():
-    """Get cache statistics."""
+async def cache_stats(current_user: User = Depends(get_admin_user)):
+    """Get cache statistics. Admin only."""
     return await cache_manager.get_stats()
 
 # Clear cache endpoint
 @app.post("/cache/clear", tags=["admin"])
-async def clear_cache(namespace: str = None):
-    """Clear the cache."""
+async def clear_cache(namespace: str = None, current_user: User = Depends(get_admin_user)):
+    """Clear the cache. Admin only."""
     await cache_manager.clear(namespace)
     return {"status": "ok", "message": f"Cache cleared for namespace: {namespace if namespace else 'all'}"}
 
 # Metrics endpoint
 @app.get("/metrics", tags=["admin"])
-async def metrics():
-    """Get metrics."""
+async def metrics(current_user: User = Depends(get_admin_user)):
+    """Get metrics. Admin only."""
     return get_metrics()
 
 # Export metrics endpoint
 @app.post("/metrics/export", tags=["admin"])
-async def export_metrics(file_path: str = "logs/metrics.json"):
-    """Export metrics to a JSON file."""
+async def export_metrics(file_path: str = "logs/metrics.json", current_user: User = Depends(get_admin_user)):
+    """Export metrics to a JSON file. Admin only."""
     export_metrics_to_json(file_path)
     return {"status": "ok", "message": f"Metrics exported to {file_path}"}
 
