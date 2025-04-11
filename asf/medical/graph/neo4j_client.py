@@ -5,10 +5,10 @@ This module provides a client for interacting with the Neo4j database.
 """
 
 import logging
-import os
+import time
+from typing import Dict, List, Optional, Any
 import numpy as np
-from typing import Dict, List, Optional, Any, Union, Tuple
-from neo4j import GraphDatabase
+from neo4j import GraphDatabase, exceptions as neo4j_exceptions
 
 from asf.medical.core.config import settings
 
@@ -253,8 +253,11 @@ class Neo4jClient:
         params = {
             "pmid": pmid,
             "cui": cui,
-            **properties or {}
         }
+
+        # Add properties if provided
+        if properties:
+            params.update(properties)
 
         self.execute_query(query, params)
 
@@ -293,8 +296,11 @@ class Neo4jClient:
         params = {
             "cui1": cui1,
             "cui2": cui2,
-            **properties or {}
         }
+
+        # Add properties if provided
+        if properties:
+            params.update(properties)
 
         self.execute_query(query, params)
 
@@ -568,24 +574,55 @@ class Neo4jClient:
 
         return self.execute_query(query, params)
 
-    def vector_search(self, embedding, max_results: int = 20) -> List[Dict[str, Any]]:
+    def vector_search(self, embedding: np.ndarray, max_results: int = 20, max_retries: int = 3, retry_delay: float = 1.0) -> List[Dict[str, Any]]:
         """
         Search for articles with similar embeddings.
 
         Args:
-            embedding: Query embedding
+            embedding: Query embedding as a numpy array
             max_results: Maximum number of results to return
+            max_retries: Maximum number of retries on failure
+            retry_delay: Delay between retries in seconds
 
         Returns:
-            List of articles
+            List of articles with similarity scores
+
+        Raises:
+            ValueError: If the embedding is invalid
+            ConnectionError: If the database connection fails after retries
+            RuntimeError: If the query execution fails after retries
         """
+        if not isinstance(embedding, np.ndarray):
+            raise ValueError("Embedding must be a numpy array")
+
+        if max_results < 1:
+            raise ValueError("max_results must be at least 1")
+
         logger.info(f"Neo4j vector search with max_results={max_results}")
 
-        # Connect to the database
-        self.connect()
+        # Connect to the database with retry
+        retry_count = 0
+        connected = False
+
+        while retry_count < max_retries and not connected:
+            try:
+                connected = self.connect()
+                if not connected:
+                    raise ConnectionError("Failed to connect to Neo4j database")
+            except Exception as e:
+                retry_count += 1
+                if retry_count >= max_retries:
+                    logger.error(f"Failed to connect to Neo4j database after {max_retries} retries: {str(e)}")
+                    raise ConnectionError(f"Failed to connect to Neo4j database: {str(e)}") from e
+                logger.warning(f"Connection attempt {retry_count} failed, retrying in {retry_delay} seconds: {str(e)}")
+                time.sleep(retry_delay)
 
         # Convert embedding to string for Cypher query
-        embedding_str = str(embedding.tolist())
+        try:
+            embedding_str = str(embedding.tolist())
+        except Exception as e:
+            logger.error(f"Failed to convert embedding to string: {str(e)}")
+            raise ValueError(f"Invalid embedding format: {str(e)}") from e
 
         # Query for articles with similar embeddings
         # This assumes that articles have an 'embedding' property
@@ -593,6 +630,7 @@ class Neo4jClient:
         MATCH (a:Article)
         WHERE a.embedding IS NOT NULL
         WITH a, gds.similarity.cosine(a.embedding, $embedding) AS similarity
+        WHERE similarity > 0.5  -- Add a similarity threshold
         ORDER BY similarity DESC
         LIMIT $max_results
         RETURN a.pmid AS pmid, a.title AS title, a.abstract AS abstract, a.authors AS authors,
@@ -604,10 +642,26 @@ class Neo4jClient:
             "max_results": max_results
         }
 
-        try:
-            results = self.execute_query(query, params)
-            logger.info(f"Neo4j vector search found {len(results)} results")
-            return results
-        except Exception as e:
-            logger.error(f"Error performing Neo4j vector search: {str(e)}")
-            return []
+        # Execute query with retry
+        retry_count = 0
+        while retry_count < max_retries:
+            try:
+                results = self.execute_query(query, params)
+                logger.info(f"Neo4j vector search found {len(results)} results")
+                return results
+            except neo4j_exceptions.ServiceUnavailable as e:
+                retry_count += 1
+                if retry_count >= max_retries:
+                    logger.error(f"Neo4j service unavailable after {max_retries} retries: {str(e)}")
+                    raise ConnectionError(f"Neo4j service unavailable: {str(e)}") from e
+                logger.warning(f"Neo4j service unavailable, retry {retry_count} in {retry_delay} seconds: {str(e)}")
+                time.sleep(retry_delay)
+            except neo4j_exceptions.ClientError as e:
+                logger.error(f"Neo4j client error: {str(e)}")
+                raise ValueError(f"Invalid query or parameters: {str(e)}") from e
+            except Exception as e:
+                logger.error(f"Error performing Neo4j vector search: {str(e)}")
+                raise RuntimeError(f"Failed to execute Neo4j vector search: {str(e)}") from e
+
+        # This should never be reached due to the exception handling above
+        return []

@@ -4,8 +4,8 @@ Search models for the Medical Research Synthesizer API.
 This module defines the Pydantic models for search requests and responses.
 """
 
-from typing import List, Dict, Any, Optional
-from pydantic import BaseModel, Field
+from typing import List, Dict, Any, Optional, Literal
+from pydantic import BaseModel, Field, field_validator
 
 class PaginationParams(BaseModel):
     """Pagination parameters for search requests."""
@@ -13,14 +13,69 @@ class PaginationParams(BaseModel):
     page_size: int = Field(20, description="Number of results per page", ge=1, le=100)
 
 class QueryRequest(BaseModel):
-    """Request model for the search endpoint."""
-    query: str = Field(..., description="The search query")
-    max_results: int = Field(100, description="Maximum number of results to return", ge=1, le=500)
-    pagination: PaginationParams = Field(default_factory=PaginationParams, description="Pagination parameters")
-    search_method: str = Field("pubmed", description="Search method to use (pubmed, clinical_trials, or graph_rag)")
-    use_graph_rag: bool = Field(False, description="Whether to use GraphRAG for search (overrides search_method if True)")
-    use_vector_search: bool = Field(True, description="Whether to use vector search with GraphRAG")
-    use_graph_search: bool = Field(True, description="Whether to use graph search with GraphRAG")
+    """
+    Request model for the search endpoint.
+
+    This model defines the parameters for searching medical literature using
+    various search methods, including PubMed, ClinicalTrials.gov, and GraphRAG.
+
+    GraphRAG (Graph-based Retrieval-Augmented Generation) combines vector search
+    and graph traversal to find relevant articles, potentially providing more
+    comprehensive and contextually relevant results than traditional search methods.
+    """
+    query: str = Field(
+        ...,
+        description="The search query",
+        example="efficacy of metformin in type 2 diabetes"
+    )
+    max_results: int = Field(
+        100,
+        description="Maximum number of results to return",
+        ge=1,
+        le=500,
+        example=100
+    )
+    pagination: PaginationParams = Field(
+        default_factory=PaginationParams,
+        description="Pagination parameters"
+    )
+    search_method: Literal["pubmed", "clinical_trials", "graph_rag"] = Field(
+        "pubmed",
+        description="Search method to use: 'pubmed' for PubMed search, 'clinical_trials' for ClinicalTrials.gov, or 'graph_rag' for graph-based retrieval-augmented generation",
+        example="pubmed"
+    )
+    use_graph_rag: bool = Field(
+        False,
+        description="Whether to use GraphRAG for search (overrides search_method if True). Note: GraphRAG may not be available in all deployments.",
+        example=False
+    )
+    use_vector_search: bool = Field(
+        True,
+        description="Whether to use vector search with GraphRAG. Only applicable when GraphRAG is used.",
+        example=True
+    )
+    use_graph_search: bool = Field(
+        True,
+        description="Whether to use graph search with GraphRAG. Only applicable when GraphRAG is used.",
+        example=True
+    )
+
+    @field_validator('query')
+    def query_must_not_be_empty(cls, v):
+        """Validate that the query is not empty."""
+        if not v or not v.strip():
+            raise ValueError('Search query cannot be empty')
+        return v.strip()
+
+    @field_validator('use_vector_search', 'use_graph_search')
+    def validate_graph_search_params(cls, v, info):
+        """Validate that at least one search method is enabled when using GraphRAG."""
+        values = info.data
+        if 'use_graph_rag' in values and values['use_graph_rag']:
+            # If GraphRAG is enabled, at least one search method must be enabled
+            if 'use_vector_search' in values and not values['use_vector_search'] and not v:
+                raise ValueError('At least one of use_vector_search or use_graph_search must be True when using GraphRAG')
+        return v
 
 class PaginationMetadata(BaseModel):
     """Pagination metadata for search responses."""

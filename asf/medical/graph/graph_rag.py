@@ -5,14 +5,13 @@ This module provides a service for graph-based retrieval-augmented generation.
 """
 
 import logging
-from typing import Dict, List, Optional, Any, Union, Tuple
-import numpy as np
+import asyncio
+from typing import Dict, List, Optional, Any, Callable, TypeVar
 from datetime import datetime
 
 from asf.medical.graph.graph_service import GraphService
 from asf.medical.ml.models.biomedlm import BioMedLMService
-from asf.medical.core.config import settings
-from asf.medical.core.cache import cached
+from asf.medical.core.cache import cached, cache_manager
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -25,30 +24,44 @@ class GraphRAG:
     """
 
     _instance = None
+    _initialized = False
 
-    def __new__(cls):
+    def __new__(cls, *args, **kwargs) -> 'GraphRAG':  # pylint: disable=unused-argument
         """
         Create a singleton instance of the GraphRAG service.
+
+        This implementation ensures that dependencies passed to the constructor
+        are properly handled even when using the singleton pattern.
 
         Returns:
             GraphRAG: The singleton instance
         """
+        # We ignore the arguments here, they will be handled in __init__
         if cls._instance is None:
             cls._instance = super(GraphRAG, cls).__new__(cls)
+            cls._initialized = False
         return cls._instance
 
     def __init__(self, graph_service: Optional[GraphService] = None, biomedlm_service: Optional[BioMedLMService] = None):
         """Initialize the GraphRAG service.
 
+        This method is called every time an instance is created or retrieved,
+        but the initialization is only performed once unless new dependencies are provided.
+
         Args:
             graph_service: Graph service instance (optional)
             biomedlm_service: BioMedLM service instance (optional)
         """
-        self.graph_service = graph_service
-        self.biomedlm_service = biomedlm_service
-        self.initialized = False
-
-        logger.info("GraphRAG service initialized")
+        # Only initialize once unless new dependencies are provided
+        if not self._initialized or graph_service is not None or biomedlm_service is not None:
+            self.graph_service = graph_service
+            self.biomedlm_service = biomedlm_service
+            self._initialized = True
+            # Clear cache when dependencies change
+            asyncio.create_task(self._clear_cache())
+            logger.info("GraphRAG service initialized with new dependencies")
+        else:
+            logger.debug("GraphRAG service already initialized, reusing existing instance")
 
     def _get_graph_service(self) -> GraphService:
         """
@@ -68,11 +81,75 @@ class GraphRAG:
 
         Returns:
             BioMedLMService: The BioMedLM service
+
+        Raises:
+            RuntimeError: If the BioMedLM service is not available
         """
         if self.biomedlm_service is None:
-            logger.info("Initializing BioMedLM service")
-            self.biomedlm_service = BioMedLMService()
+            try:
+                logger.info("Initializing BioMedLM service")
+                self.biomedlm_service = BioMedLMService()
+            except Exception as e:
+                logger.error(f"Failed to initialize BioMedLM service: {str(e)}")
+                raise RuntimeError(f"BioMedLM service not available: {str(e)}") from e
         return self.biomedlm_service
+
+    async def _clear_cache(self) -> None:
+        """
+        Clear the GraphRAG cache.
+
+        This method is called when the GraphRAG service is initialized with new dependencies.
+        """
+        try:
+            await cache_manager.clear(namespace="graphrag")
+            logger.info("GraphRAG cache cleared")
+        except Exception as e:
+            logger.warning(f"Failed to clear GraphRAG cache: {str(e)}")
+
+    # Define a type variable for the return type of the wrapped function
+    T = TypeVar('T')
+
+    def _safe_execute(self, func: Callable[..., T], *args, **kwargs) -> T:
+        """
+        Execute a function safely with error handling.
+
+        Args:
+            func: Function to execute
+            *args: Positional arguments to pass to the function
+            **kwargs: Keyword arguments to pass to the function
+
+        Returns:
+            Result of the function
+
+        Raises:
+            Exception: If the function fails
+        """
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            logger.error(f"Error executing {func.__name__}: {str(e)}")
+            raise
+
+    async def _safe_execute_async(self, func: Callable[..., T], *args, **kwargs) -> T:
+        """
+        Execute an async function safely with error handling.
+
+        Args:
+            func: Async function to execute
+            *args: Positional arguments to pass to the function
+            **kwargs: Keyword arguments to pass to the function
+
+        Returns:
+            Result of the function
+
+        Raises:
+            Exception: If the function fails
+        """
+        try:
+            return await func(*args, **kwargs)
+        except Exception as e:
+            logger.error(f"Error executing {func.__name__}: {str(e)}")
+            raise
 
     def retrieve_articles_by_concept(self, concept: str, max_results: int = 10) -> List[Dict[str, Any]]:
         """
@@ -561,7 +638,7 @@ class GraphRAG:
 
         return response
 
-    @cached(prefix="graphrag_search", ttl=3600)
+    @cached(prefix="graphrag_search", ttl=3600, namespace="graphrag")
     async def search(self, query: str, max_results: int = 20, use_vector_search: bool = True, use_graph_search: bool = True) -> Dict[str, Any]:
         """
         Search for articles using graph-based retrieval-augmented generation.
@@ -576,17 +653,30 @@ class GraphRAG:
 
         Returns:
             Search results
+
+        Raises:
+            ValueError: If the query is empty or invalid
+            ConnectionError: If the graph database connection fails
+            RuntimeError: If the BioMedLM service is not available
         """
+        if not query or not query.strip():
+            raise ValueError("Search query cannot be empty")
+
+        if max_results < 1:
+            raise ValueError("max_results must be at least 1")
+
         logger.info(f"GraphRAG search: query='{query}', max_results={max_results}, use_vector_search={use_vector_search}, use_graph_search={use_graph_search}")
 
-        # Get graph service
-        graph_service = self._get_graph_service()
+        # Get services
+        graph_service = self._safe_execute(self._get_graph_service)
 
         # Connect to the graph database
-        graph_service.connect()
+        connected = self._safe_execute(graph_service.connect)
+        if not connected:
+            raise ConnectionError("Failed to connect to graph database")
 
         # Get BioMedLM service
-        biomedlm_service = self._get_biomedlm_service()
+        biomedlm_service = self._safe_execute(self._get_biomedlm_service)
 
         # Extract concepts from query
         # This is a simplified example; in a real implementation, you would use NLP
@@ -596,60 +686,137 @@ class GraphRAG:
 
         # Vector search
         if use_vector_search:
-            # Encode the query
-            query_embedding = biomedlm_service.encode(query)
+            try:
+                # Encode the query
+                query_embedding = self._safe_execute(biomedlm_service.encode, query)
 
-            # Get articles with similar embeddings
-            vector_results = graph_service.vector_search(query_embedding, max_results=max_results)
-            results.extend(vector_results)
+                # Get articles with similar embeddings
+                vector_results = self._safe_execute(graph_service.vector_search, query_embedding, max_results=max_results)
+                logger.info(f"Vector search found {len(vector_results)} results")
+                results.extend(vector_results)
+            except Exception as e:
+                logger.warning(f"Vector search failed: {str(e)}")
+                # Continue with graph search even if vector search fails
 
         # Graph search
         if use_graph_search:
-            # Get articles for each concept
-            for concept in concepts:
-                concept_articles = self.retrieve_articles_by_concept(concept, max_results=max_results // len(concepts) if concepts else max_results)
-                results.extend(concept_articles)
+            try:
+                # Get articles for each concept
+                for concept in concepts:
+                    try:
+                        concept_max_results = max_results // len(concepts) if concepts else max_results
+                        concept_articles = self._safe_execute(
+                            self.retrieve_articles_by_concept,
+                            concept,
+                            max_results=concept_max_results
+                        )
+                        logger.info(f"Found {len(concept_articles)} articles for concept '{concept}'")
+                        results.extend(concept_articles)
+                    except Exception as e:
+                        logger.warning(f"Failed to retrieve articles for concept '{concept}': {str(e)}")
+                        # Continue with other concepts
 
-            # Get related concepts and their articles
-            for concept in concepts:
-                related_concepts = self.retrieve_related_concepts(concept, max_results=5)
-                for related_concept in related_concepts:
-                    related_articles = self.retrieve_articles_by_concept(related_concept.get("cui", ""), max_results=3)
-                    for article in related_articles:
-                        article["connection"] = {
-                            "type": "related_concept",
-                            "concept": related_concept.get("name", ""),
-                            "cui": related_concept.get("cui", "")
-                        }
-                    results.extend(related_articles)
+                # Get related concepts and their articles
+                for concept in concepts:
+                    try:
+                        related_concepts = self._safe_execute(
+                            self.retrieve_related_concepts,
+                            concept,
+                            max_results=5
+                        )
+                        logger.info(f"Found {len(related_concepts)} related concepts for '{concept}'")
 
-        # Remove duplicates
-        unique_results = {}
-        for result in results:
-            pmid = result.get("pmid", "")
-            if pmid and pmid not in unique_results:
-                unique_results[pmid] = result
+                        for related_concept in related_concepts:
+                            try:
+                                concept_cui = related_concept.get("cui", "")
+                                if not concept_cui:
+                                    continue
 
-        results = list(unique_results.values())
+                                related_articles = self._safe_execute(
+                                    self.retrieve_articles_by_concept,
+                                    concept_cui,
+                                    max_results=3
+                                )
 
-        # Sort by relevance (using BioMedLM to calculate similarity to query)
-        result_scores = []
+                                for article in related_articles:
+                                    article["connection"] = {
+                                        "type": "related_concept",
+                                        "concept": related_concept.get("name", ""),
+                                        "cui": concept_cui
+                                    }
 
-        for result in results:
-            title = result.get("title", "")
-            abstract = result.get("abstract", "")
-            text = f"{title}. {abstract}"
-            similarity = biomedlm_service.calculate_similarity(query, text)
-            result_scores.append((result, similarity))
+                                results.extend(related_articles)
+                            except Exception as e:
+                                logger.warning(f"Failed to retrieve articles for related concept '{related_concept.get('name', '')}': {str(e)}")
+                                # Continue with other related concepts
+                    except Exception as e:
+                        logger.warning(f"Failed to retrieve related concepts for '{concept}': {str(e)}")
+                        # Continue with other concepts
+            except Exception as e:
+                logger.warning(f"Graph search failed: {str(e)}")
+                # If both vector and graph search fail, raise an exception
+                if not results and not use_vector_search:
+                    raise RuntimeError(f"Both vector and graph search failed: {str(e)}") from e
 
-        # Sort by similarity
-        result_scores = sorted(result_scores, key=lambda x: x[1], reverse=True)
+        # Check if we have any results
+        if not results:
+            logger.warning(f"No results found for query: {query}")
+            return {
+                "query": query,
+                "results": [],
+                "result_count": 0,
+                "search_time": datetime.now().isoformat(),
+                "source": "graphrag",
+                "search_methods": {
+                    "vector_search": use_vector_search,
+                    "graph_search": use_graph_search
+                },
+                "error": "No results found"
+            }
 
-        # Limit to max_results
-        result_scores = result_scores[:max_results]
+        try:
+            # Remove duplicates
+            unique_results = {}
+            for result in results:
+                pmid = result.get("pmid", "")
+                if pmid and pmid not in unique_results:
+                    unique_results[pmid] = result
 
-        # Extract results
-        results = [result for result, _ in result_scores]
+            results = list(unique_results.values())
+            logger.info(f"Found {len(results)} unique results after deduplication")
+
+            # Sort by relevance (using BioMedLM to calculate similarity to query)
+            result_scores = []
+
+            try:
+                for result in results:
+                    try:
+                        title = result.get("title", "")
+                        abstract = result.get("abstract", "")
+                        text = f"{title}. {abstract}"
+                        similarity = self._safe_execute(biomedlm_service.calculate_similarity, query, text)
+                        result_scores.append((result, similarity))
+                    except Exception as e:
+                        # If similarity calculation fails for a result, use a default score
+                        logger.warning(f"Failed to calculate similarity for result {result.get('pmid', '')}: {str(e)}")
+                        result_scores.append((result, 0.0))
+
+                # Sort by similarity
+                result_scores = sorted(result_scores, key=lambda x: x[1], reverse=True)
+            except Exception as e:
+                logger.warning(f"Failed to sort results by similarity: {str(e)}")
+                # If sorting fails, use the original order
+                result_scores = [(result, 0.0) for result in results]
+
+            # Limit to max_results
+            result_scores = result_scores[:max_results]
+
+            # Extract results
+            results = [result for result, _ in result_scores]
+        except Exception as e:
+            logger.error(f"Failed to process search results: {str(e)}")
+            # Return the original results if processing fails
+            results = results[:max_results]
 
         # Create response
         response = {
@@ -668,7 +835,7 @@ class GraphRAG:
 
         return response
 
-    @cached(prefix="graphrag_summary", ttl=3600)
+    @cached(prefix="graphrag_summary", ttl=3600, namespace="graphrag")
     async def generate_summary(self, query: str, max_articles: int = 5) -> Dict[str, Any]:
         """
         Generate a summary of articles related to a query.

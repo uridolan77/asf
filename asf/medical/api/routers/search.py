@@ -5,6 +5,7 @@ This module provides endpoints for searching medical literature.
 """
 
 import logging
+import traceback
 from typing import Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, status, Request, Response
 
@@ -15,6 +16,7 @@ from asf.medical.api.auth import get_current_active_user
 from asf.medical.services.search_service import SearchService
 from asf.medical.storage.models import User
 from asf.medical.core.monitoring import async_timed, log_error
+from asf.medical.core.exceptions import SearchError, ValidationError
 
 # Initialize router
 router = APIRouter(prefix="/search", tags=["search"])
@@ -32,11 +34,21 @@ async def search(
     res: Response = None
 ):
     """
-    Search PubMed with the given query and return enriched results.
+    Search for medical literature with the given query and return enriched results.
 
-    This endpoint performs a search using the enhanced NCBIClient and enriches
-    the results with metadata such as impact factors, authority scores,
+    This endpoint performs a search using the specified search method (PubMed, ClinicalTrials.gov, or GraphRAG)
+    and enriches the results with metadata such as impact factors, authority scores,
     and standardized dates.
+
+    The search method can be specified using the search_method parameter:
+    - pubmed: Search PubMed using the NCBI API
+    - clinical_trials: Search ClinicalTrials.gov
+    - graph_rag: Search using GraphRAG (graph-based retrieval-augmented generation)
+
+    GraphRAG parameters:
+    - use_graph_rag: Whether to use GraphRAG for search (overrides search_method if True)
+    - use_vector_search: Whether to use vector search with GraphRAG
+    - use_graph_search: Whether to use graph search with GraphRAG
     """
     try:
         # Add request ID to response headers for tracing
@@ -44,8 +56,25 @@ async def search(
         if request_id and res:
             res.headers["X-Request-ID"] = request_id
 
+        # Validate the request
+        if not request.query or not request.query.strip():
+            logger.warning("Empty search query")
+            raise ValidationError("Search query cannot be empty")
+
+        # Check if GraphRAG is available if requested
+        if request.use_graph_rag and not search_service.is_graph_rag_available():
+            logger.warning("GraphRAG requested but not available")
+            if res:
+                res.headers["X-GraphRAG-Available"] = "false"
+        elif request.use_graph_rag and res:
+            res.headers["X-GraphRAG-Available"] = "true"
+
         # Log the request
-        logger.info(f"Search request: query='{request.query}', max_results={request.max_results}, user_id={current_user.id}")
+        logger.info(
+            f"Search request: query='{request.query}', max_results={request.max_results}, "
+            f"method={request.search_method}, use_graph_rag={request.use_graph_rag}, "
+            f"user_id={current_user.id}"
+        )
 
         # Execute the search
         result = await search_service.search(
@@ -59,6 +88,13 @@ async def search(
             use_vector_search=request.use_vector_search,
             use_graph_search=request.use_graph_search
         )
+
+        # Add GraphRAG info to response headers
+        if res and 'graph_rag_results' in result:
+            res.headers["X-GraphRAG-Used"] = "true"
+        elif res and 'fallback_reason' in result and 'GraphRAG' in result.get('fallback_reason', ''):
+            res.headers["X-GraphRAG-Used"] = "false"
+            res.headers["X-GraphRAG-Fallback-Reason"] = result.get('fallback_reason', '')
 
         # Log the result
         logger.info(f"Search completed: {len(result.get('results', []))} results found")
@@ -76,10 +112,12 @@ async def search(
                     "total_pages": result.get("pagination", {}).get("total_pages", 1),
                     "total_count": result.get("total_count", 0)
                 },
-                "user_id": current_user.id
+                "user_id": current_user.id,
+                "search_method": request.search_method,
+                "graph_rag_used": 'graph_rag_results' in result
             }
         )
-    except ValueError as e:
+    except ValidationError as e:
         # Handle validation errors
         log_error(e, {"query": request.query, "user_id": current_user.id})
         logger.warning(f"Validation error in search: {str(e)}")
@@ -88,13 +126,24 @@ async def search(
             errors=[{"detail": str(e)}],
             code="VALIDATION_ERROR"
         )
+    except SearchError as e:
+        # Handle search errors
+        log_error(e, {"query": request.query, "user_id": current_user.id})
+        logger.error(f"Search error: {str(e)}")
+        logger.error(traceback.format_exc())
+        return ErrorResponse(
+            message="Search failed",
+            errors=[{"detail": str(e)}],
+            code="SEARCH_ERROR"
+        )
     except Exception as e:
         # Handle unexpected errors
         log_error(e, {"query": request.query, "user_id": current_user.id})
-        logger.error(f"Error executing search: {str(e)}")
+        logger.error(f"Unexpected error in search: {str(e)}")
+        logger.error(traceback.format_exc())
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error executing search: {str(e)}"
+            detail=f"An unexpected error occurred: {str(e)}"
         )
 
 @router.post("/pico", response_model=APIResponse[Dict[str, Any]])

@@ -7,6 +7,7 @@ This module provides a service for searching medical literature.
 import logging
 import uuid
 import hashlib
+import traceback
 from datetime import datetime
 from typing import Dict, List, Any, Optional, Union
 from enum import Enum
@@ -27,7 +28,13 @@ from asf.medical.data_ingestion_layer.query_builder import (
 )
 
 class SearchMethod(str, Enum):
-    """Search method enum."""
+    """Search method enum.
+
+    This enum defines the available search methods:
+    - PUBMED: Search PubMed using the NCBI API
+    - CLINICAL_TRIALS: Search ClinicalTrials.gov
+    - GRAPH_RAG: Search using GraphRAG (graph-based retrieval-augmented generation)
+    """
     PUBMED = "pubmed"
     CLINICAL_TRIALS = "clinical_trials"
     GRAPH_RAG = "graph_rag"
@@ -63,6 +70,25 @@ class SearchService:
         self.query_repository = query_repository
         self.result_repository = result_repository
         self.graph_rag = graph_rag
+
+        # Log available search methods
+        available_methods = [SearchMethod.PUBMED, SearchMethod.CLINICAL_TRIALS]
+        if self.graph_rag is not None:
+            available_methods.append(SearchMethod.GRAPH_RAG)
+            logger.info("GraphRAG search method is available")
+        else:
+            logger.info("GraphRAG search method is not available")
+
+        logger.info(f"Search service initialized with methods: {', '.join([m.value for m in available_methods])}")
+
+    def is_graph_rag_available(self) -> bool:
+        """
+        Check if GraphRAG is available.
+
+        Returns:
+            bool: True if GraphRAG is available, False otherwise
+        """
+        return self.graph_rag is not None
 
     @cached(prefix="search", data_type="search")
     async def search(
@@ -121,24 +147,63 @@ class SearchService:
         try:
             # Use the appropriate search method
             if search_method == SearchMethod.GRAPH_RAG:
-                if self.graph_rag is None:
+                if not self.is_graph_rag_available():
                     logger.warning("GraphRAG not available, falling back to PubMed search")
                     search_results = await self.ncbi_client.search_pubmed(query, max_results=max_results)
+                    search_results['fallback_reason'] = "GraphRAG not available"
                 else:
                     # Search using GraphRAG
-                    logger.info(f"Using GraphRAG for search (vector_search={use_vector_search}, graph_search={use_graph_search})")
-                    graph_results = await self.graph_rag.search(
-                        query,
-                        max_results=max_results,
-                        use_vector_search=use_vector_search,
-                        use_graph_search=use_graph_search
-                    )
+                    try:
+                        logger.info(f"Using GraphRAG for search (vector_search={use_vector_search}, graph_search={use_graph_search})")
+                        graph_results = await self.graph_rag.search(
+                            query,
+                            max_results=max_results,
+                            use_vector_search=use_vector_search,
+                            use_graph_search=use_graph_search
+                        )
 
-                    # Convert GraphRAG results to the same format as PubMed results
+                        # Convert GraphRAG results to the same format as PubMed results
+                        search_results = {
+                            'esearchresult': {
+                                'count': str(graph_results.get('result_count', 0)),
+                                'idlist': [result.get('pmid', '') for result in graph_results.get('results', [])],
+                                'translationset': [],
+                                'querytranslation': query,
+                                'retmax': str(max_results),
+                                'retstart': '0',
+                                'querykey': '1',
+                                'webenv': '',
+                            }
+                        }
+
+                        # Store the original GraphRAG results for later use
+                        search_results['graph_rag_results'] = graph_results
+                    except ConnectionError as e:
+                        logger.error(f"GraphRAG connection error: {str(e)}")
+                        logger.warning("Falling back to PubMed search due to GraphRAG connection error")
+                        search_results = await self.ncbi_client.search_pubmed(query, max_results=max_results)
+                        search_results['fallback_reason'] = f"GraphRAG connection error: {str(e)}"
+                    except ValueError as e:
+                        logger.error(f"GraphRAG value error: {str(e)}")
+                        logger.warning("Falling back to PubMed search due to GraphRAG value error")
+                        search_results = await self.ncbi_client.search_pubmed(query, max_results=max_results)
+                        search_results['fallback_reason'] = f"GraphRAG value error: {str(e)}"
+                    except Exception as e:
+                        logger.error(f"GraphRAG search error: {str(e)}")
+                        logger.error(traceback.format_exc())
+                        logger.warning("Falling back to PubMed search due to GraphRAG error")
+                        search_results = await self.ncbi_client.search_pubmed(query, max_results=max_results)
+                        search_results['fallback_reason'] = f"GraphRAG error: {str(e)}"
+            elif search_method == SearchMethod.CLINICAL_TRIALS:
+                # Search ClinicalTrials.gov
+                try:
+                    clinical_trials_results = await self.clinical_trials_client.search(query, max_results=max_results)
+
+                    # Convert ClinicalTrials.gov results to the same format as PubMed results
                     search_results = {
                         'esearchresult': {
-                            'count': str(graph_results.get('result_count', 0)),
-                            'idlist': [result.get('pmid', '') for result in graph_results.get('results', [])],
+                            'count': str(len(clinical_trials_results)),
+                            'idlist': [trial.get('nct_id', '') for trial in clinical_trials_results],
                             'translationset': [],
                             'querytranslation': query,
                             'retmax': str(max_results),
@@ -148,31 +213,27 @@ class SearchService:
                         }
                     }
 
-                    # Store the original GraphRAG results for later use
-                    search_results['graph_rag_results'] = graph_results
-            elif search_method == SearchMethod.CLINICAL_TRIALS:
-                # Search ClinicalTrials.gov
-                clinical_trials_results = await self.clinical_trials_client.search(query, max_results=max_results)
-
-                # Convert ClinicalTrials.gov results to the same format as PubMed results
-                search_results = {
-                    'esearchresult': {
-                        'count': str(len(clinical_trials_results)),
-                        'idlist': [trial.get('nct_id', '') for trial in clinical_trials_results],
-                        'translationset': [],
-                        'querytranslation': query,
-                        'retmax': str(max_results),
-                        'retstart': '0',
-                        'querykey': '1',
-                        'webenv': '',
-                    }
-                }
-
-                # Store the original ClinicalTrials.gov results for later use
-                search_results['clinical_trials_results'] = clinical_trials_results
+                    # Store the original ClinicalTrials.gov results for later use
+                    search_results['clinical_trials_results'] = clinical_trials_results
+                except ConnectionError as e:
+                    logger.error(f"ClinicalTrials.gov connection error: {str(e)}")
+                    logger.warning("Falling back to PubMed search due to ClinicalTrials.gov connection error")
+                    search_results = await self.ncbi_client.search_pubmed(query, max_results=max_results)
+                    search_results['fallback_reason'] = f"ClinicalTrials.gov connection error: {str(e)}"
+                except Exception as e:
+                    logger.error(f"ClinicalTrials.gov search error: {str(e)}")
+                    logger.error(traceback.format_exc())
+                    logger.warning("Falling back to PubMed search due to ClinicalTrials.gov error")
+                    search_results = await self.ncbi_client.search_pubmed(query, max_results=max_results)
+                    search_results['fallback_reason'] = f"ClinicalTrials.gov error: {str(e)}"
             else:  # Default to PubMed
                 # Search PubMed
-                search_results = await self.ncbi_client.search_pubmed(query, max_results=max_results)
+                try:
+                    search_results = await self.ncbi_client.search_pubmed(query, max_results=max_results)
+                except Exception as e:
+                    logger.error(f"PubMed search error: {str(e)}")
+                    logger.error(traceback.format_exc())
+                    raise SearchError(f"PubMed search failed: {str(e)}") from e
 
             if not search_results or 'esearchresult' not in search_results:
                 logger.warning(f"No results found for query: {query}")

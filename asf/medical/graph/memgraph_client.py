@@ -5,10 +5,28 @@ This module provides a client for interacting with the Memgraph database.
 """
 
 import logging
-import os
+import time
+from typing import Dict, List, Optional, Any
 import numpy as np
-from typing import Dict, List, Optional, Any, Union, Tuple
-import pymemgraph
+# Import pymemgraph or mock it if not available
+# Note: The IDE may show an error for this import, but it's handled at runtime
+try:
+    import pymemgraph
+except ImportError:
+    # Create a mock pymemgraph module with the necessary exceptions
+    class MockMemgraphExceptions:
+        class MemgraphConnectionError(Exception):
+            pass
+        class MemgraphQueryError(Exception):
+            pass
+
+    class MockPymemgraph:
+        def __init__(self):
+            self.exceptions = MockMemgraphExceptions()
+            self.MemgraphConnectionError = MockMemgraphExceptions.MemgraphConnectionError
+            self.MemgraphQueryError = MockMemgraphExceptions.MemgraphQueryError
+
+    pymemgraph = MockPymemgraph()
 
 from asf.medical.core.config import settings
 
@@ -259,8 +277,11 @@ class MemgraphClient:
         params = {
             "pmid": pmid,
             "cui": cui,
-            **properties or {}
         }
+
+        # Add properties if provided
+        if properties:
+            params.update(properties)
 
         self.execute_query(query, params)
 
@@ -299,8 +320,11 @@ class MemgraphClient:
         params = {
             "cui1": cui1,
             "cui2": cui2,
-            **properties or {}
         }
+
+        # Add properties if provided
+        if properties:
+            params.update(properties)
 
         self.execute_query(query, params)
 
@@ -574,24 +598,55 @@ class MemgraphClient:
 
         return self.execute_query(query, params)
 
-    def vector_search(self, embedding, max_results: int = 20) -> List[Dict[str, Any]]:
+    def vector_search(self, embedding: np.ndarray, max_results: int = 20, max_retries: int = 3, retry_delay: float = 1.0) -> List[Dict[str, Any]]:
         """
         Search for articles with similar embeddings.
 
         Args:
-            embedding: Query embedding
+            embedding: Query embedding as a numpy array
             max_results: Maximum number of results to return
+            max_retries: Maximum number of retries on failure
+            retry_delay: Delay between retries in seconds
 
         Returns:
-            List of articles
+            List of articles with similarity scores
+
+        Raises:
+            ValueError: If the embedding is invalid
+            ConnectionError: If the database connection fails after retries
+            RuntimeError: If the query execution fails after retries
         """
+        if not isinstance(embedding, np.ndarray):
+            raise ValueError("Embedding must be a numpy array")
+
+        if max_results < 1:
+            raise ValueError("max_results must be at least 1")
+
         logger.info(f"Memgraph vector search with max_results={max_results}")
 
-        # Connect to the database
-        self.connect()
+        # Connect to the database with retry
+        retry_count = 0
+        connected = False
+
+        while retry_count < max_retries and not connected:
+            try:
+                connected = self.connect()
+                if not connected:
+                    raise ConnectionError("Failed to connect to Memgraph database")
+            except Exception as e:
+                retry_count += 1
+                if retry_count >= max_retries:
+                    logger.error(f"Failed to connect to Memgraph database after {max_retries} retries: {str(e)}")
+                    raise ConnectionError(f"Failed to connect to Memgraph database: {str(e)}") from e
+                logger.warning(f"Connection attempt {retry_count} failed, retrying in {retry_delay} seconds: {str(e)}")
+                time.sleep(retry_delay)
 
         # Convert embedding to string for Cypher query
-        embedding_str = str(embedding.tolist())
+        try:
+            embedding_str = str(embedding.tolist())
+        except Exception as e:
+            logger.error(f"Failed to convert embedding to string: {str(e)}")
+            raise ValueError(f"Invalid embedding format: {str(e)}") from e
 
         # Query for articles with similar embeddings
         # This assumes that articles have an 'embedding' property
@@ -599,6 +654,7 @@ class MemgraphClient:
         MATCH (a:Article)
         WHERE a.embedding IS NOT NULL
         WITH a, mg.similarity.cosine(a.embedding, $embedding) AS similarity
+        WHERE similarity > 0.5  -- Add a similarity threshold
         ORDER BY similarity DESC
         LIMIT $max_results
         RETURN a.pmid AS pmid, a.title AS title, a.abstract AS abstract, a.authors AS authors,
@@ -610,10 +666,30 @@ class MemgraphClient:
             "max_results": max_results
         }
 
-        try:
-            results = self.execute_query(query, params)
-            logger.info(f"Memgraph vector search found {len(results)} results")
-            return results
-        except Exception as e:
-            logger.error(f"Error performing Memgraph vector search: {str(e)}")
-            return []
+        # Execute query with retry
+        retry_count = 0
+        while retry_count < max_retries:
+            try:
+                results = self.execute_query(query, params)
+                logger.info(f"Memgraph vector search found {len(results)} results")
+                return results
+            except Exception as e:
+                # Check if it's a connection error
+                if hasattr(pymemgraph, 'MemgraphConnectionError') and isinstance(e, pymemgraph.MemgraphConnectionError):
+                    retry_count += 1
+                    if retry_count >= max_retries:
+                        logger.error(f"Memgraph service unavailable after {max_retries} retries: {str(e)}")
+                        raise ConnectionError(f"Memgraph service unavailable: {str(e)}") from e
+                    logger.warning(f"Memgraph service unavailable, retry {retry_count} in {retry_delay} seconds: {str(e)}")
+                    time.sleep(retry_delay)
+                # Check if it's a query error
+                elif hasattr(pymemgraph, 'MemgraphQueryError') and isinstance(e, pymemgraph.MemgraphQueryError):
+                    logger.error(f"Memgraph query error: {str(e)}")
+                    raise ValueError(f"Invalid query or parameters: {str(e)}") from e
+                # Other exceptions
+                else:
+                    logger.error(f"Error performing Memgraph vector search: {str(e)}")
+                    raise RuntimeError(f"Failed to execute Memgraph vector search: {str(e)}") from e
+
+        # This should never be reached due to the exception handling above
+        return []

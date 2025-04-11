@@ -1,0 +1,360 @@
+"""
+Enhanced ML Services for the Medical Research Synthesizer.
+
+This module provides enhancements to the ML Services, including:
+- Better error handling for ML model errors
+- Validation of input data
+- Caching of ML model predictions
+- Progress tracking for long-running ML operations
+"""
+
+import logging
+import time
+import hashlib
+import asyncio
+from typing import Dict, List, Optional, Any, Union, Callable
+from datetime import datetime
+
+from asf.medical.core.exceptions import (
+    ValidationError, ModelError, ResourceNotFoundError
+)
+from asf.medical.core.cache import cache_manager
+from asf.medical.core.progress_tracker import ProgressTracker
+
+# Set up logging
+logger = logging.getLogger(__name__)
+
+class MLProgressTracker(ProgressTracker):
+    """
+    Progress tracker for ML operations.
+    
+    This class extends the base ProgressTracker to provide ML-specific
+    progress tracking functionality.
+    """
+    
+    def __init__(self, operation_id: str, total_steps: int = 100):
+        """
+        Initialize the ML progress tracker.
+        
+        Args:
+            operation_id: Operation ID
+            total_steps: Total number of steps in the operation
+        """
+        super().__init__(operation_id=operation_id, total_steps=total_steps)
+        self.model_name = "unknown"
+        self.operation_type = "unknown"
+        self.start_time = time.time()
+        self.input_size = 0
+        
+    def set_model_name(self, model_name: str):
+        """
+        Set the model name.
+        
+        Args:
+            model_name: Name of the model
+        """
+        self.model_name = model_name
+        
+    def set_operation_type(self, operation_type: str):
+        """
+        Set the operation type.
+        
+        Args:
+            operation_type: Type of operation
+        """
+        self.operation_type = operation_type
+        
+    def set_input_size(self, input_size: int):
+        """
+        Set the input size.
+        
+        Args:
+            input_size: Size of the input data
+        """
+        self.input_size = input_size
+        
+    def get_progress_details(self) -> Dict[str, Any]:
+        """
+        Get detailed progress information.
+        
+        Returns:
+            Dictionary with progress details
+        """
+        details = super().get_progress_details()
+        details.update({
+            "model_name": self.model_name,
+            "operation_type": self.operation_type,
+            "elapsed_time": time.time() - self.start_time,
+            "input_size": self.input_size
+        })
+        return details
+        
+    async def save_progress(self):
+        """
+        Save progress to cache.
+        """
+        progress_key = f"ml_progress:{self.operation_id}"
+        await cache_manager.set(
+            progress_key, 
+            self.get_progress_details(),
+            ttl=3600,  # 1 hour TTL
+            data_type="progress"
+        )
+
+def validate_ml_input(func):
+    """
+    Decorator for validating ML input data.
+    
+    This decorator validates input parameters for ML methods.
+    """
+    async def wrapper(self, *args, **kwargs):
+        # Extract common parameters
+        text = kwargs.get('text', '')
+        texts = kwargs.get('texts', [])
+        claim1 = kwargs.get('claim1', '')
+        claim2 = kwargs.get('claim2', '')
+        articles = kwargs.get('articles', [])
+        claims = kwargs.get('claims', [])
+        threshold = kwargs.get('threshold', 0.5)
+        
+        # Validate text if present
+        if 'text' in kwargs and not text and not isinstance(text, str):
+            raise ValidationError("Text cannot be empty and must be a string")
+            
+        # Validate texts if present
+        if 'texts' in kwargs:
+            if not texts:
+                raise ValidationError("Texts cannot be empty")
+            if not all(isinstance(t, str) for t in texts):
+                raise ValidationError("All texts must be strings")
+                
+        # Validate claim1 and claim2 if present
+        if ('claim1' in kwargs or 'claim2' in kwargs) and (not claim1 or not claim2):
+            raise ValidationError("Both claim1 and claim2 must be provided and non-empty")
+            
+        # Validate articles if present
+        if 'articles' in kwargs and not articles:
+            raise ValidationError("Articles cannot be empty")
+            
+        # Validate claims if present
+        if 'claims' in kwargs and not claims:
+            raise ValidationError("Claims cannot be empty")
+            
+        # Validate threshold if present
+        if 'threshold' in kwargs:
+            if not isinstance(threshold, (int, float)):
+                raise ValidationError("Threshold must be a number")
+            if threshold < 0.0 or threshold > 1.0:
+                raise ValidationError("Threshold must be between 0.0 and 1.0")
+                
+        # Call the original function
+        return await func(self, *args, **kwargs)
+    return wrapper
+
+def track_ml_progress(model_name: str, operation_type: str, total_steps: int = 100):
+    """
+    Decorator for tracking ML operation progress.
+    
+    This decorator adds progress tracking to ML methods.
+    
+    Args:
+        model_name: Name of the model
+        operation_type: Type of operation
+        total_steps: Total number of steps in the operation
+    """
+    def decorator(func):
+        async def wrapper(self, *args, **kwargs):
+            # Generate a deterministic operation ID based on the function and parameters
+            func_name = func.__name__
+            param_str = f"{func_name}:{args}:{kwargs}"
+            operation_id = hashlib.md5(param_str.encode()).hexdigest()
+            
+            # Create progress tracker
+            tracker = MLProgressTracker(operation_id, total_steps)
+            tracker.set_model_name(model_name)
+            tracker.set_operation_type(operation_type)
+            
+            # Set input size if applicable
+            if 'text' in kwargs:
+                tracker.set_input_size(len(kwargs['text']))
+            elif 'texts' in kwargs:
+                tracker.set_input_size(len(kwargs['texts']))
+            elif 'articles' in kwargs:
+                tracker.set_input_size(len(kwargs['articles']))
+            elif 'claims' in kwargs:
+                tracker.set_input_size(len(kwargs['claims']))
+            
+            # Initialize progress
+            tracker.update(0, f"Starting {operation_type}")
+            await tracker.save_progress()
+            
+            # Add tracker to kwargs
+            kwargs['progress_tracker'] = tracker
+            
+            try:
+                # Call the original function
+                result = await func(self, *args, **kwargs)
+                
+                # Mark as complete
+                tracker.complete(f"{operation_type.capitalize()} completed successfully")
+                await tracker.save_progress()
+                
+                return result
+            except Exception as e:
+                # Mark as failed
+                tracker.fail(f"{operation_type.capitalize()} failed: {str(e)}")
+                await tracker.save_progress()
+                
+                # Re-raise the exception
+                raise
+        return wrapper
+    return decorator
+
+def enhanced_ml_error_handling(func):
+    """
+    Decorator for enhanced error handling in ML methods.
+    
+    This decorator adds detailed error handling to ML methods.
+    """
+    async def wrapper(self, *args, **kwargs):
+        try:
+            # Call the original function
+            return await func(self, *args, **kwargs)
+        except ValidationError:
+            # Re-raise validation errors
+            raise
+        except ModelError:
+            # Re-raise model errors
+            raise
+        except ResourceNotFoundError:
+            # Re-raise resource not found errors
+            raise
+        except Exception as e:
+            # Log unexpected errors
+            logger.error(f"Unexpected error in {func.__name__}: {str(e)}", exc_info=True)
+            
+            # Convert to ModelError
+            raise ModelError(
+                model=getattr(self, 'model_name', func.__name__),
+                message=f"Unexpected error: {str(e)}"
+            )
+    return wrapper
+
+def cached_ml_prediction(ttl: int = 3600, prefix: str = "ml_prediction", data_type: str = "prediction"):
+    """
+    Decorator for caching ML model predictions.
+    
+    This decorator adds caching to ML prediction methods.
+    
+    Args:
+        ttl: Time-to-live in seconds (default: 3600 = 1 hour)
+        prefix: Cache key prefix (default: "ml_prediction")
+        data_type: Type of data being cached (default: "prediction")
+    """
+    def decorator(func):
+        async def wrapper(self, *args, **kwargs):
+            # Skip caching if explicitly requested
+            skip_cache = kwargs.pop('skip_cache', False)
+            if skip_cache:
+                return await func(self, *args, **kwargs)
+                
+            # Generate cache key
+            func_name = func.__name__
+            
+            # Create a deterministic cache key based on the function and parameters
+            # We need to handle different parameter types appropriately
+            cache_key_parts = [prefix, func_name]
+            
+            # Add model name if available
+            model_name = getattr(self, 'model_name', None)
+            if model_name:
+                cache_key_parts.append(model_name)
+                
+            # Add args (excluding self)
+            for arg in args[1:]:
+                if isinstance(arg, (str, int, float, bool)):
+                    cache_key_parts.append(str(arg))
+                elif isinstance(arg, (list, tuple)):
+                    # For lists/tuples, hash the contents
+                    arg_hash = hashlib.md5(str(arg).encode()).hexdigest()
+                    cache_key_parts.append(arg_hash)
+                elif isinstance(arg, dict):
+                    # For dicts, hash the sorted items
+                    arg_hash = hashlib.md5(str(sorted(arg.items())).encode()).hexdigest()
+                    cache_key_parts.append(arg_hash)
+                    
+            # Add kwargs
+            for key, value in sorted(kwargs.items()):
+                if isinstance(value, (str, int, float, bool)):
+                    cache_key_parts.append(f"{key}={value}")
+                elif isinstance(value, (list, tuple)):
+                    # For lists/tuples, hash the contents
+                    value_hash = hashlib.md5(str(value).encode()).hexdigest()
+                    cache_key_parts.append(f"{key}={value_hash}")
+                elif isinstance(value, dict):
+                    # For dicts, hash the sorted items
+                    value_hash = hashlib.md5(str(sorted(value.items())).encode()).hexdigest()
+                    cache_key_parts.append(f"{key}={value_hash}")
+                    
+            # Create the final cache key
+            cache_key = hashlib.md5(":".join(cache_key_parts).encode()).hexdigest()
+            
+            # Try to get from cache
+            cached_result = await cache_manager.get(cache_key, data_type=data_type)
+            if cached_result is not None:
+                logger.debug(f"Cache hit for {func_name}")
+                return cached_result
+                
+            # Call the original function
+            logger.debug(f"Cache miss for {func_name}")
+            result = await func(self, *args, **kwargs)
+            
+            # Store in cache
+            await cache_manager.set(cache_key, result, ttl=ttl, data_type=data_type)
+            
+            return result
+        return wrapper
+    return decorator
+
+# Example usage:
+"""
+class EnhancedContradictionService:
+    @validate_ml_input
+    @track_ml_progress("contradiction_detection", "contradiction_detection", total_steps=4)
+    @enhanced_ml_error_handling
+    @cached_ml_prediction(ttl=3600, prefix="contradiction", data_type="prediction")
+    async def detect_contradictions_in_articles(
+        self,
+        articles: List[Dict[str, Any]],
+        threshold: float = 0.7,
+        use_all_methods: bool = True,
+        progress_tracker: Optional[MLProgressTracker] = None
+    ) -> List[Dict[str, Any]]:
+        # Implementation with progress tracking
+        if progress_tracker:
+            progress_tracker.update(1, "Validating input articles")
+            await progress_tracker.save_progress()
+            
+        # Extract article texts
+        if progress_tracker:
+            progress_tracker.update(2, "Extracting article texts")
+            await progress_tracker.save_progress()
+            
+        # ... extraction logic ...
+        
+        # Detect contradictions
+        if progress_tracker:
+            progress_tracker.update(3, "Detecting contradictions")
+            await progress_tracker.save_progress()
+            
+        # ... contradiction detection logic ...
+        
+        # Format results
+        if progress_tracker:
+            progress_tracker.update(4, "Formatting results")
+            await progress_tracker.save_progress()
+            
+        # ... result formatting logic ...
+        
+        return contradictions
+"""

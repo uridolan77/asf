@@ -366,6 +366,36 @@ class CacheManager:
 
         return count
 
+    async def count_pattern(self, pattern: str) -> int:
+        """
+        Count the number of keys matching a pattern.
+
+        Args:
+            pattern: Key pattern (e.g., "search:*")
+
+        Returns:
+            Number of keys matching the pattern
+        """
+        count = 0
+
+        # Count in Redis if available
+        if self.redis:
+            try:
+                # Get all keys matching the pattern
+                keys = await self.redis.keys(pattern)
+                count += len(keys)
+            except Exception as e:
+                logger.error(f"Error counting keys by pattern in Redis: {str(e)}")
+
+        # Count in local cache
+        with self.local_cache.lock:
+            # Find keys matching the pattern
+            for key in list(self.local_cache.cache.keys()):
+                if self._match_pattern(key, pattern):
+                    count += 1
+
+        return count
+
     def _match_pattern(self, key: str, pattern: str) -> bool:
         """
         Check if a key matches a pattern.

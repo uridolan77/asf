@@ -5,8 +5,7 @@ This module contains tests for the GraphRAG service.
 """
 
 import pytest
-import asyncio
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 import numpy as np
 
 from asf.medical.graph.graph_rag import GraphRAG
@@ -18,6 +17,7 @@ from asf.medical.ml.models.biomedlm import BioMedLMService
 def mock_graph_service():
     """Create a mock graph service."""
     mock = MagicMock(spec=GraphService)
+    mock.connect.return_value = True
     mock.vector_search.return_value = [
         {
             "pmid": "12345",
@@ -42,6 +42,15 @@ def mock_graph_service():
 
 
 @pytest.fixture
+def failing_graph_service():
+    """Create a mock graph service that fails to connect."""
+    mock = MagicMock(spec=GraphService)
+    mock.connect.return_value = False
+    mock.connect.side_effect = ConnectionError("Failed to connect to graph database")
+    return mock
+
+
+@pytest.fixture
 def mock_biomedlm_service():
     """Create a mock BioMedLM service."""
     mock = MagicMock(spec=BioMedLMService)
@@ -51,11 +60,29 @@ def mock_biomedlm_service():
 
 
 @pytest.fixture
+def failing_biomedlm_service():
+    """Create a mock BioMedLM service that fails."""
+    mock = MagicMock(spec=BioMedLMService)
+    mock.encode.side_effect = RuntimeError("Failed to encode query")
+    mock.calculate_similarity.side_effect = RuntimeError("Failed to calculate similarity")
+    return mock
+
+
+@pytest.fixture
 def graph_rag(mock_graph_service, mock_biomedlm_service):
     """Create a GraphRAG instance with mock dependencies."""
     return GraphRAG(
         graph_service=mock_graph_service,
         biomedlm_service=mock_biomedlm_service
+    )
+
+
+@pytest.fixture
+def failing_graph_rag(failing_graph_service, failing_biomedlm_service):
+    """Create a GraphRAG instance with failing dependencies."""
+    return GraphRAG(
+        graph_service=failing_graph_service,
+        biomedlm_service=failing_biomedlm_service
     )
 
 
@@ -73,7 +100,7 @@ async def test_search(graph_rag, mock_graph_service, mock_biomedlm_service):
             "journal": "Test Journal"
         }
     ])
-    
+
     # Set up mock for retrieve_related_concepts
     graph_rag.retrieve_related_concepts = MagicMock(return_value=[
         {
@@ -82,10 +109,10 @@ async def test_search(graph_rag, mock_graph_service, mock_biomedlm_service):
             "semantic_types": ["Disease"]
         }
     ])
-    
+
     # Call the search method
     results = await graph_rag.search("test query", max_results=5)
-    
+
     # Verify the results
     assert results is not None
     assert "query" in results
@@ -100,7 +127,7 @@ async def test_search(graph_rag, mock_graph_service, mock_biomedlm_service):
     assert "search_methods" in results
     assert results["search_methods"]["vector_search"] is True
     assert results["search_methods"]["graph_search"] is True
-    
+
     # Verify that the mock methods were called
     mock_graph_service.connect.assert_called_once()
     mock_biomedlm_service.encode.assert_called_once_with("test query")
@@ -114,13 +141,13 @@ async def test_search_vector_only(graph_rag, mock_graph_service, mock_biomedlm_s
     """Test the search method with vector search only."""
     # Call the search method with graph_search=False
     results = await graph_rag.search("test query", max_results=5, use_graph_search=False)
-    
+
     # Verify the results
     assert results is not None
     assert "search_methods" in results
     assert results["search_methods"]["vector_search"] is True
     assert results["search_methods"]["graph_search"] is False
-    
+
     # Verify that the mock methods were called
     mock_graph_service.connect.assert_called_once()
     mock_biomedlm_service.encode.assert_called_once_with("test query")
@@ -128,7 +155,7 @@ async def test_search_vector_only(graph_rag, mock_graph_service, mock_biomedlm_s
 
 
 @pytest.mark.asyncio
-async def test_search_graph_only(graph_rag, mock_graph_service, mock_biomedlm_service):
+async def test_search_graph_only(graph_rag, mock_graph_service):
     """Test the search method with graph search only."""
     # Set up mock for retrieve_articles_by_concept
     graph_rag.retrieve_articles_by_concept = MagicMock(return_value=[
@@ -141,7 +168,7 @@ async def test_search_graph_only(graph_rag, mock_graph_service, mock_biomedlm_se
             "journal": "Test Journal"
         }
     ])
-    
+
     # Set up mock for retrieve_related_concepts
     graph_rag.retrieve_related_concepts = MagicMock(return_value=[
         {
@@ -150,16 +177,16 @@ async def test_search_graph_only(graph_rag, mock_graph_service, mock_biomedlm_se
             "semantic_types": ["Disease"]
         }
     ])
-    
+
     # Call the search method with vector_search=False
     results = await graph_rag.search("test query", max_results=5, use_vector_search=False)
-    
+
     # Verify the results
     assert results is not None
     assert "search_methods" in results
     assert results["search_methods"]["vector_search"] is False
     assert results["search_methods"]["graph_search"] is True
-    
+
     # Verify that the mock methods were called
     mock_graph_service.connect.assert_called_once()
     mock_graph_service.vector_search.assert_not_called()
@@ -168,7 +195,7 @@ async def test_search_graph_only(graph_rag, mock_graph_service, mock_biomedlm_se
 
 
 @pytest.mark.asyncio
-async def test_generate_summary(graph_rag, mock_graph_service, mock_biomedlm_service):
+async def test_generate_summary(graph_rag, mock_graph_service):
     """Test the generate_summary method."""
     # Set up mock for retrieve_articles_by_concept
     graph_rag.retrieve_articles_by_concept = MagicMock(return_value=[
@@ -181,10 +208,10 @@ async def test_generate_summary(graph_rag, mock_graph_service, mock_biomedlm_ser
             "journal": "Test Journal"
         }
     ])
-    
+
     # Call the generate_summary method
     summary = await graph_rag.generate_summary("test query", max_articles=3)
-    
+
     # Verify the summary
     assert summary is not None
     assert "query" in summary
@@ -196,7 +223,40 @@ async def test_generate_summary(graph_rag, mock_graph_service, mock_biomedlm_ser
     assert "generated_at" in summary
     assert "source" in summary
     assert summary["source"] == "graphrag"
-    
+
     # Verify that the mock methods were called
     mock_graph_service.connect.assert_called_once()
     graph_rag.retrieve_articles_by_concept.assert_called()
+
+
+@pytest.mark.asyncio
+async def test_search_with_empty_query(graph_rag):
+    """Test the search method with an empty query."""
+    # Call the search method with an empty query
+    with pytest.raises(ValueError) as excinfo:
+        await graph_rag.search("", max_results=5)
+
+    # Verify the error message
+    assert "Search query cannot be empty" in str(excinfo.value)
+
+
+@pytest.mark.asyncio
+async def test_search_with_connection_error(failing_graph_rag):
+    """Test the search method with a connection error."""
+    # Call the search method
+    with pytest.raises(ConnectionError) as excinfo:
+        await failing_graph_rag.search("test query", max_results=5)
+
+    # Verify the error message
+    assert "Failed to connect to graph database" in str(excinfo.value)
+
+
+@pytest.mark.asyncio
+async def test_search_with_invalid_max_results(graph_rag):
+    """Test the search method with invalid max_results."""
+    # Call the search method with invalid max_results
+    with pytest.raises(ValueError) as excinfo:
+        await graph_rag.search("test query", max_results=0)
+
+    # Verify the error message
+    assert "max_results must be at least 1" in str(excinfo.value)
