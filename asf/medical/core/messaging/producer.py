@@ -1,7 +1,8 @@
+"""
 Message producer for the Medical Research Synthesizer.
 
 This module provides a message producer for publishing messages to the message broker.
-
+"""
 import uuid
 from typing import Dict, Any, Optional, Union
 from datetime import datetime
@@ -16,10 +17,12 @@ from asf.medical.core.messaging.rabbitmq_broker import (
 logger = get_logger(__name__)
 
 class MessageProducer:
+    """
     Message producer for publishing messages to the message broker.
     
     This class provides methods for publishing messages to exchanges
     with various options for routing, delivery, and message properties.
+    """
 
     def __init__(self, broker: RabbitMQBroker = None):
         """
@@ -266,60 +269,6 @@ class MessageProducer:
         )
 
         return command_id
-
-    async def publish_raw_message(
-        self,
-        exchange: str,
-        routing_key: str,
-        message: Dict[str, Any],
-        headers: Optional[Dict[str, Any]] = None,
-        message_id: Optional[str] = None,
-        correlation_id: Optional[str] = None,
-        priority: Union[int, MessagePriority] = MessagePriority.NORMAL,
-        persistent: bool = True
-    ) -> str:
-        """
-        Publish a raw message to an exchange.
-
-        This method is primarily used for reprocessing dead letter messages.
-
-        Args:
-            exchange: Exchange name
-            routing_key: Routing key
-            message: Message content
-            headers: Message headers
-            message_id: Message ID (default: generated UUID)
-            correlation_id: Correlation ID
-            priority: Message priority
-            persistent: Whether the message should be persistent
-
-        Returns:
-            Message ID
-
-        Raises:
-            ConnectionError: If connection fails
-            MessageError: If serialization fails
-            MessageBrokerError: If publishing fails
-        """
-        # Generate a message ID if not provided
-        message_id = message_id or str(uuid.uuid4())
-
-        # Set delivery mode based on persistence
-        delivery_mode = DeliveryMode.PERSISTENT if persistent else DeliveryMode.TRANSIENT
-
-        # Publish the message
-        await self.broker.publish(
-            exchange_name=exchange,
-            routing_key=routing_key,
-            message=message,
-            message_id=message_id,
-            correlation_id=correlation_id,
-            priority=priority,
-            delivery_mode=delivery_mode,
-            headers=headers
-        )
-
-        return message_id
 
     async def publish_raw_message(
         self,

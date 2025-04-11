@@ -82,6 +82,7 @@ class ClinicalTrialsClient:
         self.client = httpx.AsyncClient(timeout=timeout)
         self.rate_limiter = AsyncRateLimiter(requests_per_second, burst_size)
     async def close(self):
+        """
         Make a request to the ClinicalTrials.gov API with retry logic and rate limiting.
         Args:
             endpoint: API endpoint
@@ -118,3 +119,4 @@ class ClinicalTrialsClient:
             Dictionary mapping NCT IDs to study details
         Raises:
             ClinicalTrialsClientError: If the batch operation fails
+        """

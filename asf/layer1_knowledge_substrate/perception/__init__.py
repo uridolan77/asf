@@ -1,2 +1,0 @@
-from asf.layer1_knowledge_substrate.perception.feature import PerceptualFeature
-from asf.layer1_knowledge_substrate.perception.entity import PerceptualEntity

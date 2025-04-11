@@ -1,7 +1,14 @@
 """
-Task Queue Configuration
+Task queue module for the Medical Research Synthesizer.
 
-This module configures Dramatiq for asynchronous task processing.
+This module provides utilities for managing task queues, including task
+scheduling, execution, and monitoring.
+
+Classes:
+    TaskTrackingMiddleware: Middleware to track task status and results.
+
+Functions:
+    get_task_status: Get the status of a task by ID.
 """
 
 import logging
@@ -26,25 +33,45 @@ broker.add_middleware(Retries(max_retries=3, min_backoff=1000, max_backoff=60000
 dramatiq.set_broker(broker)
 
 class TaskTrackingMiddleware(Middleware):
-    """Middleware to track task status and results."""
+    """
+    Middleware to track task status and results.
+
+    This middleware provides functionality to store and retrieve task
+    status and results, enabling better monitoring and debugging of tasks.
+    """
 
     def __init__(self):
+        """
+        Initialize the TaskTrackingMiddleware.
+        """
         self.tasks = {}  # In-memory cache for fast access
 
     def after_process_message(self, broker, message, *, result=None, exception=None):
-        """Store task result or exception after processing.
+        """
+        Store task result or exception after processing.
 
-    Args:
-        # TODO: Add parameter descriptions
+        Args:
+            broker: The message broker.
+            message: The message being processed.
+            result: The result of the task, if successful.
+            exception: The exception raised by the task, if any.
+        """
+        task_id = message.message_id
+        if exception:
+            task_storage.store_task_result(task_id, {"status": "failed", "error": str(exception)})
+        else:
+            task_storage.store_task_result(task_id, {"status": "completed", "result": result})
 
-    Returns:
-        # TODO: Add return description
+    def get_task_status(self, task_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Retrieve the status of a task.
 
-    Args:
-        # TODO: Add parameter descriptions
+        Args:
+            task_id: The ID of the task.
 
-    Returns:
-        # TODO: Add return description
+        Returns:
+            Task status information or None if not found.
+        """
         if task_id in self.tasks:
             return self.tasks.get(task_id)
 
@@ -63,9 +90,9 @@ def get_task_status(task_id: str) -> Optional[Dict[str, Any]]:
     Get the status of a task by ID.
 
     Args:
-        task_id: The ID of the task
+        task_id: The ID of the task.
 
     Returns:
-        Task status information or None if not found
+        Task status information or None if not found.
     """
     return task_tracker.get_task_status(task_id)

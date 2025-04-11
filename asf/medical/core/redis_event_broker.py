@@ -1,6 +1,14 @@
-Redis-based event broker for the Medical Research Synthesizer.
-This module provides a Redis-based implementation of the EventBroker interface,
-allowing events to be published and subscribed to across process boundaries.
+"""
+Redis Event Broker module for the Medical Research Synthesizer.
+
+This module provides a Redis-based implementation of an event broker, allowing
+for publishing and subscribing to events across processes or services.
+
+Classes:
+    RedisEventBroker: Redis-based event broker for publishing and subscribing to events.
+    EventBridge: Bridge between Redis events and the local event bus.
+"""
+
 import json
 import asyncio
 from typing import Dict, Any, List, Callable, Set
@@ -8,16 +16,30 @@ import redis.asyncio as redis
 from asf.medical.core.events import Event, EventBroker, event_bus
 from asf.medical.core.config import settings
 from asf.medical.core.logging_config import get_logger
+
 logger = get_logger(__name__)
+
 class RedisEventBroker(EventBroker):
-    Redis-based implementation of the EventBroker interface.
-    This class uses Redis Pub/Sub to implement a distributed event system,
-    allowing events to be published and subscribed to across process boundaries.
+    """
+    Redis-based event broker for publishing and subscribing to events.
+    
+    This class implements an event broker using Redis as the backend,
+    allowing for cross-process or cross-service event communication.
+    
+    Attributes:
+        redis_url (str): URL for the Redis server.
+        redis_client (Optional[Redis]): Redis client instance.
+        pubsub (Optional[PubSub]): Redis Pub/Sub instance.
+        _handlers (Dict[str, List[Callable[[Event], Any]]]): Handlers for subscribed topics.
+        _running (bool): Whether the broker is currently listening for events.
+        _listen_task (Optional[asyncio.Task]): Task for listening to events.
+    """
     def __init__(self, redis_url: str = None):
         """
         Initialize the Redis event broker.
+        
         Args:
-            redis_url: Redis connection URL (default: from settings)
+            redis_url (str): Redis connection URL (default: from settings).
         """
         self.redis_url = redis_url or settings.REDIS_URL
         if not self.redis_url:
@@ -28,11 +50,13 @@ class RedisEventBroker(EventBroker):
         self._running = False
         self._listen_task = None
         logger.info(f"Initialized Redis event broker with URL: {self.redis_url}")
+
     async def connect(self) -> None:
         """
         Connect to Redis.
+        
         Raises:
-            Exception: If connection fails
+            Exception: If connection fails.
         """
         try:
             self.redis_client = redis.from_url(self.redis_url, decode_responses=True)
@@ -41,11 +65,13 @@ class RedisEventBroker(EventBroker):
         except Exception as e:
             logger.error(f"Failed to connect to Redis: {str(e)}", exc_info=e)
             raise
+
     async def disconnect(self) -> None:
         """
         Disconnect from Redis.
+        
         Raises:
-            Exception: If disconnection fails
+            Exception: If disconnection fails.
         """
         try:
             if self._running:
@@ -60,14 +86,17 @@ class RedisEventBroker(EventBroker):
         except Exception as e:
             logger.error(f"Failed to disconnect from Redis: {str(e)}", exc_info=e)
             raise
+
     async def publish(self, topic: str, event: Event) -> None:
         """
         Publish an event to a topic.
+        
         Args:
-            topic: Topic to publish to
-            event: Event to publish
+            topic (str): Topic to publish to.
+            event (Event): Event to publish.
+        
         Raises:
-            Exception: If publishing fails
+            Exception: If publishing fails.
         """
         if not self.redis_client:
             await self.connect()
@@ -78,75 +107,79 @@ class RedisEventBroker(EventBroker):
         except Exception as e:
             logger.error(f"Failed to publish event to topic {topic}: {str(e)}", exc_info=e)
             raise
+
     async def subscribe(self, topic: str, handler: Callable[[Event], Any]) -> None:
         """
         Subscribe to events on a topic.
+        
         Args:
-            topic: Topic to subscribe to
-            handler: Function to handle events
+            topic (str): Topic to subscribe to.
+            handler (Callable[[Event], Any]): Function to handle events.
+        
         Raises:
-            Exception: If subscription fails
+            Exception: If subscription fails.
         """
         if not self.pubsub:
             await self.connect()
         try:
-            # Register the handler
             if topic not in self._handlers:
                 self._handlers[topic] = []
-                # Subscribe to the topic
                 await self.pubsub.subscribe(topic)
                 logger.debug(f"Subscribed to topic: {topic}")
             self._handlers[topic].append(handler)
             logger.debug(f"Registered handler for topic: {topic}")
-            # Start listening if not already running
             if not self._running:
                 await self.start_listening()
         except Exception as e:
             logger.error(f"Failed to subscribe to topic {topic}: {str(e)}", exc_info=e)
             raise
+
     async def unsubscribe(self, topic: str, handler: Callable[[Event], Any]) -> None:
         """
         Unsubscribe from events on a topic.
+        
         Args:
-            topic: Topic to unsubscribe from
-            handler: Function to unsubscribe
+            topic (str): Topic to unsubscribe from.
+            handler (Callable[[Event], Any]): Function to unsubscribe.
+        
         Raises:
-            Exception: If unsubscription fails
+            Exception: If unsubscription fails.
         """
         if not self.pubsub:
             return
         try:
-            # Unregister the handler
             if topic in self._handlers:
                 self._handlers[topic] = [h for h in self._handlers[topic] if h != handler]
-                # If no more handlers for this topic, unsubscribe
                 if not self._handlers[topic]:
                     await self.pubsub.unsubscribe(topic)
                     del self._handlers[topic]
                     logger.debug(f"Unsubscribed from topic: {topic}")
             logger.debug(f"Unregistered handler for topic: {topic}")
-            # Stop listening if no more handlers
             if not self._handlers and self._running:
                 await self.stop_listening()
         except Exception as e:
             logger.error(f"Failed to unsubscribe from topic {topic}: {str(e)}", exc_info=e)
             raise
+
     async def start_listening(self) -> None:
         """
         Start listening for events.
+        
         Raises:
-            Exception: If starting fails
+            Exception: If starting fails.
         """
         if self._running:
             return
         self._running = True
         self._listen_task = asyncio.create_task(self._listen_for_messages())
         logger.info("Started listening for Redis events")
+
     async def stop_listening(self) -> None:
         """
         Stop listening for events.
+        
         Raises:
-            Exception: If stopping fails
+            Exception: If stopping fails.
         """
         if not self._running:
             return
@@ -159,8 +192,11 @@ class RedisEventBroker(EventBroker):
                 pass
             self._listen_task = None
         logger.info("Stopped listening for Redis events")
+
     async def _listen_for_messages(self) -> None:
-        """Listen for messages from Redis Pub/Sub."""
+        """
+        Listen for messages from Redis Pub/Sub.
+        """
         try:
             async for message in self.pubsub.listen():
                 if not self._running:
@@ -170,10 +206,8 @@ class RedisEventBroker(EventBroker):
                 topic = message["channel"]
                 data = message["data"]
                 try:
-                    # Parse the event
                     event_dict = json.loads(data)
                     event = Event.from_dict(event_dict)
-                    # Call handlers for this topic
                     if topic in self._handlers:
                         for handler in self._handlers[topic]:
                             try:
@@ -189,101 +223,121 @@ class RedisEventBroker(EventBroker):
                 except Exception as e:
                     logger.error(f"Error processing event: {str(e)}", exc_info=e)
         except asyncio.CancelledError:
-            # Task was cancelled, exit gracefully
             pass
         except Exception as e:
             logger.error(f"Error in Redis Pub/Sub listener: {str(e)}", exc_info=e)
-            # Try to reconnect
             await asyncio.sleep(1)
             if self._running:
                 self._listen_task = asyncio.create_task(self._listen_for_messages())
-# Bridge between Redis events and the local event bus
+
 class EventBridge:
+    """
     Bridge between Redis events and the local event bus.
+    
     This class connects the Redis event broker to the local event bus,
     allowing events to be published and subscribed to across process boundaries.
+    
+    Attributes:
+        redis_broker (RedisEventBroker): Redis event broker instance.
+        _subscribed_topics (Set[str]): Set of topics the bridge is subscribed to.
+    """
     def __init__(self, redis_broker: RedisEventBroker):
         """
         Initialize the event bridge.
+        
         Args:
-            redis_broker: Redis event broker
+            redis_broker (RedisEventBroker): Redis event broker.
         """
         self.redis_broker = redis_broker
         self._subscribed_topics: Set[str] = set()
         logger.info("Initialized event bridge")
+
     async def connect(self) -> None:
         """
         Connect the bridge.
+        
         Raises:
-            Exception: If connection fails
+            Exception: If connection fails.
         """
         await self.redis_broker.connect()
         logger.info("Connected event bridge")
+
     async def disconnect(self) -> None:
         """
         Disconnect the bridge.
+        
         Raises:
-            Exception: If disconnection fails
+            Exception: If disconnection fails.
         """
         await self.redis_broker.disconnect()
         logger.info("Disconnected event bridge")
+
     async def subscribe_to_topic(self, topic: str) -> None:
         """
         Subscribe to a Redis topic and forward events to the local event bus.
+        
         Args:
-            topic: Topic to subscribe to
+            topic (str): Topic to subscribe to.
+        
         Raises:
-            Exception: If subscription fails
+            Exception: If subscription fails.
         """
         if topic in self._subscribed_topics:
             return
         await self.redis_broker.subscribe(topic, self._forward_to_event_bus)
         self._subscribed_topics.add(topic)
         logger.info(f"Subscribed to Redis topic: {topic}")
+
     async def unsubscribe_from_topic(self, topic: str) -> None:
         """
         Unsubscribe from a Redis topic.
+        
         Args:
-            topic: Topic to unsubscribe from
+            topic (str): Topic to unsubscribe from.
+        
         Raises:
-            Exception: If unsubscription fails
+            Exception: If unsubscription fails.
         """
         if topic not in self._subscribed_topics:
             return
         await self.redis_broker.unsubscribe(topic, self._forward_to_event_bus)
         self._subscribed_topics.remove(topic)
         logger.info(f"Unsubscribed from Redis topic: {topic}")
+
     async def publish_to_topic(self, topic: str, event: Event) -> None:
         """
         Publish an event to a Redis topic.
+        
         Args:
-            topic: Topic to publish to
-            event: Event to publish
+            topic (str): Topic to publish to.
+            event (Event): Event to publish.
+        
         Raises:
-            Exception: If publishing fails
+            Exception: If publishing fails.
         """
         await self.redis_broker.publish(topic, event)
+
     async def _forward_to_event_bus(self, event: Event) -> None:
         """
         Forward an event from Redis to the local event bus.
+        
         Args:
-            event: Event to forward
+            event (Event): Event to forward.
         """
         await event_bus.publish(event)
         logger.debug(f"Forwarded event to local event bus: {event}")
-# Create a global Redis event broker
+
 redis_event_broker = RedisEventBroker()
-# Create a global event bridge
 event_bridge = EventBridge(redis_event_broker)
-# Function to initialize the event system
+
 async def initialize_event_system() -> None:
     """
     Initialize the event system.
+    
     This function connects the Redis event broker and subscribes to common topics.
     """
     try:
         await event_bridge.connect()
-        # Subscribe to common topics
         common_topics = [
             "user.events",
             "search.events",
@@ -296,10 +350,11 @@ async def initialize_event_system() -> None:
     except Exception as e:
         logger.error(f"Failed to initialize event system: {str(e)}", exc_info=e)
         raise
-# Function to shutdown the event system
+
 async def shutdown_event_system() -> None:
     """
     Shutdown the event system.
+    
     This function disconnects the Redis event broker and stops the event bus.
     """
     try:

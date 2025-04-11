@@ -81,6 +81,7 @@ class NCBIClient:
     def get_rate_limit(self) -> Dict[str, Any]:
         """
         Get the current rate limit settings.
+
         Returns:
             Dictionary with rate limit information
         """

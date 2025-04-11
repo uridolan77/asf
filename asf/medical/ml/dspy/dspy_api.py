@@ -11,8 +11,8 @@ from typing import Dict, Any, List, Optional, Union
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Query, Path
 from pydantic import BaseModel, Field
 
-from .dspy_client import get_dspy_client, DSPyClient
-from .dspy_settings import get_dspy_settings
+from client import get_dspy_client, DSPyClient
+from settings import get_dspy_settings
 from .modules import (
     MedicalRAGModule,
     EnhancedMedicalRAGModule,

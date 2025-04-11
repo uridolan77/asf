@@ -21,9 +21,9 @@ from concurrent.futures import ThreadPoolExecutor
 import dspy
 import mlflow
 
-from .enhanced_settings import get_enhanced_settings, EnhancedDSPySettings
-from .enhanced_cache import CacheInterface, create_cache
-from .enhanced_module_base import EnhancedDSPyModuleBase, EnhancedDSPyModuleProtocol
+from settings import get_enhanced_settings, EnhancedDSPySettings
+from cache import CacheInterface, create_cache
+from module_base import EnhancedDSPyModuleBase, EnhancedDSPyModuleProtocol
 from .circuit_breaker import get_circuit_breaker_registry, CircuitOpenError
 from .audit_logging import get_audit_logger
 

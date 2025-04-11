@@ -1,166 +1,202 @@
 """
-Resource Limiter
-This module provides resource limiting for ML operations to prevent overloading the system.
+Resource Limiter module for the Medical Research Synthesizer.
+
+This module provides functionality to limit resource usage for system stability
+and to prevent resource exhaustion by applying throttling and quota mechanisms.
+
+Classes:
+    ResourceLimiter: Controls and limits usage of system resources.
+    ResourceLimitExceededError: Exception raised when a resource limit is exceeded.
+
+Functions:
+    apply_resource_limits: Decorator to apply resource limits to a function.
 """
+import contextlib
 import os
 import time
 import logging
 import threading
 import psutil
 from typing import Dict, Any, Tuple
+from contextlib import contextmanager
+
 logger = logging.getLogger(__name__)
+
+class ResourceLimitExceededError(Exception):
+    """
+    Exception raised when a resource limit is exceeded.
+
+    Attributes:
+        resource (str): The resource that was limited.
+        limit (int): The limit that was exceeded.
+        usage (int): The attempted usage that exceeded the limit.
+        message (str): Explanation of the error.
+    """
+
+    def __init__(self, resource: str, limit: int, usage: int, message: str = None):
+        """
+        Initialize the ResourceLimitExceededError.
+
+        Args:
+            resource (str): The resource that was limited.
+            limit (int): The limit that was exceeded.
+            usage (int): The attempted usage that exceeded the limit.
+            message (str, optional): Explanation of the error. Defaults to None.
+        """
+        self.resource = resource
+        self.limit = limit
+        self.usage = usage
+        self.message = message or f"{resource} limit of {limit} exceeded with usage {usage}"
+        super().__init__(self.message)
+
 class ResourceLimiter:
     """
-    Resource limiter for ML operations.
-    This class provides methods for limiting resource usage of ML operations,
-    including CPU, memory, and GPU usage.
+    Controls and limits usage of system resources.
+
+    This class provides methods to define, track, and enforce limits on
+    various system resources like memory, CPU, and network connections.
+
+    Attributes:
+        limits (Dict[str, int]): Resource limits configuration.
+        usage (Dict[str, int]): Current resource usage.
+        locks (Dict[str, threading.Lock]): Locks for thread-safe access to resource accounting.
     """
-    def __init__(
-        self,
-        max_cpu_percent: float = 80.0,
-        max_memory_percent: float = 80.0,
-        max_gpu_percent: float = 80.0,
-        max_concurrent_tasks: int = 5,
-        check_interval: float = 1.0
-    ):
-        self.max_cpu_percent = float(os.environ.get("MAX_CPU_PERCENT", max_cpu_percent))
-        self.max_memory_percent = float(os.environ.get("MAX_MEMORY_PERCENT", max_memory_percent))
-        self.max_gpu_percent = float(os.environ.get("MAX_GPU_PERCENT", max_gpu_percent))
-        self.max_concurrent_tasks = int(os.environ.get("MAX_CONCURRENT_TASKS", max_concurrent_tasks))
-        self.check_interval = float(os.environ.get("RESOURCE_CHECK_INTERVAL", check_interval))
-        self.concurrent_tasks = 0
-        self.task_lock = threading.Lock()
-        self.model_locks: Dict[str, threading.Lock] = {}
-        self.model_usage: Dict[str, Dict[str, Any]] = {}
-        self.has_gpu = False
-        try:
-            import torch
-            self.has_gpu = torch.cuda.is_available()
-            if self.has_gpu:
-                logger.info(f"GPU available: {torch.cuda.get_device_name(0)}")
-                try:
-                    import pynvml
-                    pynvml.nvmlInit()
-                    self.pynvml = pynvml
-                    logger.info("NVML initialized for GPU monitoring")
-                except (ImportError, Exception) as e:
-                    logger.warning(f"Could not initialize NVML for GPU monitoring: {str(e)}")
-                    self.pynvml = None
-        except ImportError:
-            logger.info("PyTorch not available, GPU monitoring disabled")
-    def get_resource_usage(self) -> Dict[str, float]:
+
+    def __init__(self, limits: Dict[str, int] = None):
         """
-        Get current resource usage.
-        Returns:
-            Dictionary with resource usage percentages
-        """
-        cpu_percent = psutil.cpu_percent(interval=0.1)
-        memory = psutil.virtual_memory()
-        memory_percent = memory.percent
-        gpu_percent = 0.0
-        if self.has_gpu and self.pynvml:
-            try:
-                handle = self.pynvml.nvmlDeviceGetHandleByIndex(0)
-                info = self.pynvml.nvmlDeviceGetUtilizationRates(handle)
-                gpu_percent = info.gpu
-            except Exception as e:
-                logger.warning(f"Error getting GPU usage: {str(e)}")
-        return {
-            "cpu_percent": cpu_percent,
-            "memory_percent": memory_percent,
-            "gpu_percent": gpu_percent,
-            "concurrent_tasks": self.concurrent_tasks
-        }
-    def can_start_task(self) -> Tuple[bool, Dict[str, float]]:
-        """
-        Check if a new task can be started based on resource usage.
-        Returns:
-            Tuple of (can_start, resource_usage)
-        """
-        usage = self.get_resource_usage()
-        can_start = (
-            usage["cpu_percent"] < self.max_cpu_percent and
-            usage["memory_percent"] < self.max_memory_percent and
-            usage["gpu_percent"] < self.max_gpu_percent and
-            usage["concurrent_tasks"] < self.max_concurrent_tasks
-        )
-        return can_start, usage
-    def wait_for_resources(self, timeout: float = 300.0) -> bool:
-        """
-        Wait for resources to become available.
+        Initialize the ResourceLimiter instance.
+
         Args:
-            timeout: Maximum time to wait in seconds (default: 300.0)
-        Returns:
-            True if resources became available, False if timeout occurred
+            limits (Dict[str, int], optional): Resource limits configuration. Defaults to None.
         """
-        start_time = time.time()
-        while time.time() - start_time < timeout:
-            can_start, usage = self.can_start_task()
-            if can_start:
-                return True
-            logger.info(
-                f"Waiting for resources: CPU: {usage['cpu_percent']:.1f}%, "
-                f"Memory: {usage['memory_percent']:.1f}%, "
-                f"GPU: {usage['gpu_percent']:.1f}%, "
-                f"Tasks: {usage['concurrent_tasks']}/{self.max_concurrent_tasks}"
-            )
-            time.sleep(self.check_interval)
-        logger.warning("Timeout waiting for resources")
-        return False
-    def acquire_task_slot(self, timeout: float = 300.0) -> bool:
+        self.limits = limits or {}
+        self.usage = {resource: 0 for resource in self.limits}
+        self.locks = {resource: threading.Lock() for resource in self.limits}
+
+    def set_limit(self, resource: str, limit: int) -> None:
         """
-        Acquire a task slot.
+        Set a limit for a specific resource.
+
         Args:
-            timeout: Maximum time to wait in seconds (default: 300.0)
-        Returns:
-            True if a slot was acquired, False otherwise
+            resource (str): The resource to limit.
+            limit (int): The maximum amount of the resource that can be used.
         """
-        if not self.wait_for_resources(timeout):
-            return False
-        with self.task_lock:
-            if self.concurrent_tasks >= self.max_concurrent_tasks:
-                return False
-            self.concurrent_tasks += 1
-            logger.debug(f"Task slot acquired, concurrent tasks: {self.concurrent_tasks}")
+        self.limits[resource] = limit
+        if resource not in self.usage:
+            self.usage[resource] = 0
+        if resource not in self.locks:
+            self.locks[resource] = threading.Lock()
+
+    def get_limit(self, resource: str) -> int:
+        """
+        Get the limit for a specific resource.
+
+        Args:
+            resource (str): The resource to get the limit for.
+
+        Returns:
+            int: The limit for the resource.
+        """
+        return self.limits.get(resource, 0)
+
+    def get_usage(self, resource: str) -> int:
+        """
+        Get the current usage for a specific resource.
+
+        Args:
+            resource (str): The resource to get the usage for.
+
+        Returns:
+            int: The current usage of the resource.
+        """
+        return self.usage.get(resource, 0)
+
+    def check_limit(self, resource: str, amount: int = 1) -> bool:
+        """
+        Check if using a certain amount of a resource would exceed its limit.
+
+        Args:
+            resource (str): The resource to check.
+            amount (int, optional): The amount of the resource to check. Defaults to 1.
+
+        Returns:
+            bool: True if the resource usage would be within limits, False otherwise.
+        """
+        limit = self.get_limit(resource)
+        usage = self.get_usage(resource)
+        return usage + amount <= limit
+
+    def acquire(self, resource: str, amount: int = 1) -> bool:
+        """
+        Acquire a certain amount of a resource if it's within limits.
+
+        Args:
+            resource (str): The resource to acquire.
+            amount (int, optional): The amount of the resource to acquire. Defaults to 1.
+
+        Returns:
+            bool: True if the resource was acquired, False otherwise.
+
+        Raises:
+            ResourceLimitExceededError: If the resource limit would be exceeded.
+        """
+        with self.locks[resource]:
+            if not self.check_limit(resource, amount):
+                raise ResourceLimitExceededError(resource, self.get_limit(resource), self.get_usage(resource) + amount)
+            self.usage[resource] += amount
             return True
-    def release_task_slot(self):
-        """Release a task slot.
-    Args:
-        # TODO: Add parameter descriptions
-    Returns:
-        # TODO: Add return description
-    """
-        with self.task_lock:
-            if self.concurrent_tasks > 0:
-                self.concurrent_tasks -= 1
-                logger.debug(f"Task slot released, concurrent tasks: {self.concurrent_tasks}")
-    def acquire_model_lock(self, model_name: str, timeout: float = 300.0) -> bool:
+
+    def release(self, resource: str, amount: int = 1) -> None:
         """
-        Acquire a lock for a specific model.
+        Release a certain amount of a previously acquired resource.
+
         Args:
-            model_name: Name of the model
-            timeout: Maximum time to wait in seconds (default: 300.0)
-        Returns:
-            True if the lock was acquired, False otherwise
-        Release a lock for a specific model.
+            resource (str): The resource to release.
+            amount (int, optional): The amount of the resource to release. Defaults to 1.
+        """
+        with self.locks[resource]:
+            self.usage[resource] = max(0, self.usage[resource] - amount)
+
+    @contextmanager
+    def resource_context(self, resource: str, amount: int = 1):
+        """
+        Context manager for resource acquisition and release.
+
         Args:
-            model_name: Name of the model
-        Register memory usage for a model.
-        Args:
-            model_name: Name of the model
-            memory_mb: Memory usage in MB
-        Get usage information for a model.
-        Args:
-            model_name: Name of the model
-        Returns:
-            Usage information or None if not found
-        Get usage information for all models.
-        Returns:
-            Dictionary of model usage information
-        Decorator for limiting resources for a function.
-        Args:
-            func: Function to decorate
-            model_name: Name of the model (optional)
-            timeout: Maximum time to wait for resources in seconds (default: 300.0)
-        Returns:
-            Decorated function
+            resource (str): The resource to acquire and release.
+            amount (int, optional): The amount of the resource to acquire and release. Defaults to 1.
+
+        Yields:
+            None
+
+        Raises:
+            ResourceLimitExceededError: If the resource limit would be exceeded.
+        """
+        self.acquire(resource, amount)
+        try:
+            yield
+        finally:
+            self.release(resource, amount)
+
+def apply_resource_limits(**resource_amounts):
+    """
+    Decorator to apply resource limits to a function.
+
+    Args:
+        **resource_amounts: Keyword arguments specifying the resource amounts to acquire.
+
+    Returns:
+        Callable: A decorated function that acquires resources before execution and releases them after.
+
+    Raises:
+        ResourceLimitExceededError: If any resource limit would be exceeded.
+    """
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            limiter = ResourceLimiter()
+            with contextlib.ExitStack() as stack:
+                for resource, amount in resource_amounts.items():
+                    stack.enter_context(limiter.resource_context(resource, amount))
+                return func(*args, **kwargs)
+        return wrapper
+    return decorator

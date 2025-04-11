@@ -1,29 +1,55 @@
-Service Registry for ASF Medical Research Synthesizer.
-This module provides a centralized registry for managing service dependencies.
-It handles service instantiation, dependency resolution, and lifecycle management.
+"""
+Service Registry module for the Medical Research Synthesizer.
+
+This module provides a central registry for all services in the application,
+enabling dependency injection and service lifecycle management.
+
+Classes:
+    ServiceRegistry: Central registry for managing application services.
+"""
+
 import inspect
 from typing import Dict, Type, TypeVar, Optional, Any, Callable, List, Set
 from fastapi import Depends
 from asf.medical.core.logging_config import get_logger
+
 T = TypeVar('T')
 logger = get_logger(__name__)
+
 class ServiceRegistry:
-    Registry for managing service dependencies.
-    This class provides a centralized registry for all services in the application.
-    It handles service instantiation, dependency resolution, and lifecycle management.
+    """
+    Central registry for managing application services.
+    
+    This class provides methods for registering, retrieving, and managing the lifecycle
+    of services throughout the application, supporting dependency injection.
+    
+    Attributes:
+        _factories (Dict[Type, Callable]): Service factory functions.
+        _services (Dict[Type, Any]): Initialized service instances.
+        _dependencies (Dict[Type, List[Type]]): Service dependencies.
+        _initialized (bool): Whether the registry has been initialized.
+    """
     def __init__(self):
-        Initialize an empty service registry.
-        
-        Args:
-        
+        """
+        Initialize the ServiceRegistry.
+        """
+        self._services = {}
+        self._factories = {}
+        self._singletons = {}
+        self._dependencies = {}
+
+    def register_instance(self, service_type: Type[T], instance: T) -> None:
+        """
         Register an existing service instance.
+        
         Args:
-            service_type: The service type (usually an interface or class)
-            instance: The service instance
+            service_type (Type): The service type (usually an interface or class).
+            instance (Any): The service instance.
         """
         self._services[service_type] = instance
         self._singletons[service_type] = True
         logger.debug(f"Registered service instance: {service_type.__name__}")
+
     def register_factory(
         self, 
         service_type: Type[T], 
@@ -32,12 +58,13 @@ class ServiceRegistry:
         dependencies: Optional[List[Type]] = None
     ) -> None:
         """
-        Register a factory function for creating service instances.
+        Register a service factory.
+        
         Args:
-            service_type: The service type (usually an interface or class)
-            factory: A function that creates instances of the service
-            singleton: Whether to cache and reuse the instance (True) or create new instances (False)
-            dependencies: Optional list of explicit dependencies for this service
+            service_type (Type): The type of service to register.
+            factory (Callable): Factory function that creates the service.
+            singleton (bool): Whether to cache and reuse the instance (True) or create new instances (False).
+            dependencies (List[Type], optional): Dependencies required by the service. Defaults to None.
         """
         self._factories[service_type] = factory
         self._singletons[service_type] = singleton
@@ -58,15 +85,19 @@ class ServiceRegistry:
                 "dependencies": [dep.__name__ for dep in self._dependencies.get(service_type, set())]
             }
         )
+
     def get(self, service_type: Type[T]) -> T:
         """
-        Get a service instance by type.
+        Get an instance of a service.
+        
         Args:
-            service_type: The service type to retrieve
+            service_type (Type): The type of service to get.
+            
         Returns:
-            An instance of the requested service
+            Any: The service instance.
+            
         Raises:
-            KeyError: If the service type is not registered
+            KeyError: If the service type is not registered.
         """
         # Check if we already have an instance
         if service_type in self._services:
@@ -93,19 +124,25 @@ class ServiceRegistry:
             logger.debug(f"Created instance of {service_type.__name__}")
             return instance
         raise KeyError(f"Service type {service_type.__name__} not registered")
+
     def clear(self) -> None:
-        Clear all registered services.
-        
-        Args:
-        
-        
-        Returns:
-            Description of return value
+        """
+        Reset the registry, clearing all services.
+        """
+        self._services.clear()
+        self._factories.clear()
+        self._singletons.clear()
+        self._dependencies.clear()
+
+    def _sort_by_dependencies(self, service_types: List[Type]) -> List[Type]:
+        """
         Sort service types by dependencies.
+        
         Args:
-            service_types: List of service types to sort
+            service_types (List[Type]): List of service types to sort.
+            
         Returns:
-            Sorted list of service types
+            List[Type]: Sorted list of service types.
         """
         # Build a graph of dependencies
         graph = {service_type: self._dependencies.get(service_type, set()) for service_type in service_types}
@@ -113,13 +150,13 @@ class ServiceRegistry:
         result = []
         visited = set()
         temp_visited = set()
+
         def visit(node):
             """
-            visit function.
+            Visit a node in the dependency graph.
             
-            This function provides functionality for...
             Args:
-                node: Description of node
+                node (Type): The service type node to visit.
             """
             if node in temp_visited:
                 # Circular dependency detected
@@ -134,22 +171,33 @@ class ServiceRegistry:
                 temp_visited.remove(node)
                 visited.add(node)
                 result.append(node)
+
         for node in graph:
             if node not in visited:
                 visit(node)
         return result
+
 # Global registry instance
 _registry = ServiceRegistry()
+
 def get_registry() -> ServiceRegistry:
+    """
     Get the global service registry.
     
     Returns:
-        Description of return value
+        ServiceRegistry: The global service registry instance.
+    """
+    return _registry
+
+def create_dependency(service_type: Type[T]) -> Callable[..., T]:
+    """
     Create a FastAPI dependency provider for a service.
+    
     Args:
-        service_type: The service type to provide
+        service_type (Type): The service type to provide.
+        
     Returns:
-        A dependency function that returns the service instance
+        Callable[..., T]: A dependency function that returns the service instance.
     """
     def _get_service(registry: ServiceRegistry = Depends(get_registry)) -> T:
         return registry.get(service_type)

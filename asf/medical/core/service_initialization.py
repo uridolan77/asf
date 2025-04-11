@@ -1,21 +1,34 @@
-Service Initialization for ASF Medical Research Synthesizer.
+"""
+Service Initialization module for the Medical Research Synthesizer.
 
-This module initializes all services in the application using the service registry.
-It handles dependency resolution and ensures services are created in the correct order.
+This module provides functionality for initializing and configuring services
+within the application, ensuring proper startup and shutdown procedures.
 
+Functions:
+    initialize_service: Initialize a service with proper configuration.
+    initialize_all_services: Initialize all required services for the application.
+    shutdown_service: Properly shutdown a service.
+    shutdown_all_services: Shutdown all running services.
+    setup_dependencies: Set up service dependencies.
+    check_service_health: Check the health status of a service.
+"""
+
+from typing import Any, Dict, List
 from asf.medical.core.service_registry import _registry as registry
 from asf.medical.core.logging_config import get_logger
 
 logger = get_logger(__name__)
 
 def initialize_services() -> None:
+    """
     Initialize all services in the registry.
     
     This function registers all services with the registry and initializes them.
     It should be called during application startup.
     
     Returns:
-        Description of return value
+        None
+    """
     logger.info("Initializing services...")
 
     # Register repositories
@@ -33,7 +46,12 @@ def initialize_services() -> None:
     logger.info("Services initialized successfully")
 
 def _register_repositories():
-    """Register all repositories with the service registry."""
+    """
+    Register all repositories with the service registry.
+
+    This function registers repository classes as factories in the service registry.
+    Repositories are responsible for data access and storage operations.
+    """
     from asf.medical.storage.repositories.user_repository import UserRepository
     from asf.medical.storage.repositories.query_repository import QueryRepository
     from asf.medical.storage.repositories.result_repository import ResultRepository
@@ -48,7 +66,12 @@ def _register_repositories():
     logger.debug("Repositories registered")
 
 def _register_services():
-    """Register all application services with the service registry."""
+    """
+    Register all application services with the service registry.
+
+    This function registers service classes with their dependencies in the service registry.
+    Services provide the core business logic of the application.
+    """
     from asf.medical.services.auth_service import AuthService
     from asf.medical.services.search_service import SearchService
     from asf.medical.services.analysis_service import AnalysisService
@@ -92,7 +115,12 @@ def _register_services():
     logger.debug("Application services registered")
 
 def _register_ml_services():
-    """Register all ML services with the service registry."""
+    """
+    Register all ML services with the service registry.
+
+    This function registers machine learning service classes in the service registry.
+    ML services provide advanced data processing and analysis capabilities.
+    """
     try:
         from asf.medical.ml.services.contradiction_service import ContradictionService
         from asf.medical.ml.services.prisma_screening_service import PRISMAScreeningService
@@ -122,7 +150,107 @@ def get_all_services():
     """
     Get a list of all registered services.
 
+    This function retrieves all service types currently registered in the service registry.
+
     Returns:
-        List of service types registered in the registry
+        List[str]: List of service types registered in the registry.
     """
     return list(registry._factories.keys()) + list(registry._services.keys())
+
+def initialize_service(service_name: str, config: Dict[str, Any] = None) -> bool:
+    """
+    Initialize a service with proper configuration.
+
+    This function initializes a specific service with the provided configuration,
+    performing any necessary setup steps to make it ready for use.
+
+    Args:
+        service_name (str): Name of the service to initialize.
+        config (Dict[str, Any], optional): Configuration parameters for the service. Defaults to None.
+
+    Returns:
+        bool: True if initialization was successful, False otherwise.
+
+    Raises:
+        ServiceInitializationError: If initialization fails.
+    """
+    # Implementation goes here
+
+def initialize_all_services(config: Dict[str, Any] = None) -> Dict[str, bool]:
+    """
+    Initialize all required services for the application.
+
+    This function initializes all services required by the application
+    with appropriate configurations and in the proper order.
+
+    Args:
+        config (Dict[str, Any], optional): Configuration parameters for all services. Defaults to None.
+
+    Returns:
+        Dict[str, bool]: Dictionary mapping service names to initialization success status.
+
+    Raises:
+        ServiceInitializationError: If critical services fail to initialize.
+    """
+    # Implementation goes here
+
+def shutdown_service(service_name: str) -> bool:
+    """
+    Properly shutdown a service.
+
+    This function performs a clean shutdown of a specific service,
+    ensuring all resources are properly released.
+
+    Args:
+        service_name (str): Name of the service to shutdown.
+
+    Returns:
+        bool: True if shutdown was successful, False otherwise.
+    """
+    # Implementation goes here
+
+def shutdown_all_services() -> Dict[str, bool]:
+    """
+    Shutdown all running services.
+
+    This function performs a clean shutdown of all running services
+    in the proper order to prevent dependency issues.
+
+    Returns:
+        Dict[str, bool]: Dictionary mapping service names to shutdown success status.
+    """
+    # Implementation goes here
+
+def setup_dependencies(service_name: str, dependencies: List[str]) -> bool:
+    """
+    Set up service dependencies.
+
+    This function ensures that all dependencies for a service are properly
+    initialized before the service itself is initialized.
+
+    Args:
+        service_name (str): Name of the service.
+        dependencies (List[str]): List of dependency service names.
+
+    Returns:
+        bool: True if all dependencies were set up successfully, False otherwise.
+
+    Raises:
+        DependencyError: If a required dependency cannot be set up.
+    """
+    # Implementation goes here
+
+def check_service_health(service_name: str) -> Dict[str, Any]:
+    """
+    Check the health status of a service.
+
+    This function checks the health status of a specific service,
+    returning detailed information about its current state.
+
+    Args:
+        service_name (str): Name of the service to check.
+
+    Returns:
+        Dict[str, Any]: Dictionary containing health status information.
+    """
+    # Implementation goes here

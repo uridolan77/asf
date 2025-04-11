@@ -1,7 +1,9 @@
+"""
 Dependency injection for the Medical Research Synthesizer API.
 This module provides dependencies that can be injected into API endpoints
 using FastAPI's dependency injection system. It uses the service registry
 for managing dependencies and ensuring proper instantiation order.
+"""
 from typing import Optional, TypeVar
 from jose import JWTError, jwt
 from fastapi import Depends, HTTPException, status, WebSocket, Query

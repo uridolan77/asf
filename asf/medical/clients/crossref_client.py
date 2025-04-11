@@ -22,6 +22,7 @@ class CrossRefClient:
         self.requests_per_second = 2
         self.last_request_time = 0
     async def close(self):
+        """
         Implement rate limiting for CrossRef API.
         CrossRef recommends no more than 2 requests per second.
         Make a request to the CrossRef API.
@@ -44,3 +45,4 @@ class CrossRefClient:
             filter: Filters to apply (e.g., {"type": "journal-article"})
         Returns:
             List of article summaries
+        """

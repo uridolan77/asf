@@ -18,8 +18,8 @@ import difflib
 import dspy
 import mlflow
 
-from .enhanced_settings import get_enhanced_settings
-from .audit_logging import get_audit_logger
+from settings import get_enhanced_settings
+from audit_logging import get_audit_logger
 
 # Set up logging
 import logging

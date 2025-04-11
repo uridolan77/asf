@@ -24,6 +24,7 @@ class UMLSClient:
         self.requests_per_second = 5
         self.last_request_time = 0
     async def close(self):
+        """
         Implement rate limiting for UMLS API.
         UMLS recommends no more than 5 requests per second.
         Get a Ticket Granting Ticket (TGT) from the UMLS API.
@@ -61,3 +62,4 @@ class UMLSClient:
             concept_id: Concept ID (e.g., "C0012634")
         Returns:
             List of relations
+        """

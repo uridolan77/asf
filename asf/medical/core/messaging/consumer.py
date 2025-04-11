@@ -1,5 +1,7 @@
+"""
 Message consumer for the Medical Research Synthesizer.
 This module provides a message consumer for consuming messages from the message broker.
+"""
 from typing import Dict, Any, List, Set, TypeVar
 from abc import ABC, abstractmethod
 from aio_pika.abc import AbstractIncomingMessage
@@ -9,9 +11,12 @@ from asf.medical.core.messaging.producer import MessageProducer, get_message_pro
 logger = get_logger(__name__)
 T = TypeVar('T')
 class MessageHandler(ABC):
+    """
     Base class for message handlers.
+    
     Message handlers process messages from the message broker.
     They can be registered with a consumer to handle specific message types.
+    """
     @abstractmethod
     async def handle(self, message: Dict[str, Any], properties: Dict[str, Any]) -> Any:
         """
@@ -24,9 +29,12 @@ class MessageHandler(ABC):
         """
         pass
 class EventHandler(MessageHandler):
+    """
     Base class for event handlers.
+    
     Event handlers process events from the message broker.
     They can be registered with a consumer to handle specific event types.
+    """
     @abstractmethod
     async def handle_event(self, event_type: str, event_data: Dict[str, Any], properties: Dict[str, Any]) -> Any:
         """
@@ -52,9 +60,12 @@ class EventHandler(MessageHandler):
         event_data = message.get("data", {})
         return await self.handle_event(event_type, event_data, properties)
 class TaskHandler(MessageHandler):
+    """
     Base class for task handlers.
+    
     Task handlers process tasks from the message broker.
     They can be registered with a consumer to handle specific task types.
+    """
     @abstractmethod
     async def handle_task(self, task_id: str, task_type: str, task_data: Dict[str, Any], properties: Dict[str, Any]) -> Any:
         """
@@ -82,9 +93,12 @@ class TaskHandler(MessageHandler):
         task_data = message.get("data", {})
         return await self.handle_task(task_id, task_type, task_data, properties)
 class CommandHandler(MessageHandler):
+    """
     Base class for command handlers.
+    
     Command handlers process commands from the message broker.
     They can be registered with a consumer to handle specific command types.
+    """
     def __init__(self, producer: MessageProducer = None):
         """
         Initialize the command handler.
@@ -134,9 +148,12 @@ class CommandHandler(MessageHandler):
             )
         return result
 class MessageConsumer:
+    """
     Message consumer for consuming messages from the message broker.
+    
     This class provides methods for consuming messages from queues
     and routing them to registered handlers based on message type.
+    """
     def __init__(self, broker: RabbitMQBroker = None, producer: MessageProducer = None):
         """
         Initialize the message consumer.

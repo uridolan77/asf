@@ -1,9 +1,14 @@
+"""
 Configuration module for the Medical Research Synthesizer.
 
-This module provides a centralized configuration using Pydantic.
-It supports loading configuration from environment variables, .env files,
-and external configuration sources.
+This module provides configuration settings and utilities for the application.
 
+Classes:
+    Settings: Defines application-wide configuration settings.
+
+Functions:
+    load_settings: Load configuration settings from environment variables or defaults.
+"""
 import os
 import secrets
 import logging
@@ -22,10 +27,45 @@ if env_file.exists():
     load_dotenv(env_file)
 
 class Settings(BaseSettings):
-    Settings for the Medical Research Synthesizer.
-    
-    This class uses Pydantic to load and validate configuration from environment variables.
+    """
+    Application configuration settings.
 
+    This class defines configuration settings for the application, including
+    database connections, API keys, and other environment-specific settings.
+
+    Attributes:
+        API_V1_STR (str): API version string.
+        PROJECT_NAME (str): Name of the project.
+        DEBUG (bool): Debug mode flag.
+        CORS_ORIGINS (List[str]): List of allowed CORS origins.
+        SECRET_KEY (SecretStr): Secret key for the application.
+        ACCESS_TOKEN_EXPIRE_MINUTES (int): Access token expiration time in minutes.
+        DATABASE_URL (str): Database connection URL.
+        REDIS_URL (Optional[str]): Redis connection URL.
+        CACHE_TTL (int): Cache time-to-live in seconds.
+        NCBI_EMAIL (EmailStr): Email for NCBI API.
+        NCBI_API_KEY (Optional[SecretStr]): API key for NCBI.
+        IMPACT_FACTOR_SOURCE (str): Source file for journal impact factors.
+        KB_DIR (str): Directory for knowledge bases.
+        USE_GPU (bool): Whether to use GPU for computations.
+        BIOMEDLM_MODEL (str): Name of the BioMedLM model to use.
+        RAY_ADDRESS (Optional[str]): Address of the Ray cluster.
+        RAY_NUM_CPUS (Optional[int]): Number of CPUs to allocate for Ray.
+        RAY_NUM_GPUS (Optional[int]): Number of GPUs to allocate for Ray.
+        LOG_LEVEL (str): Logging level for the application.
+        GRAPH_DB_TYPE (str): Type of graph database (e.g., "memgraph", "neo4j").
+        MEMGRAPH_HOST (str): Hostname for the Memgraph database.
+        MEMGRAPH_PORT (int): Port for the Memgraph database.
+        NEO4J_URI (str): URI for the Neo4j database.
+        NEO4J_USER (str): Username for the Neo4j database.
+        NEO4J_PASSWORD (SecretStr): Password for the Neo4j database.
+        RABBITMQ_HOST (str): Hostname for the RabbitMQ server.
+        RABBITMQ_PORT (int): Port for the RabbitMQ server.
+        RABBITMQ_USERNAME (str): Username for the RabbitMQ server.
+        RABBITMQ_PASSWORD (str): Password for the RabbitMQ server.
+        RABBITMQ_VHOST (str): Virtual host for the RabbitMQ server.
+        RABBITMQ_ENABLED (bool): Whether RabbitMQ messaging is enabled.
+    """
     API_V1_STR: str = "/v1"
     PROJECT_NAME: str = "Medical Research Synthesizer"
     DEBUG: bool = False
@@ -72,21 +112,32 @@ class Settings(BaseSettings):
 
     @validator("CORS_ORIGINS", pre=True)
     def assemble_cors_origins(cls, v: Union[str, List[str]]) -> Union[List[str], str]:
-        Parse CORS origins from string or list.
-        
+        """
+        Assemble CORS origins from a string or list.
+
         Args:
-            cls: Description of cls
-            v: Description of v
-        
-        
+            v (Union[str, List[str]]): CORS origins as a string or list.
+
         Returns:
-            Description of return value
+            Union[List[str], str]: Parsed CORS origins.
+        """
+        if isinstance(v, str):
+            return [i.strip() for i in v.split(",")]
+        return v
+
+def load_settings() -> Settings:
+    """
+    Load configuration settings from environment variables or defaults.
+
+    Returns:
+        Settings: The loaded configuration settings.
+    """
     settings = Settings()
 
     os.makedirs(settings.KB_DIR, exist_ok=True)
 
     return settings
 
-settings = get_settings()
+settings = load_settings()
 
-__all__ = ["settings", "get_settings"]
+__all__ = ["settings", "load_settings"]

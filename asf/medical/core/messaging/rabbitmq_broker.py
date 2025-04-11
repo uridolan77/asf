@@ -1,6 +1,9 @@
+"""
 RabbitMQ message broker for the Medical Research Synthesizer.
 This module provides a RabbitMQ-based implementation of the message broker interface,
 allowing services to publish and consume messages in an event-driven architecture.
+"""
+
 import json
 import asyncio
 import time
@@ -15,12 +18,36 @@ from asf.medical.core.exceptions import MessageBrokerError, ConnectionError, Mes
 logger = get_logger(__name__)
 T = TypeVar('T')
 class MessagePriority(int, Enum):
+    """
     Message priority levels.
+    
+    Defines standard priority levels for messages in the messaging system.
+    Higher values indicate higher priority.
+    """
+    LOWEST = 0
+    LOW = 3
+    NORMAL = 5
+    HIGH = 7
+    HIGHEST = 10
+
+class MessageSerializer:
+    """
+    Serializer for message data.
+    
+    Handles conversion between Python objects and bytes for message transport.
+    Uses JSON serialization with UTF-8 encoding.
+    """
+    @staticmethod
+    def serialize(data: Any) -> bytes:
+        """
         Serialize data to bytes.
+        
         Args:
             data: Data to serialize
+            
         Returns:
             Serialized data as bytes
+            
         Raises:
             MessageError: If serialization fails
         """
@@ -29,14 +56,18 @@ class MessagePriority(int, Enum):
         except (TypeError, ValueError) as e:
             logger.error(f"Error serializing message: {str(e)}", exc_info=e)
             raise MessageError("serialize", f"Failed to serialize message: {str(e)}")
+
     @staticmethod
     def deserialize(data: bytes) -> Any:
         """
         Deserialize bytes to data.
+        
         Args:
             data: Bytes to deserialize
+            
         Returns:
             Deserialized data
+            
         Raises:
             MessageError: If deserialization fails
         """
@@ -45,10 +76,14 @@ class MessagePriority(int, Enum):
         except (UnicodeDecodeError, json.JSONDecodeError) as e:
             logger.error(f"Error deserializing message: {str(e)}", exc_info=e)
             raise MessageError("deserialize", f"Failed to deserialize message: {str(e)}")
+
 class CircuitBreaker:
+    """
     Circuit breaker for handling connection failures.
+    
     This class implements the circuit breaker pattern to prevent repeated
     connection attempts when the broker is unavailable.
+    """
     def __init__(
         self,
         failure_threshold: int = 3,
@@ -69,32 +104,89 @@ class CircuitBreaker:
         self.last_failure_time = 0
         self.state = "CLOSED"  # CLOSED, OPEN, HALF-OPEN
     def record_failure(self) -> None:
+        """
         Record a connection failure.
         
-        Args:
-        
+        Increments the failure count and updates the circuit state if needed.
+        If the failure threshold is reached, opens the circuit.
         
         Returns:
-            Description of return value
-        if self.state == "CLOSED":
-            return True
-        if self.state == "OPEN":
-            time_since_last_failure = time.time() - self.last_failure_time
-            if time_since_last_failure >= self.recovery_timeout:
-                self.state = "HALF-OPEN"
-                logger.info("Circuit breaker entering half-open state for recovery attempt.")
-                return True
-            return False
-        # HALF-OPEN state
-        return True
+            None
+        """
+        self.failure_count += 1
+        self.last_failure_time = time.time()
+        
+        if self.state == "CLOSED" and self.failure_count >= self.failure_threshold:
+            self.state = "OPEN"
+            logger.warning(
+                f"Circuit breaker opened after {self.failure_count} consecutive failures"
+            )
+        
+        logger.debug(
+            f"Circuit breaker recorded failure (count: {self.failure_count}, state: {self.state})"
+        )
     def reset(self) -> None:
+        """
         Reset the circuit breaker to its initial state.
         
-        Args:
-        
+        Resets the failure count and changes the state to CLOSED.
         
         Returns:
-            Description of return value
+            None
+        """
+        self.failure_count = 0
+        self.last_failure_time = 0
+        self.state = "CLOSED"
+        logger.debug("Circuit breaker reset to initial closed state")
+    def allow_request(self) -> bool:
+        """
+        Check if requests are allowed based on the circuit state.
+        
+        Returns:
+            True if requests are allowed, False otherwise
+        """
+        if self.state == "CLOSED":
+            return True
+        elif self.state == "OPEN":
+            if time.time() - self.last_failure_time > self.recovery_timeout:
+                self.state = "HALF-OPEN"
+                logger.debug("Circuit breaker moved to half-open state")
+                return True
+            return False
+        elif self.state == "HALF-OPEN":
+            return True
+        return False
+    def record_success(self) -> None:
+        """
+        Record a successful connection attempt.
+        
+        Resets the failure count and closes the circuit if in half-open state.
+        
+        Returns:
+            None
+        """
+        if self.state == "HALF-OPEN":
+            self.reset()
+            logger.info("Circuit breaker closed after successful attempt")
+        elif self.state == "CLOSED":
+            self.failure_count = 0
+class RabbitMQBroker:
+    """
+    RabbitMQ message broker for the Medical Research Synthesizer.
+    
+    This class provides methods to connect to RabbitMQ, declare exchanges and queues,
+    publish and consume messages, and manage the broker connection.
+    """
+    def __init__(
+        self,
+        host: str = None,
+        port: int = None,
+        username: str = None,
+        password: str = None,
+        vhost: str = None,
+        connection_name: str = None
+    ):
+        """
         Initialize the RabbitMQ broker.
         Args:
             host: RabbitMQ host (default: from settings)
@@ -501,6 +593,7 @@ class CircuitBreaker:
         except Exception as e:
             logger.error(f"Failed to delete exchange {exchange_name}: {str(e)}", exc_info=e)
             raise MessageBrokerError(f"Failed to delete exchange {exchange_name}: {str(e)}")
+
 # Create a global RabbitMQ broker instance
 rabbitmq_broker = RabbitMQBroker()
 # Function to get the global RabbitMQ broker instance

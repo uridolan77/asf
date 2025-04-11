@@ -116,3 +116,4 @@ class KnowledgeBaseUpdater:
             file_path: Path to the knowledge base file
         Returns:
             Update result
+        """

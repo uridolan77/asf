@@ -1,301 +1,341 @@
-Exceptions for ASF Medical Research Synthesizer.
+"""
+Exceptions module for the Medical Research Synthesizer.
 
-This module defines a comprehensive exception hierarchy for the ASF Medical Research
-Synthesizer. It provides specialized exceptions for different types of errors that
-can occur in the application.
+This module defines custom exceptions used throughout the application to
+provide consistent error handling and reporting.
+
+Classes:
+    MedicalResearchSynthesizerError: Base class for all custom exceptions.
+    ValidationError: Exception for validation errors.
+    DatabaseError: Exception for database-related errors.
+    AuthenticationError: Exception for authentication-related errors.
+    AuthorizationError: Exception for authorization-related errors.
+    APIError: Exception for API-related errors.
+    CacheError: Exception for cache-related errors.
+    TaskError: Exception for task-related errors.
+    ServiceError: Exception for service-related errors.
+    ResourceError: Exception for resource-related errors.
+    ConfigurationError: Exception for configuration-related errors.
+    MLError: Exception for machine learning-related errors.
+"""
 
 from typing import Dict, Any, Optional
 
 
-class ASFError(Exception):
-    Base exception for all ASF-related errors.
-        Initialize the exception.
+class MedicalResearchSynthesizerError(Exception):
+    """
+    Base exception class for all Medical Research Synthesizer errors.
+
+    This provides a consistent interface for all exceptions in the application.
+
+    Attributes:
+        message (str): The error message.
+        details (Dict[str, Any]): Additional details about the error.
+    """
+
+    def __init__(self, message: str, details: Dict[str, Any] = None):
+        """
+        Initialize the MedicalResearchSynthesizerError.
 
         Args:
-            message: The error message.
-            details: Optional dictionary with additional error details.
+            message (str): The error message.
+            details (Dict[str, Any], optional): Additional details about the error. Defaults to None.
         """
         self.message = message
         self.details = details or {}
         super().__init__(message)
 
 
-# For backward compatibility
-class ASFException(ASFError):
-    Legacy base exception for all ASF exceptions.
-        super().__init__(message)
-
-
-# Data access errors
-class DataError(ASFError):
-    Base exception for data-related errors.
-    pass
-
-
-class DatabaseError(DataError):
-    Exception raised for database operation errors.
-        super().__init__(message, details)
-
-
-class RepositoryError(DataError):
-    Exception raised for repository operation errors.
-        super().__init__(message, details)
-
-
-class NotFoundError(DataError):
-    Exception raised when a requested resource is not found.
-        message = f"{resource_type} with ID '{resource_id}' not found"
-        super().__init__(message, details)
-        self.resource_type = resource_type
-        self.resource_id = resource_id
-
-
-class DuplicateError(DataError):
-    Exception raised when attempting to create a duplicate resource.
-        message = f"{resource_type} with ID '{resource_id}' already exists"
-        super().__init__(message, details)
-        self.resource_type = resource_type
-        self.resource_id = resource_id
-
-
-# Service errors
-class ServiceError(ASFError):
-    Base exception for service-related errors.
-    pass
-
-
-class ValidationError(ServiceError):
+class ValidationError(MedicalResearchSynthesizerError):
+    """
     Exception raised for validation errors.
+
+    This is used when input data fails validation checks.
+
+    Attributes:
+        field (str): The field that failed validation.
+        value (Any): The value that failed validation.
+    """
+
+    def __init__(self, message: str, field: str = None, value: Any = None, details: Dict[str, Any] = None):
+        """
+        Initialize the ValidationError.
+
+        Args:
+            message (str): The error message.
+            field (str, optional): The field that failed validation. Defaults to None.
+            value (Any, optional): The value that failed validation. Defaults to None.
+            details (Dict[str, Any], optional): Additional details about the error. Defaults to None.
+        """
+        self.field = field
+        self.value = value
         super().__init__(message, details)
 
 
-# For backward compatibility
-class ResourceNotFoundError(NotFoundError):
-    Legacy exception raised when a resource is not found.
-        super().__init__(resource_type, resource_id)
+class DatabaseError(MedicalResearchSynthesizerError):
+    """
+    Exception raised for database-related errors.
 
+    This is used when operations on the database fail.
 
-# For backward compatibility
-class ResourceAlreadyExistsError(DuplicateError):
-    Legacy exception raised when a resource already exists.
-        super().__init__(resource_type, resource_id)
+    Attributes:
+        operation (str): The database operation that failed.
+        model (str): The model involved in the operation.
+    """
 
+    def __init__(self, message: str, operation: str = None, model: str = None, details: Dict[str, Any] = None):
+        """
+        Initialize the DatabaseError.
 
-class BusinessLogicError(ServiceError):
-    Exception raised for business logic violations.
-        super().__init__(message, details)
-
-
-class ExternalServiceError(ServiceError):
-    Exception raised for errors in external service calls.
-        full_message = f"{service_name}: {message}"
-        super().__init__(full_message, details)
-        self.service_name = service_name
-
-
-# Authentication and authorization errors
-class AuthError(ASFError):
-    Base exception for authentication and authorization errors.
-    pass
-
-
-class AuthenticationError(AuthError):
-    Exception raised for authentication failures.
-        super().__init__(message, details)
-
-
-class AuthorizationError(AuthError):
-    Exception raised for authorization failures.
-        super().__init__(message, details)
-
-
-class TokenError(AuthError):
-    Exception raised for token-related errors.
-        super().__init__(message, details)
-
-
-# ML-related errors
-class MLError(ASFError):
-    Base exception for machine learning related errors.
-    pass
-
-
-class ModelError(MLError):
-    Exception raised for ML model errors.
-        full_message = f"{model_name}: {message}"
-        super().__init__(full_message, details)
-        self.model_name = model_name
-
-
-class ModelNotLoadedError(MLError):
-    Exception raised when a required model is not loaded.
-        full_message = f"{model_name}: {message}"
-        super().__init__(full_message, details)
-        self.model_name = model_name
-
-
-class InferenceError(MLError):
-    Exception raised during model inference.
-        full_message = f"{model_name}: {message}"
-        super().__init__(full_message, details)
-        self.model_name = model_name
-
-
-class ModelVersionError(MLError):
-    Exception raised for model version incompatibilities.
-        full_message = f"{model_name} (version {version}): {message}"
-        super().__init__(full_message, details)
-        self.model_name = model_name
-        self.version = version
-
-
-# Cache errors
-class CacheError(ASFError):
-    Base exception for cache-related errors.
-        super().__init__(message, details)
-
-
-class CacheConnectionError(CacheError):
-    Exception raised for cache connection errors.
-        super().__init__(message, details)
-
-
-class CacheOperationError(CacheError):
-    Exception raised for cache operation errors.
-        full_message = f"{operation}: {message}"
-        super().__init__(full_message, details)
+        Args:
+            message (str): The error message.
+            operation (str, optional): The database operation that failed. Defaults to None.
+            model (str, optional): The model involved in the operation. Defaults to None.
+            details (Dict[str, Any], optional): Additional details about the error. Defaults to None.
+        """
         self.operation = operation
-
-
-# Messaging errors
-class MessagingError(ASFError):
-    Base exception for messaging-related errors.
+        self.model = model
         super().__init__(message, details)
 
 
-class ConnectionError(MessagingError):
-    Exception raised for connection errors.
-        full_message = f"{service}: {message}"
-        super().__init__(full_message, details)
+class AuthenticationError(MedicalResearchSynthesizerError):
+    """
+    Exception raised for authentication-related errors.
+
+    This is used when a user fails to authenticate.
+
+    Attributes:
+        user_id (str): The ID of the user who failed to authenticate.
+    """
+
+    def __init__(self, message: str, user_id: str = None, details: Dict[str, Any] = None):
+        """
+        Initialize the AuthenticationError.
+
+        Args:
+            message (str): The error message.
+            user_id (str, optional): The ID of the user who failed to authenticate. Defaults to None.
+            details (Dict[str, Any], optional): Additional details about the error. Defaults to None.
+        """
+        self.user_id = user_id
+        super().__init__(message, details)
+
+
+class AuthorizationError(MedicalResearchSynthesizerError):
+    """
+    Exception raised for authorization-related errors.
+
+    This is used when a user is not authorized to perform an action.
+
+    Attributes:
+        user_id (str): The ID of the user who is not authorized.
+        resource (str): The resource the user attempted to access.
+        action (str): The action the user attempted to perform.
+    """
+
+    def __init__(self, message: str, user_id: str = None, resource: str = None, action: str = None, details: Dict[str, Any] = None):
+        """
+        Initialize the AuthorizationError.
+
+        Args:
+            message (str): The error message.
+            user_id (str, optional): The ID of the user who is not authorized. Defaults to None.
+            resource (str, optional): The resource the user attempted to access. Defaults to None.
+            action (str, optional): The action the user attempted to perform. Defaults to None.
+            details (Dict[str, Any], optional): Additional details about the error. Defaults to None.
+        """
+        self.user_id = user_id
+        self.resource = resource
+        self.action = action
+        super().__init__(message, details)
+
+
+class APIError(MedicalResearchSynthesizerError):
+    """
+    Exception raised for API-related errors.
+
+    This is used when external API calls fail.
+
+    Attributes:
+        api (str): The API that failed.
+        status_code (int): The HTTP status code returned by the API.
+        endpoint (str): The API endpoint that was called.
+    """
+
+    def __init__(self, message: str, api: str = None, status_code: int = None, endpoint: str = None, details: Dict[str, Any] = None):
+        """
+        Initialize the APIError.
+
+        Args:
+            message (str): The error message.
+            api (str, optional): The API that failed. Defaults to None.
+            status_code (int, optional): The HTTP status code returned by the API. Defaults to None.
+            endpoint (str, optional): The API endpoint that was called. Defaults to None.
+            details (Dict[str, Any], optional): Additional details about the error. Defaults to None.
+        """
+        self.api = api
+        self.status_code = status_code
+        self.endpoint = endpoint
+        super().__init__(message, details)
+
+
+class CacheError(MedicalResearchSynthesizerError):
+    """
+    Exception raised for cache-related errors.
+
+    This is used when cache operations fail.
+
+    Attributes:
+        operation (str): The cache operation that failed.
+        key (str): The cache key involved in the operation.
+    """
+
+    def __init__(self, message: str, operation: str = None, key: str = None, details: Dict[str, Any] = None):
+        """
+        Initialize the CacheError.
+
+        Args:
+            message (str): The error message.
+            operation (str, optional): The cache operation that failed. Defaults to None.
+            key (str, optional): The cache key involved in the operation. Defaults to None.
+            details (Dict[str, Any], optional): Additional details about the error. Defaults to None.
+        """
+        self.operation = operation
+        self.key = key
+        super().__init__(message, details)
+
+
+class TaskError(MedicalResearchSynthesizerError):
+    """
+    Exception raised for task-related errors.
+
+    This is used when background tasks fail.
+
+    Attributes:
+        task_id (str): The ID of the task that failed.
+        task_type (str): The type of the task that failed.
+    """
+
+    def __init__(self, message: str, task_id: str = None, task_type: str = None, details: Dict[str, Any] = None):
+        """
+        Initialize the TaskError.
+
+        Args:
+            message (str): The error message.
+            task_id (str, optional): The ID of the task that failed. Defaults to None.
+            task_type (str, optional): The type of the task that failed. Defaults to None.
+            details (Dict[str, Any], optional): Additional details about the error. Defaults to None.
+        """
+        self.task_id = task_id
+        self.task_type = task_type
+        super().__init__(message, details)
+
+
+class ServiceError(MedicalResearchSynthesizerError):
+    """
+    Exception raised for service-related errors.
+
+    This is used when services fail to function properly.
+
+    Attributes:
+        service (str): The service that failed.
+        operation (str): The operation that failed.
+    """
+
+    def __init__(self, message: str, service: str = None, operation: str = None, details: Dict[str, Any] = None):
+        """
+        Initialize the ServiceError.
+
+        Args:
+            message (str): The error message.
+            service (str, optional): The service that failed. Defaults to None.
+            operation (str, optional): The operation that failed. Defaults to None.
+            details (Dict[str, Any], optional): Additional details about the error. Defaults to None.
+        """
         self.service = service
-
-
-class MessageBrokerError(MessagingError):
-    Exception raised for message broker errors.
-        super().__init__(message, details)
-
-
-class MessageError(MessagingError):
-    Exception raised for message-related errors.
-        full_message = f"{operation}: {message}"
-        super().__init__(full_message, details)
         self.operation = operation
-
-
-# Configuration errors
-class ConfigurationError(ASFError):
-    Exception raised for configuration errors.
         super().__init__(message, details)
 
 
-# File system errors
-class FileSystemError(ASFError):
-    Base exception for file system errors.
-    pass
+class ResourceError(MedicalResearchSynthesizerError):
+    """
+    Exception raised for resource-related errors.
 
+    This is used when resource allocation or access fails.
 
-class FileError(FileSystemError):
-    Exception raised for file-related errors.
-        full_message = f"{file_path}: {message}"
-        super().__init__(full_message, details)
-        self.file_path = file_path
+    Attributes:
+        resource (str): The resource that caused the error.
+        resource_type (str): The type of the resource.
+    """
 
+    def __init__(self, message: str, resource: str = None, resource_type: str = None, details: Dict[str, Any] = None):
+        """
+        Initialize the ResourceError.
 
-class FileNotFoundError(FileSystemError):
-    Exception raised when a file is not found.
-        full_message = f"{file_path}: {message}"
-        super().__init__(full_message, details)
-        self.file_path = file_path
-
-
-class FileAccessError(FileSystemError):
-    Exception raised for file access errors.
-        full_message = f"{file_path}: {message}"
-        super().__init__(full_message, details)
-        self.file_path = file_path
-
-
-# API errors
-class APIError(ASFError):
-    Base exception for API-related errors.
-    pass
-
-
-class RateLimitError(APIError):
-    Exception raised when rate limits are exceeded.
+        Args:
+            message (str): The error message.
+            resource (str, optional): The resource that caused the error. Defaults to None.
+            resource_type (str, optional): The type of the resource. Defaults to None.
+            details (Dict[str, Any], optional): Additional details about the error. Defaults to None.
+        """
+        self.resource = resource
+        self.resource_type = resource_type
         super().__init__(message, details)
 
 
-class InvalidRequestError(APIError):
-    Exception raised for invalid API requests.
+class ConfigurationError(MedicalResearchSynthesizerError):
+    """
+    Exception raised for configuration-related errors.
+
+    This is used when the application is misconfigured.
+
+    Attributes:
+        setting (str): The configuration setting that caused the error.
+        expected (str): The expected value or format of the setting.
+        actual (str): The actual value of the setting.
+    """
+
+    def __init__(self, message: str, setting: str = None, expected: str = None, actual: str = None, details: Dict[str, Any] = None):
+        """
+        Initialize the ConfigurationError.
+
+        Args:
+            message (str): The error message.
+            setting (str, optional): The configuration setting that caused the error. Defaults to None.
+            expected (str, optional): The expected value or format of the setting. Defaults to None.
+            actual (str, optional): The actual value of the setting. Defaults to None.
+            details (Dict[str, Any], optional): Additional details about the error. Defaults to None.
+        """
+        self.setting = setting
+        self.expected = expected
+        self.actual = actual
         super().__init__(message, details)
 
 
-# Task errors
-class TaskError(ASFError):
-    Base exception for task-related errors.
-    pass
+class MLError(MedicalResearchSynthesizerError):
+    """
+    Exception raised for machine learning-related errors.
 
+    This is used when machine learning operations fail.
 
-class TaskExecutionError(TaskError):
-    Exception raised for task execution errors.
-        full_message = f"Task {task_id}: {message}"
-        super().__init__(full_message, details)
-        self.task_id = task_id
+    Attributes:
+        model (str): The model that failed.
+        operation (str): The operation that failed.
+        inputs (Any): The inputs that caused the error.
+    """
 
+    def __init__(self, message: str, model: str = None, operation: str = None, inputs: Any = None, details: Dict[str, Any] = None):
+        """
+        Initialize the MLError.
 
-class TaskTimeoutError(TaskError):
-    Exception raised when a task times out.
-        full_message = f"Task {task_id} timed out after {timeout} seconds: {message}"
-        super().__init__(full_message, details)
-        self.task_id = task_id
-        self.timeout = timeout
-
-
-# Domain-specific errors
-class ExportError(ServiceError):
-    Exception raised for export errors.
-        full_message = f"{format}: {message}"
-        super().__init__(full_message, details)
-        self.format = format
-
-
-class SearchError(ServiceError):
-    Exception raised for search errors.
-        full_message = f"Query '{query}': {message}"
-        super().__init__(full_message, details)
-        self.query = query
-
-
-class AnalysisError(ServiceError):
-    Exception raised for analysis errors.
-        full_message = f"{analysis_type}: {message}"
-        super().__init__(full_message, details)
-        self.analysis_type = analysis_type
-
-
-class KnowledgeBaseError(ServiceError):
-    Exception raised for knowledge base errors.
-        full_message = f"{kb_name}: {message}"
-        super().__init__(full_message, details)
-        self.kb_name = kb_name
-
-
-class ContradictionError(ServiceError):
-    Exception raised for contradiction analysis errors.
-        super().__init__(message, details)
-
-
-class OperationError(ServiceError):
-    Exception raised for general operation errors.
+        Args:
+            message (str): The error message.
+            model (str, optional): The model that failed. Defaults to None.
+            operation (str, optional): The operation that failed. Defaults to None.
+            inputs (Any, optional): The inputs that caused the error. Defaults to None.
+            details (Dict[str, Any], optional): Additional details about the error. Defaults to None.
+        """
+        self.model = model
+        self.operation = operation
+        self.inputs = inputs
         super().__init__(message, details)

@@ -1,241 +1,230 @@
-# ASF Medical Research Synthesizer Monitoring and Observability
+# Monitoring Framework
 
-This document describes the monitoring and observability solutions for the ASF Medical Research Synthesizer.
+This documentation provides a comprehensive guide to the monitoring capabilities implemented in the Medical Research Synthesizer application.
 
-## Monitoring Module
+## Table of Contents
+1. [Overview](#overview)
+2. [Key Components](#key-components)
+3. [Metrics Collection](#metrics-collection)
+4. [Logging](#logging)
+5. [Alerting](#alerting)
+6. [Dashboards](#dashboards)
+7. [Health Checks](#health-checks)
+8. [Performance Monitoring](#performance-monitoring)
+9. [Integration with External Systems](#integration-with-external-systems)
+10. [Best Practices](#best-practices)
 
-The monitoring module (`monitoring.py`) provides a comprehensive set of tools for monitoring and observability:
+## Overview
 
-- **Metrics**: Counters, gauges, histograms, and timers
-- **Health Checks**: System and application health checks
-- **Logging**: Structured logging with context
-- **Error Tracking**: Error tracking with context
-- **Request Logging**: HTTP request logging with duration and status code
-- **Performance Monitoring**: Performance monitoring with timers and histograms
+The monitoring framework provides real-time visibility into the health, performance, and behavior of the Medical Research Synthesizer application. It enables developers and operators to detect, diagnose, and resolve issues quickly while providing insights for capacity planning and optimization.
 
-## Metrics
+## Key Components
 
-The monitoring module provides the following metric types:
+### Monitoring Module (`monitoring.py`)
 
-- **Counters**: Incrementing values (e.g., number of requests)
-- **Gauges**: Current values (e.g., memory usage)
-- **Histograms**: Distribution of values (e.g., request duration)
-- **Timers**: Duration of operations (e.g., function execution time)
+The main monitoring module provides:
+- Metric collection and reporting
+- Health check mechanisms
+- Performance tracking
+- Integration with external monitoring systems
 
-### Using Metrics
+### Observability Module (`observability.py`)
+
+Extends the monitoring framework with:
+- Distributed tracing
+- Detailed request/response logging
+- Event correlation
+- System-wide observability features
+
+### Logging Configuration (`logging_config.py`)
+
+Provides structured logging with:
+- Consistent log format
+- Log level management
+- Context enrichment
+- Integration with central log management systems
+
+## Metrics Collection
+
+### Available Metrics
+
+The monitoring system collects the following types of metrics:
+
+1. **System Metrics**
+   - CPU usage
+   - Memory usage
+   - Disk I/O
+   - Network I/O
+
+2. **Application Metrics**
+   - Request rates
+   - Response times
+   - Error rates
+   - Task queue depths
+   - Cache hit/miss ratios
+   - Database query performance
+
+3. **Business Metrics**
+   - Search operations per minute
+   - Document processing rates
+   - API usage by client
+   - User activity
+
+### Metric Collection Methods
 
 ```python
-from asf.medical.core.monitoring import (
-    increment_counter, set_gauge, record_histogram,
-    start_timer, stop_timer, timer, timed, async_timed
-)
+# Example: Tracking a custom metric
+from asf.medical.core.monitoring import metrics
 
-# Increment a counter
-increment_counter("requests", 1, {"method": "GET", "path": "/api/v1/search"})
+# Counter example (accumulates)
+metrics.increment('api_calls', 1, tags={'endpoint': '/search', 'method': 'GET'})
 
-# Set a gauge
-set_gauge("memory_usage", 1024, {"unit": "MB"})
+# Gauge example (current value)
+metrics.gauge('active_connections', 42)
 
-# Record a histogram value
-record_histogram("request_duration", 0.123, {"method": "GET", "path": "/api/v1/search"})
-
-# Use a timer
-timer_id = start_timer("function_execution", {"function": "search"})
-# ... do something
-elapsed = stop_timer("function_execution", timer_id)
-
-# Use a timer context manager
-with timer("function_execution", {"function": "search"}):
-    # ... do something
-
-# Use a timer decorator
-@timed("function_execution", {"function": "search"})
-def my_function():
-    # ... do something
-
-# Use an async timer decorator
-@async_timed("function_execution", {"function": "search"})
-async def my_async_function():
-    # ... do something
-```
-
-## Health Checks
-
-The monitoring module provides a health check system that can be used to check the health of the application and its dependencies.
-
-### Using Health Checks
-
-```python
-from asf.medical.core.monitoring import register_health_check, run_health_checks
-
-# Register a health check
-register_health_check("database", lambda: {
-    "status": "ok",
-    "latency": 0.123,
-    "timestamp": datetime.now().isoformat()
-})
-
-# Run health checks
-health_checks = run_health_checks()
+# Histogram example (statistical distribution)
+metrics.histogram('response_time', 0.23, tags={'endpoint': '/documents'})
 ```
 
 ## Logging
 
-The monitoring module provides structured logging with context.
+### Log Levels
 
-### Using Logging
+The system uses the following log levels:
+- **DEBUG**: Detailed information for debugging
+- **INFO**: General information about system operation
+- **WARNING**: Potential issues that don't impact operation
+- **ERROR**: Errors that impact specific operations
+- **CRITICAL**: Critical issues that require immediate attention
 
-```python
-from asf.medical.core.monitoring import log_error, log_request
+### Contextual Logging
 
-# Log an error
-try:
-    # ... do something
-except Exception as e:
-    log_error(e, {"function": "search", "query": "statin therapy"})
-
-# Log a request
-log_request("GET", "/api/v1/search", 200, 0.123, user_id=123)
-```
-
-## Middleware
-
-The monitoring middleware (`middleware.py`) provides automatic request logging and error tracking for FastAPI applications.
-
-### Using Middleware
+All logs include context to make troubleshooting easier:
 
 ```python
-from fastapi import FastAPI
-from asf.medical.api.middleware import MonitoringMiddleware
+from asf.medical.core.logging_config import get_logger
 
-app = FastAPI()
-app.add_middleware(MonitoringMiddleware)
+logger = get_logger(__name__)
+
+def process_document(doc_id):
+    logger.info("Processing document", extra={
+        'document_id': doc_id,
+        'process_type': 'text_extraction'
+    })
 ```
 
-## API Endpoints
+## Alerting
 
-The API provides the following endpoints for monitoring and observability:
+The monitoring system integrates with various alerting mechanisms:
 
-- `GET /health`: Health check endpoint
-- `GET /metrics`: Metrics endpoint
-- `POST /metrics/export`: Export metrics to a JSON file
+1. **Email Alerts**: For non-urgent issues
+2. **SMS Notifications**: For critical issues
+3. **PagerDuty/OpsGenie Integration**: For on-call escalation
+4. **Slack Notifications**: For team awareness
 
-### Health Check Endpoint
+### Alert Configuration
 
-The health check endpoint returns the health status of the application and its dependencies.
+Alerts are configured based on:
+- Metric thresholds
+- Error rates
+- System availability
+- Custom business logic
 
-```http
-GET /health
+## Dashboards
+
+The monitoring system provides data for various dashboards:
+
+1. **System Overview**: High-level health and performance metrics
+2. **API Performance**: Detailed API call metrics
+3. **Error Analysis**: Visualization of error rates and types
+4. **Resource Utilization**: CPU, memory, and storage metrics
+5. **Business Metrics**: Domain-specific usage patterns
+
+## Health Checks
+
+The system implements the following health check types:
+
+1. **Service Liveness**: Is the service running?
+2. **Service Readiness**: Is the service ready to handle traffic?
+3. **Dependency Checks**: Are required dependencies available?
+4. **Deep Health Checks**: Test full functionality paths
+
+### Example Health Check Implementation
+
+```python
+from asf.medical.core.monitoring import health_checks
+
+@health_checks.register('database')
+def check_database_health():
+    try:
+        # Perform database check
+        return health_checks.HealthStatus.HEALTHY
+    except Exception as e:
+        return health_checks.HealthStatus.UNHEALTHY, str(e)
 ```
 
-Response:
+## Performance Monitoring
 
-```json
-{
-  "status": "ok",
-  "checks": {
-    "system": {
-      "status": "ok",
-      "cpu_usage": 0.1,
-      "memory_usage": "2.5",
-      "timestamp": "2023-04-10T14:30:00.000Z"
-    }
-  }
-}
+The monitoring system tracks performance at various levels:
+
+1. **Request timing**: End-to-end request processing time
+2. **Component timing**: Time spent in different components
+3. **Database query performance**: Query execution times
+4. **External service calls**: API call performance
+5. **Resource utilization**: CPU, memory, I/O utilization
+
+### Distributed Tracing
+
+Using OpenTelemetry for distributed tracing:
+
+```python
+from asf.medical.core.observability import tracer
+
+@tracer.trace('process_document')
+async def process_document(doc_id):
+    # Function implementation
+    pass
 ```
 
-### Metrics Endpoint
+## Integration with External Systems
 
-The metrics endpoint returns the current metrics.
+The monitoring framework integrates with:
 
-```http
-GET /metrics
+1. **Prometheus**: Metrics collection and storage
+2. **Grafana**: Dashboard visualization
+3. **ELK Stack**: Log aggregation and analysis
+4. **Jaeger/Zipkin**: Distributed tracing
+5. **NewRelic/Datadog**: Application performance monitoring
+
+## Best Practices
+
+1. **Monitor what matters**: Focus on metrics that provide actionable insights
+2. **Use structured logging**: Include context in all log messages
+3. **Set appropriate thresholds**: Avoid alert fatigue
+4. **Implement correlation IDs**: Track requests across services
+5. **Document your metrics**: Ensure the team understands what each metric means
+6. **Regular review**: Periodically review monitoring effectiveness
+7. **Automated testing**: Include monitoring in your test suite
+
+## Configuration
+
+The monitoring system is configurable through environment variables:
+
+```
+MONITORING_ENABLED=true
+METRICS_REPORTING_INTERVAL=60
+LOG_LEVEL=INFO
+TRACING_ENABLED=true
+HEALTH_CHECK_INTERVAL=30
 ```
 
-Response:
+## Troubleshooting
 
-```json
-{
-  "counters": {
-    "requests": {
-      "value": 100,
-      "tags": {
-        "method": "GET",
-        "path": "/api/v1/search"
-      }
-    }
-  },
-  "gauges": {
-    "memory_usage": {
-      "value": 1024,
-      "tags": {
-        "unit": "MB"
-      }
-    }
-  },
-  "histograms": {
-    "request_duration": {
-      "values": [0.123, 0.456, 0.789],
-      "tags": {
-        "method": "GET",
-        "path": "/api/v1/search"
-      }
-    }
-  },
-  "timers": {
-    "function_execution": {
-      "timers": {
-        "1234567890": {
-          "start": 1617979200.0,
-          "end": 1617979200.123,
-          "elapsed": 0.123
-        }
-      },
-      "tags": {
-        "function": "search"
-      }
-    }
-  }
-}
-```
+Common monitoring issues and solutions:
 
-### Export Metrics Endpoint
+1. **High alert volume**: Review and adjust thresholds
+2. **Missing metrics**: Check metric collection configuration
+3. **Log flooding**: Adjust log levels or implement log rate limiting
+4. **Slow dashboards**: Optimize queries or increase refresh intervals
 
-The export metrics endpoint exports the current metrics to a JSON file.
-
-```http
-POST /metrics/export
-```
-
-Request:
-
-```json
-{
-  "file_path": "logs/metrics.json"
-}
-```
-
-Response:
-
-```json
-{
-  "status": "ok",
-  "message": "Metrics exported to logs/metrics.json"
-}
-```
-
-## Integration with External Monitoring Systems
-
-The monitoring module can be integrated with external monitoring systems such as Prometheus, Grafana, and ELK Stack.
-
-### Prometheus Integration
-
-The metrics endpoint can be scraped by Prometheus to collect metrics.
-
-### Grafana Integration
-
-Grafana can be used to visualize metrics collected by Prometheus.
-
-### ELK Stack Integration
-
-The structured logs can be sent to Elasticsearch for indexing and visualization in Kibana.
+For additional support, contact the DevOps team at devops@example.com

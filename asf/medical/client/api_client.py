@@ -26,6 +26,7 @@ class MedicalResearchSynthesizerClient:
             api_version: API version
             token: Authentication token
         await self.client.aclose()
+    """        
     async def _request(
         self, 
         method: str, 

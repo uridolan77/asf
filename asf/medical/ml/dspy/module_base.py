@@ -12,8 +12,8 @@ import traceback
 from typing import Dict, Any, List, Optional, Union, Protocol, runtime_checkable
 import dspy
 
-from .audit_logging import get_audit_logger
-from .enhanced_settings import get_enhanced_settings
+from audit_logging import get_audit_logger
+from settings import get_enhanced_settings
 
 # Set up logging
 logger = logging.getLogger(__name__)

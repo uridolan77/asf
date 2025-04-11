@@ -1,8 +1,14 @@
+"""
 Documentation Standards for ASF Medical Research Synthesizer.
 
 This module defines the documentation standards for the ASF Medical Research Synthesizer
 codebase. It includes templates and guidelines for documenting different components.
 
+Functions:
+    generate_class_template: Generate a class documentation template.
+    generate_method_template: Generate a method documentation template.
+    generate_module_template: Generate a module documentation template.
+"""
 # Class documentation template
 CLASS_TEMPLATE = """
 {class_name}
@@ -54,13 +60,13 @@ Documentation Guidelines:
 def generate_class_template(class_name, description, functionality, additional_info=""):
     """
     Generate a class documentation template.
-    
+
     Args:
         class_name (str): The name of the class.
         description (str): A brief description of the class.
         functionality (str): Description of what the class does.
         additional_info (str, optional): Any additional information about the class.
-        
+
     Returns:
         str: Formatted class documentation template.
     """
@@ -74,14 +80,14 @@ def generate_class_template(class_name, description, functionality, additional_i
 def generate_method_template(method_name, description, args, returns, raises):
     """
     Generate a method documentation template.
-    
+
     Args:
         method_name (str): The name of the method.
         description (str): A brief description of the method.
-        args (str): Description of the method arguments.
+        args (str): Arguments of the method in formatted string.
         returns (str): Description of the return value.
-        raises (str): Description of exceptions raised.
-        
+        raises (str): Description of exceptions raised by the method.
+
     Returns:
         str: Formatted method documentation template.
     """
@@ -91,4 +97,22 @@ def generate_method_template(method_name, description, args, returns, raises):
         args=args,
         returns=returns,
         raises=raises
+    )
+
+def generate_module_template(module_name, description, functionality):
+    """
+    Generate a module documentation template.
+
+    Args:
+        module_name (str): The name of the module.
+        description (str): A brief description of the module.
+        functionality (str): Description of what the module provides.
+
+    Returns:
+        str: Formatted module documentation template.
+    """
+    return MODULE_TEMPLATE.format(
+        module_name=module_name,
+        description=description,
+        functionality=functionality
     )

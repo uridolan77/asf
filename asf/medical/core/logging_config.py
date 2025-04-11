@@ -1,7 +1,14 @@
-Logging Configuration
+"""
+Logging configuration module for the Medical Research Synthesizer.
 
-This module provides a centralized configuration for logging in the application.
-It sets up logging handlers, formatters, and configures log levels based on the environment.
+This module provides functions for configuring and retrieving loggers
+with consistent formatting and behavior throughout the application.
+
+Functions:
+    configure_logging: Configure the logging system.
+    get_logger: Get a logger with the specified name.
+    get_structlog_logger: Get a structured logger with the specified name.
+"""
 
 import logging
 import sys
@@ -27,13 +34,12 @@ MAX_LOG_SIZE = 10 * 1024 * 1024
 BACKUP_COUNT = 5
 
 def configure_logging() -> None:
+    """
     Configure logging for the application.
     
     This sets up handlers for console and file logging, configures formatters,
     and sets the appropriate log levels based on the environment.
-    
-    Returns:
-        Description of return value
+    """
     root_logger = logging.getLogger()
     for handler in root_logger.handlers[:]:
         root_logger.removeHandler(handler)
@@ -103,12 +109,12 @@ def configure_logging() -> None:
 def get_logger(name: str) -> logging.Logger:
     """
     Get a logger with the specified name.
-    
+
     Args:
-        name: The name of the logger, typically __name__
-        
+        name (str): Name of the logger.
+
     Returns:
-        A configured logger instance
+        logging.Logger: Configured logger instance.
     """
     return logging.getLogger(name)
 
@@ -117,10 +123,10 @@ def get_structlog_logger(name: str) -> structlog.stdlib.BoundLogger:
     Get a structured logger with the specified name.
     
     Args:
-        name: The name of the logger, typically __name__
+        name (str): The name of the logger, typically __name__
         
     Returns:
-        A configured structlog logger instance
+        structlog.stdlib.BoundLogger: A configured structlog logger instance.
     """
     return structlog.get_logger(name)
 
