@@ -1,45 +1,32 @@
 """
 Neo4j client for the Medical Research Synthesizer.
-
 This module provides a client for interacting with the Neo4j database.
 """
-
 import logging
-import time
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Any
 import numpy as np
-from neo4j import GraphDatabase, exceptions as neo4j_exceptions
-
+from neo4j import exceptions as neo4j_exceptions
 from asf.medical.core.config import settings
-
 logger = logging.getLogger(__name__)
-
 class Neo4jClient:
     """
     Client for interacting with the Neo4j database.
-
     This client provides methods for storing and querying medical knowledge graphs.
     """
-
     _instance = None
-
     def __new__(cls):
         """
         Create a singleton instance of the Neo4j client.
-
         Returns:
             Neo4jClient: The singleton instance
         """
         if cls._instance is None:
             cls._instance = super(Neo4jClient, cls).__new__(cls)
         return cls._instance
-
     def __init__(self):
         """Initialize the Neo4j client.
-
     Args:
         # TODO: Add parameter descriptions
-
     Returns:
         # TODO: Add return description
     """
@@ -47,41 +34,31 @@ class Neo4jClient:
         self.user = settings.NEO4J_USER
         self.password = settings.NEO4J_PASSWORD.get_secret_value()
         self.driver = None
-
         logger.info(f"Neo4j client initialized with uri={self.uri}, user={self.user}")
-
     def connect(self):
         """
         Connect to the Neo4j database.
-
         Returns:
             bool: True if connection is successful, False otherwise
         if self.driver:
             self.driver.close()
             self.driver = None
             logger.info("Disconnected from Neo4j")
-
     def execute_query(self, query: str, params: Dict[str, Any] = None) -> List[Dict[str, Any]]:
         """
         Execute a Cypher query.
-
         Args:
             query: Cypher query
             params: Query parameters
-
         Returns:
             Query results
-
         Raises:
             Exception: If the query fails
         Create an article node in the graph.
-
         Args:
             article: Article data
-
         Returns:
             Article ID
-
         Raises:
             Exception: If the query fails
         CREATE (a:Article {
@@ -93,24 +70,19 @@ class Neo4jClient:
         })
         RETURN a.pmid AS id
         Create an author node and relationship to an article.
-
         Args:
             pmid: Article PMID
             author: Author name
-
         Raises:
             Exception: If the query fails
         MATCH (a:Article {pmid: $pmid})
         MERGE (au:Author {name: $author})
         MERGE (au)-[:AUTHORED]->(a)
         Create a concept node in the graph.
-
         Args:
             concept: Concept data
-
         Returns:
             Concept ID
-
         Raises:
             Exception: If the query fails
         CREATE (c:Concept {
@@ -120,33 +92,28 @@ class Neo4jClient:
         })
         RETURN c.cui AS id
         Create a relationship between an article and a concept.
-
         Args:
             pmid: Article PMID
             cui: Concept CUI
             relationship_type: Relationship type
             properties: Relationship properties
-
         Raises:
             Exception: If the query fails
         MATCH (a:Article {{pmid: $pmid}})
         MATCH (c:Concept {{cui: $cui}})
         MERGE (a)-[r:{relationship_type}]->(c)
         Create a relationship between two concepts.
-
         Args:
             cui1: First concept CUI
             cui2: Second concept CUI
             relationship_type: Relationship type
             properties: Relationship properties
-
         Raises:
             Exception: If the query fails
         MATCH (c1:Concept {{cui: $cui1}})
         MATCH (c2:Concept {{cui: $cui2}})
         MERGE (c1)-[r:{relationship_type}]->(c2)
         Create a contradiction relationship between two articles.
-
         Args:
             pmid1: First article PMID
             pmid2: Second article PMID
@@ -154,7 +121,6 @@ class Neo4jClient:
             confidence: Confidence level
             topic: Contradiction topic
             explanation: Contradiction explanation
-
         Raises:
             Exception: If the query fails
         MATCH (a1:Article {pmid: $pmid1})
@@ -163,13 +129,10 @@ class Neo4jClient:
         SET r.contradiction_score = $contradiction_score,
             r.confidence = $confidence
         Get an article from the graph.
-
         Args:
             pmid: Article PMID
-
         Returns:
             Article data or None if not found
-
         Raises:
             Exception: If the query fails
         MATCH (a:Article {pmid: $pmid})
@@ -181,13 +144,10 @@ class Neo4jClient:
                a.publication_date AS publication_date,
                collect(au.name) AS authors
         Get a concept from the graph.
-
         Args:
             cui: Concept CUI
-
         Returns:
             Concept data or None if not found
-
         Raises:
             Exception: If the query fails
         MATCH (c:Concept {cui: $cui})
@@ -195,13 +155,10 @@ class Neo4jClient:
                c.name AS name,
                c.semantic_types AS semantic_types
         Get concepts mentioned in an article.
-
         Args:
             pmid: Article PMID
-
         Returns:
             List of concepts
-
         Raises:
             Exception: If the query fails
         MATCH (a:Article {pmid: $pmid})-[r:MENTIONS]->(c:Concept)
@@ -210,13 +167,10 @@ class Neo4jClient:
                c.semantic_types AS semantic_types,
                r.frequency AS frequency
         Get articles that mention a concept.
-
         Args:
             cui: Concept CUI
-
         Returns:
             List of articles
-
         Raises:
             Exception: If the query fails
         MATCH (a:Article)-[r:MENTIONS]->(c:Concept {cui: $cui})
@@ -226,13 +180,10 @@ class Neo4jClient:
                a.publication_date AS publication_date,
                r.frequency AS frequency
         Get contradictions in the graph.
-
         Args:
             pmid: Article PMID (optional)
-
         Returns:
             List of contradictions
-
         Raises:
             Exception: If the query fails
             MATCH (a1:Article {pmid: $pmid})-[r:CONTRADICTS]->(a2:Article)
@@ -261,14 +212,11 @@ class Neo4jClient:
                    r.confidence AS confidence,
                    r.topic AS topic
         Get concepts related to a concept.
-
         Args:
             cui: Concept CUI
             relationship_type: Relationship type (optional)
-
         Returns:
             List of related concepts
-
         Raises:
             Exception: If the query fails
             MATCH (c1:Concept {{cui: $cui}})-[r:{relationship_type}]->(c2:Concept)
@@ -282,16 +230,13 @@ class Neo4jClient:
                    c2.semantic_types AS semantic_types,
                    type(r) AS relationship_type
         Search for articles with similar embeddings.
-
         Args:
             embedding: Query embedding as a numpy array
             max_results: Maximum number of results to return
             max_retries: Maximum number of retries on failure
             retry_delay: Delay between retries in seconds
-
         Returns:
             List of articles with similarity scores
-
         Raises:
             ValueError: If the embedding is invalid
             ConnectionError: If the database connection fails after retries

@@ -1,8 +1,6 @@
-"""
 Static file serving for the Medical Research Synthesizer API.
 
 This module provides static file serving for the API.
-"""
 
 import os
 from pathlib import Path

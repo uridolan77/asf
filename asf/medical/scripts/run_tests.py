@@ -1,8 +1,6 @@
-"""
 Script to run tests for the Medical Research Synthesizer.
 
 This script runs pytest on the tests directory.
-"""
 
 import os
 import sys

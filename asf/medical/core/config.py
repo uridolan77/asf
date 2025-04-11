@@ -1,10 +1,8 @@
-"""
 Configuration module for the Medical Research Synthesizer.
 
 This module provides a centralized configuration using Pydantic.
 It supports loading configuration from environment variables, .env files,
 and external configuration sources.
-"""
 
 import os
 import secrets
@@ -24,11 +22,9 @@ if env_file.exists():
     load_dotenv(env_file)
 
 class Settings(BaseSettings):
-    """
     Settings for the Medical Research Synthesizer.
-
+    
     This class uses Pydantic to load and validate configuration from environment variables.
-    """
 
     API_V1_STR: str = "/v1"
     PROJECT_NAME: str = "Medical Research Synthesizer"
@@ -76,29 +72,15 @@ class Settings(BaseSettings):
 
     @validator("CORS_ORIGINS", pre=True)
     def assemble_cors_origins(cls, v: Union[str, List[str]]) -> Union[List[str], str]:
-        """Parse CORS origins from string or list."""
-        if isinstance(v, str) and not v.startswith("["):
-            return [i.strip() for i in v.split(",")]
-        elif isinstance(v, (list, str)):
-            return v
-        raise ValueError(v)
-
-    class Config:
-        """Pydantic config"""
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        case_sensitive = True
-
-@lru_cache()
-def get_settings() -> Settings:
-    """Get the settings instance.
-
-    Args:
-        # TODO: Add parameter descriptions
-
-    Returns:
-        # TODO: Add return description
-    """
+        Parse CORS origins from string or list.
+        
+        Args:
+            cls: Description of cls
+            v: Description of v
+        
+        
+        Returns:
+            Description of return value
     settings = Settings()
 
     os.makedirs(settings.KB_DIR, exist_ok=True)

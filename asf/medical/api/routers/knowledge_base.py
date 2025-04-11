@@ -1,8 +1,6 @@
-"""
 Knowledge Base router for the Medical Research Synthesizer API.
 
 This module provides endpoints for creating and managing knowledge bases.
-"""
 
 import logging
 from fastapi import APIRouter, Depends, HTTPException, status, Request, Response, BackgroundTasks

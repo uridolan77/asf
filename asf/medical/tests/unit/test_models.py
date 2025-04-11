@@ -1,62 +1,44 @@
 """
 Unit tests for Pydantic models.
-
 This module provides unit tests for Pydantic models to ensure data validation rules are effective.
 """
-
 import pytest
 from pydantic import ValidationError
-
-from asf.medical.api.models.user import UserCreate, UserUpdate, UserInDB
+from asf.medical.api.models.user import UserCreate
 from asf.medical.api.models.token import Token, TokenPayload
-from asf.medical.api.models.study import StudyCreate, StudyUpdate, StudyInDB
+from asf.medical.api.models.study import StudyCreate
 from asf.medical.api.models.contradiction import ContradictionRequest, ContradictionResponse
-from asf.medical.api.models.screening import ScreeningRequest, ScreeningResponse
+from asf.medical.api.models.screening import ScreeningRequest
 from asf.medical.api.models.bias import BiasAssessmentRequest, BiasAssessmentResponse
-
 @pytest.mark.unit
 class TestUserModels:
     """Test cases for user models."""
-    
     def test_user_create_valid(self):
         """Test valid UserCreate model.
-
     Args:
         # TODO: Add parameter descriptions
-
     Returns:
         # TODO: Add return description
-
     Args:
         # TODO: Add parameter descriptions
-
     Returns:
         # TODO: Add return description
-
     Args:
         # TODO: Add parameter descriptions
-
     Returns:
         # TODO: Add return description
-
     Args:
         # TODO: Add parameter descriptions
-
     Returns:
         # TODO: Add return description
-
     Args:
         # TODO: Add parameter descriptions
-
     Returns:
         # TODO: Add return description
-    
     def test_token_valid(self):
         """Test valid Token model.
-
     Args:
         # TODO: Add parameter descriptions
-
     Returns:
         # TODO: Add return description
     """
@@ -66,13 +48,10 @@ class TestUserModels:
         )
         assert token.access_token == "access_token"
         assert token.token_type == "bearer"
-    
     def test_token_payload_valid(self):
         """Test valid TokenPayload model.
-
     Args:
         # TODO: Add parameter descriptions
-
     Returns:
         # TODO: Add return description
     """
@@ -82,45 +61,31 @@ class TestUserModels:
         )
         assert payload.sub == "test@example.com"
         assert payload.exp == 1234567890
-
-
 @pytest.mark.unit
 class TestStudyModels:
     """Test cases for study models."""
-    
     def test_study_create_valid(self):
         """Test valid StudyCreate model.
-
     Args:
         # TODO: Add parameter descriptions
-
     Returns:
         # TODO: Add return description
-
     Args:
         # TODO: Add parameter descriptions
-
     Returns:
         # TODO: Add return description
-
     Args:
         # TODO: Add parameter descriptions
-
     Returns:
         # TODO: Add return description
-
     Args:
         # TODO: Add parameter descriptions
-
     Returns:
         # TODO: Add return description
-    
     def test_contradiction_request_valid(self):
         """Test valid ContradictionRequest model.
-
     Args:
         # TODO: Add parameter descriptions
-
     Returns:
         # TODO: Add return description
     """
@@ -132,13 +97,10 @@ class TestStudyModels:
         assert request.claim1 == "Claim 1"
         assert request.claim2 == "Claim 2"
         assert request.context == "Context"
-    
     def test_contradiction_request_empty_claims(self):
         """Test empty claims in ContradictionRequest model.
-
     Args:
         # TODO: Add parameter descriptions
-
     Returns:
         # TODO: Add return description
     """
@@ -148,20 +110,16 @@ class TestStudyModels:
                 claim2="Claim 2",
                 context="Context",
             )
-        
         with pytest.raises(ValidationError):
             ContradictionRequest(
                 claim1="Claim 1",
                 claim2="",
                 context="Context",
             )
-    
     def test_contradiction_response_valid(self):
         """Test valid ContradictionResponse model.
-
     Args:
         # TODO: Add parameter descriptions
-
     Returns:
         # TODO: Add return description
     """
@@ -186,39 +144,27 @@ class TestStudyModels:
         assert len(response.evidence) == 2
         assert response.evidence[0]["text"] == "Evidence 1"
         assert response.evidence[0]["score"] == 0.9
-
-
 @pytest.mark.unit
 class TestScreeningModels:
     """Test cases for screening models."""
-    
     def test_screening_request_valid(self):
         """Test valid ScreeningRequest model.
-
     Args:
         # TODO: Add parameter descriptions
-
     Returns:
         # TODO: Add return description
-
     Args:
         # TODO: Add parameter descriptions
-
     Returns:
         # TODO: Add return description
-
     Args:
         # TODO: Add parameter descriptions
-
     Returns:
         # TODO: Add return description
-    
     def test_bias_assessment_request_valid(self):
         """Test valid BiasAssessmentRequest model.
-
     Args:
         # TODO: Add parameter descriptions
-
     Returns:
         # TODO: Add return description
     """
@@ -228,13 +174,10 @@ class TestScreeningModels:
         )
         assert request.study_text == "This is a randomized controlled trial..."
         assert request.domains == ["randomization", "blinding", "allocation_concealment"]
-    
     def test_bias_assessment_request_invalid_domain(self):
         """Test invalid domain in BiasAssessmentRequest model.
-
     Args:
         # TODO: Add parameter descriptions
-
     Returns:
         # TODO: Add return description
     """
@@ -243,13 +186,10 @@ class TestScreeningModels:
                 study_text="This is a randomized controlled trial...",
                 domains=["randomization", "invalid_domain"],
             )
-    
     def test_bias_assessment_response_valid(self):
         """Test valid BiasAssessmentResponse model.
-
     Args:
         # TODO: Add parameter descriptions
-
     Returns:
         # TODO: Add return description
     """

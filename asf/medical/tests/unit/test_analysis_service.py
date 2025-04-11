@@ -1,30 +1,21 @@
 """
 Unit tests for the AnalysisService.
-
 This module provides unit tests for the AnalysisService.
 """
-
 import pytest
 import logging
 import uuid
-
 from asf.medical.services.analysis_service import AnalysisService
-from asf.medical.core.exceptions import ExternalServiceError, DatabaseError
-
 logger = logging.getLogger(__name__)
-
 @pytest.fixture
 def mock_search_service():
     """Mock SearchService for testing.
-
     Args:
         # TODO: Add parameter descriptions
-
     Returns:
         # TODO: Add return description
     """
     mock = AsyncMock()
-    
     mock.search.return_value = {
         "query": "test query",
         "results": [
@@ -49,23 +40,17 @@ def mock_search_service():
         ],
         "total": 2
     }
-    
     mock.save_result.return_value = str(uuid.uuid4())
-    
     return mock
-
 @pytest.fixture
 def mock_contradiction_service():
-    """Mock UnifiedUnifiedContradictionService for testing.
-
+    """Mock ContradictionService for testing.
     Args:
         # TODO: Add parameter descriptions
-
     Returns:
         # TODO: Add return description
     """
     mock = AsyncMock()
-    
     mock.detect_contradictions_in_articles.return_value = [
         {
             "article1": {
@@ -83,28 +68,22 @@ def mock_contradiction_service():
             "explanation": "The articles contradict each other on the effectiveness of the treatment."
         }
     ]
-    
     mock.detect_contradiction.return_value = {
         "is_contradiction": True,
         "score": 0.85,
         "type": "negation",
         "explanation": "The claims contradict each other on the effectiveness of the treatment."
     }
-    
     return mock
-
 @pytest.fixture
 def mock_analysis_repository():
     """Mock AnalysisRepository for testing.
-
     Args:
         # TODO: Add parameter descriptions
-
     Returns:
         # TODO: Add return description
     """
     mock = AsyncMock()
-    
     mock.get_by_analysis_id_async.return_value = MagicMock(
         query=MagicMock(query_text="test query"),
         analysis_data={
@@ -126,18 +105,13 @@ def mock_analysis_repository():
         created_at=MagicMock(isoformat=lambda: "2023-01-01T12:00:00"),
         user_id=1
     )
-    
     mock.save_async.return_value = MagicMock(id=str(uuid.uuid4()))
-    
     return mock
-
 @pytest.fixture
 def analysis_service(mock_search_service, mock_contradiction_service, mock_analysis_repository):
     """AnalysisService instance for testing.
-
     Args:
         # TODO: Add parameter descriptions
-
     Returns:
         # TODO: Add return description
     """
@@ -146,18 +120,14 @@ def analysis_service(mock_search_service, mock_contradiction_service, mock_analy
         contradiction_service=mock_contradiction_service,
         analysis_repository=mock_analysis_repository
     )
-
 @pytest.mark.asyncio
 @pytest.mark.unit
 @pytest.mark.service
 class TestAnalysisService:
     """Test cases for AnalysisService."""
-    
     async def test_analyze_contradictions(self, analysis_service, mock_search_service, mock_contradiction_service):
         """Test analyze_contradictions.
-
     Args:
         # TODO: Add parameter descriptions
-
     Returns:
         # TODO: Add return description

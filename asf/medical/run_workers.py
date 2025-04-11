@@ -1,8 +1,6 @@
-"""
 Run Dramatiq Workers
 
 This script starts Dramatiq workers for processing background tasks.
-"""
 
 import os
 import sys

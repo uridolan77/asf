@@ -1,8 +1,6 @@
-"""
 Task Management API Router
 
 This module provides API endpoints for monitoring and managing tasks.
-"""
 
 from typing import Dict, Any, List, Optional
 
@@ -20,73 +18,7 @@ router = APIRouter(
 )
 
 class TaskInfo(BaseModel):
-    """Task information."""
-    task_id: str
-    status: str
-    progress: Optional[int] = None
-    updated_at: Optional[float] = None
-    created_at: Optional[float] = None
-    completed_at: Optional[float] = None
-    failed_at: Optional[float] = None
-    error: Optional[str] = None
-    result: Optional[Any] = None
-    metadata: Optional[Dict[str, Any]] = None
-
-class TaskListResponse(BaseModel):
-    """Task list response."""
-    tasks: List[TaskInfo]
-    total: int
-
-class TaskResponse(BaseModel):
-    """Task response."""
-    status: str
-    message: str
-    data: Dict[str, Any] = {}
-
-# Routes
-@router.get("/", response_model=TaskListResponse)
-async def list_tasks(
-    status: Optional[str] = Query(None, description="Filter by status (completed, failed, processing)"),
-    limit: int = Query(100, description="Maximum number of tasks to return"),
-    offset: int = Query(0, description="Offset for pagination"),
-):
-    """
-    List tasks.
-
-    Args:
-        status: Filter by status (completed, failed, processing)
-        limit: Maximum number of tasks to return
-        offset: Offset for pagination
-
-    Returns:
-        List of tasks
-    """
-    # Get tasks from the persistent task storage
-    tasks = task_storage.get_tasks(status=status, limit=limit, offset=offset)
-
-    # Convert tasks to TaskInfo objects
-    task_infos = [
-        TaskInfo(
-            task_id=task_id,
-            status=task_info["status"],
-            progress=task_info.get("progress"),
-            updated_at=task_info.get("updated_at"),
-            created_at=task_info.get("created_at"),
-            completed_at=task_info.get("completed_at"),
-            failed_at=task_info.get("failed_at"),
-            error=task_info.get("error"),
-            result=task_info.get("result"),
-            metadata=task_info.get("metadata")
-        )
-        for task_id, task_info in tasks.items()
-    ]
-
-    return TaskListResponse(tasks=task_infos, total=len(task_infos))
-
-
-@router.get("/{task_id}", response_model=TaskResponse)
-async def get_task(task_id: str):
-    """
+    Task information.
     Get task information.
 
     Args:

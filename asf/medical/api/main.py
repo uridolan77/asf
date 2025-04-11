@@ -35,7 +35,7 @@ except ImportError:
 
 from asf.medical.api.routers.auth import router as auth_router
 from asf.medical.api.routers.search import router as search_router
-from asf.medical.api.routers.unified_contradiction import router as contradiction_router
+from asf.medical.api.routers.contradiction import router as contradiction_router
 from asf.medical.api.routers.contradiction_resolution import router as contradiction_resolution_router
 from asf.medical.api.routers.screening import router as screening_router
 from asf.medical.api.routers.export import router as export_router
@@ -111,8 +111,8 @@ async def lifespan(_: FastAPI):
         logger.info("Application startup complete")
         logger.info("API documentation available at: /docs and /redoc")
     except Exception as e:
-        logger.error(f"Error during application startup: {str(e)}")
-        raise DatabaseError(f"Error during application startup: {str(e)}")
+    logger.error(f\"Error during application startup: {str(e)}\")
+    raise DatabaseError(f\"Error during application startup: {str(e)}\") DatabaseError(f"Error during application startup: {str(e)}")
 
     yield
 
@@ -129,7 +129,7 @@ async def lifespan(_: FastAPI):
         logger.info("Event system shutdown")
 
         # Clear cache
-        await cache_manager.clear()
+        await enhanced_cache_manager.clear()
         logger.info("Cache cleared")
 
         # Unload models

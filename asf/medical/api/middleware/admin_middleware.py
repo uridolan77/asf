@@ -1,8 +1,6 @@
-"""
 Admin Middleware for the Medical Research Synthesizer.
 
 This module provides a middleware for protecting admin-only routes.
-"""
 
 import logging
 from typing import Callable, List
@@ -13,16 +11,23 @@ from starlette.types import ASGIApp
 logger = logging.getLogger(__name__)
 
 class AdminRouteMiddleware(BaseHTTPMiddleware):
-    """
     Middleware for protecting admin-only routes.
     
     This middleware ensures that only users with admin role can access
     routes with the "admin" tag or routes that match admin path patterns.
-    """
     
     def __init__(
         self,
         app: ASGIApp,
+            """
+            __init__ function.
+            
+            This function provides functionality for...
+            Args:
+                app: Description of app
+                admin_path_patterns: Description of admin_path_patterns
+                admin_tag: Description of admin_tag
+            """
         admin_path_patterns: List[str] = None,
         admin_tag: str = "admin"
     ):
@@ -55,6 +60,15 @@ class AdminRouteMiddleware(BaseHTTPMiddleware):
 
 def add_admin_middleware(
     app: ASGIApp,
+        """
+        add_admin_middleware function.
+        
+        This function provides functionality for...
+        Args:
+            app: Description of app
+            admin_path_patterns: Description of admin_path_patterns
+            admin_tag: Description of admin_tag
+        """
     admin_path_patterns: List[str] = None,
     admin_tag: str = "admin"
 ):

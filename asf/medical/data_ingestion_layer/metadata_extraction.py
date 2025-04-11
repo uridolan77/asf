@@ -1,9 +1,7 @@
-"""
 Metadata Extraction Module for Medical Research Synthesizer
 
 This module enhances the NCBIClient with specialized functions to extract,
 standardize, and enrich publication metadata from PubMed and other sources.
-"""
 
 import os
 import json
@@ -19,13 +17,20 @@ logging.basicConfig(
 logger = logging.getLogger('metadata_extraction')
 
 class PublicationMetadataExtractor:
-    """
     Extract and standardize metadata from scientific publications.
     Can be used to enhance publication data retrieved from NCBI.
-    """
 
     def __init__(self,
                  impact_factor_source: Optional[str] = None,
+                     """
+                     __init__ function.
+                     
+                     This function provides functionality for...
+                     Args:
+                         impact_factor_source: Description of impact_factor_source
+                         crossref_email: Description of crossref_email
+                         cache_dir: Description of cache_dir
+                     """
                  crossref_email: Optional[str] = None,
                  cache_dir: Optional[str] = None):
         self.crossref_email = crossref_email

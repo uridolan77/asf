@@ -1,8 +1,6 @@
-"""
 Retry module for the Medical Research Synthesizer.
 
 This module provides utilities for implementing retry logic with exponential backoff.
-"""
 
 import logging
 import random
@@ -27,14 +25,45 @@ ExceptionTypes = Union[Type[Exception], List[Type[Exception]]]
 
 def with_retry(
     max_attempts: int = 3,
+        """
+        with_retry function.
+        
+        This function provides functionality for...
+        Args:
+            max_attempts: Description of max_attempts
+            min_wait: Description of min_wait
+            max_wait: Description of max_wait
+            exception_types: Description of exception_types
+            on_retry: Description of on_retry
+        
+        Returns:
+            Description of return value
+        """
     min_wait: float = 1.0,
     max_wait: float = 10.0,
     exception_types: Optional[ExceptionTypes] = None,
     on_retry: Optional[Callable[[Exception, int], None]] = None,
 ) -> Callable[[Callable[..., T]], Callable[..., T]]:
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
+        """
+        decorator function.
+        
+        This function provides functionality for...
+        Args:
+            func: Description of func
+        
+        Returns:
+            Description of return value
+        """
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> T:
+            """
+            wrapper function.
+            
+            This function provides functionality for...
+            Returns:
+                Description of return value
+            """
             attempt = 0
             last_exception = None
             
@@ -80,6 +109,19 @@ def with_retry(
 
 def with_tenacity_retry(
     max_attempts: int = 3,
+        """
+        with_tenacity_retry function.
+        
+        This function provides functionality for...
+        Args:
+            max_attempts: Description of max_attempts
+            min_wait: Description of min_wait
+            max_wait: Description of max_wait
+            exception_types: Description of exception_types
+        
+        Returns:
+            Description of return value
+        """
     min_wait: float = 1.0,
     max_wait: float = 10.0,
     exception_types: Optional[ExceptionTypes] = None,

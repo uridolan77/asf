@@ -1,32 +1,25 @@
 """
 SHAP-based Explainability for Contradiction Analysis
-
 This module provides SHAP-based explainability for contradiction analysis
 in the ASF framework. It uses SHAP (SHapley Additive exPlanations) values
 to identify the most influential words and phrases that contributed to
 the contradiction detection.
 """
-
 import logging
 import numpy as np
-import torch
-from typing import Dict, List, Optional, Tuple, Union, Any
+from typing import Dict, List, Optional, Any
 import json
-import re
 from dataclasses import dataclass, field
-
 try:
     import shap
     HAS_SHAP = True
 except ImportError:
     HAS_SHAP = False
     logging.warning("SHAP not installed. Explainability features will be limited.")
-
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger("shap-explainer")
-
 @dataclass
 class ContradictionExplanation:
     """Explanation for a contradiction between two claims."""
@@ -40,7 +33,6 @@ class ContradictionExplanation:
     multimodal_factors: Dict[str, Any] = field(default_factory=dict)
     visualization_data: Dict[str, Any] = field(default_factory=dict)
     precision_weights: Dict[str, Any] = field(default_factory=dict)
-
     def to_dict(self) -> Dict[str, Any]:
         """Convert explanation to dictionary."""
         return {
@@ -55,18 +47,14 @@ class ContradictionExplanation:
             "visualization_data": self.visualization_data,
             "precision_weights": self.precision_weights
         }
-
     def to_json(self) -> str:
         """Convert explanation to JSON string.
-
     Args:
         # TODO: Add parameter descriptions
-
     Returns:
         # TODO: Add return description
     """
         return json.dumps(self.to_dict(), indent=2)
-
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'ContradictionExplanation':
         """Create explanation from dictionary."""
@@ -82,35 +70,28 @@ class ContradictionExplanation:
             visualization_data=data.get("visualization_data", {}),
             precision_weights=data.get("precision_weights", {})
         )
-
     @classmethod
     def from_json(cls, json_str: str) -> 'ContradictionExplanation':
         """Create explanation from JSON string."""
         data = json.loads(json_str)
         return cls.from_dict(data)
-
 class ContradictionExplainer:
     """
     SHAP-based explainer for contradiction analysis.
-
     This class provides methods for explaining why two medical claims
     were determined to be contradictory using SHAP values.
         Initialize the contradiction explainer.
-
         Args:
             model: Model for contradiction detection
             tokenizer: Tokenizer for the model
             device: Device to run the model on
             use_precision_weighting: Whether to use precision weighting
         Predict contradiction scores for a list of texts.
-
         Args:
             texts: List of texts to predict
-
         Returns:
             Array of contradiction scores
         Explain why two claims are contradictory.
-
         Args:
             claim1: First claim
             claim2: Second claim
@@ -119,48 +100,37 @@ class ContradictionExplainer:
             use_negation_detection: Whether to use negation detection
             use_multimodal_factors: Whether to use multimodal factors
             metadata: Additional metadata for explanation
-
         Returns:
             Contradiction explanation
         Detect negation patterns between two claims.
-
         Args:
             claim1: First claim
             claim2: Second claim
-
         Returns:
             List of detected negation patterns
         Get context around a word in a text.
-
         Args:
             text: Text to search in
             word: Word to find
             window: Context window size
-
         Returns:
             Context around the word
         Analyze multimodal factors for contradiction.
-
         Args:
             metadata: Metadata for the claims
-
         Returns:
             Dictionary of multimodal factors
     Visualizer for contradiction explanations.
-
     This class provides methods for visualizing contradiction explanations
     using SHAP and other visualization techniques.
         self.has_shap = HAS_SHAP
-
     def visualize_shap(self, explanation: ContradictionExplanation, output_path: Optional[str] = None):
         """
         Visualize SHAP values for a contradiction explanation.
-
         Args:
             explanation: Contradiction explanation
             output_path: Path to save the visualization
         Generate an HTML report for a contradiction explanation.
-
         Args:
             explanation: Contradiction explanation
             output_path: Path to save the HTML report
@@ -198,7 +168,6 @@ class ContradictionExplainer:
                         <p>Explanation Type: {explanation.explanation_type}</p>
                         <p>Contradiction Score: <span class="score">{explanation.contradiction_score:.4f}</span></p>
                     </div>
-
                     <div class="claims">
                         <h2>Claims</h2>
                         <div class="claim">

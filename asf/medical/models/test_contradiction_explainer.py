@@ -1,8 +1,6 @@
-"""
 Test Contradiction Explainer
 
 This script tests the SHAP-based explainability for contradiction analysis results.
-"""
 
 import argparse
 import logging

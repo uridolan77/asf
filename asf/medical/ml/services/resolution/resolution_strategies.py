@@ -1,20 +1,15 @@
-"""
 Resolution strategies for medical contradictions.
-
 This module provides strategies for resolving contradictions in medical literature
 based on evidence-based medicine principles.
-"""
-
 import logging
 from datetime import datetime
-
-from asf.medical.ml.services.enhanced_contradiction_classifier import (
+from typing import Dict, Any
+from asf.medical.ml.services.contradiction_classifier_service import (
     ContradictionType,
     ClinicalSignificance,
-    EvidenceQuality,
-    StudyDesignHierarchy
+    EvidenceQuality
 )
-
+from asf.medical.ml.services.resolution.resolution_models import StudyDesignHierarchy
 from asf.medical.ml.services.resolution.resolution_models import (
     ResolutionStrategy,
     ResolutionConfidence,
@@ -22,42 +17,33 @@ from asf.medical.ml.services.resolution.resolution_models import (
     STUDY_DESIGN_HIERARCHY,
     STUDY_DESIGN_KEYWORDS
 )
-
 from asf.medical.ml.services.resolution.resolution_utils import (
     calculate_confidence_from_hierarchy_diff,
     assess_population_relevance
 )
-
 logger = logging.getLogger(__name__)
-
 async def resolve_by_evidence_hierarchy(contradiction: Dict[str, Any]) -> Dict[str, Any]:
     claim1 = contradiction.get("claim1", "")
     claim2 = contradiction.get("claim2", "")
     metadata1 = contradiction.get("metadata1", {})
     metadata2 = contradiction.get("metadata2", {})
     classification = contradiction.get("classification", {})
-    
     evidence_quality = classification.get("evidence_quality", {})
     quality1 = evidence_quality.get("claim1", EvidenceQuality.UNKNOWN)
     quality2 = evidence_quality.get("claim2", EvidenceQuality.UNKNOWN)
     quality_score1 = evidence_quality.get("claim1_score", 0)
     quality_score2 = evidence_quality.get("claim2_score", 0)
-    
     study_design1 = metadata1.get("study_design", "unknown").lower()
     study_design2 = metadata2.get("study_design", "unknown").lower()
-    
     design_type1 = StudyDesignHierarchy.UNKNOWN
     design_type2 = StudyDesignHierarchy.UNKNOWN
-    
     for design, keywords in STUDY_DESIGN_KEYWORDS.items():
         if any(keyword in study_design1 for keyword in keywords):
             design_type1 = design
         if any(keyword in study_design2 for keyword in keywords):
             design_type2 = design
-    
     hierarchy_pos1 = STUDY_DESIGN_HIERARCHY.get(design_type1, 0)
     hierarchy_pos2 = STUDY_DESIGN_HIERARCHY.get(design_type2, 0)
-    
     result = {
         "recommendation": RecommendationType.INCONCLUSIVE,
         "confidence": ResolutionConfidence.LOW,
@@ -76,7 +62,6 @@ async def resolve_by_evidence_hierarchy(contradiction: Dict[str, Any]) -> Dict[s
             "quality_differential": quality_score1 - quality_score2
         }
     }
-    
     if hierarchy_pos1 > hierarchy_pos2:
         result["recommendation"] = RecommendationType.FAVOR_CLAIM1
         result["recommended_claim"] = claim1
@@ -103,18 +88,14 @@ async def resolve_by_evidence_hierarchy(contradiction: Dict[str, Any]) -> Dict[s
             result["recommended_claim"] = "Evidence is insufficient to determine which claim is more reliable."
             result["confidence"] = ResolutionConfidence.LOW
             result["confidence_score"] = 0.3
-    
     return result
-
 async def resolve_by_sample_size(contradiction: Dict[str, Any]) -> Dict[str, Any]:
     claim1 = contradiction.get("claim1", "")
     claim2 = contradiction.get("claim2", "")
     metadata1 = contradiction.get("metadata1", {})
     metadata2 = contradiction.get("metadata2", {})
-    
     sample_size1 = metadata1.get("sample_size", 0)
     sample_size2 = metadata2.get("sample_size", 0)
-    
     result = {
         "recommendation": RecommendationType.INCONCLUSIVE,
         "confidence": ResolutionConfidence.LOW,
@@ -127,15 +108,12 @@ async def resolve_by_sample_size(contradiction: Dict[str, Any]) -> Dict[str, Any
             "absolute_difference": abs(sample_size1 - sample_size2)
         }
     }
-    
     if sample_size1 <= 0 or sample_size2 <= 0:
         result["recommendation"] = RecommendationType.INCONCLUSIVE
         result["recommended_claim"] = "Sample size information is not available for one or both claims."
         return result
-    
     ratio = max(sample_size1, sample_size2) / max(1, min(sample_size1, sample_size2))
     result["sample_size_comparison"]["ratio"] = ratio
-    
     if sample_size1 > sample_size2:
         if ratio >= 10:  # 10x larger
             result["recommendation"] = RecommendationType.FAVOR_CLAIM1
@@ -183,30 +161,23 @@ async def resolve_by_sample_size(contradiction: Dict[str, Any]) -> Dict[str, Any
         result["recommended_claim"] = "Both claims have the same sample size."
         result["confidence"] = ResolutionConfidence.VERY_LOW
         result["confidence_score"] = 0.3
-    
     power1 = metadata1.get("statistical_power")
     power2 = metadata2.get("statistical_power")
-    
     if power1 is not None and power2 is not None:
         result["sample_size_comparison"]["claim1_power"] = power1
         result["sample_size_comparison"]["claim2_power"] = power2
-        
         if result["recommendation"] == RecommendationType.FAVOR_CLAIM1 and power1 > 0.8 and power1 > power2:
             result["confidence_score"] += 0.1
         elif result["recommendation"] == RecommendationType.FAVOR_CLAIM2 and power2 > 0.8 and power2 > power1:
             result["confidence_score"] += 0.1
-    
     return result
-
 async def resolve_by_recency(contradiction: Dict[str, Any]) -> Dict[str, Any]:
     claim1 = contradiction.get("claim1", "")
     claim2 = contradiction.get("claim2", "")
     metadata1 = contradiction.get("metadata1", {})
     metadata2 = contradiction.get("metadata2", {})
-    
     pub_year1 = metadata1.get("publication_year", 0)
     pub_year2 = metadata2.get("publication_year", 0)
-    
     result = {
         "recommendation": RecommendationType.INCONCLUSIVE,
         "confidence": ResolutionConfidence.LOW,
@@ -219,15 +190,12 @@ async def resolve_by_recency(contradiction: Dict[str, Any]) -> Dict[str, Any]:
             "current_year": datetime.now().year
         }
     }
-    
     if pub_year1 <= 0 or pub_year2 <= 0:
         result["recommendation"] = RecommendationType.INCONCLUSIVE
         result["recommended_claim"] = "Publication year information is not available for one or both claims."
         return result
-    
     year_diff = abs(pub_year1 - pub_year2)
     result["recency_comparison"]["year_difference"] = year_diff
-    
     if pub_year1 > pub_year2:
         if year_diff >= 10:  # 10+ years difference
             result["recommendation"] = RecommendationType.FAVOR_CLAIM1
@@ -275,19 +243,15 @@ async def resolve_by_recency(contradiction: Dict[str, Any]) -> Dict[str, Any]:
         result["recommended_claim"] = "Both claims were published in the same year."
         result["confidence"] = ResolutionConfidence.VERY_LOW
         result["confidence_score"] = 0.3
-    
     current_year = datetime.now().year
     claim1_age = current_year - pub_year1
     claim2_age = current_year - pub_year2
-    
     result["recency_comparison"]["claim1_age"] = claim1_age
     result["recency_comparison"]["claim2_age"] = claim2_age
-    
     if claim1_age > 15 and claim2_age > 15:
         result["confidence_score"] = max(0.2, result["confidence_score"] - 0.2)
         result["confidence"] = ResolutionConfidence.LOW
         result["recommendation_note"] = "Both studies are more than 15 years old, which reduces confidence in the resolution."
-    
     if result["recommendation"] == RecommendationType.FAVOR_CLAIM1 and claim1_age > 15 and claim2_age <= 15:
         result["recommendation"] = RecommendationType.CONDITIONAL
         result["recommended_claim"] = f"While {claim1} is from a more recent study, it is still over 15 years old. Consider the possibility that more recent evidence may exist."
@@ -298,22 +262,17 @@ async def resolve_by_recency(contradiction: Dict[str, Any]) -> Dict[str, Any]:
         result["recommended_claim"] = f"While {claim2} is from a more recent study, it is still over 15 years old. Consider the possibility that more recent evidence may exist."
         result["confidence_score"] = max(0.3, result["confidence_score"] - 0.3)
         result["confidence"] = ResolutionConfidence.LOW
-    
     return result
-
 async def resolve_by_population_specificity(contradiction: Dict[str, Any]) -> Dict[str, Any]:
     claim1 = contradiction.get("claim1", "")
     claim2 = contradiction.get("claim2", "")
     metadata1 = contradiction.get("metadata1", {})
     metadata2 = contradiction.get("metadata2", {})
     classification = contradiction.get("classification", {})
-    
     population1 = metadata1.get("population", "")
     population2 = metadata2.get("population", "")
-    
     population_difference = classification.get("population_difference", {})
     differences = population_difference.get("differences", [])
-    
     result = {
         "recommendation": RecommendationType.INCONCLUSIVE,
         "confidence": ResolutionConfidence.LOW,
@@ -325,15 +284,12 @@ async def resolve_by_population_specificity(contradiction: Dict[str, Any]) -> Di
             "differences": differences
         }
     }
-    
     if not population1 and not population2 and not differences:
         result["recommendation"] = RecommendationType.INCONCLUSIVE
         result["recommended_claim"] = "Population information is not available for one or both claims."
         return result
-    
     population_relevance = assess_population_relevance(population1, population2, differences)
     result["population_comparison"]["relevance_assessment"] = population_relevance
-    
     if population_relevance["more_relevant_population"] == "claim1":
         result["recommendation"] = RecommendationType.FAVOR_CLAIM1
         result["recommended_claim"] = claim1
@@ -357,5 +313,4 @@ async def resolve_by_population_specificity(contradiction: Dict[str, Any]) -> Di
             result["recommended_claim"] = "There is insufficient information about population differences to resolve the contradiction."
             result["confidence"] = ResolutionConfidence.LOW
             result["confidence_score"] = 0.3
-    
     return result

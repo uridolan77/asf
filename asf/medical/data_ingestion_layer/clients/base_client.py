@@ -1,9 +1,7 @@
-"""
 Base client for external API clients.
 
 This module provides a base class for external API clients with retry logic
 and circuit breaker pattern.
-"""
 
 import logging
 import json
@@ -24,16 +22,24 @@ ResponseType = TypeVar("ResponseType")
 
 
 class BaseClient(ABC, Generic[ResponseType]):
-    """
     Base class for external API clients.
     
     This class provides common functionality for external API clients,
     including retry logic and circuit breaker pattern.
-    """
     
     def __init__(
         self,
         base_url: str,
+            """
+            __init__ function.
+            
+            This function provides functionality for...
+            Args:
+                base_url: Description of base_url
+                timeout: Description of timeout
+                max_retries: Description of max_retries
+                circuit_breaker_name: Description of circuit_breaker_name
+            """
         timeout: float = 30.0,
         max_retries: int = 3,
         circuit_breaker_name: Optional[str] = None,
@@ -65,6 +71,18 @@ class BaseClient(ABC, Generic[ResponseType]):
     def get(
         self,
         path: str,
+            """
+            get function.
+            
+            This function provides functionality for...
+            Args:
+                path: Description of path
+                params: Description of params
+                headers: Description of headers
+            
+            Returns:
+                Description of return value
+            """
         params: Optional[Dict[str, Any]] = None,
         headers: Optional[Dict[str, str]] = None,
     ) -> ResponseType:
@@ -95,6 +113,20 @@ class BaseClient(ABC, Generic[ResponseType]):
     def post(
         self,
         path: str,
+            """
+            post function.
+            
+            This function provides functionality for...
+            Args:
+                path: Description of path
+                data: Description of data
+                json_data: Description of json_data
+                params: Description of params
+                headers: Description of headers
+            
+            Returns:
+                Description of return value
+            """
         data: Optional[Dict[str, Any]] = None,
         json_data: Optional[Dict[str, Any]] = None,
         params: Optional[Dict[str, Any]] = None,
@@ -238,15 +270,23 @@ class BaseClient(ABC, Generic[ResponseType]):
 
 
 class JSONClient(BaseClient[Dict[str, Any]]):
-    """
     Client for JSON APIs.
     
     This class provides a client for APIs that return JSON responses.
-    """
     
     def __init__(
         self,
         base_url: str,
+            """
+            __init__ function.
+            
+            This function provides functionality for...
+            Args:
+                base_url: Description of base_url
+                timeout: Description of timeout
+                max_retries: Description of max_retries
+                circuit_breaker_name: Description of circuit_breaker_name
+            """
         timeout: float = 30.0,
         max_retries: int = 3,
         circuit_breaker_name: Optional[str] = None,

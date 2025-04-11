@@ -1,10 +1,22 @@
+"""
+Module description.
+
+This module provides functionality for...
+"""
 from asf.layer1_knowledge_substrate.temporal.adaptive_metadata import AdaptiveTemporalMetadata
 
 class PerceptualFeature:
-    """
     Represents an individual feature extracted from perceptual input.
-    """
     def __init__(self, name, value, confidence=0.5):
+        """
+        __init__ function.
+        
+        This function provides functionality for...
+        Args:
+            name: Description of name
+            value: Description of value
+            confidence: Description of confidence
+        """
         self.name = name
         self.value = value  # Could be a scalar, vector, or more complex structure
         self.confidence = confidence

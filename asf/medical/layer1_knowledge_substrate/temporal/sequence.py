@@ -1,13 +1,23 @@
+"""
+Module description.
+
+This module provides functionality for...
+"""
 import time
 from collections import deque
 import numpy as np
 
 class TemporalSequence:
-    """
     Represents a sequence of temporal events for pattern detection.
     Optimized for performance with efficient data structures and operations.
-    """
     def __init__(self, max_length=100):
+        """
+        __init__ function.
+        
+        This function provides functionality for...
+        Args:
+            max_length: Description of max_length
+        """
         self.events = deque(maxlen=max_length)
         self.timestamps = deque(maxlen=max_length)
         self._max_length = max_length

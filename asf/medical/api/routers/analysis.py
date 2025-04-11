@@ -1,9 +1,7 @@
-"""
 Analysis router for the Medical Research Synthesizer API.
 
 This module provides endpoints for analyzing medical literature,
 including contradiction detection and specialized analyses.
-"""
 
 import logging
 from fastapi import APIRouter, Depends, HTTPException, status, Request, Response

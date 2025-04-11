@@ -1,3 +1,8 @@
+"""
+Module description.
+
+This module provides functionality for...
+"""
 import os
 import sys
 import logging

@@ -1,8 +1,6 @@
-"""
 Script to retry failed tasks in the Medical Research Synthesizer.
 
 This script is intended to be run as a scheduled job to retry failed tasks.
-"""
 
 import sys
 import asyncio
@@ -77,7 +75,7 @@ async def retry_failed_tasks(max_age_days: int = 7, max_retries: int = 3):
     return retried_count
 
 def main():
-    """Main entry point."""
+    Main entry point.
     parser = argparse.ArgumentParser(description="Task Retry")
     parser.add_argument("--max-age-days", type=int, default=7, help="Maximum age in days for tasks to be considered for retry")
     parser.add_argument("--max-retries", type=int, default=3, help="Maximum number of retries")

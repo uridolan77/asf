@@ -1,8 +1,6 @@
-"""
 Script to run task workers for the Medical Research Synthesizer.
 
 This script initializes and starts task workers that consume messages from the message broker.
-"""
 
 import sys
 import asyncio
@@ -70,11 +68,9 @@ async def run_workers():
         logger.info("Task workers stopped")
 
 def main():
-    """
     Main entry point.
     
     This function parses command-line arguments and runs the task workers.
-    """
     parser = argparse.ArgumentParser(description="Run task workers")
     parser.add_argument("--debug", action="store_true", help="Enable debug logging")
     args = parser.parse_args()

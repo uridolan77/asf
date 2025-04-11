@@ -1,8 +1,6 @@
-"""
 Enhanced Task Storage for the Medical Research Synthesizer.
 
 This module provides a persistent storage for task results using Redis.
-"""
 
 import os
 import time
@@ -13,13 +11,11 @@ import asyncio
 logger = logging.getLogger(__name__)
 
 class EnhancedTaskStorage:
-    """
     Enhanced storage for task results.
     
     This class provides a persistent storage for task results using Redis.
     It ensures that task results are available across multiple instances
     of the application.
-    """
     
     _instance = None
     _initialized = False
@@ -39,6 +35,15 @@ class EnhancedTaskStorage:
     def __init__(
         self,
         redis_url: Optional[str] = None,
+            """
+            __init__ function.
+            
+            This function provides functionality for...
+            Args:
+                redis_url: Description of redis_url
+                ttl: Description of ttl
+                namespace: Description of namespace
+            """
         ttl: int = 86400,  # 24 hours
         namespace: str = "asf:medical:tasks:"
     ):

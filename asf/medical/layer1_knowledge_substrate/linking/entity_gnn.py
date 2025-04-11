@@ -1,3 +1,8 @@
+"""
+Module description.
+
+This module provides functionality for...
+"""
 import asyncio
 import datetime
 
@@ -8,12 +13,22 @@ from torch_geometric.nn import GATConv
 
 
 class PerceptualInputType(str):  # Mock
+    """
+    PerceptualInputType class.
+    
+    This class provides functionality for...
+    """
     TEXT = "text"
     IMAGE = "image"
     AUDIO = "audio"
     VIDEO = "video"
 
 class ChronographMiddleware:  # Mock
+    """
+    ChronographMiddleware class.
+    
+    This class provides functionality for...
+    """
     async def get_entity(self, entity_id: str, include_history: bool = False) -> Optional[Dict]:
         print(f"Mock Chronograph: get_entity({entity_id}, {include_history})")
         return {"id": entity_id, "features": {}, "input_type": PerceptualInputType.TEXT, "cross_modal_links": []} # Added input type
@@ -53,6 +68,11 @@ class ChronographMiddleware:  # Mock
         print(f"MOCK: update_entity_embedding({entity_id}, {embedding[:3]}...)") # Print a slice
 
 class ChronoGnosisLayer:  # Mock
+    """
+    ChronoGnosisLayer class.
+    
+    This class provides functionality for...
+    """
     async def generate_embeddings(self, entity_ids: List[str]) -> Dict[str, Dict]:
       return {entity_id: {"embedding": [0.1 + i*0.01]*128} for i, entity_id in enumerate(entity_ids)} # 128 dim, unique
     async def generate_context_embedding(self, context:Dict):
@@ -63,19 +83,48 @@ class ChronoGnosisLayer:  # Mock
         return 0.7 # Mock prediction
 
 class PerceptualEntity:  # Mock (but more complete)
+    """
+    PerceptualEntity class.
+    
+    This class provides functionality for...
+    """
     def __init__(self, entity_id: str, input_type: str, features: Dict, cross_modal_links:Optional[List]=None):
+        """
+        __init__ function.
+        
+        This function provides functionality for...
+        Args:
+            entity_id: Description of entity_id
+            input_type: Description of input_type
+            features: Description of features
+            cross_modal_links: Description of cross_modal_links
+        """
         self.id = entity_id
         self.input_type = input_type
         self.features = features # Dictionary of features
         self.cross_modal_links = cross_modal_links if cross_modal_links is not None else []
 
     def get_feature_vector(self) -> List[float]:
+        """
+        get_feature_vector function.
+        
+        This function provides functionality for...
+        Args:
+        
+        Returns:
+            Description of return value
+        """
       return self.features.get("embedding", [])
 
     def __repr__(self):
         return f"PerceptualEntity(id={self.id}, type={self.input_type}, links={self.cross_modal_links})"
 
 class EntityLinkingGNNConfig(BaseModel):
+    """
+    EntityLinkingGNNConfig class.
+    
+    This class provides functionality for...
+    """
     feature_dim: int = Field(128, description="Dimension of entity feature vectors.")
     hidden_dim: int = Field(64, description="Dimension of hidden layers in the GNN.")
     num_relation_types: int = Field(10, description="Number of distinct relation types.")
@@ -85,11 +134,18 @@ class EntityLinkingGNNConfig(BaseModel):
     gat_heads: int = Field(4, description="Number of attention heads in GATConv.")
 
 class EntityLinkingGNN:
-    """
     Links entities across modalities using Graph Neural Networks.
-    """
 
     def __init__(self, chronograph: ChronographMiddleware, gnosis: ChronoGnosisLayer, config: Optional[EntityLinkingGNNConfig] = None):
+        """
+        __init__ function.
+        
+        This function provides functionality for...
+        Args:
+            chronograph: Description of chronograph
+            gnosis: Description of gnosis
+            config: Description of config
+        """
         self.config = config or EntityLinkingGNNConfig()
         self.chronograph = chronograph
         self.gnosis = gnosis

@@ -1,19 +1,14 @@
 """
 Client library for the Medical Research Synthesizer API.
-
 This module provides a client library for interacting with the Medical Research Synthesizer API.
 """
-
-import os
 import json
 import logging
 import httpx
-from typing import Dict, Any, List, Optional, Union
+from typing import Dict, Any, List, Optional
 from pydantic import BaseModel, Field
-
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
 class APIResponse(BaseModel):
     """API response model."""
     success: bool = Field(..., description="Whether the request was successful")
@@ -21,20 +16,16 @@ class APIResponse(BaseModel):
     data: Optional[Any] = Field(None, description="Response data")
     errors: Optional[List[Dict[str, Any]]] = Field(None, description="Error details")
     meta: Optional[Dict[str, Any]] = Field(None, description="Metadata")
-
 class MedicalResearchSynthesizerClient:
     """
     Client for the Medical Research Synthesizer API.
-    
     This class provides methods for interacting with the Medical Research Synthesizer API.
         Initialize the client.
-        
         Args:
             base_url: Base URL of the API
             api_version: API version
             token: Authentication token
         await self.client.aclose()
-    
     async def _request(
         self, 
         method: str, 
@@ -45,7 +36,6 @@ class MedicalResearchSynthesizerClient:
         headers = {}
         if self.token:
             headers["Authorization"] = f"Bearer {self.token}"
-        
         try:
             response = await self.client.request(
                 method=method,
@@ -81,7 +71,6 @@ class MedicalResearchSynthesizerClient:
                 errors=[{"detail": str(e)}],
                 meta={}
             )
-    
     async def login(self, email: str, password: str) -> APIResponse:
         try:
             response = await self.client.post(
@@ -90,9 +79,7 @@ class MedicalResearchSynthesizerClient:
             )
             response.raise_for_status()
             data = response.json()
-            
             self.token = data["access_token"]
-            
             return APIResponse(
                 success=True,
                 message="Login successful",
@@ -124,10 +111,8 @@ class MedicalResearchSynthesizerClient:
                 errors=[{"detail": str(e)}],
                 meta={}
             )
-    
     async def get_current_user(self) -> APIResponse:
         return await self._request("GET", "/auth/me")
-    
     async def search(
         self, 
         query: str, 
@@ -138,7 +123,6 @@ class MedicalResearchSynthesizerClient:
             "/search", 
             data={"query": query, "max_results": max_results}
         )
-    
     async def search_pico(
         self,
         condition: str,
@@ -162,7 +146,6 @@ class MedicalResearchSynthesizerClient:
                 "max_results": max_results
             }
         )
-    
     async def analyze_contradictions(
         self,
         query: str,
@@ -184,10 +167,8 @@ class MedicalResearchSynthesizerClient:
                 "use_lorentz": use_lorentz
             }
         )
-    
     async def analyze_cap(self) -> APIResponse:
         return await self._request("GET", "/analysis/cap")
-    
     async def screen_articles(
         self,
         query: str,
@@ -205,7 +186,6 @@ class MedicalResearchSynthesizerClient:
                 "criteria": criteria
             }
         )
-    
     async def assess_bias(
         self,
         query: str,
@@ -221,7 +201,6 @@ class MedicalResearchSynthesizerClient:
                 "domains": domains
             }
         )
-    
     async def create_knowledge_base(
         self,
         name: str,
@@ -237,19 +216,14 @@ class MedicalResearchSynthesizerClient:
                 "update_schedule": update_schedule
             }
         )
-    
     async def list_knowledge_bases(self) -> APIResponse:
         return await self._request("GET", "/knowledge-base")
-    
     async def get_knowledge_base(self, kb_id: str) -> APIResponse:
         return await self._request("GET", f"/knowledge-base/{kb_id}")
-    
     async def update_knowledge_base(self, kb_id: str) -> APIResponse:
         return await self._request("POST", f"/knowledge-base/{kb_id}/update")
-    
     async def delete_knowledge_base(self, kb_id: str) -> APIResponse:
         return await self._request("DELETE", f"/knowledge-base/{kb_id}")
-    
     async def export_results(
         self,
         format: str,
@@ -265,7 +239,6 @@ class MedicalResearchSynthesizerClient:
             data["max_results"] = max_results
         else:
             raise ValueError("Either result_id or query must be provided")
-        
         return await self._request(
             "POST",
             f"/export/{format}",

@@ -1,8 +1,6 @@
-"""
 Script to run the full Medical Research Synthesizer application.
 
 This script initializes and starts all components of the application.
-"""
 
 import sys
 import argparse

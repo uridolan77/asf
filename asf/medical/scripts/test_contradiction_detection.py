@@ -1,19 +1,13 @@
 import sys
 import json
-import asyncio
 import logging
 from pathlib import Path
-
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
-
-from asf.medical.ml.services.unified_contradiction_service import UnifiedUnifiedUnifiedContradictionService
-
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
-
 TEST_CLAIMS = [
     {
         "claim1": "Statin therapy reduces the risk of cardiovascular events in patients with high cholesterol.",
@@ -64,7 +58,6 @@ TEST_CLAIMS = [
         }
     }
 ]
-
 TEST_ARTICLES = [
     {
         "pmid": "12345678",
@@ -117,10 +110,8 @@ TEST_ARTICLES = [
         "effect_size": 0.05
     }
 ]
-
 async def test_contradiction_service():
     logger.info("Testing API request creation...")
-
     request = {
         "claim1": "Statin therapy reduces the risk of cardiovascular events in patients with high cholesterol.",
         "claim2": "Statin therapy does not reduce the risk of cardiovascular events in patients with high cholesterol.",
@@ -140,8 +131,6 @@ async def test_contradiction_service():
         },
         "threshold": 0.7
     }
-
     logger.info(f"API request: {json.dumps(request, indent=2)}")
     logger.info("API request validation successful")
-
 async def main():

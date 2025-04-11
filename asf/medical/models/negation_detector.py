@@ -1,9 +1,7 @@
-"""
 Negation Detection Module
 
 This module provides utilities for detecting negation in medical text,
 which is crucial for accurate contradiction detection.
-"""
 
 import logging
 import re
@@ -14,14 +12,12 @@ logging.basicConfig(
 logger = logging.getLogger("negation-detector")
 
 class NegationDetector:
-    """
     Detect negated concepts in medical text.
     
     This class provides methods for identifying negated terms and concepts
     in medical text, which is crucial for accurate contradiction detection.
     It can use spaCy with negspaCy if available, or fall back to a rule-based
     approach using regular expressions.
-    """
     
     def __init__(self, use_spacy: bool = True):
         """
@@ -241,12 +237,10 @@ class NegationDetector:
 
 
 class NegationAwareContradictionDetector:
-    """
     Contradiction detector that is aware of negation.
     
     This class combines negation detection with other contradiction detection
     methods to improve accuracy.
-    """
     
     def __init__(self, negation_detector: NegationDetector, biomedlm_scorer=None):
         """

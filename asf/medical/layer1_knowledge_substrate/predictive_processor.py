@@ -1,3 +1,8 @@
+"""
+Module description.
+
+This module provides functionality for...
+"""
 import time
 import numpy as np
 from collections import defaultdict
@@ -7,19 +12,23 @@ import logging
 logger = logging.getLogger(__name__)
 
 class PredictiveProcessor:
-    """
     Implements Seth's predictive processing principles across the ASF system.
-
+    
     Manages the balance between predictions and data-driven updates,
     tracking prediction errors and precision weighting.
-
+    
     This is a cross-cutting component that coordinates predictive processing
     across all parts of Layer 1.
-
+    
     Philosophical influences: Seth's Predictive Processing, Friston's Free Energy
-    """
 
     def __init__(self):
+        """
+        __init__ function.
+        
+        This function provides functionality for...
+        Args:
+        """
         self.prediction_models = {}
 
         self.prediction_errors = defaultdict(list)
@@ -160,19 +169,29 @@ class PredictiveProcessor:
         }
 
     def get_precision_weight(self, entity_id):
-        """
         Get current precision weight for entity
-
+        
         Higher precision = more predictable entity = higher weight
-        """
+        
+        Args:
+            entity_id: Description of entity_id
+        
+        
+        Returns:
+            Description of return value
         return self.precision_weights.get(entity_id, self.default_precision)
 
     def get_learning_rate(self, entity_id):
-        """
         Get adaptive learning rate for entity
-
+        
         This balances learning speed based on prediction errors and precision
-        """
+        
+        Args:
+            entity_id: Description of entity_id
+        
+        
+        Returns:
+            Description of return value
         return self.learning_rates.get(entity_id, 0.3)  # Default learning rate
 
     def _calculate_prediction_error(self, predicted, actual):
@@ -418,6 +437,15 @@ if __name__ == '__main__':
     print(f"\nCombined Vector Prediction: Value = {combined_value}, Confidence = {combined_confidence:.2f}")
 
     def example_integration_function(predicted_value, knowledge_base, entity_id):
+        """
+        example_integration_function function.
+        
+        This function provides functionality for...
+        Args:
+            predicted_value: Description of predicted_value
+            knowledge_base: Description of knowledge_base
+            entity_id: Description of entity_id
+        """
         print(f"Integrating prediction: {predicted_value} for entity {entity_id} into knowledge base.")
         current_knowledge = knowledge_base.get_knowledge(entity_id)
         if current_knowledge:
@@ -437,10 +465,15 @@ if __name__ == '__main__':
     print(knowledge_base.get_knowledge("entity_1"))
 
     def register_prediction(self, entity_id, context_id, predicted_value, metadata=None):
-        """
         Register a prediction.  predicted_value is now expected to be a tuple: (mean, variance)
         for probabilistic predictions.  It can still be a single value for backwards compatibility.
-        """
+        
+        Args:
+            entity_id: Description of entity_id
+            context_id: Description of context_id
+            predicted_value: Description of predicted_value
+            metadata: Description of metadata
+        
         prediction_id = f"{entity_id}_{context_id}_{int(time.time()*1000)}"
 
         self.prediction_models[prediction_id] = {
@@ -526,9 +559,12 @@ if __name__ == '__main__':
 
 
     def predict_with_precision(self, predictions, entity_id=None):
-      """
-      Combine predictions, weighted by precision. Now handles distributions.
-      """
+        Combine predictions, weighted by precision. Now handles distributions.
+        
+        Args:
+            predictions: Description of predictions
+            entity_id: Description of entity_id
+        
       if not predictions:
           return None, 0.0
 

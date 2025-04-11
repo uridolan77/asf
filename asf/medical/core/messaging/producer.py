@@ -1,8 +1,6 @@
-"""
 Message producer for the Medical Research Synthesizer.
 
 This module provides a message producer for publishing messages to the message broker.
-"""
 
 import uuid
 from typing import Dict, Any, Optional, Union
@@ -18,12 +16,10 @@ from asf.medical.core.messaging.rabbitmq_broker import (
 logger = get_logger(__name__)
 
 class MessageProducer:
-    """
     Message producer for publishing messages to the message broker.
-
+    
     This class provides methods for publishing messages to exchanges
     with various options for routing, delivery, and message properties.
-    """
 
     def __init__(self, broker: RabbitMQBroker = None):
         """

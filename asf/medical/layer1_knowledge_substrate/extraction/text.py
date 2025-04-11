@@ -1,12 +1,22 @@
+"""
+Module description.
+
+This module provides functionality for...
+"""
 import numpy as np
 from transformers import BertModel
 from asf.medical.layer1_knowledge_substrate.extraction.base import FeatureExtractor
 
 class TextFeatureExtractor(FeatureExtractor):
-    """
     Extracts features from text inputs using BERT.
-    """
     def __init__(self, model_name='bert-base-uncased'):
+        """
+        __init__ function.
+        
+        This function provides functionality for...
+        Args:
+            model_name: Description of model_name
+        """
         super().__init__()
         self.model = BertModel.from_pretrained(model_name)
         self.tokenizer = None  # Would initialize tokenizer in real implementation

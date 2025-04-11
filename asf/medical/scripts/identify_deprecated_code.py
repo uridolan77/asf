@@ -1,10 +1,7 @@
 import os
 import re
 import ast
-import sys
-from pathlib import Path
-from typing import List, Dict, Set, Tuple, Optional
-
+from typing import List, Dict, Tuple
 DEPRECATED_FILE_PATTERNS = [r"_new\.py$", r"_old\.py$", r"\.bak$", r"\.old$"]
 DEPRECATED_COMMENT_PATTERNS = [
     r"#\s*TODO",
@@ -14,7 +11,6 @@ DEPRECATED_COMMENT_PATTERNS = [
     r"\'\'\'.*DEPRECATED.*\'\'\'",
 ]
 FASTAPI_ROUTE_PATTERN = r"@\w+\.(?:get|post|put|delete|patch|options|head)\s*\(\s*[\"\']([^\"\']+)[\"\']"
-
 def find_python_files(directory: str) -> List[str]:
     """Find all Python files in the given directory and its subdirectories."""
     python_files = []
@@ -23,7 +19,6 @@ def find_python_files(directory: str) -> List[str]:
             if file.endswith(".py"):
                 python_files.append(os.path.join(root, file))
     return python_files
-
 def check_deprecated_filenames(files: List[str]) -> List[str]:
     """Check for files with deprecated naming patterns."""
     deprecated_files = []
@@ -34,7 +29,6 @@ def check_deprecated_filenames(files: List[str]) -> List[str]:
                 deprecated_files.append(file)
                 break
     return deprecated_files
-
 def check_deprecated_comments(files: List[str]) -> Dict[str, List[Tuple[int, str]]]:
     """Check for deprecated comments in files."""
     deprecated_comments = {}
@@ -54,12 +48,10 @@ def check_deprecated_comments(files: List[str]) -> Dict[str, List[Tuple[int, str
     logger.error(f\"Error reading {file}: {str(e)}\")
     raise DatabaseError(f\"Error reading {file}: {str(e)}\")
     return deprecated_comments
-
 def find_duplicate_routes(files: List[str]) -> Dict[str, List[str]]:
     """Find duplicate route definitions in FastAPI routers."""
     routes = {}
     duplicate_routes = {}
-
     for file in files:
         try:
             with open(file, "r", encoding="utf-8") as f:
@@ -75,22 +67,17 @@ def find_duplicate_routes(files: List[str]) -> Dict[str, List[str]]:
         except Exception as e:
     logger.error(f\"Error reading {file}: {str(e)}\")
     raise DatabaseError(f\"Error reading {file}: {str(e)}\")
-
     return duplicate_routes
-
 def find_unused_imports(files: List[str]) -> Dict[str, List[str]]:
     """Find unused imports in Python files."""
     unused_imports = {}
-
     for file in files:
         try:
             with open(file, "r", encoding="utf-8") as f:
                 content = f.read()
-
             tree = ast.parse(content)
             imports = []
             used_names = set()
-
             # Find all imports
             for node in ast.walk(tree):
                 if isinstance(node, ast.Import):
@@ -106,7 +93,6 @@ def find_unused_imports(files: List[str]) -> Dict[str, List[str]]:
                             imports.append(f"{module}.{name.name}")
                         else:
                             imports.append(name.name)
-
             # Find all used names
             for node in ast.walk(tree):
                 if isinstance(node, ast.Name):
@@ -115,28 +101,21 @@ def find_unused_imports(files: List[str]) -> Dict[str, List[str]]:
                     # This is a simplification and might miss some cases
                     if isinstance(node.value, ast.Name):
                         used_names.add(node.value.id)
-
             # Find unused imports
             file_unused_imports = []
             for imp in imports:
                 base_name = imp.split(".")[0]
                 if base_name not in used_names:
                     file_unused_imports.append(imp)
-
             if file_unused_imports:
                 unused_imports[file] = file_unused_imports
-
         except Exception as e:
     logger.error(f\"Error analyzing {file}: {str(e)}\")
     raise DatabaseError(f\"Error analyzing {file}: {str(e)}\")
-
     return unused_imports
-
 def main():
     """Main function to run the script.
-
     Args:
         # TODO: Add parameter descriptions
-
     Returns:
         # TODO: Add return description

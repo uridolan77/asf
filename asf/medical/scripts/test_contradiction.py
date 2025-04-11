@@ -1,31 +1,23 @@
 """
 Test script for enhanced contradiction detection.
-
 This script tests the enhanced contradiction detection service.
 """
-
-import asyncio
 import logging
 import os
 import sys
-from typing import Dict, List, Any
-
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-
 from asf.medical.ml.services.enhanced_contradiction_service import (
-    EnhancedUnifiedUnifiedContradictionService, ContradictionType, ContradictionConfidence
+    ContradictionService, ContradictionType, ContradictionConfidence
 )
 from asf.medical.ml.models.biomedlm import BioMedLMService
 from asf.medical.ml.models.shap_explainer import SHAPExplainer
 from asf.medical.ml.services.temporal_service import TemporalService
 from asf.medical.ml.models.tsmixer import TSMixerService
-
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
-
 TEST_CLAIMS = [
     {
         "claim1": "Statin therapy reduces the risk of cardiovascular events in patients with high cholesterol.",
@@ -46,7 +38,6 @@ TEST_CLAIMS = [
         "expected_type": ContradictionType.DIRECT
     }
 ]
-
 TEST_ARTICLES = [
     {
         "pmid": "12345",
@@ -76,17 +67,14 @@ TEST_ARTICLES = [
         "p_value": 0.78
     }
 ]
-
 async def test_claim_contradiction():
     logger.info("Testing contradiction detection in articles...")
-    
     try:
         biomedlm_service = BioMedLMService()
         logger.info("Initialized BioMedLM service")
     except Exception as e:
         logger.warning(f"Could not initialize BioMedLM service: {str(e)}. Using basic contradiction detection.")
         biomedlm_service = None
-    
     try:
         tsmixer_service = TSMixerService()
         temporal_service = TemporalService(tsmixer_service=tsmixer_service)
@@ -94,28 +82,23 @@ async def test_claim_contradiction():
     except Exception as e:
         logger.warning(f"Could not initialize temporal service: {str(e)}. Temporal contradiction detection will be limited.")
         temporal_service = None
-    
     try:
         shap_explainer = SHAPExplainer()
         logger.info("Initialized SHAP explainer")
     except Exception as e:
         logger.warning(f"Could not initialize SHAP explainer: {str(e)}. Explanations will be limited.")
         shap_explainer = None
-    
-    contradiction_service = EnhancedUnifiedUnifiedContradictionService(
+    contradiction_service = ContradictionService(
         biomedlm_service=biomedlm_service,
         temporal_service=temporal_service,
         shap_explainer=shap_explainer
     )
-    
     contradictions = await contradiction_service.detect_contradictions_in_articles(
         articles=TEST_ARTICLES,
         threshold=0.6,
         use_all_methods=True
     )
-    
     logger.info(f"Found {len(contradictions)} contradictions in {len(TEST_ARTICLES)} articles")
-    
     for i, contradiction in enumerate(contradictions):
         logger.info(f"Contradiction {i+1}:")
         logger.info(f"  Article 1: {contradiction['article1']['title']} (ID: {contradiction['article1']['id']})")
@@ -124,5 +107,4 @@ async def test_claim_contradiction():
         logger.info(f"  Contradiction type: {contradiction['contradiction_type']}")
         logger.info(f"  Confidence: {contradiction['confidence']}")
         logger.info(f"  Explanation: {contradiction['explanation']}")
-
 async def main():

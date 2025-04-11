@@ -1,9 +1,7 @@
-"""
 Migration Script for Unified Architecture.
 
 This script helps migrate from the old architecture to the new unified architecture
 by updating imports, replacing deprecated components, and cleaning up redundant code.
-"""
 
 import os
 import re
@@ -17,8 +15,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 IMPORT_MAPPINGS = {
-    "from asf.medical.ml.services.unified_contradiction_service import UnifiedUnifiedUnifiedContradictionService": "from asf.medical.ml.services.unified_contradiction_service import UnifiedUnifiedUnifiedContradictionService",
-    "from asf.medical.ml.services.unified_contradiction_service import UnifiedUnifiedUnifiedContradictionService": "from asf.medical.ml.services.unified_contradiction_service import UnifiedUnifiedUnifiedContradictionService",
+    "from asf.medical.ml.services.unified_contradiction_service import ContradictionService": "from asf.medical.ml.services.unified_contradiction_service import ContradictionService",
+    "from asf.medical.ml.services.unified_contradiction_service import ContradictionService": "from asf.medical.ml.services.unified_contradiction_service import ContradictionService",
     
     "from asf.medical.storage.repositories.enhanced_base_repository import EnhancedBaseRepository": "from asf.medical.storage.repositories.enhanced_base_repository import EnhancedBaseRepository",
     
@@ -29,8 +27,8 @@ IMPORT_MAPPINGS = {
 }
 
 CLASS_MAPPINGS = {
-    "UnifiedUnifiedContradictionService": "UnifiedUnifiedUnifiedContradictionService",
-    "EnhancedUnifiedUnifiedContradictionService": "UnifiedUnifiedUnifiedContradictionService",
+    "ContradictionService": "ContradictionService",
+    "ContradictionService": "ContradictionService",
     "BaseRepository": "EnhancedBaseRepository",
 }
 

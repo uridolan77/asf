@@ -1,54 +1,26 @@
-"""
 Bias assessment service for the Medical Research Synthesizer.
 
 This module provides a service for assessing risk of bias in medical studies.
-"""
 
 import logging
 import re
 import asyncio
 import spacy
 from enum import Enum
+from asf.medical.core.exceptions import MLError
+
 
 logger = logging.getLogger(__name__)
 
 class BiasRisk(str, Enum):
-    """Risk of bias levels."""
-    LOW = "low"
-    MODERATE = "moderate"
-    HIGH = "high"
-    UNCLEAR = "unclear"
-
-class BiasDomain(str, Enum):
-    """Domains for bias assessment."""
-    RANDOMIZATION = "randomization"
-    BLINDING = "blinding"
-    ALLOCATION_CONCEALMENT = "allocation_concealment"
-    SAMPLE_SIZE = "sample_size"
-    ATTRITION = "attrition"
-    SELECTIVE_REPORTING = "selective_reporting"
-    OVERALL = "overall"
-
-class BiasAssessmentService:
-    """
-    Service for assessing risk of bias in medical studies.
-    
-    This service implements methods for assessing risk of bias in medical studies
-    according to standard frameworks like Cochrane Risk of Bias Tool.
-    """
-    
-    def __init__(self, nlp_model: Optional[Any] = None):
-        """
-        Initialize the bias assessment service.
-        
-        Args:
-            nlp_model: NLP model for text analysis
-        """
+    Risk of bias levels.
         try:
             self.nlp = nlp_model or spacy.load("en_core_sci_md")
             logger.info("Loaded spaCy model for bias assessment")
         except Exception as e:
             logger.warning(f"Could not load spaCy model: {str(e)}. Falling back to basic pattern matching.")
+            raise MLError(f"ML operation failed: {str(e)}")
+            raise MLError(f"ML operation failed: {str(e)}")
             self.nlp = None
         
         self.bias_patterns = self._load_patterns()

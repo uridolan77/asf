@@ -1,8 +1,6 @@
-"""
 Rate Limit Middleware for the Medical Research Synthesizer.
 
 This module provides a middleware for rate limiting API requests.
-"""
 
 import logging
 from fastapi import Request, Response, FastAPI
@@ -15,16 +13,26 @@ from asf.medical.core.enhanced_rate_limiter import enhanced_rate_limiter
 logger = logging.getLogger(__name__)
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
-    """
     Middleware for rate limiting API requests.
     
     This middleware limits the rate of API requests based on the client's
     IP address or user ID.
-    """
     
     def __init__(
         self,
         app: ASGIApp,
+            """
+            __init__ function.
+            
+            This function provides functionality for...
+            Args:
+                app: Description of app
+                default_rate: Description of default_rate
+                default_burst: Description of default_burst
+                default_window: Description of default_window
+                exempt_paths: Description of exempt_paths
+                get_key: Description of get_key
+            """
         default_rate: int = 60,  # 60 requests per minute
         default_burst: int = 10,  # 10 requests in a burst
         default_window: int = 60,  # 1 minute window
@@ -97,6 +105,18 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
 def add_rate_limit_middleware(
     app: FastAPI,
+        """
+        add_rate_limit_middleware function.
+        
+        This function provides functionality for...
+        Args:
+            app: Description of app
+            default_rate: Description of default_rate
+            default_burst: Description of default_burst
+            default_window: Description of default_window
+            exempt_paths: Description of exempt_paths
+            get_key: Description of get_key
+        """
     default_rate: int = 60,
     default_burst: int = 10,
     default_window: int = 60,

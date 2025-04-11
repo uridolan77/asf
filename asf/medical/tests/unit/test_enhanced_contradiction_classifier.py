@@ -1,11 +1,9 @@
-"""
 Unit tests for the enhanced contradiction classifier.
-"""
 
 import pytest
 
 from asf.medical.ml.services.enhanced_contradiction_classifier import (
-    EnhancedContradictionClassifier,
+    ContradictionClassifierService,
     ContradictionType,
     ContradictionConfidence,
     ClinicalSignificance,
@@ -23,7 +21,7 @@ def enhanced_classifier():
     Returns:
         # TODO: Add return description
     """
-    return EnhancedContradictionClassifier()
+    return ContradictionClassifierService()
 
 @pytest.fixture
 def sample_contradiction():
@@ -64,6 +62,16 @@ def sample_contradiction():
         }
     }
 
+def test_enhanced_classifier_initialization(enhanced_classifier):
+    Test that the enhanced contradiction classifier initializes correctly.
+    
+    Args:
+        enhanced_classifier: Description of enhanced_classifier
+    
+    assert enhanced_classifier is not None
+    assert enhanced_classifier.thresholds is not None
+    assert enhanced_classifier.thresholds[ContradictionType.DIRECT] > 0
+
 @pytest.mark.asyncio
 async def test_classify_contradiction(enhanced_classifier, sample_contradiction):
     high_significance = await enhanced_classifier._assess_clinical_significance(
@@ -71,13 +79,13 @@ async def test_classify_contradiction(enhanced_classifier, sample_contradiction)
         "Statin therapy increases mortality in patients with cardiovascular disease."
     )
     assert high_significance["significance"] == ClinicalSignificance.HIGH
-    
+
     moderate_significance = await enhanced_classifier._assess_clinical_significance(
         "Aspirin reduces pain in patients with headache.",
         "Acetaminophen is more effective than aspirin for pain relief in patients with headache."
     )
     assert moderate_significance["significance"] == ClinicalSignificance.MODERATE
-    
+
     low_significance = await enhanced_classifier._assess_clinical_significance(
         "Vitamin C supplements may cause mild gastrointestinal discomfort.",
         "Vitamin C supplements are well-tolerated with minimal side effects."
@@ -92,7 +100,7 @@ async def test_assess_evidence_quality(enhanced_classifier):
     )
     assert significant_temporal["detected"] == True
     assert significant_temporal["publication_date_difference"] == 13
-    
+
     no_temporal = enhanced_classifier._assess_temporal_factor(
         {"publication_year": 2022},
         {"publication_year": 2021}
@@ -114,7 +122,7 @@ async def test_assess_population_difference(enhanced_classifier):
         }
     )
     assert method_diff["detected"] == True
-    
+
     no_diff = enhanced_classifier._assess_methodological_difference(
         "The treatment was effective.",
         "The treatment was not effective.",

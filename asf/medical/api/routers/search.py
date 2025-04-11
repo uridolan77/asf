@@ -1,8 +1,6 @@
-"""
 Search router for the Medical Research Synthesizer API.
 
 This module provides endpoints for searching medical literature.
-"""
 
 import logging
 import traceback

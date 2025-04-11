@@ -1,8 +1,20 @@
+"""
+Module description.
+
+This module provides functionality for...
+"""
 class CausalVariable:
-    """
     Represents a variable in a causal model with its current state and relationships.
-    """
     def __init__(self, name, value=None, feature_id=None):
+        """
+        __init__ function.
+        
+        This function provides functionality for...
+        Args:
+            name: Description of name
+            value: Description of value
+            feature_id: Description of feature_id
+        """
         self.name = name
         self.value = value
         self.feature_id = feature_id  # Link to original feature if applicable

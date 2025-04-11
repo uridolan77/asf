@@ -1,8 +1,6 @@
-"""
 Script to reprocess dead letter messages in the Medical Research Synthesizer.
 
 This script is intended to be run as a scheduled job to reprocess dead letter messages.
-"""
 
 import sys
 import asyncio
@@ -72,7 +70,7 @@ async def reprocess_dead_letters(max_age_days: int = 7, max_retries: int = 3):
     return reprocessed_count
 
 def main():
-    """Main entry point."""
+    Main entry point.
     parser = argparse.ArgumentParser(description="Dead Letter Reprocessing")
     parser.add_argument("--max-age-days", type=int, default=7, help="Maximum age in days for messages to be considered for reprocessing")
     parser.add_argument("--max-retries", type=int, default=3, help="Maximum number of retries")

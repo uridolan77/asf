@@ -1,3 +1,8 @@
+"""
+Module description.
+
+This module provides functionality for...
+"""
 import re
 import logging
 from enum import Enum
@@ -9,82 +14,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 class ContradictionType(str, Enum):
-    """Contradiction type enum."""
-    NONE = "none"
-    DIRECT = "direct"
-    NEGATION = "negation"
-    STATISTICAL = "statistical"
-    UNKNOWN = "unknown"
-
-class ContradictionConfidence(str, Enum):
-    """Contradiction confidence enum."""
-    HIGH = "high"
-    MEDIUM = "medium"
-    LOW = "low"
-    UNKNOWN = "unknown"
-
-TEST_CLAIMS = [
-    {
-        "claim1": "Statin therapy reduces the risk of cardiovascular events in patients with high cholesterol.",
-        "claim2": "Statin therapy does not reduce the risk of cardiovascular events in patients with high cholesterol.",
-        "metadata1": {
-            "publication_date": "2020-01-01",
-            "study_design": "randomized controlled trial",
-            "sample_size": 1000,
-            "p_value": 0.001,
-            "effect_size": 0.3
-        },
-        "metadata2": {
-            "publication_date": "2021-06-15",
-            "study_design": "randomized controlled trial",
-            "sample_size": 2000,
-            "p_value": 0.45,
-            "effect_size": -0.05
-        }
-    },
-    {
-        "claim1": "Antibiotics are effective for treating bacterial pneumonia.",
-        "claim2": "Antibiotics are ineffective for treating bacterial pneumonia.",
-        "metadata1": None,
-        "metadata2": None
-    },
-    {
-        "claim1": "Regular exercise improves cardiovascular health.",
-        "claim2": "Physical activity has positive effects on heart health.",
-        "metadata1": None,
-        "metadata2": None
-    },
-    {
-        "claim1": "Vitamin D supplementation prevents respiratory infections.",
-        "claim2": "Vitamin D supplementation has no effect on respiratory infection risk.",
-        "metadata1": {
-            "publication_date": "2019-05-10",
-            "study_design": "meta-analysis",
-            "sample_size": 5000,
-            "p_value": 0.02,
-            "effect_size": 0.15
-        },
-        "metadata2": {
-            "publication_date": "2022-03-20",
-            "study_design": "randomized controlled trial",
-            "sample_size": 3000,
-            "p_value": 0.3,
-            "effect_size": 0.05
-        }
-    }
-]
-
-def calculate_text_similarity(text1: str, text2: str) -> float:
-    """
-    Calculate text similarity using a simple Jaccard similarity.
-    
-    Args:
-        text1: First text
-        text2: Second text
-        
-    Returns:
-        Similarity score between 0 and 1
-    """
+    Contradiction type enum.
     tokens1 = set(re.findall(r'\b\w+\b', text1.lower()))
     tokens2 = set(re.findall(r'\b\w+\b', text2.lower()))
     
@@ -162,6 +92,19 @@ def detect_negation_contradiction(claim1: str, claim2: str) -> Dict[str, Any]:
 
 def detect_statistical_contradiction(
     claim1: str,
+        """
+        detect_statistical_contradiction function.
+        
+        This function provides functionality for...
+        Args:
+            claim1: Description of claim1
+            claim2: Description of claim2
+            metadata1: Description of metadata1
+            metadata2: Description of metadata2
+        
+        Returns:
+            Description of return value
+        """
     claim2: str,
     metadata1: Optional[Dict[str, Any]],
     metadata2: Optional[Dict[str, Any]]
@@ -224,6 +167,19 @@ def detect_statistical_contradiction(
 
 def detect_contradiction(
     claim1: str,
+        """
+        detect_contradiction function.
+        
+        This function provides functionality for...
+        Args:
+            claim1: Description of claim1
+            claim2: Description of claim2
+            metadata1: Description of metadata1
+            metadata2: Description of metadata2
+        
+        Returns:
+            Description of return value
+        """
     claim2: str,
     metadata1: Optional[Dict[str, Any]] = None,
     metadata2: Optional[Dict[str, Any]] = None

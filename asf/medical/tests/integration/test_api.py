@@ -1,8 +1,6 @@
-"""
 Integration tests for the API.
 
 This module provides integration tests for the API.
-"""
 
 import pytest
 import logging

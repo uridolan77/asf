@@ -1,8 +1,6 @@
-"""
 Security tests for rate limiting.
 
 This module provides tests for the rate limiting middleware.
-"""
 
 import pytest
 from fastapi import FastAPI
@@ -34,12 +32,24 @@ def rate_limited_app():
     
     @app.post("/login")
     def login_endpoint(username: str, password: str):
+        """
+        login_endpoint function.
+        
+        This function provides functionality for...
+        Args:
+            username: Description of username
+            password: Description of password
+        """
         if username == "test" and password == "password":
             return {"message": "success"}
         return {"message": "failure"}, 401
     
     @app.post("/other")
     def other_endpoint():
+        """
+        other_endpoint function.
+        
+        This function provides functionality for..."""
         return {"message": "success"}
     
     return app
@@ -118,9 +128,29 @@ def test_different_ips_separate_rate_limits(rate_limited_app, reset_rate_limiter
     client2 = TestClient(rate_limited_app)
     
     def get_client_ip_1(request):
+        """
+        get_client_ip_1 function.
+        
+        This function provides functionality for...
+        Args:
+            request: Description of request
+        
+        Returns:
+            Description of return value
+        """
         return "192.168.1.1"
     
     def get_client_ip_2(request):
+        """
+        get_client_ip_2 function.
+        
+        This function provides functionality for...
+        Args:
+            request: Description of request
+        
+        Returns:
+            Description of return value
+        """
         return "192.168.1.2"
     
     from asf.medical.api.middleware.login_rate_limit_middleware import LoginRateLimitMiddleware
@@ -155,6 +185,16 @@ def test_block_after_too_many_failed_attempts(rate_limited_app, reset_rate_limit
     client = TestClient(rate_limited_app)
     
     def get_client_ip(request):
+        """
+        get_client_ip function.
+        
+        This function provides functionality for...
+        Args:
+            request: Description of request
+        
+        Returns:
+            Description of return value
+        """
         return "192.168.1.3"
     
     from asf.medical.api.middleware.login_rate_limit_middleware import LoginRateLimitMiddleware

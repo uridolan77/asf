@@ -1,63 +1,42 @@
-"""
 Task handlers for the Medical Research Synthesizer.
-
 This module provides handlers for processing tasks from the message broker.
-"""
-
 import asyncio
 import time
 import uuid
-from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta
-
-from sqlalchemy.ext.asyncio import AsyncSession
-
+from typing import Dict, Any
 from asf.medical.storage.database import get_db_session
 from asf.medical.storage.repositories.task_repository import TaskRepository
 from asf.medical.storage.models.task import Task, TaskStatus, TaskPriority
-
 from asf.medical.core.logging_config import get_logger
 from asf.medical.core.messaging.consumer import TaskHandler
 from asf.medical.core.messaging.producer import get_message_producer
 from asf.medical.core.messaging.schemas import TaskType
 from asf.medical.api.websockets.task_updates import task_update_manager
-
 logger = get_logger(__name__)
-
 class SearchTaskHandler(TaskHandler):
-    """
     Handler for search tasks.
-
     This handler processes search tasks from the message broker.
-    """
-
     def __init__(self):
-        """Initialize the search task handler."""
-        self.task_repository = TaskRepository()
-
-    async def handle_task(self, task_id: str, task_type: str, task_data: Dict[str, Any], properties: Dict[str, Any]) -> Any:
-        """
+        Initialize the search task handler.
+        
+        Args:
+        
         Handle a search task.
-
         Args:
             task_id: Task ID
             task_type: Task type
             task_data: Task data
             properties: Task properties
-
         Returns:
             Task result
         """
         logger.info(f"Processing search task: {task_id} ({task_type})")
-
         # Get the message producer
         producer = get_message_producer()
-
         # Get a database session
         async with get_db_session() as db:
             # Create or get the task in the database
             db_task = await self.task_repository.get_task_by_id(db, task_id)
-
             if not db_task:
                 # Create a new task record
                 db_task = await self.task_repository.create_task(
@@ -68,10 +47,8 @@ class SearchTaskHandler(TaskHandler):
                     user_id=task_data.get("user_id"),
                     priority=task_data.get("priority", TaskPriority.NORMAL)
                 )
-
                 # Notify clients about the new task
                 await task_update_manager.broadcast_task_created(db_task)
-
             # Update task status to running
             db_task = await self.task_repository.update_task_status(
                 db=db,
@@ -80,10 +57,8 @@ class SearchTaskHandler(TaskHandler):
                 message="Task started",
                 worker_id=str(uuid.uuid4())  # Generate a worker ID
             )
-
             # Notify clients about the status change
             await task_update_manager.broadcast_task_status_changed(db_task, TaskStatus.PENDING.value)
-
         try:
             # Publish task started event to the message broker
             await producer.publish_event(
@@ -94,7 +69,6 @@ class SearchTaskHandler(TaskHandler):
                     "params": task_data
                 }
             )
-
             # Process the task based on the task type
             if task_type == TaskType.SEARCH_PUBMED:
                 result = await self._search_pubmed(task_id, task_data)
@@ -104,7 +78,6 @@ class SearchTaskHandler(TaskHandler):
                 result = await self._search_knowledge_base(task_id, task_data)
             else:
                 raise ValueError(f"Unsupported search task type: {task_type}")
-
             # Update task status to completed
             async with get_db_session() as db:
                 db_task = await self.task_repository.update_task_status(
@@ -115,10 +88,8 @@ class SearchTaskHandler(TaskHandler):
                     message="Task completed successfully",
                     result=result
                 )
-
                 # Notify clients about the completion
                 await task_update_manager.broadcast_task_completed(db_task)
-
             # Publish task completed event to the message broker
             await producer.publish_event(
                 event_type="task.completed",
@@ -129,7 +100,6 @@ class SearchTaskHandler(TaskHandler):
                     "duration_ms": int((time.time() - properties.get("timestamp", time.time())) * 1000)
                 }
             )
-
             return result
         except Exception as e:
             logger.error(
@@ -137,7 +107,6 @@ class SearchTaskHandler(TaskHandler):
                 extra={"task_id": task_id, "task_type": task_type},
                 exc_info=e
             )
-
             # Update task status to failed
             async with get_db_session() as db:
                 db_task = await self.task_repository.update_task_status(
@@ -147,10 +116,8 @@ class SearchTaskHandler(TaskHandler):
                     message=f"Task failed: {str(e)}",
                     error=str(e)
                 )
-
                 # Notify clients about the failure
                 await task_update_manager.broadcast_task_failed(db_task)
-
             # Publish task failed event to the message broker
             await producer.publish_event(
                 event_type="task.failed",
@@ -160,39 +127,31 @@ class SearchTaskHandler(TaskHandler):
                     "error": str(e)
                 }
             )
-
             raise
-
     async def _search_pubmed(self, task_id: str, task_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Search PubMed.
-
         Args:
             task_id: Task ID
             task_data: Task data
-
         Returns:
             Search results
         """
         # Get the message producer
         producer = get_message_producer()
-
         # Extract search parameters
         query = task_data.get("query", "")
         filters = task_data.get("filters", {})
         page = task_data.get("page", 1)
         page_size = task_data.get("page_size", 20)
-
         # Simulate search progress
         total_steps = 5
         for step in range(1, total_steps + 1):
             # Simulate work
             await asyncio.sleep(0.5)
-
             # Calculate progress percentage
             progress = step / total_steps * 100
             message = f"Searching PubMed (step {step}/{total_steps})"
-
             # Update task progress in the database
             async with get_db_session() as db:
                 db_task = await self.task_repository.update_task_progress(
@@ -201,10 +160,8 @@ class SearchTaskHandler(TaskHandler):
                     progress=progress,
                     message=message
                 )
-
                 # Notify clients about the progress
                 await task_update_manager.broadcast_task_progress(db_task)
-
             # Publish progress event to the message broker
             await producer.publish_event(
                 event_type="task.progress",
@@ -214,7 +171,6 @@ class SearchTaskHandler(TaskHandler):
                     "message": message
                 }
             )
-
         # Simulate search results
         return {
             "items": [
@@ -232,37 +188,30 @@ class SearchTaskHandler(TaskHandler):
             "page_size": page_size,
             "total_pages": 1
         }
-
     async def _search_clinical_trials(self, task_id: str, task_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Search ClinicalTrials.gov.
-
         Args:
             task_id: Task ID
             task_data: Task data
-
         Returns:
             Search results
         """
         # Get the message producer
         producer = get_message_producer()
-
         # Extract search parameters
         query = task_data.get("query", "")
         filters = task_data.get("filters", {})
         page = task_data.get("page", 1)
         page_size = task_data.get("page_size", 20)
-
         # Simulate search progress
         total_steps = 3
         for step in range(1, total_steps + 1):
             # Simulate work
             await asyncio.sleep(0.7)
-
             # Calculate progress percentage
             progress = step / total_steps * 100
             message = f"Searching ClinicalTrials.gov (step {step}/{total_steps})"
-
             # Update task progress in the database
             async with get_db_session() as db:
                 db_task = await self.task_repository.update_task_progress(
@@ -271,10 +220,8 @@ class SearchTaskHandler(TaskHandler):
                     progress=progress,
                     message=message
                 )
-
                 # Notify clients about the progress
                 await task_update_manager.broadcast_task_progress(db_task)
-
             # Publish progress event to the message broker
             await producer.publish_event(
                 event_type="task.progress",
@@ -284,7 +231,6 @@ class SearchTaskHandler(TaskHandler):
                     "message": message
                 }
             )
-
         # Simulate search results
         return {
             "items": [
@@ -305,37 +251,30 @@ class SearchTaskHandler(TaskHandler):
             "page_size": page_size,
             "total_pages": 1
         }
-
     async def _search_knowledge_base(self, task_id: str, task_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Search the knowledge base.
-
         Args:
             task_id: Task ID
             task_data: Task data
-
         Returns:
             Search results
         """
         # Get the message producer
         producer = get_message_producer()
-
         # Extract search parameters
         query = task_data.get("query", "")
         filters = task_data.get("filters", {})
         page = task_data.get("page", 1)
         page_size = task_data.get("page_size", 20)
-
         # Simulate search progress
         total_steps = 2
         for step in range(1, total_steps + 1):
             # Simulate work
             await asyncio.sleep(0.3)
-
             # Calculate progress percentage
             progress = step / total_steps * 100
             message = f"Searching knowledge base (step {step}/{total_steps})"
-
             # Update task progress in the database
             async with get_db_session() as db:
                 db_task = await self.task_repository.update_task_progress(
@@ -344,10 +283,8 @@ class SearchTaskHandler(TaskHandler):
                     progress=progress,
                     message=message
                 )
-
                 # Notify clients about the progress
                 await task_update_manager.broadcast_task_progress(db_task)
-
             # Publish progress event to the message broker
             await producer.publish_event(
                 event_type="task.progress",
@@ -357,7 +294,6 @@ class SearchTaskHandler(TaskHandler):
                     "message": message
                 }
             )
-
         # Simulate search results
         return {
             "items": [
@@ -375,42 +311,30 @@ class SearchTaskHandler(TaskHandler):
             "page_size": page_size,
             "total_pages": 1
         }
-
-
 class AnalysisTaskHandler(TaskHandler):
-    """
     Handler for analysis tasks.
-
     This handler processes analysis tasks from the message broker.
-    """
-
     def __init__(self):
-        """Initialize the analysis task handler."""
-        self.task_repository = TaskRepository()
-
-    async def handle_task(self, task_id: str, task_type: str, task_data: Dict[str, Any], properties: Dict[str, Any]) -> Any:
-        """
+        Initialize the analysis task handler.
+        
+        Args:
+        
         Handle an analysis task.
-
         Args:
             task_id: Task ID
             task_type: Task type
             task_data: Task data
             properties: Task properties
-
         Returns:
             Task result
         """
         logger.info(f"Processing analysis task: {task_id} ({task_type})")
-
         # Get the message producer
         producer = get_message_producer()
-
         # Get a database session
         async with get_db_session() as db:
             # Create or get the task in the database
             db_task = await self.task_repository.get_task_by_id(db, task_id)
-
             if not db_task:
                 # Create a new task record
                 db_task = await self.task_repository.create_task(
@@ -421,10 +345,8 @@ class AnalysisTaskHandler(TaskHandler):
                     user_id=task_data.get("user_id"),
                     priority=task_data.get("priority", TaskPriority.NORMAL)
                 )
-
                 # Notify clients about the new task
                 await task_update_manager.broadcast_task_created(db_task)
-
             # Update task status to running
             db_task = await self.task_repository.update_task_status(
                 db=db,
@@ -433,10 +355,8 @@ class AnalysisTaskHandler(TaskHandler):
                 message="Task started",
                 worker_id=str(uuid.uuid4())  # Generate a worker ID
             )
-
             # Notify clients about the status change
             await task_update_manager.broadcast_task_status_changed(db_task, TaskStatus.PENDING.value)
-
         try:
             # Publish task started event to the message broker
             await producer.publish_event(
@@ -447,7 +367,6 @@ class AnalysisTaskHandler(TaskHandler):
                     "params": task_data
                 }
             )
-
             # Process the task based on the task type
             if task_type == TaskType.ANALYZE_CONTRADICTIONS:
                 result = await self._analyze_contradictions(task_id, task_data)
@@ -457,7 +376,6 @@ class AnalysisTaskHandler(TaskHandler):
                 result = await self._analyze_trends(task_id, task_data)
             else:
                 raise ValueError(f"Unsupported analysis task type: {task_type}")
-
             # Update task status to completed
             async with get_db_session() as db:
                 db_task = await self.task_repository.update_task_status(
@@ -468,10 +386,8 @@ class AnalysisTaskHandler(TaskHandler):
                     message="Task completed successfully",
                     result=result
                 )
-
                 # Notify clients about the completion
                 await task_update_manager.broadcast_task_completed(db_task)
-
             # Publish task completed event to the message broker
             await producer.publish_event(
                 event_type="task.completed",
@@ -482,7 +398,6 @@ class AnalysisTaskHandler(TaskHandler):
                     "duration_ms": int((time.time() - properties.get("timestamp", time.time())) * 1000)
                 }
             )
-
             return result
         except Exception as e:
             logger.error(
@@ -490,7 +405,6 @@ class AnalysisTaskHandler(TaskHandler):
                 extra={"task_id": task_id, "task_type": task_type},
                 exc_info=e
             )
-
             # Update task status to failed
             async with get_db_session() as db:
                 db_task = await self.task_repository.update_task_status(
@@ -500,10 +414,8 @@ class AnalysisTaskHandler(TaskHandler):
                     message=f"Task failed: {str(e)}",
                     error=str(e)
                 )
-
                 # Notify clients about the failure
                 await task_update_manager.broadcast_task_failed(db_task)
-
             # Publish task failed event to the message broker
             await producer.publish_event(
                 event_type="task.failed",
@@ -513,17 +425,14 @@ class AnalysisTaskHandler(TaskHandler):
                     "error": str(e)
                 }
             )
-
             # Check if we should retry the task
             if task_data.get("retry_on_failure", True):
                 async with get_db_session() as db:
                     # Get the latest task state
                     db_task = await self.task_repository.get_task_by_id(db, task_id)
-
                     if db_task and db_task.retry_count < db_task.max_retries:
                         # Calculate exponential backoff delay
                         retry_delay = min(60 * (2 ** db_task.retry_count), 3600)  # Max 1 hour
-
                         # Mark the task for retry
                         db_task = await self.task_repository.mark_task_for_retry(
                             db=db,
@@ -531,41 +440,32 @@ class AnalysisTaskHandler(TaskHandler):
                             error=str(e),
                             retry_delay=retry_delay
                         )
-
                         logger.info(
                             f"Scheduled task {task_id} for retry in {retry_delay} seconds "
                             f"(attempt {db_task.retry_count} of {db_task.max_retries})"
                         )
-
             raise
-
     async def _analyze_contradictions(self, task_id: str, task_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Analyze contradictions.
-
         Args:
             task_id: Task ID
             task_data: Task data
-
         Returns:
             Analysis results
         """
         # Get the message producer
         producer = get_message_producer()
-
         # Extract analysis parameters
         study_ids = task_data.get("study_ids", [])
-
         # Simulate analysis progress
         total_steps = 4
         for step in range(1, total_steps + 1):
             # Simulate work
             await asyncio.sleep(1.0)
-
             # Calculate progress percentage
             progress = step / total_steps * 100
             message = f"Analyzing contradictions (step {step}/{total_steps})"
-
             # Update task progress in the database
             async with get_db_session() as db:
                 db_task = await self.task_repository.update_task_progress(
@@ -574,10 +474,8 @@ class AnalysisTaskHandler(TaskHandler):
                     progress=progress,
                     message=message
                 )
-
                 # Notify clients about the progress
                 await task_update_manager.broadcast_task_progress(db_task)
-
             # Publish progress event to the message broker
             await producer.publish_event(
                 event_type="task.progress",
@@ -587,7 +485,6 @@ class AnalysisTaskHandler(TaskHandler):
                     "message": message
                 }
             )
-
         # Simulate analysis results
         return {
             "contradictions": [
@@ -602,34 +499,27 @@ class AnalysisTaskHandler(TaskHandler):
             ],
             "total_count": 1
         }
-
     async def _analyze_bias(self, task_id: str, task_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Analyze bias.
-
         Args:
             task_id: Task ID
             task_data: Task data
-
         Returns:
             Analysis results
         """
         # Get the message producer
         producer = get_message_producer()
-
         # Extract analysis parameters
         study_id = task_data.get("study_id", "")
-
         # Simulate analysis progress
         total_steps = 5
         for step in range(1, total_steps + 1):
             # Simulate work
             await asyncio.sleep(0.8)
-
             # Calculate progress percentage
             progress = step / total_steps * 100
             message = f"Analyzing bias (step {step}/{total_steps})"
-
             # Update task progress in the database
             async with get_db_session() as db:
                 db_task = await self.task_repository.update_task_progress(
@@ -638,10 +528,8 @@ class AnalysisTaskHandler(TaskHandler):
                     progress=progress,
                     message=message
                 )
-
                 # Notify clients about the progress
                 await task_update_manager.broadcast_task_progress(db_task)
-
             # Publish progress event to the message broker
             await producer.publish_event(
                 event_type="task.progress",
@@ -651,7 +539,6 @@ class AnalysisTaskHandler(TaskHandler):
                     "message": message
                 }
             )
-
         # Simulate analysis results
         return {
             "study_id": study_id,
@@ -680,35 +567,28 @@ class AnalysisTaskHandler(TaskHandler):
             "overall_score": 0.42,
             "overall_assessment": "Low to moderate risk of bias"
         }
-
     async def _analyze_trends(self, task_id: str, task_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Analyze trends.
-
         Args:
             task_id: Task ID
             task_data: Task data
-
         Returns:
             Analysis results
         """
         # Get the message producer
         producer = get_message_producer()
-
         # Extract analysis parameters
         topic = task_data.get("topic", "")
         time_range = task_data.get("time_range", {"start": "2000-01-01", "end": "2023-01-01"})
-
         # Simulate analysis progress
         total_steps = 3
         for step in range(1, total_steps + 1):
             # Simulate work
             await asyncio.sleep(1.2)
-
             # Calculate progress percentage
             progress = step / total_steps * 100
             message = f"Analyzing trends (step {step}/{total_steps})"
-
             # Update task progress in the database
             async with get_db_session() as db:
                 db_task = await self.task_repository.update_task_progress(
@@ -717,10 +597,8 @@ class AnalysisTaskHandler(TaskHandler):
                     progress=progress,
                     message=message
                 )
-
                 # Notify clients about the progress
                 await task_update_manager.broadcast_task_progress(db_task)
-
             # Publish progress event to the message broker
             await producer.publish_event(
                 event_type="task.progress",
@@ -730,7 +608,6 @@ class AnalysisTaskHandler(TaskHandler):
                     "message": message
                 }
             )
-
         # Simulate analysis results
         return {
             "topic": topic,
@@ -761,42 +638,30 @@ class AnalysisTaskHandler(TaskHandler):
             "peak_year": "2020",
             "analysis": f"Research on {topic} has shown consistent growth over the past two decades, with a significant acceleration after 2010."
         }
-
-
 class ExportTaskHandler(TaskHandler):
-    """
     Handler for export tasks.
-
     This handler processes export tasks from the message broker.
-    """
-
     def __init__(self):
-        """Initialize the export task handler."""
-        self.task_repository = TaskRepository()
-
-    async def handle_task(self, task_id: str, task_type: str, task_data: Dict[str, Any], properties: Dict[str, Any]) -> Any:
-        """
+        Initialize the export task handler.
+        
+        Args:
+        
         Handle an export task.
-
         Args:
             task_id: Task ID
             task_type: Task type
             task_data: Task data
             properties: Task properties
-
         Returns:
             Task result
         """
         logger.info(f"Processing export task: {task_id} ({task_type})")
-
         # Get the message producer
         producer = get_message_producer()
-
         # Get a database session
         async with get_db_session() as db:
             # Create or get the task in the database
             db_task = await self.task_repository.get_task_by_id(db, task_id)
-
             if not db_task:
                 # Create a new task record
                 db_task = await self.task_repository.create_task(
@@ -807,10 +672,8 @@ class ExportTaskHandler(TaskHandler):
                     user_id=task_data.get("user_id"),
                     priority=task_data.get("priority", TaskPriority.NORMAL)
                 )
-
                 # Notify clients about the new task
                 await task_update_manager.broadcast_task_created(db_task)
-
             # Update task status to running
             db_task = await self.task_repository.update_task_status(
                 db=db,
@@ -819,10 +682,8 @@ class ExportTaskHandler(TaskHandler):
                 message="Task started",
                 worker_id=str(uuid.uuid4())  # Generate a worker ID
             )
-
             # Notify clients about the status change
             await task_update_manager.broadcast_task_status_changed(db_task, TaskStatus.PENDING.value)
-
         try:
             # Publish task started event to the message broker
             await producer.publish_event(
@@ -833,7 +694,6 @@ class ExportTaskHandler(TaskHandler):
                     "params": task_data
                 }
             )
-
             # Process the task based on the task type
             if task_type == TaskType.EXPORT_RESULTS:
                 result = await self._export_results(task_id, task_data)
@@ -841,7 +701,6 @@ class ExportTaskHandler(TaskHandler):
                 result = await self._export_analysis(task_id, task_data)
             else:
                 raise ValueError(f"Unsupported export task type: {task_type}")
-
             # Update task status to completed
             async with get_db_session() as db:
                 db_task = await self.task_repository.update_task_status(
@@ -852,10 +711,8 @@ class ExportTaskHandler(TaskHandler):
                     message="Task completed successfully",
                     result=result
                 )
-
                 # Notify clients about the completion
                 await task_update_manager.broadcast_task_completed(db_task)
-
             # Publish task completed event to the message broker
             await producer.publish_event(
                 event_type="task.completed",
@@ -866,7 +723,6 @@ class ExportTaskHandler(TaskHandler):
                     "duration_ms": int((time.time() - properties.get("timestamp", time.time())) * 1000)
                 }
             )
-
             return result
         except Exception as e:
             logger.error(
@@ -874,7 +730,6 @@ class ExportTaskHandler(TaskHandler):
                 extra={"task_id": task_id, "task_type": task_type},
                 exc_info=e
             )
-
             # Update task status to failed
             async with get_db_session() as db:
                 db_task = await self.task_repository.update_task_status(
@@ -884,10 +739,8 @@ class ExportTaskHandler(TaskHandler):
                     message=f"Task failed: {str(e)}",
                     error=str(e)
                 )
-
                 # Notify clients about the failure
                 await task_update_manager.broadcast_task_failed(db_task)
-
             # Publish task failed event to the message broker
             await producer.publish_event(
                 event_type="task.failed",
@@ -897,37 +750,29 @@ class ExportTaskHandler(TaskHandler):
                     "error": str(e)
                 }
             )
-
             raise
-
     async def _export_results(self, task_id: str, task_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Export search results.
-
         Args:
             task_id: Task ID
             task_data: Task data
-
         Returns:
             Export results
         """
         # Get the message producer
         producer = get_message_producer()
-
         # Extract export parameters
         result_id = task_data.get("result_id", "")
         format = task_data.get("format", "csv")
-
         # Simulate export progress
         total_steps = 3
         for step in range(1, total_steps + 1):
             # Simulate work
             await asyncio.sleep(0.5)
-
             # Calculate progress percentage
             progress = step / total_steps * 100
             message = f"Exporting results (step {step}/{total_steps})"
-
             # Update task progress in the database
             async with get_db_session() as db:
                 db_task = await self.task_repository.update_task_progress(
@@ -936,10 +781,8 @@ class ExportTaskHandler(TaskHandler):
                     progress=progress,
                     message=message
                 )
-
                 # Notify clients about the progress
                 await task_update_manager.broadcast_task_progress(db_task)
-
             # Publish progress event to the message broker
             await producer.publish_event(
                 event_type="task.progress",
@@ -949,7 +792,6 @@ class ExportTaskHandler(TaskHandler):
                     "message": message
                 }
             )
-
         # Simulate export results
         file_id = str(uuid.uuid4())
         return {
@@ -959,35 +801,28 @@ class ExportTaskHandler(TaskHandler):
             "size": 1024,
             "download_url": f"/api/v1/export/download/{file_id}"
         }
-
     async def _export_analysis(self, task_id: str, task_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Export analysis results.
-
         Args:
             task_id: Task ID
             task_data: Task data
-
         Returns:
             Export results
         """
         # Get the message producer
         producer = get_message_producer()
-
         # Extract export parameters
         analysis_id = task_data.get("analysis_id", "")
         format = task_data.get("format", "pdf")
-
         # Simulate export progress
         total_steps = 4
         for step in range(1, total_steps + 1):
             # Simulate work
             await asyncio.sleep(0.7)
-
             # Calculate progress percentage
             progress = step / total_steps * 100
             message = f"Exporting analysis (step {step}/{total_steps})"
-
             # Update task progress in the database
             async with get_db_session() as db:
                 db_task = await self.task_repository.update_task_progress(
@@ -996,10 +831,8 @@ class ExportTaskHandler(TaskHandler):
                     progress=progress,
                     message=message
                 )
-
                 # Notify clients about the progress
                 await task_update_manager.broadcast_task_progress(db_task)
-
             # Publish progress event to the message broker
             await producer.publish_event(
                 event_type="task.progress",
@@ -1009,7 +842,6 @@ class ExportTaskHandler(TaskHandler):
                     "message": message
                 }
             )
-
         # Simulate export results
         file_id = str(uuid.uuid4())
         return {

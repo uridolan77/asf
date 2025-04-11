@@ -1,10 +1,8 @@
-"""
 TSMixer Implementation
 
 This module provides a TSMixer implementation for temporal modeling in the ASF framework.
 TSMixer is a state-of-the-art architecture for time series forecasting that uses MLPs
 to mix information across both time and feature dimensions.
-"""
 
 import torch
 import torch.nn as nn
@@ -16,12 +14,10 @@ logging.basicConfig(
 logger = logging.getLogger("tsmixer")
 
 class RevIN(nn.Module):
-    """
     Reversible Instance Normalization for time series data.
     
     This normalization technique is specifically designed for time series data,
     allowing for normalization during training and denormalization during inference.
-    """
     
     def __init__(self, num_features: int, eps: float = 1e-5, affine: bool = True):
         """
@@ -77,15 +73,22 @@ class RevIN(nn.Module):
 
 
 class TimeMixer(nn.Module):
-    """
     Time-mixing module for TSMixer.
     
     Applies MLP along the time dimension to capture temporal patterns.
-    """
     
     def __init__(
         self, 
         seq_len: int, 
+            """
+            __init__ function.
+            
+            This function provides functionality for...
+            Args:
+                seq_len: Description of seq_len
+                hidden_dim: Description of hidden_dim
+                dropout: Description of dropout
+            """
         hidden_dim: Optional[int] = None, 
         dropout: float = 0.1
     ):
@@ -123,15 +126,22 @@ class TimeMixer(nn.Module):
 
 
 class FeatureMixer(nn.Module):
-    """
     Feature-mixing module for TSMixer.
     
     Applies MLP along the feature dimension to capture cross-feature interactions.
-    """
     
     def __init__(
         self, 
         num_features: int, 
+            """
+            __init__ function.
+            
+            This function provides functionality for...
+            Args:
+                num_features: Description of num_features
+                hidden_dim: Description of hidden_dim
+                dropout: Description of dropout
+            """
         hidden_dim: Optional[int] = None, 
         dropout: float = 0.1
     ):
@@ -165,17 +175,26 @@ class FeatureMixer(nn.Module):
 
 
 class TSMixerBlock(nn.Module):
-    """
     TSMixer block combining time mixing and feature mixing.
     
     Each block consists of:
     1. Layer normalization + Time mixing + Residual connection
     2. Layer normalization + Feature mixing + Residual connection
-    """
     
     def __init__(
         self, 
         seq_len: int, 
+            """
+            __init__ function.
+            
+            This function provides functionality for...
+            Args:
+                seq_len: Description of seq_len
+                num_features: Description of num_features
+                time_hidden_dim: Description of time_hidden_dim
+                feature_hidden_dim: Description of feature_hidden_dim
+                dropout: Description of dropout
+            """
         num_features: int, 
         time_hidden_dim: Optional[int] = None,
         feature_hidden_dim: Optional[int] = None,
@@ -216,16 +235,29 @@ class TSMixerBlock(nn.Module):
 
 
 class TSMixer(nn.Module):
-    """
     TSMixer model for time series forecasting.
     
     This model applies multiple TSMixer blocks followed by a prediction head
     to forecast future values based on historical data.
-    """
     
     def __init__(
         self,
         seq_len: int,
+            """
+            __init__ function.
+            
+            This function provides functionality for...
+            Args:
+                seq_len: Description of seq_len
+                num_features: Description of num_features
+                num_blocks: Description of num_blocks
+                time_hidden_dim: Description of time_hidden_dim
+                feature_hidden_dim: Description of feature_hidden_dim
+                output_dim: Description of output_dim
+                forecast_horizon: Description of forecast_horizon
+                dropout: Description of dropout
+                use_revin: Description of use_revin
+            """
         num_features: int,
         num_blocks: int = 3,
         time_hidden_dim: Optional[int] = None,
@@ -297,16 +329,28 @@ class TSMixer(nn.Module):
 
 
 class TSMixerEncoder(nn.Module):
-    """
     TSMixer-based encoder for temporal data.
     
     This encoder uses TSMixer to process temporal sequences and produces
     fixed-size embeddings for downstream tasks.
-    """
     
     def __init__(
         self,
         seq_len: int,
+            """
+            __init__ function.
+            
+            This function provides functionality for...
+            Args:
+                seq_len: Description of seq_len
+                num_features: Description of num_features
+                embedding_dim: Description of embedding_dim
+                num_blocks: Description of num_blocks
+                time_hidden_dim: Description of time_hidden_dim
+                feature_hidden_dim: Description of feature_hidden_dim
+                dropout: Description of dropout
+                use_revin: Description of use_revin
+            """
         num_features: int,
         embedding_dim: int,
         num_blocks: int = 3,
@@ -365,16 +409,29 @@ class TSMixerEncoder(nn.Module):
 
 
 class AdaptiveTSMixer(nn.Module):
-    """
     Adaptive TSMixer with dynamic sequence length handling.
     
     This variant of TSMixer can handle variable-length sequences by using
     adaptive pooling before applying the TSMixer blocks.
-    """
     
     def __init__(
         self,
         max_seq_len: int,
+            """
+            __init__ function.
+            
+            This function provides functionality for...
+            Args:
+                max_seq_len: Description of max_seq_len
+                num_features: Description of num_features
+                num_blocks: Description of num_blocks
+                time_hidden_dim: Description of time_hidden_dim
+                feature_hidden_dim: Description of feature_hidden_dim
+                output_dim: Description of output_dim
+                forecast_horizon: Description of forecast_horizon
+                dropout: Description of dropout
+                use_revin: Description of use_revin
+            """
         num_features: int,
         num_blocks: int = 3,
         time_hidden_dim: Optional[int] = None,

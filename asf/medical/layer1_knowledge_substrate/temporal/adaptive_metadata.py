@@ -1,6 +1,4 @@
 import time
-import math
-
 class AdaptiveTemporalMetadata:
     """
     Manages temporal aspects of knowledge entities with dynamic decay rates.
@@ -16,19 +14,15 @@ class AdaptiveTemporalMetadata:
             "ephemeral": 3600  # 1 hour
         }
         self.context_type = context_type
-    
     def update_access_time(self):
         """Update last access time and increment access counter
-
     Args:
         # TODO: Add parameter descriptions
-
     Returns:
         # TODO: Add return description
     """
         self.last_access_time = time.time()
         self.access_count += 1
-    
     def get_temporal_relevance(self) -> float:
         """
         Calculate temporal relevance based on adaptive logarithmic decay.

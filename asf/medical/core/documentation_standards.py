@@ -1,9 +1,7 @@
-"""
 Documentation Standards for ASF Medical Research Synthesizer.
 
 This module defines the documentation standards for the ASF Medical Research Synthesizer
 codebase. It includes templates and guidelines for documenting different components.
-"""
 
 # Class documentation template
 CLASS_TEMPLATE = """

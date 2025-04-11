@@ -1,9 +1,7 @@
-"""
 Contradiction Visualizer
 
 This module provides utilities for visualizing contradiction analysis results,
 including SHAP-based explanations.
-"""
 
 import logging
 import os
@@ -17,13 +15,11 @@ logging.basicConfig(
 logger = logging.getLogger("contradiction-visualizer")
 
 class ContradictionVisualizer:
-    """
     Visualizer for contradiction analysis results.
     
     This class provides methods for visualizing contradiction analysis results,
     including SHAP-based explanations, to help users understand why two medical
     claims were determined to be contradictory.
-    """
     
     def __init__(self, output_dir: str = "./visualizations"):
         """

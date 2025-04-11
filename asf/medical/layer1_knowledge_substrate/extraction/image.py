@@ -1,12 +1,22 @@
+"""
+Module description.
+
+This module provides functionality for...
+"""
 import numpy as np
 from transformers import ViTModel
 from asf.medical.layer1_knowledge_substrate.extraction.base import FeatureExtractor
 
 class ImageFeatureExtractor(FeatureExtractor):
-    """
     Extracts features from image inputs using Vision Transformer.
-    """
     def __init__(self, model_name='vit-base-patch16-224'):
+        """
+        __init__ function.
+        
+        This function provides functionality for...
+        Args:
+            model_name: Description of model_name
+        """
         super().__init__()
         self.model = ViTModel.from_pretrained(model_name)
 

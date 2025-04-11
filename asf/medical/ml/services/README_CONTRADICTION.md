@@ -8,7 +8,7 @@ The contradiction detection and resolution system consists of several components
 
 ## Components
 
-### 1. Enhanced Contradiction Service (`enhanced_contradiction_service.py`)
+### 1. Contradiction Service (`contradiction_service.py`)
 
 This is the main entry point for contradiction detection. It integrates multiple methods and models for accurate contradiction detection, including:
 - BioMedLM for semantic contradiction detection
@@ -18,7 +18,7 @@ This is the main entry point for contradiction detection. It integrates multiple
 
 **Status**: Active and preferred for use in the application.
 
-### 2. Enhanced Contradiction Classifier (`enhanced_contradiction_classifier.py`)
+### 2. Contradiction Classifier Service (`contradiction_classifier_service.py`)
 
 This component provides multi-dimensional classification of medical contradictions, integrating:
 - Clinical significance assessment
@@ -27,9 +27,9 @@ This component provides multi-dimensional classification of medical contradictio
 - Population difference detection
 - Methodological difference detection
 
-It works closely with the Enhanced Contradiction Service to provide detailed classification of detected contradictions.
+It works closely with the Contradiction Service to provide detailed classification of detected contradictions.
 
-**Status**: Active and used by the Enhanced Contradiction Service.
+**Status**: Active and used by the Contradiction Service.
 
 ### 3. Contradiction Resolution Service (`contradiction_resolution_service.py`)
 
@@ -44,11 +44,15 @@ This service provides strategies for resolving contradictions in medical literat
 
 **Status**: Active and used for resolving contradictions detected by the Enhanced Contradiction Service.
 
-### 4. Legacy Contradiction Service (`contradiction_service.py`)
+### 4. Legacy Services
 
-This is the original, simpler implementation of contradiction detection. It provides basic contradiction detection using rule-based approaches and text similarity.
+The following services are deprecated and should not be used in new code:
 
-**Status**: Deprecated. New code should use the Enhanced Contradiction Service instead.
+- `enhanced_contradiction_classifier.py` - Replaced by `contradiction_classifier_service.py`
+- `enhanced_contradiction_service.py` - Replaced by `contradiction_service.py`
+- `unified_contradiction_service.py` - Replaced by `contradiction_service.py`
+
+**Status**: Deprecated. New code should use the Contradiction Service instead.
 
 ## Relationships
 

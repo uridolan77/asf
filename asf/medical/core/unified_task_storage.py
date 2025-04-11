@@ -1,9 +1,7 @@
-"""
 Unified Task Storage for the Medical Research Synthesizer.
 
 This module provides a persistent storage for task results using Redis,
 replacing the in-memory task_results dictionary in export_tasks.py.
-"""
 
 import os
 import time
@@ -14,13 +12,11 @@ import asyncio
 logger = logging.getLogger(__name__)
 
 class UnifiedTaskStorage:
-    """
     Unified storage for task results.
     
     This class provides a persistent storage for task results using Redis,
     ensuring that task results are available across multiple instances
     of the application.
-    """
     
     _instance = None
     
@@ -39,6 +35,15 @@ class UnifiedTaskStorage:
     def __init__(
         self,
         redis_url: Optional[str] = None,
+            """
+            __init__ function.
+            
+            This function provides functionality for...
+            Args:
+                redis_url: Description of redis_url
+                ttl: Description of ttl
+                namespace: Description of namespace
+            """
         ttl: int = 86400,  # 24 hours
         namespace: str = "asf:medical:tasks:"
     ):
@@ -328,6 +333,19 @@ class UnifiedTaskStorage:
     def set_task_result_sync(
         self,
         task_id: str,
+            """
+            set_task_result_sync function.
+            
+            This function provides functionality for...
+            Args:
+                task_id: Description of task_id
+                result: Description of result
+                ttl: Description of ttl
+                metadata: Description of metadata
+            
+            Returns:
+                Description of return value
+            """
         result: Any,
         ttl: Optional[int] = None,
         metadata: Optional[Dict[str, Any]] = None

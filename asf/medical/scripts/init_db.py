@@ -1,8 +1,6 @@
-"""
 Script to initialize the database.
 
 This script creates the database tables and adds initial data.
-"""
 
 import sys
 import logging

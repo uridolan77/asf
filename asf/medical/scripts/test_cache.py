@@ -1,8 +1,6 @@
-"""
 Test script for the enhanced caching system.
 
 This script tests the enhanced caching system with Redis support.
-"""
 
 import asyncio
 import logging

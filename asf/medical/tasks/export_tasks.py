@@ -1,8 +1,6 @@
-"""
 Export Tasks
 
 This module defines background tasks for exporting data in various formats.
-"""
 
 import logging
 import shutil

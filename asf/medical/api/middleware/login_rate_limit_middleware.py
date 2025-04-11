@@ -1,8 +1,6 @@
-"""
 Login Rate Limit Middleware for the Medical Research Synthesizer.
 
 This module provides a middleware for rate limiting login attempts.
-"""
 
 import time
 import logging
@@ -16,16 +14,26 @@ from asf.medical.core.enhanced_rate_limiter import enhanced_rate_limiter
 logger = logging.getLogger(__name__)
 
 class LoginRateLimitMiddleware(BaseHTTPMiddleware):
-    """
     Middleware for rate limiting login attempts.
     
     This middleware limits the rate of login attempts based on the client's
     IP address to prevent brute force attacks.
-    """
     
     def __init__(
         self,
         app: ASGIApp,
+            """
+            __init__ function.
+            
+            This function provides functionality for...
+            Args:
+                app: Description of app
+                login_path: Description of login_path
+                rate: Description of rate
+                burst: Description of burst
+                window: Description of window
+                block_time: Description of block_time
+            """
         login_path: str = "/v1/auth/token",
         rate: int = 5,  # 5 attempts per minute
         burst: int = 3,  # 3 attempts in a burst
@@ -150,6 +158,18 @@ class LoginRateLimitMiddleware(BaseHTTPMiddleware):
 
 def add_login_rate_limit_middleware(
     app: FastAPI,
+        """
+        add_login_rate_limit_middleware function.
+        
+        This function provides functionality for...
+        Args:
+            app: Description of app
+            login_path: Description of login_path
+            rate: Description of rate
+            burst: Description of burst
+            window: Description of window
+            block_time: Description of block_time
+        """
     login_path: str = "/v1/auth/token",
     rate: int = 5,
     burst: int = 3,

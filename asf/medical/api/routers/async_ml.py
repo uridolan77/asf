@@ -1,8 +1,6 @@
-"""
 Asynchronous ML Inference Router for the Medical Research Synthesizer API.
 
 This module provides endpoints for asynchronous ML model inference operations.
-"""
 
 import logging
 import json

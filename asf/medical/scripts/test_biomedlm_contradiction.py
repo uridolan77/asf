@@ -1,26 +1,19 @@
 import sys
-import json
-import asyncio
 import logging
 from pathlib import Path
-
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
-
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
-
 try:
     from asf.medical.ml.models.biomedlm import BioMedLMService
 except ImportError:
     logger.warning("BioMedLM service not available, using mock implementation")
     from asf.medical.ml.models.mock_biomedlm import MockBioMedLMService as BioMedLMService
-from asf.medical.ml.services.unified_contradiction_service import UnifiedUnifiedUnifiedContradictionService
-
+from asf.medical.ml.services.unified_contradiction_service import ContradictionService
 logger = logging.getLogger(__name__)
-
 TEST_CLAIMS = [
     {
         "claim1": "Statin therapy reduces the risk of cardiovascular events in patients with high cholesterol.",
@@ -71,18 +64,14 @@ TEST_CLAIMS = [
         }
     }
 ]
-
 async def test_biomedlm_service():
     logger.info("Testing contradiction service with BioMedLM integration...")
-
     biomedlm_service = BioMedLMService()
-    contradiction_service = EnhancedUnifiedUnifiedContradictionService(biomedlm_service=biomedlm_service)
-
+    contradiction_service = ContradictionService(biomedlm_service=biomedlm_service)
     for i, test_case in enumerate(TEST_CLAIMS):
         logger.info(f"Test case {i+1}:")
         logger.info(f"Claim 1: {test_case['claim1']}")
         logger.info(f"Claim 2: {test_case['claim2']}")
-
         result_with_biomedlm = await contradiction_service.detect_contradiction(
             claim1=test_case["claim1"],
             claim2=test_case["claim2"],
@@ -90,7 +79,6 @@ async def test_biomedlm_service():
             metadata2=test_case["metadata2"],
             use_biomedlm=True
         )
-
         result_without_biomedlm = await contradiction_service.detect_contradiction(
             claim1=test_case["claim1"],
             claim2=test_case["claim2"],
@@ -98,7 +86,6 @@ async def test_biomedlm_service():
             metadata2=test_case["metadata2"],
             use_biomedlm=False
         )
-
         logger.info("With BioMedLM:")
         logger.info(f"  Result: {'Contradiction' if result_with_biomedlm['is_contradiction'] else 'No contradiction'}")
         logger.info(f"  Score: {result_with_biomedlm['contradiction_score']:.4f}")
@@ -107,7 +94,6 @@ async def test_biomedlm_service():
         logger.info(f"  Methods: {', '.join(result_with_biomedlm['methods_used'])}")
         if result_with_biomedlm["explanation"]:
             logger.info(f"  Explanation: {result_with_biomedlm['explanation']}")
-
         logger.info("Without BioMedLM:")
         logger.info(f"  Result: {'Contradiction' if result_without_biomedlm['is_contradiction'] else 'No contradiction'}")
         logger.info(f"  Score: {result_without_biomedlm['contradiction_score']:.4f}")
@@ -116,9 +102,6 @@ async def test_biomedlm_service():
         logger.info(f"  Methods: {', '.join(result_without_biomedlm['methods_used'])}")
         if result_without_biomedlm["explanation"]:
             logger.info(f"  Explanation: {result_without_biomedlm['explanation']}")
-
         logger.info("---")
-
     logger.info("Contradiction service tests completed")
-
 async def main():

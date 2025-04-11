@@ -1,8 +1,6 @@
-"""
 Script to run the API.
 
 This script starts the FastAPI application using uvicorn.
-"""
 
 import sys
 import logging

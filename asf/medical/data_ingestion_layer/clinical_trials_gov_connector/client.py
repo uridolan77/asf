@@ -1,8 +1,6 @@
-"""
 ClinicalTrials.gov API Client
 
 This module provides a comprehensive client for the ClinicalTrials.gov API v2.
-"""
 
 import requests
 import time
@@ -18,14 +16,12 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 class ClinicalTrialsClient:
-    """
     A comprehensive connector for the ClinicalTrials.gov API Version 2.0
     
     API Base URL: https://clinicaltrials.gov
     Version: 2.0
     
     Documentation: https://clinicaltrials.gov/data-api/api
-    """
     
     BASE_URL = "https://clinicaltrials.gov/api/v2"
     DEFAULT_PAGE_SIZE = 100  # API default is 100, max is 1000
@@ -35,6 +31,15 @@ class ClinicalTrialsClient:
     def __init__(
         self, 
         max_retries: int = 3, 
+            """
+            __init__ function.
+            
+            This function provides functionality for...
+            Args:
+                max_retries: Description of max_retries
+                backoff_factor: Description of backoff_factor
+                timeout: Description of timeout
+            """
         backoff_factor: float = 0.5,
         timeout: int = DEFAULT_TIMEOUT
     ):
@@ -55,6 +60,28 @@ class ClinicalTrialsClient:
     def search_studies(
         self,
         query: str = "",
+            """
+            search_studies function.
+            
+            This function provides functionality for...
+            Args:
+                query: Description of query
+                fields: Description of fields
+                page_size: Description of page_size
+                page: Description of page
+                format: Description of format
+                search_areas: Description of search_areas
+                min_rank: Description of min_rank
+                max_rank: Description of max_rank
+                country_codes: Description of country_codes
+                status: Description of status
+                study_type: Description of study_type
+                phase: Description of phase
+                to_dataframe: Description of to_dataframe
+            
+            Returns:
+                Description of return value
+            """
         fields: List[str] = None,
         page_size: int = DEFAULT_PAGE_SIZE,
         page: int = 1,
@@ -112,6 +139,18 @@ class ClinicalTrialsClient:
     def get_study(
         self, 
         nct_id: str,
+            """
+            get_study function.
+            
+            This function provides functionality for...
+            Args:
+                nct_id: Description of nct_id
+                fields: Description of fields
+                format: Description of format
+            
+            Returns:
+                Description of return value
+            """
         fields: List[str] = None,
         format: str = "json"
     ) -> Dict[str, Any]:
@@ -146,6 +185,29 @@ class ClinicalTrialsClient:
     def build_advanced_query(
         self,
         condition: Optional[str] = None,
+            """
+            build_advanced_query function.
+            
+            This function provides functionality for...
+            Args:
+                condition: Description of condition
+                intervention: Description of intervention
+                title: Description of title
+                outcome: Description of outcome
+                sponsor: Description of sponsor
+                location: Description of location
+                status: Description of status
+                phase: Description of phase
+                study_type: Description of study_type
+                gender: Description of gender
+                min_age: Description of min_age
+                max_age: Description of max_age
+                start_date: Description of start_date
+                completion_date: Description of completion_date
+            
+            Returns:
+                Description of return value
+            """
         intervention: Optional[str] = None,
         title: Optional[str] = None,
         outcome: Optional[str] = None,

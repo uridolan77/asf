@@ -1,13 +1,9 @@
 """
 Simple test script for the enhanced contradiction classifier.
 """
-
-import asyncio
 import sys
 import os
-
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
 class ContradictionType(str):
     DIRECT = "direct"
     NEGATION = "negation"
@@ -17,25 +13,21 @@ class ContradictionType(str):
     STATISTICAL = "statistical"
     POPULATION = "population"
     UNKNOWN = "unknown"
-
 class ContradictionConfidence(str):
     HIGH = "high"
     MEDIUM = "medium"
     LOW = "low"
-
 class ClinicalSignificance(str):
     HIGH = "high"
     MODERATE = "moderate"
     LOW = "low"
     UNKNOWN = "unknown"
-
 class EvidenceQuality(str):
     HIGH = "high"
     MODERATE = "moderate"
     LOW = "low"
     VERY_LOW = "very_low"
     UNKNOWN = "unknown"
-
 class StudyDesignHierarchy(str):
     SYSTEMATIC_REVIEW_META_ANALYSIS = "systematic_review_meta_analysis"
     RANDOMIZED_CONTROLLED_TRIAL = "randomized_controlled_trial"
@@ -45,8 +37,7 @@ class StudyDesignHierarchy(str):
     CASE_REPORT = "case_report"
     EXPERT_OPINION = "expert_opinion"
     UNKNOWN = "unknown"
-
-class EnhancedContradictionClassifier:
+class ContradictionClassifierService:
     async def classify_contradiction(self, contradiction):
         classification = {
             "contradiction_type": contradiction.get("contradiction_type", ContradictionType.UNKNOWN),
@@ -118,10 +109,6 @@ class EnhancedContradictionClassifier:
                 ]
             }
         }
-
         contradiction["classification"] = classification
-
         return contradiction
-
-
 async def test_classifier():

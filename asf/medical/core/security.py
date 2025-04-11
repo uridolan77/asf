@@ -1,8 +1,6 @@
-"""
 Security module for the Medical Research Synthesizer.
 
 This module provides security-related functions and utilities.
-"""
 
 from datetime import datetime, timedelta
 
@@ -40,6 +38,18 @@ def get_password_hash(password: str) -> str:
 
 def create_access_token(
     subject: Union[str, Any], expires_delta: Optional[timedelta] = None, token_type: str = "access"
+        """
+        create_access_token function.
+        
+        This function provides functionality for...
+        Args:
+            subject: Description of subject
+            expires_delta: Description of expires_delta
+            token_type: Description of token_type
+        
+        Returns:
+            Description of return value
+        """
 ) -> str:
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
@@ -63,6 +73,17 @@ def create_access_token(
 
 def create_refresh_token(
     subject: Union[str, Any], expires_delta: Optional[timedelta] = None
+        """
+        create_refresh_token function.
+        
+        This function provides functionality for...
+        Args:
+            subject: Description of subject
+            expires_delta: Description of expires_delta
+        
+        Returns:
+            Description of return value
+        """
 ) -> str:
     if expires_delta:
         expire = datetime.utcnow() + expires_delta

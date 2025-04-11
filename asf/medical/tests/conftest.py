@@ -16,7 +16,8 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(
 
 from asf.medical.ml.services.bias_assessment_service import BiasAssessmentService, BiasRisk, BiasDomain
 from asf.medical.ml.services.prisma_screening_service import PRISMAScreeningService, ScreeningStage, ScreeningDecision
-from asf.medical.ml.services.unified_contradiction_service import UnifiedUnifiedUnifiedContradictionService, ContradictionType, ContradictionConfidence
+from asf.medical.ml.services.contradiction_service import ContradictionService
+from asf.medical.ml.services.contradiction_classifier_service import ContradictionType, ContradictionConfidence
 from asf.medical.ml.models.biomedlm import BioMedLMService
 from asf.medical.ml.models.tsmixer import TSMixerService
 from asf.medical.ml.models.shap_explainer import SHAPExplainer
@@ -85,18 +86,23 @@ def sample_study_text() -> str:
         # TODO: Add return description
     """
     return """
-    This randomized controlled trial included 100 participants. Patients were randomly assigned to the treatment or placebo group. 
+    This randomized controlled trial included 100 participants. Patients were randomly assigned to the treatment or placebo group.
     The study did not use blinding for the participants or researchers. Allocation was concealed using sealed envelopes.
     Sample size calculation was performed before the study. There was a 15% dropout rate in the treatment group.
     All pre-specified outcomes were reported in the results.
+    """
+
+@pytest.fixture
+def mock_biomedlm_service() -> BioMedLMService:
+    """Mock BioMedLM service for testing.
+
+    Returns:
+        A mock BioMedLM service
+    """
     mock_service = MagicMock(spec=BioMedLMService)
-    
     mock_service.calculate_similarity.return_value = 0.8
-    
     mock_service.detect_contradiction.return_value = (True, 0.85)
-    
     mock_service.encode.return_value = [0.1, 0.2, 0.3, 0.4, 0.5]
-    
     return mock_service
 
 @pytest.fixture
@@ -110,7 +116,7 @@ def mock_tsmixer_service() -> TSMixerService:
         # TODO: Add return description
     """
     mock_service = MagicMock(spec=TSMixerService)
-    
+
     mock_service.analyze_temporal_sequence.return_value = {
         "contradiction_scores": [0.1, 0.8, 0.3],
         "trend_analysis": {
@@ -118,7 +124,7 @@ def mock_tsmixer_service() -> TSMixerService:
             "confidence": 0.7
         }
     }
-    
+
     return mock_service
 
 @pytest.fixture
@@ -132,13 +138,13 @@ def mock_shap_explainer() -> SHAPExplainer:
         # TODO: Add return description
     """
     mock_explainer = MagicMock(spec=SHAPExplainer)
-    
+
     mock_explainer.explain_contradiction.return_value = {
         "explanation": "The claims contradict each other due to the presence of negation.",
         "influential_words": ["reduces", "does not reduce"],
         "visualization_path": "path/to/visualization.html"
     }
-    
+
     return mock_explainer
 
 @pytest.fixture
@@ -164,34 +170,38 @@ def prisma_screening_service(mock_biomedlm_service) -> PRISMAScreeningService:
         # TODO: Add return description
     """
     service = PRISMAScreeningService(biomedlm_service=mock_biomedlm_service)
-    
+
     service.set_criteria(
         stage=ScreeningStage.IDENTIFICATION,
         include_criteria=["randomized", "controlled trial", "meta-analysis"],
         exclude_criteria=["animal study", "in vitro"]
     )
-    
+
     service.set_criteria(
         stage=ScreeningStage.SCREENING,
         include_criteria=["condition Y", "drug X"],
         exclude_criteria=["pediatric", "pregnant women"]
     )
-    
+
     service.set_criteria(
         stage=ScreeningStage.ELIGIBILITY,
         include_criteria=["efficacy", "safety"],
         exclude_criteria=["case report", "sample size < 100"]
     )
-    
+
     return service
 
 @pytest.fixture
 def enhanced_contradiction_service(
-    mock_biomedlm_service, 
-    mock_tsmixer_service, 
+    mock_biomedlm_service,
+    mock_tsmixer_service,
     mock_shap_explainer
-) -> EnhancedUnifiedUnifiedContradictionService:
-    return TemporalService(tsmixer_service=mock_tsmixer_service)
+) -> ContradictionService:
+    return ContradictionService(
+        biomedlm_service=mock_biomedlm_service,
+        tsmixer_service=mock_tsmixer_service,
+        shap_explainer=mock_shap_explainer
+    )
 
 @pytest.fixture(scope="function", autouse=True)
 async def clear_cache():

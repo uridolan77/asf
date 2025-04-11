@@ -1,8 +1,6 @@
-"""
 Test Contradiction Visualizer
 
 This script tests the visualization capabilities for contradiction explanations.
-"""
 
 import argparse
 import logging

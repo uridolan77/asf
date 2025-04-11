@@ -1,8 +1,6 @@
-"""
 Screening router for the Medical Research Synthesizer API.
 
 This module provides endpoints for PRISMA-guided screening and bias assessment.
-"""
 
 import logging
 from typing import List, Dict, Any, Optional
@@ -29,24 +27,24 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/screening", tags=["screening"])
 
 class ScreeningCriteriaItem(BaseModel):
-    """Screening criteria item."""
+    Screening criteria item.
     text: str = Field(..., description="Criterion text")
     description: Optional[str] = Field(None, description="Criterion description")
 
 class ScreeningCriteria(BaseModel):
-    """Screening criteria."""
+    Screening criteria.
     include: List[str] = Field(default_factory=list, description="Inclusion criteria")
     exclude: List[str] = Field(default_factory=list, description="Exclusion criteria")
 
 class ScreeningRequest(BaseModel):
-    """PRISMA screening request."""
+    PRISMA screening request.
     query: str = Field(..., description="Search query")
     max_results: int = Field(20, description="Maximum number of results to screen")
     stage: ScreeningStage = Field(ScreeningStage.SCREENING, description="Screening stage")
     criteria: Optional[ScreeningCriteria] = Field(None, description="Custom screening criteria")
 
 class BiasAssessmentRequest(BaseModel):
-    """Bias assessment request."""
+    Bias assessment request.
     query: str = Field(..., description="Search query")
     max_results: int = Field(20, description="Maximum number of results to assess")
     domains: Optional[List[BiasDomain]] = Field(None, description="Bias domains to assess")

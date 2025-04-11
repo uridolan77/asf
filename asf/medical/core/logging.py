@@ -1,8 +1,6 @@
-"""
 Logging module for the Medical Research Synthesizer.
 
 This module provides logging configuration and utilities.
-"""
 
 import logging
 import json
@@ -14,11 +12,9 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from asf.medical.core.config import settings
 
 class RequestIdMiddleware(BaseHTTPMiddleware):
-    """
     Middleware to add a request ID to each request.
     
     This middleware adds a unique ID to each request, which can be used for tracing.
-    """
     
     async def dispatch(self, request: Request, call_next):
         request_id = str(uuid.uuid4())
@@ -28,11 +24,9 @@ class RequestIdMiddleware(BaseHTTPMiddleware):
         return response
 
 class JSONLogFormatter(logging.Formatter):
-    """
     JSON formatter for logs.
     
     This formatter outputs logs in JSON format, which is easier to parse and analyze.
-    """
     
     def format(self, record):
         """

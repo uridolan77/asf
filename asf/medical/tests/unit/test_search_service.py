@@ -1,29 +1,21 @@
 """
 Unit tests for the SearchService.
-
 This module provides unit tests for the SearchService.
 """
-
 import pytest
 import logging
 import uuid
-
-from asf.medical.services.search_service import SearchService, SearchMethod
-
+from asf.medical.services.search_service import SearchService
 logger = logging.getLogger(__name__)
-
 @pytest.fixture
 def mock_ncbi_client():
     """Mock NCBI client for testing.
-
     Args:
         # TODO: Add parameter descriptions
-
     Returns:
         # TODO: Add return description
     """
     mock = AsyncMock()
-    
     mock.search_pubmed.return_value = {
         "query": "test query",
         "results": [
@@ -48,7 +40,6 @@ def mock_ncbi_client():
         ],
         "total": 2
     }
-    
     mock.search_clinical_trials.return_value = {
         "query": "test query",
         "results": [
@@ -73,21 +64,16 @@ def mock_ncbi_client():
         ],
         "total": 2
     }
-    
     return mock
-
 @pytest.fixture
 def mock_graph_rag():
     """Mock GraphRAG for testing.
-
     Args:
         # TODO: Add parameter descriptions
-
     Returns:
         # TODO: Add return description
     """
     mock = AsyncMock()
-    
     mock.search.return_value = {
         "query": "test query",
         "results": [
@@ -115,21 +101,16 @@ def mock_graph_rag():
         "total": 2,
         "search_method": "graph_rag"
     }
-    
     return mock
-
 @pytest.fixture
 def mock_result_repository():
     """Mock result repository for testing.
-
     Args:
         # TODO: Add parameter descriptions
-
     Returns:
         # TODO: Add return description
     """
     mock = AsyncMock()
-    
     mock.get_by_result_id_async.return_value = MagicMock(
         query=MagicMock(query_text="test query"),
         result_data={
@@ -148,18 +129,13 @@ def mock_result_repository():
         created_at=MagicMock(isoformat=lambda: "2023-01-01T12:00:00"),
         user_id=1
     )
-    
     mock.save_async.return_value = MagicMock(id=str(uuid.uuid4()))
-    
     return mock
-
 @pytest.fixture
 def search_service(mock_ncbi_client, mock_graph_rag, mock_result_repository):
     """SearchService instance for testing.
-
     Args:
         # TODO: Add parameter descriptions
-
     Returns:
         # TODO: Add return description
     """
@@ -168,22 +144,16 @@ def search_service(mock_ncbi_client, mock_graph_rag, mock_result_repository):
         graph_rag=mock_graph_rag,
         result_repository=mock_result_repository
     )
-    
     service.is_graph_rag_available = lambda: True
-    
     return service
-
 @pytest.mark.asyncio
 @pytest.mark.unit
 @pytest.mark.service
 class TestSearchService:
     """Test cases for SearchService."""
-    
     async def test_search_with_pubmed(self, search_service, mock_ncbi_client):
         """Test search with PubMed.
-
     Args:
         # TODO: Add parameter descriptions
-
     Returns:
         # TODO: Add return description

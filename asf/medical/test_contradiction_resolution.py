@@ -1,31 +1,23 @@
 """
 Test script for the contradiction resolution service.
 """
-
-import asyncio
 import sys
 import os
-import json
-
 current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(current_dir)
 root_dir = os.path.dirname(parent_dir)
 sys.path.insert(0, root_dir)
-
 print(f"Python path: {sys.path}")
 print(f"Current directory: {os.getcwd()}")
-
 try:
-    from asf.medical.ml.services.unified_contradiction_service import UnifiedUnifiedUnifiedContradictionService
+    from asf.medical.ml.services.unified_contradiction_service import ContradictionService
     from asf.medical.ml.services.resolution.contradiction_resolution_service import MedicalContradictionResolutionService
     from asf.medical.ml.services.resolution.resolution_models import ResolutionStrategy
     print("Successfully imported modules")
 except ImportError as e:
     print(f"Import error: {e}")
-
     print("Trying alternative import approach...")
-
-    class EnhancedUnifiedUnifiedContradictionService:
+    class ContradictionService:
         async def detect_contradiction(self, claim1, claim2, metadata1=None, metadata2=None):
             print(f"Mock detecting contradiction between:\n- {claim1}\n- {claim2}")
             return {
@@ -65,7 +57,6 @@ except ImportError as e:
                     }
                 }
             }
-
     class ResolutionStrategy:
         EVIDENCE_HIERARCHY = "evidence_hierarchy"
         SAMPLE_SIZE_WEIGHTING = "sample_size_weighting"
@@ -74,11 +65,9 @@ except ImportError as e:
         METHODOLOGICAL_QUALITY = "methodological_quality"
         STATISTICAL_SIGNIFICANCE = "statistical_significance"
         COMBINED_EVIDENCE = "combined_evidence"
-
     class MedicalContradictionResolutionService:
         def __init__(self):
             self.history = []
-
         async def resolve_contradiction(self, contradiction, strategy=None):
             print(f"Mock resolving contradiction with strategy: {strategy}")
             return {
@@ -96,12 +85,9 @@ except ImportError as e:
                     "references": []
                 }
             }
-
         async def resolve_contradiction_with_combined_evidence(self, contradiction):
             print("Mock resolving contradiction with combined evidence")
             return await self.resolve_contradiction(contradiction, ResolutionStrategy.COMBINED_EVIDENCE)
-
         def get_resolution_history(self):
             return self.history
-
 async def test_contradiction_resolution():

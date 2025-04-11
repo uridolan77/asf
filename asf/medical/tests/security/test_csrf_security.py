@@ -1,8 +1,6 @@
-"""
 Security tests for CSRF protection.
 
 This module provides tests for the CSRF protection middleware.
-"""
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -23,6 +21,10 @@ def test_csrf_middleware_get_request():
     
     @app.get("/test")
     def test_endpoint():
+        """
+        test_endpoint function.
+        
+        This function provides functionality for..."""
         return {"message": "success"}
     
     client = TestClient(app)
@@ -48,6 +50,10 @@ def test_csrf_middleware_post_request_without_token():
     
     @app.post("/test")
     def test_endpoint():
+        """
+        test_endpoint function.
+        
+        This function provides functionality for..."""
         return {"message": "success"}
     
     client = TestClient(app)
@@ -71,6 +77,10 @@ def test_csrf_middleware_post_request_with_token():
     
     @app.post("/test")
     def test_endpoint():
+        """
+        test_endpoint function.
+        
+        This function provides functionality for..."""
         return {"message": "success"}
     
     client = TestClient(app)
@@ -100,6 +110,10 @@ def test_csrf_middleware_post_request_with_invalid_token():
     
     @app.post("/test")
     def test_endpoint():
+        """
+        test_endpoint function.
+        
+        This function provides functionality for..."""
         return {"message": "success"}
     
     client = TestClient(app)
@@ -131,10 +145,18 @@ def test_csrf_middleware_exempt_paths():
     
     @app.post("/test")
     def test_endpoint():
+        """
+        test_endpoint function.
+        
+        This function provides functionality for..."""
         return {"message": "success"}
     
     @app.post("/exempt")
     def exempt_endpoint():
+        """
+        exempt_endpoint function.
+        
+        This function provides functionality for..."""
         return {"message": "exempt"}
     
     client = TestClient(app)

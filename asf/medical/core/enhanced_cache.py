@@ -1,9 +1,7 @@
-"""
 Enhanced Cache Manager for the Medical Research Synthesizer.
 
 This module provides an enhanced caching layer with mandatory Redis support
 for production environments, ensuring consistent state across multiple instances.
-"""
 
 import os
 import json
@@ -15,7 +13,6 @@ from functools import wraps
 logger = logging.getLogger(__name__)
 
 class EnhancedCacheManager:
-    """
     Enhanced cache manager for the Medical Research Synthesizer.
     
     This class provides a caching layer that ensures consistent state across
@@ -25,7 +22,6 @@ class EnhancedCacheManager:
     
     In production environments, Redis is mandatory to ensure consistent state.
     In development environments, a local cache can be used as a fallback.
-    """
     
     _instance = None
     _initialized = False
@@ -58,6 +54,17 @@ class EnhancedCacheManager:
     def __init__(
         self,
         redis_url: Optional[str] = None,
+            """
+            __init__ function.
+            
+            This function provides functionality for...
+            Args:
+                redis_url: Description of redis_url
+                default_ttl: Description of default_ttl
+                namespace: Description of namespace
+                local_cache_size: Description of local_cache_size
+                environment: Description of environment
+            """
         default_ttl: int = 3600,
         namespace: str = "asf:medical:",
         local_cache_size: int = 1000,
@@ -401,12 +408,30 @@ enhanced_cache_manager = EnhancedCacheManager()
 
 def enhanced_cached(
     prefix: str,
+        """
+        enhanced_cached function.
+        
+        This function provides functionality for...
+        Args:
+            prefix: Description of prefix
+            ttl: Description of ttl
+            cache_exceptions: Description of cache_exceptions
+            namespace: Description of namespace
+            data_type: Description of data_type
+        """
     ttl: Optional[int] = None,
     cache_exceptions: bool = False,
     namespace: Optional[str] = None,
     data_type: Optional[str] = None
 ):
     def decorator(func):
+        """
+        decorator function.
+        
+        This function provides functionality for...
+        Args:
+            func: Description of func
+        """
         @wraps(func)
         async def wrapper(*args, **kwargs):
             skip_cache = kwargs.pop("skip_cache", False)

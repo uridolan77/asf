@@ -1,12 +1,21 @@
+"""
+Module description.
+
+This module provides functionality for...
+"""
 import time
 from asf.layer1_knowledge_substrate.temporal.sequence import TemporalSequence
 from asf.layer1_knowledge_substrate.temporal.pattern_detector import TemporalPatternDetector
 
 class TemporalProcessingEngine:
-    """
     Manages temporal processing across different modalities and timescales.
-    """
     def __init__(self):
+        """
+        __init__ function.
+        
+        This function provides functionality for...
+        Args:
+        """
         self.sequences = {}  # Maps entity_ids to their temporal sequences
         self.pattern_detectors = {}  # Different detectors for different sequence types
         self.temporal_context = {}  # Maintains context across processing cycles

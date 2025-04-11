@@ -1,8 +1,6 @@
-"""
 Authentication router for the Medical Research Synthesizer API.
 
 This module provides endpoints for user authentication and management.
-"""
 
 import logging
 from datetime import timedelta

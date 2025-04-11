@@ -1,8 +1,6 @@
-"""
 CSRF Protection Middleware for the Medical Research Synthesizer.
 
 This module provides a middleware for protecting against CSRF attacks.
-"""
 
 import secrets
 import logging
@@ -13,17 +11,29 @@ from starlette.types import ASGIApp
 logger = logging.getLogger(__name__)
 
 class CSRFMiddleware(BaseHTTPMiddleware):
-    """
     Middleware for protecting against CSRF attacks.
     
     This middleware implements Double Submit Cookie pattern for CSRF protection.
     It sets a CSRF token in a cookie and requires the same token to be sent in
     the X-CSRF-Token header for all non-GET/HEAD requests.
-    """
     
     def __init__(
         self,
         app: ASGIApp,
+            """
+            __init__ function.
+            
+            This function provides functionality for...
+            Args:
+                app: Description of app
+                cookie_name: Description of cookie_name
+                header_name: Description of header_name
+                cookie_secure: Description of cookie_secure
+                cookie_httponly: Description of cookie_httponly
+                cookie_samesite: Description of cookie_samesite
+                cookie_max_age: Description of cookie_max_age
+                exempt_paths: Description of exempt_paths
+            """
         cookie_name: str = "csrf_token",
         header_name: str = "X-CSRF-Token",
         cookie_secure: bool = True,
@@ -96,6 +106,20 @@ class CSRFMiddleware(BaseHTTPMiddleware):
 
 def add_csrf_middleware(
     app: FastAPI,
+        """
+        add_csrf_middleware function.
+        
+        This function provides functionality for...
+        Args:
+            app: Description of app
+            cookie_name: Description of cookie_name
+            header_name: Description of header_name
+            cookie_secure: Description of cookie_secure
+            cookie_httponly: Description of cookie_httponly
+            cookie_samesite: Description of cookie_samesite
+            cookie_max_age: Description of cookie_max_age
+            exempt_paths: Description of exempt_paths
+        """
     cookie_name: str = "csrf_token",
     header_name: str = "X-CSRF-Token",
     cookie_secure: bool = True,

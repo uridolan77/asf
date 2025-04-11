@@ -1,9 +1,7 @@
-"""
 Global Rate Limiter for the Medical Research Synthesizer.
 
 This module provides a global rate limiter for API requests to prevent
 any single user from consuming too many resources.
-"""
 
 import time
 import asyncio
@@ -12,13 +10,11 @@ import logging
 logger = logging.getLogger(__name__)
 
 class GlobalRateLimiter:
-    """
     Global rate limiter for API requests.
     
     This class provides a global rate limiter that can be used to limit
     the rate of API requests across multiple instances of the application.
     It uses Redis for distributed rate limiting.
-    """
     
     _instance = None
     _initialized = False
@@ -38,6 +34,17 @@ class GlobalRateLimiter:
     def __init__(
         self,
         redis_url: Optional[str] = None,
+            """
+            __init__ function.
+            
+            This function provides functionality for...
+            Args:
+                redis_url: Description of redis_url
+                default_rate: Description of default_rate
+                default_burst: Description of default_burst
+                default_window: Description of default_window
+                namespace: Description of namespace
+            """
         default_rate: int = 60,  # 60 requests per minute
         default_burst: int = 10,  # 10 requests in a burst
         default_window: int = 60,  # 1 minute window

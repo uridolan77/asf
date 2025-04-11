@@ -1,8 +1,6 @@
-"""
 Task Cleanup Script
 
 This script cleans up old tasks from the persistent storage.
-"""
 
 import os
 import sys

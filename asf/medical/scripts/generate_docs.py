@@ -1,8 +1,6 @@
-"""
 Script to generate documentation for the Medical Research Synthesizer.
 
 This script generates documentation using Sphinx.
-"""
 
 import os
 import sys

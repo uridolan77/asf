@@ -1,23 +1,27 @@
-"""
 Rate limiter for the Medical Research Synthesizer.
 
 This module provides a rate limiter for API clients.
-"""
 
 import asyncio
 import time
 
 class AsyncRateLimiter:
-    """
     Asynchronous rate limiter for API clients.
     
     This class provides a rate limiter that can be used to limit the rate of API requests.
     It uses a token bucket algorithm to limit the rate of requests.
-    """
     
     def __init__(
         self,
         requests_per_second: float,
+            """
+            __init__ function.
+            
+            This function provides functionality for...
+            Args:
+                requests_per_second: Description of requests_per_second
+                burst_size: Description of burst_size
+            """
         burst_size: Optional[int] = None
     ):
         self.requests_per_second = requests_per_second

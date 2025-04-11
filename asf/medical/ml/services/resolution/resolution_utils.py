@@ -1,9 +1,7 @@
-"""
 Utilities for medical contradiction resolution.
 
 This module provides utility functions for resolving contradictions
 in medical literature.
-"""
 
 import logging
 

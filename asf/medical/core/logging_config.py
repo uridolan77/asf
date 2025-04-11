@@ -1,9 +1,7 @@
-"""
 Logging Configuration
 
 This module provides a centralized configuration for logging in the application.
 It sets up logging handlers, formatters, and configures log levels based on the environment.
-"""
 
 import logging
 import sys
@@ -29,12 +27,13 @@ MAX_LOG_SIZE = 10 * 1024 * 1024
 BACKUP_COUNT = 5
 
 def configure_logging() -> None:
-    """
     Configure logging for the application.
     
     This sets up handlers for console and file logging, configures formatters,
     and sets the appropriate log levels based on the environment.
-    """
+    
+    Returns:
+        Description of return value
     root_logger = logging.getLogger()
     for handler in root_logger.handlers[:]:
         root_logger.removeHandler(handler)

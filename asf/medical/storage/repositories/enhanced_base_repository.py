@@ -48,7 +48,7 @@ class EnhancedBaseRepository(Generic[T]):
             else:
                 return db.query(self.model).filter(self.model.id == id).first()
         except SQLAlchemyError as e:
-            await db.rollback()
+            await await await db.rollback()
             logger.error(f\"Error getting {self.model.__name__} by ID: {str(e)}\")
             raise DatabaseError(f\"Error getting {self.model.__name__} by ID: {str(e)}\") DatabaseError(f"Failed to get {self.model.__name__} by ID: {str(e)}")
     
@@ -69,7 +69,7 @@ class EnhancedBaseRepository(Generic[T]):
             else:
                 return db.query(self.model).offset(skip).limit(limit).all()
         except SQLAlchemyError as e:
-            await db.rollback()
+            await await await db.rollback()
             logger.error(f\"Error getting all {self.model.__name__}: {str(e)}\")
             raise DatabaseError(f\"Error getting all {self.model.__name__}: {str(e)}\") DatabaseError(f"Failed to get all {self.model.__name__}: {str(e)}")
     
@@ -88,9 +88,9 @@ class EnhancedBaseRepository(Generic[T]):
                 return db_obj
         except SQLAlchemyError as e:
             if self.is_async:
-                await await db.rollback()
+                await await await await db.rollback()
             else:
-                await db.rollback()
+                await await await db.rollback()
             logger.error(f"Error creating {self.model.__name__}: {str(e)}")
             raise DatabaseError(f"Failed to create {self.model.__name__}: {str(e)}")
     
@@ -113,9 +113,9 @@ class EnhancedBaseRepository(Generic[T]):
             raise
         except SQLAlchemyError as e:
             if self.is_async:
-                await await db.rollback()
+                await await await await db.rollback()
             else:
-                await db.rollback()
+                await await await db.rollback()
             logger.error(f"Error updating {self.model.__name__}: {str(e)}")
             raise DatabaseError(f"Failed to update {self.model.__name__}: {str(e)}")
     
@@ -136,9 +136,9 @@ class EnhancedBaseRepository(Generic[T]):
             raise
         except SQLAlchemyError as e:
             if self.is_async:
-                await await db.rollback()
+                await await await await db.rollback()
             else:
-                await db.rollback()
+                await await await db.rollback()
             logger.error(f"Error deleting {self.model.__name__}: {str(e)}")
             raise DatabaseError(f"Failed to delete {self.model.__name__}: {str(e)}")
     
@@ -151,7 +151,7 @@ class EnhancedBaseRepository(Generic[T]):
             else:
                 return db.query(self.model).count()
         except SQLAlchemyError as e:
-            await db.rollback()
+            await await await db.rollback()
             logger.error(f\"Error counting {self.model.__name__}: {str(e)}\")
             raise DatabaseError(f\"Error counting {self.model.__name__}: {str(e)}\") DatabaseError(f"Failed to count {self.model.__name__}: {str(e)}")
     
@@ -164,7 +164,7 @@ class EnhancedBaseRepository(Generic[T]):
             else:
                 return db.query(self.model.id).filter(self.model.id == id).first() is not None
         except SQLAlchemyError as e:
-            await db.rollback()
+            await await await db.rollback()
             logger.error(f\"Error checking if {self.model.__name__} exists: {str(e)}\")
             raise DatabaseError(f\"Error checking if {self.model.__name__} exists: {str(e)}\") DatabaseError(f"Failed to check if {self.model.__name__} exists: {str(e)}")
     
@@ -177,7 +177,7 @@ class EnhancedBaseRepository(Generic[T]):
             else:
                 return db.query(self.model).filter(getattr(self.model, field) == value).first()
         except SQLAlchemyError as e:
-            await db.rollback()
+            await await await db.rollback()
             logger.error(f\"Error getting {self.model.__name__} by field: {str(e)}\")
             raise DatabaseError(f\"Error getting {self.model.__name__} by field: {str(e)}\") DatabaseError(f"Failed to get {self.model.__name__} by field: {str(e)}")
     
@@ -202,7 +202,7 @@ class EnhancedBaseRepository(Generic[T]):
                     query = query.filter(getattr(self.model, field) == value)
                 return query.all()
         except SQLAlchemyError as e:
-            await db.rollback()
+            await await await db.rollback()
             logger.error(f\"Error getting {self.model.__name__} by fields: {str(e)}\")
             raise DatabaseError(f\"Error getting {self.model.__name__} by fields: {str(e)}\") DatabaseError(f"Failed to get {self.model.__name__} by fields: {str(e)}")
     
@@ -222,9 +222,9 @@ class EnhancedBaseRepository(Generic[T]):
                 return db_objs
         except SQLAlchemyError as e:
             if self.is_async:
-                await await db.rollback()
+                await await await await db.rollback()
             else:
-                await db.rollback()
+                await await await db.rollback()
             logger.error(f"Error creating multiple {self.model.__name__}: {str(e)}")
             raise DatabaseError(f"Failed to create multiple {self.model.__name__}: {str(e)}")
     
@@ -241,9 +241,9 @@ class EnhancedBaseRepository(Generic[T]):
                 return result
         except SQLAlchemyError as e:
             if self.is_async:
-                await await db.rollback()
+                await await await await db.rollback()
             else:
-                await db.rollback()
+                await await await db.rollback()
             logger.error(f"Error deleting multiple {self.model.__name__}: {str(e)}")
             raise DatabaseError(f"Failed to delete multiple {self.model.__name__}: {str(e)}")
     
@@ -260,9 +260,9 @@ class EnhancedBaseRepository(Generic[T]):
                 return result
         except SQLAlchemyError as e:
             if self.is_async:
-                await await db.rollback()
+                await await await await db.rollback()
             else:
-                await db.rollback()
+                await await await db.rollback()
             logger.error(f"Error updating multiple {self.model.__name__}: {str(e)}")
             raise DatabaseError(f"Failed to update multiple {self.model.__name__}: {str(e)}")
     
@@ -277,7 +277,7 @@ class EnhancedBaseRepository(Generic[T]):
             record = await self.create(db, obj_in)
             return record, True
         except SQLAlchemyError as e:
-            await db.rollback()
+            await await await db.rollback()
             logger.error(f\"Error getting or creating {self.model.__name__}: {str(e)}\")
             raise DatabaseError(f\"Error getting or creating {self.model.__name__}: {str(e)}\") DatabaseError(f"Failed to get or create {self.model.__name__}: {str(e)}")
     
@@ -295,6 +295,6 @@ class EnhancedBaseRepository(Generic[T]):
             record = await self.create(db, obj_in)
             return record, True
         except SQLAlchemyError as e:
-            await db.rollback()
+            await await await db.rollback()
             logger.error(f\"Error updating or creating {self.model.__name__}: {str(e)}\")
             raise DatabaseError(f\"Error updating or creating {self.model.__name__}: {str(e)}\") DatabaseError(f"Failed to update or create {self.model.__name__}: {str(e)}")

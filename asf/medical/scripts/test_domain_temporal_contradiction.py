@@ -1,26 +1,21 @@
 import sys
 import logging
-import datetime
 from pathlib import Path
-from typing import Dict, Any, List
-
+from typing import Dict, Any
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
-
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
-
 try:
-    from asf.medical.ml.services.unified_contradiction_service import UnifiedUnifiedUnifiedContradictionService
+    from asf.medical.ml.services.unified_contradiction_service import ContradictionService
     from asf.medical.ml.services.temporal_service import TemporalService
     from asf.medical.ml.models.biomedlm import BioMedLMService
     USING_REAL_SERVICES = True
 except ImportError:
     logger.warning("Failed to import required modules. Using mock implementations.")
     USING_REAL_SERVICES = False
-
     class ContradictionType:
         NONE = "none"
         DIRECT = "direct"
@@ -29,48 +24,35 @@ except ImportError:
         METHODOLOGICAL = "methodological"
         TEMPORAL = "temporal"
         UNKNOWN = "unknown"
-
     class ContradictionConfidence:
         HIGH = "high"
         MEDIUM = "medium"
         LOW = "low"
         UNKNOWN = "unknown"
-
     class MockBioMedLMService:
         """Mock BioMedLM service for testing."""
-
         def __init__(self):
             """Initialize the mock BioMedLM service.
-
     Args:
         # TODO: Add parameter descriptions
-
     Returns:
         # TODO: Add return description
-
     Args:
         # TODO: Add parameter descriptions
-
     Returns:
         # TODO: Add return description
-
     Args:
         # TODO: Add parameter descriptions
-
     Returns:
         # TODO: Add return description
-
         def __init__(self):
             """Initialize the mock temporal service.
-
     Args:
         # TODO: Add parameter descriptions
-
     Returns:
         # TODO: Add return description
     """
             logger.info("Mock temporal service initialized")
-
             self.domain_characteristics = {
                 "oncology": {
                     "half_life": 365 * 2,  # 2 years
@@ -108,7 +90,6 @@ except ImportError:
                     "description": "General medical knowledge with moderate evolution rate"
                 }
             }
-
         def calculate_temporal_confidence(
             self,
             publication_date: str,
@@ -116,20 +97,16 @@ except ImportError:
             reference_date: str = None,
             include_details: bool = False
         ):
-
         def __init__(self, biomedlm_service=None, temporal_service=None):
             """Initialize the mock contradiction service.
-
     Args:
         # TODO: Add parameter descriptions
-
     Returns:
         # TODO: Add return description
     """
             logger.info("Mock contradiction service initialized")
             self.biomedlm_service = biomedlm_service or MockBioMedLMService()
             self.temporal_service = temporal_service or MockTemporalService()
-
             self.thresholds = {
                 ContradictionType.DIRECT: 0.7,
                 ContradictionType.NEGATION: 0.8,
@@ -137,7 +114,6 @@ except ImportError:
                 ContradictionType.METHODOLOGICAL: 0.7,
                 ContradictionType.TEMPORAL: 0.7,
             }
-
         async def detect_contradiction(
             self,
             claim1: str,
