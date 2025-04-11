@@ -1,23 +1,16 @@
-Medical Contradiction Resolution Service.
+"""Medical Contradiction Resolution Service.
 
 This module provides the main service for resolving contradictions in medical literature
 based on evidence-based medicine principles.
+"""
 
 import logging
 from datetime import datetime
 from typing import Dict, List, Optional, Any
 
-from asf.medical.ml.services.contradiction_classifier_service import (
-    ContradictionType,
-    ClinicalSignificance,
-    EvidenceQuality
-)
+# Import contradiction classifier service if needed
 
-from asf.medical.ml.services.resolution.resolution_models import (
-    ResolutionStrategy,
-    ResolutionConfidence,
-    RecommendationType
-)
+from asf.medical.ml.services.resolution.resolution_models import ResolutionStrategy
 
 from asf.medical.ml.services.resolution.resolution_strategies import (
     resolve_by_evidence_hierarchy,
@@ -39,11 +32,12 @@ from asf.medical.ml.services.resolution.explanation_generator import (
 logger = logging.getLogger(__name__)
 
 class MedicalContradictionResolutionService:
-    Service for resolving contradictions in medical literature.
-    
+    """Service for resolving contradictions in medical literature.
+
     This service provides strategies for resolving contradictions based on
     evidence-based medicine principles, including evidence hierarchy,
     sample size, publication recency, population specificity, and methodological quality.
+    """
 
     def __init__(self):
         """Initialize the medical contradiction resolution service.

@@ -1,10 +1,12 @@
-Contradiction Detection Service for the Medical Research Synthesizer.
+"""Contradiction Detection Service for the Medical Research Synthesizer.
+
 This module provides a comprehensive service for detecting contradictions in medical literature,
 integrating multiple methods and models for accurate contradiction detection including:
 - BioMedLM for direct contradiction detection
 - TSMixer for temporal contradiction analysis
 - Lorentz embeddings for hierarchical contradiction detection
 - SHAP for explainability
+"""
 import logging
 from typing import Dict, Optional, Any
 from asf.medical.core.enhanced_cache import enhanced_cached
@@ -14,8 +16,7 @@ from asf.medical.ml.models.lorentz_embeddings import LorentzEmbeddingService
 from asf.medical.ml.models.shap_explainer import SHAPExplainer
 from asf.medical.ml.services.contradiction_classifier_service import (
     ContradictionClassifierService,
-    ContradictionType,
-    ContradictionConfidence
+    ContradictionType
 )
 from asf.medical.ml.services.temporal_service import TemporalService
 
@@ -23,10 +24,12 @@ from asf.medical.core.exceptions import OperationError
 
 logger = logging.getLogger(__name__)
 class ContradictionService:
-    Contradiction detection service for medical literature.
+    """Contradiction detection service for medical literature.
+
     This service integrates multiple methods and models for accurate contradiction detection,
     including BioMedLM for direct contradiction detection, TSMixer for temporal contradiction analysis,
     Lorentz embeddings for hierarchical contradiction detection, and SHAP for explainability.
+    """
     def __init__(
         self,
         biomedlm_service: Optional[BioMedLMService] = None,
@@ -143,8 +146,6 @@ class ContradictionService:
             except Exception as e:
                 logger.error(f"Error generating SHAP explanation: {str(e)}")
                 raise OperationError(f"Operation failed: {str(e)}")
-                raise OperationError(f"Operation failed: {str(e)}")
-                result["shap_explanation"] = {"error": str(e)}
         return result
     async def _detect_biomedlm_contradiction(
         self,
@@ -164,7 +165,7 @@ class ContradictionService:
             "explanation": None
         }
         try:
-            is_contradiction, score = await self.biomedlm_service.detect_contradiction(claim1, claim2)
+            _, score = await self.biomedlm_service.detect_contradiction(claim1, claim2)
             result["is_contradiction"] = score > self.thresholds[ContradictionType.DIRECT]
             result["score"] = float(score)
             result["explanation"] = (
@@ -175,8 +176,6 @@ class ContradictionService:
         except Exception as e:
             logger.error(f"Error detecting contradiction with BioMedLM: {str(e)}")
             raise OperationError(f"Operation failed: {str(e)}")
-            raise OperationError(f"Operation failed: {str(e)}")
-            result["error"] = str(e)
         return result
     async def _detect_tsmixer_contradiction(
         self,
@@ -203,7 +202,7 @@ class ContradictionService:
         try:
             date1 = metadata1.get("publication_date", "") if metadata1 else ""
             date2 = metadata2.get("publication_date", "") if metadata2 else ""
-            is_contradiction, score, explanation = await self.tsmixer_service.detect_temporal_contradiction(
+            _, score, explanation = await self.tsmixer_service.detect_temporal_contradiction(
                 claim1, claim2, date1, date2
             )
             result["is_contradiction"] = score > self.thresholds[ContradictionType.TEMPORAL]
@@ -217,8 +216,6 @@ class ContradictionService:
         except Exception as e:
             logger.error(f"Error detecting contradiction with TSMixer: {str(e)}")
             raise OperationError(f"Operation failed: {str(e)}")
-            raise OperationError(f"Operation failed: {str(e)}")
-            result["error"] = str(e)
         return result
     async def _detect_lorentz_contradiction(
         self,
@@ -238,7 +235,7 @@ class ContradictionService:
             "explanation": None
         }
         try:
-            is_contradiction, score = await self.lorentz_service.detect_contradiction(claim1, claim2)
+            _, score = await self.lorentz_service.detect_contradiction(claim1, claim2)
             result["is_contradiction"] = score > self.thresholds[ContradictionType.DIRECT]
             result["score"] = float(score)
             result["explanation"] = (
@@ -249,8 +246,6 @@ class ContradictionService:
         except Exception as e:
             logger.error(f"Error detecting contradiction with Lorentz embeddings: {str(e)}")
             raise OperationError(f"Operation failed: {str(e)}")
-            raise OperationError(f"Operation failed: {str(e)}")
-            result["error"] = str(e)
         return result
     async def _detect_temporal_contradiction(
         self,
@@ -277,7 +272,7 @@ class ContradictionService:
         try:
             date1 = metadata1.get("publication_date", "") if metadata1 else ""
             date2 = metadata2.get("publication_date", "") if metadata2 else ""
-            is_contradiction, score, explanation = await self.temporal_service.analyze_temporal_contradiction(
+            _, score, explanation = await self.temporal_service.analyze_temporal_contradiction(
                 claim1, claim2, date1, date2
             )
             result["is_contradiction"] = score > self.thresholds[ContradictionType.TEMPORAL]
@@ -291,6 +286,4 @@ class ContradictionService:
         except Exception as e:
             logger.error(f"Error detecting temporal contradiction: {str(e)}")
             raise OperationError(f"Operation failed: {str(e)}")
-            raise OperationError(f"Operation failed: {str(e)}")
-            result["error"] = str(e)
         return result
