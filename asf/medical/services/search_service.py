@@ -4,7 +4,6 @@ Search service for the Medical Research Synthesizer.
 This module provides a service for searching medical literature.
 """
 
-import logging
 import uuid
 import hashlib
 import traceback
@@ -12,11 +11,13 @@ from datetime import datetime
 from typing import Dict, List, Any, Optional, Union
 from enum import Enum
 
-from asf.medical.core.enhanced_cache import enhanced_cache_manager as cache_manager, enhanced_cached as cached, cache_manager
+from asf.medical.core.distributed_cache import redis_cached
 from asf.medical.core.exceptions import (
     SearchError, ValidationError,
-    ExternalServiceError, DatabaseError
+    ExternalServiceError, DatabaseError, ServiceError
 )
+from asf.medical.core.logging_config import get_logger
+from asf.medical.core.events import event_bus, SearchPerformedEvent, SearchCompletedEvent
 
 from asf.medical.clients.ncbi_client import NCBIClient
 from asf.medical.clients.clinical_trials_client import ClinicalTrialsClient
@@ -39,7 +40,7 @@ class SearchMethod(str, Enum):
     CLINICAL_TRIALS = "clinical_trials"
     GRAPH_RAG = "graph_rag"
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 class SearchService:
     """
@@ -78,7 +79,7 @@ class SearchService:
         """
         return self.graph_rag is not None
 
-    @enhanced_cached(prefix="search", data_type="search")
+    @redis_cached(ttl=3600, key_prefix="search")
     async def search(
         self, query: str, max_results: int = 100, page: int = 1, page_size: int = 20,
         user_id: Optional[int] = None, search_method: Union[str, SearchMethod] = SearchMethod.PUBMED,
@@ -200,8 +201,8 @@ class SearchService:
                     "result_id": str(uuid.uuid4())
                 }
         except Exception as e:
-    logger.error(f\"Error searching PubMed: {str(e)}\")
-    raise DatabaseError(f\"Error searching PubMed: {str(e)}\") ExternalServiceError("NCBI PubMed", f"Failed to search: {str(e)}")
+            logger.error(f"Error searching PubMed: {str(e)}")
+            raise ExternalServiceError("NCBI PubMed", f"Failed to search: {str(e)}")
 
         try:
             id_list = search_results['esearchresult'].get('idlist', [])
@@ -226,8 +227,8 @@ class SearchService:
                     "result_id": str(uuid.uuid4())
                 }
         except Exception as e:
-    logger.error(f\"Error fetching abstracts: {str(e)}\")
-    raise DatabaseError(f\"Error fetching abstracts: {str(e)}\") ExternalServiceError("NCBI PubMed", f"Failed to fetch abstracts: {str(e)}")
+            logger.error(f"Error fetching abstracts: {str(e)}")
+            raise ExternalServiceError("NCBI PubMed", f"Failed to fetch abstracts: {str(e)}")
 
         enriched_articles = []
         for article in abstracts:
@@ -298,7 +299,7 @@ class SearchService:
             "pagination": pagination_metadata
         }
 
-    @enhanced_cached(prefix="search_pico", data_type="search")
+    @redis_cached(ttl=3600, key_prefix="search_pico")
     async def search_pico(
         self,
         condition: str,
@@ -358,8 +359,8 @@ class SearchService:
         except ValidationError:
             raise
         except Exception as e:
-    logger.error(f\"Error in PICO search: {str(e)}\")
-    raise DatabaseError(f\"Error in PICO search: {str(e)}\") SearchError(condition, f"Failed to execute PICO search: {str(e)}")
+            logger.error(f"Error in PICO search: {str(e)}")
+            raise SearchError(condition, f"Failed to execute PICO search: {str(e)}")
 
     async def get_result(self, result_id: str) -> Optional[Dict[str, Any]]:
         if not result_id or not result_id.strip():
@@ -391,8 +392,8 @@ class SearchService:
                 logger.warning(f"Result not found: {result_id}")
                 return None
         except Exception as e:
-    logger.error(f\"Error getting result from database: {str(e)}\")
-    raise DatabaseError(f\"Error getting result from database: {str(e)}\") DatabaseError(f"Failed to retrieve search result: {str(e)}")
+            logger.error(f"Error getting result from database: {str(e)}")
+            raise DatabaseError(f"Failed to retrieve search result: {str(e)}")
 
     def _enrich_article(self, article: Dict[str, Any]) -> Dict[str, Any]:
         """

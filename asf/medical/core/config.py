@@ -11,8 +11,10 @@ import secrets
 import logging
 from functools import lru_cache
 from pathlib import Path
+from typing import List, Optional, Union
 
 from dotenv import load_dotenv
+from pydantic import BaseSettings, Field, SecretStr, EmailStr, validator
 
 logger = logging.getLogger(__name__)
 
@@ -63,6 +65,14 @@ class Settings(BaseSettings):
     NEO4J_URI: str = "bolt://localhost:7687"
     NEO4J_USER: str = "neo4j"
     NEO4J_PASSWORD: SecretStr = SecretStr("neo4j")
+
+    # RabbitMQ settings
+    RABBITMQ_HOST: str = "localhost"
+    RABBITMQ_PORT: int = 5672
+    RABBITMQ_USERNAME: str = "guest"
+    RABBITMQ_PASSWORD: str = "guest"
+    RABBITMQ_VHOST: str = "/"
+    RABBITMQ_ENABLED: bool = False  # Set to True to enable RabbitMQ messaging
 
     @validator("CORS_ORIGINS", pre=True)
     def assemble_cors_origins(cls, v: Union[str, List[str]]) -> Union[List[str], str]:

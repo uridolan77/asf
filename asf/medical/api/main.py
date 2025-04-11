@@ -18,6 +18,9 @@ from asf.medical.api.dependencies import get_admin_user
 from asf.medical.core.logging_config import get_logger
 from asf.medical.api.middleware import MonitoringMiddleware
 from asf.medical.core.monitoring import setup_monitoring, get_metrics, run_health_checks
+from asf.medical.core.service_initialization import initialize_services
+from asf.medical.core.redis_event_broker import initialize_event_system, shutdown_event_system
+from asf.medical.core.messaging.initialization import initialize_messaging_system, shutdown_messaging_system
 
 logger = get_logger(__name__)
 
@@ -42,21 +45,32 @@ from asf.medical.api.routers.async_ml import router as async_ml_router
 from asf.medical.api.routers.model_cache import router as model_cache_router
 from asf.medical.api.routers.task_management import router as task_management_router
 from asf.medical.api.routers.resource_monitoring import router as resource_monitoring_router
+from asf.medical.api.routers.messaging_tasks import router as messaging_tasks_router
+from asf.medical.api.routers.websockets import router as websockets_router
+from asf.medical.api.routers.task_repository_api import router as task_repository_api_router
+from asf.medical.api.routers.messaging_metrics import router as messaging_metrics_router
+from asf.medical.api.static import router as static_router
 from asf.medical.core.config import settings
-from asf.medical.core.enhanced_cache import enhanced_cache_manager as cache_manager, enhanced_cached as cached
+from asf.medical.core.enhanced_cache import EnhancedCacheManager
+
+# Create a global cache manager instance
+cache_manager = EnhancedCacheManager()
 from asf.medical.storage.database import init_db
 from asf.medical.ml.model_registry import model_registry
+from asf.medical.core.exceptions import DatabaseError
 
 logger = get_logger(__name__)
 
 @asynccontextmanager
-async def lifespan(app_instance: FastAPI):
+async def lifespan(_: FastAPI):
     logger.info(f"Starting application in {settings.ENVIRONMENT} environment")
 
     try:
+        # Initialize database
         init_db()
         logger.info("Database initialized successfully")
 
+        # Initialize cache
         if settings.REDIS_URL:
             cache_manager.__init__(
                 max_size=10000,  # Increase cache size for production
@@ -68,26 +82,57 @@ async def lifespan(app_instance: FastAPI):
         else:
             logger.info("Cache manager initialized with local LRU cache only")
 
+        # Initialize service registry
+        initialize_services()
+        logger.info("Service registry initialized")
+
+        # Initialize event system
+        await initialize_event_system()
+        logger.info("Event system initialized")
+
+        # Initialize messaging system if RabbitMQ is enabled
+        if settings.RABBITMQ_ENABLED:
+            await initialize_messaging_system()
+            logger.info("Messaging system initialized")
+        else:
+            logger.info("RabbitMQ messaging is disabled")
+
+        # Initialize model registry
         model_registry.initialize(use_gpu=settings.USE_GPU)
         logger.info(f"Model registry initialized with GPU support: {settings.USE_GPU}")
 
+        # Setup monitoring
         setup_monitoring()
         logger.info("Monitoring initialized")
+
+        # Setup exception handlers will be implemented later
+        logger.info("Exception handlers will be implemented later")
 
         logger.info("Application startup complete")
         logger.info("API documentation available at: /docs and /redoc")
     except Exception as e:
-    logger.error(f\"Error during application startup: {str(e)}\")
-    raise DatabaseError(f\"Error during application startup: {str(e)}\")
+        logger.error(f"Error during application startup: {str(e)}")
+        raise DatabaseError(f"Error during application startup: {str(e)}")
 
     yield
 
     logger.info("Application shutdown initiated")
 
     try:
-        await enhanced_cache_manager.clear()
+        # Shutdown messaging system if RabbitMQ is enabled
+        if settings.RABBITMQ_ENABLED:
+            await shutdown_messaging_system()
+            logger.info("Messaging system shutdown")
+
+        # Shutdown event system
+        await shutdown_event_system()
+        logger.info("Event system shutdown")
+
+        # Clear cache
+        await cache_manager.clear()
         logger.info("Cache cleared")
 
+        # Unload models
         model_registry.unload_all()
         logger.info("Models unloaded")
 
@@ -236,6 +281,11 @@ app.include_router(async_ml_router, prefix=settings.API_V1_STR, tags=["async-ml"
 app.include_router(model_cache_router)
 app.include_router(task_management_router)
 app.include_router(resource_monitoring_router)
+app.include_router(messaging_tasks_router)
+app.include_router(websockets_router)
+app.include_router(task_repository_api_router)
+app.include_router(messaging_metrics_router)
+app.include_router(static_router)
 
 @app.get("/", tags=["status"])
 async def root():
@@ -251,12 +301,12 @@ async def root():
         )
 
 @app.get("/cache/stats", tags=["admin"])
-async def cache_stats(current_user: User = Depends(get_admin_user)):
+async def cache_stats(_: User = Depends(get_admin_user)):
     stats = await cache_manager.get_stats()
     return {"status": "ok", "stats": stats}
 
 @app.get("/metrics", tags=["admin"])
-async def metrics(current_user: User = Depends(get_admin_user)):
+async def metrics(_: User = Depends(get_admin_user)):
     metrics_data = get_metrics()
     return {"status": "ok", "metrics": metrics_data}
 

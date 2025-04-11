@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Messaging System Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        h1, h2, h3 {
+            color: #333;
+        }
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .dashboard-card {
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            padding: 15px;
+            border-top: 4px solid #3498db;
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .card-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin: 0;
+        }
+        .card-refresh {
+            background: none;
+            border: none;
+            color: #3498db;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .metric:last-child {
+            border-bottom: none;
+        }
+        .metric-name {
+            font-weight: bold;
+        }
+        .metric-value {
+            font-family: monospace;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        .status-healthy {
+            background-color: #2ecc71;
+        }
+        .status-warning {
+            background-color: #f39c12;
+        }
+        .status-error {
+            background-color: #e74c3c;
+        }
+        .chart-container {
+            height: 200px;
+            margin-top: 15px;
+        }
+        .message-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 15px;
+        }
+        .message-item {
+            padding: 10px;
+            margin-bottom: 5px;
+            background-color: #f9f9f9;
+            border-radius: 3px;
+            font-size: 14px;
+        }
+        .message-item:nth-child(even) {
+            background-color: #f0f0f0;
+        }
+        .message-time {
+            font-size: 12px;
+            color: #777;
+        }
+        .message-type {
+            font-weight: bold;
+            margin-right: 5px;
+        }
+        .message-type-task {
+            color: #3498db;
+        }
+        .message-type-event {
+            color: #2ecc71;
+        }
+        .message-type-command {
+            color: #9b59b6;
+        }
+        .message-type-error {
+            color: #e74c3c;
+        }
+        .controls {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .refresh-rate {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        select, button {
+            padding: 8px 12px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+        }
+        .tab.active {
+            border-bottom-color: #3498db;
+            font-weight: bold;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .dead-letter-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        .dead-letter-table th, .dead-letter-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        .dead-letter-table th {
+            background-color: #f5f5f5;
+            font-weight: bold;
+        }
+        .dead-letter-table tr:hover {
+            background-color: #f9f9f9;
+        }
+        .action-btn {
+            padding: 5px 10px;
+            font-size: 12px;
+            margin-right: 5px;
+        }
+        .reprocess-btn {
+            background-color: #2ecc71;
+        }
+        .delete-btn {
+            background-color: #e74c3c;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Messaging System Dashboard</h1>
+
+        <div class="controls">
+            <button id="refresh-btn">Refresh All</button>
+            <div class="refresh-rate">
+                <label for="refresh-interval">Auto-refresh:</label>
+                <select id="refresh-interval">
+                    <option value="0">Off</option>
+                    <option value="5000">5 seconds</option>
+                    <option value="10000" selected>10 seconds</option>
+                    <option value="30000">30 seconds</option>
+                    <option value="60000">1 minute</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" data-tab="overview">Overview</div>
+            <div class="tab" data-tab="tasks">Tasks</div>
+            <div class="tab" data-tab="dead-letters">Dead Letters</div>
+            <div class="tab" data-tab="metrics">Metrics</div>
+        </div>
+
+        <div id="overview" class="tab-content active">
+            <div class="dashboard-grid">
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h3 class="card-title">System Status</h3>
+                        <button class="card-refresh" data-card="system-status">↻</button>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-name">RabbitMQ Connection</span>
+                        <span class="metric-value"><span class="status-indicator status-healthy"></span> Connected</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-name">Worker Status</span>
+                        <span class="metric-value"><span class="status-indicator status-healthy"></span> Running (5/5)</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-name">Message Processing</span>
+                        <span class="metric-value"><span class="status-indicator status-healthy"></span> Normal</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-name">Dead Letter Queue</span>
+                        <span class="metric-value"><span class="status-indicator status-healthy"></span> 0 messages</span>
+                    </div>
+                </div>
+
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h3 class="card-title">Message Counts</h3>
+                        <button class="card-refresh" data-card="message-counts">↻</button>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-name">Tasks</span>
+                        <span class="metric-value">245</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-name">Events</span>
+                        <span class="metric-value">1,203</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-name">Commands</span>
+                        <span class="metric-value">87</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-name">Total</span>
+                        <span class="metric-value">1,535</span>
+                    </div>
+                </div>
+
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h3 class="card-title">Task Status</h3>
+                        <button class="card-refresh" data-card="task-status">↻</button>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-name">Pending</span>
+                        <span class="metric-value">12</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-name">Running</span>
+                        <span class="metric-value">5</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-name">Completed</span>
+                        <span class="metric-value">215</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-name">Failed</span>
+                        <span class="metric-value">13</span>
+                    </div>
+                </div>
+
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h3 class="card-title">Recent Messages</h3>
+                        <button class="card-refresh" data-card="recent-messages">↻</button>
+                    </div>
+                    <div class="message-list" id="recent-messages-list">
+                        <div class="message-item">
+                            <div><span class="message-type message-type-task">TASK</span> SEARCH_PUBMED</div>
+                            <div class="message-time">2023-06-15 14:32:45</div>
+                        </div>
+                        <div class="message-item">
+                            <div><span class="message-type message-type-event">EVENT</span> task.started</div>
+                            <div class="message-time">2023-06-15 14:32:45</div>
+                        </div>
+                        <div class="message-item">
+                            <div><span class="message-type message-type-event">EVENT</span> task.progress</div>
+                            <div class="message-time">2023-06-15 14:32:47</div>
+                        </div>
+                        <div class="message-item">
+                            <div><span class="message-type message-type-event">EVENT</span> task.completed</div>
+                            <div class="message-time">2023-06-15 14:32:50</div>
+                        </div>
+                        <div class="message-item">
+                            <div><span class="message-type message-type-task">TASK</span> ANALYZE_BIAS</div>
+                            <div class="message-time">2023-06-15 14:33:12</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tasks" class="tab-content">
+            <h2>Task Management</h2>
+            <div class="controls">
+                <button id="refresh-tasks-btn">Refresh Tasks</button>
+                <select id="task-status-filter">
+                    <option value="all">All Statuses</option>
+                    <option value="pending">Pending</option>
+                    <option value="running">Running</option>
+                    <option value="completed">Completed</option>
+                    <option value="failed">Failed</option>
+                    <option value="retrying">Retrying</option>
+                    <option value="cancelled">Cancelled</option>
+                </select>
+            </div>
+
+            <table class="dead-letter-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Type</th>
+                        <th>Status</th>
+                        <th>Progress</th>
+                        <th>Created</th>
+                        <th>Updated</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="tasks-table-body">
+                    <tr>
+                        <td>task-123456</td>
+                        <td>SEARCH_PUBMED</td>
+                        <td>COMPLETED</td>
+                        <td>100%</td>
+                        <td>2023-06-15 14:32:45</td>
+                        <td>2023-06-15 14:32:50</td>
+                        <td>
+                            <button class="action-btn">View</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>task-123457</td>
+                        <td>ANALYZE_BIAS</td>
+                        <td>RUNNING</td>
+                        <td>45%</td>
+                        <td>2023-06-15 14:33:12</td>
+                        <td>2023-06-15 14:33:20</td>
+                        <td>
+                            <button class="action-btn">View</button>
+                            <button class="action-btn delete-btn">Cancel</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>task-123458</td>
+                        <td>EXPORT_RESULTS</td>
+                        <td>PENDING</td>
+                        <td>0%</td>
+                        <td>2023-06-15 14:34:01</td>
+                        <td>2023-06-15 14:34:01</td>
+                        <td>
+                            <button class="action-btn">View</button>
+                            <button class="action-btn delete-btn">Cancel</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>task-123459</td>
+                        <td>SEARCH_CLINICAL_TRIALS</td>
+                        <td>FAILED</td>
+                        <td>75%</td>
+                        <td>2023-06-15 14:35:22</td>
+                        <td>2023-06-15 14:35:30</td>
+                        <td>
+                            <button class="action-btn">View</button>
+                            <button class="action-btn reprocess-btn">Retry</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div id="dead-letters" class="tab-content">
+            <h2>Dead Letter Management</h2>
+            <div class="controls">
+                <button id="refresh-dead-letters-btn">Refresh Dead Letters</button>
+                <button id="reprocess-all-btn" class="reprocess-btn">Reprocess All</button>
+                <select id="dead-letter-filter">
+                    <option value="all">All Messages</option>
+                    <option value="not-reprocessed">Not Reprocessed</option>
+                    <option value="reprocessed">Reprocessed</option>
+                </select>
+            </div>
+
+            <table class="dead-letter-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Exchange</th>
+                        <th>Routing Key</th>
+                        <th>Error</th>
+                        <th>Created</th>
+                        <th>Retry Count</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="dead-letters-table-body">
+                    <tr>
+                        <td>dl-123456</td>
+                        <td>tasks</td>
+                        <td>search.pubmed</td>
+                        <td>Connection timeout</td>
+                        <td>2023-06-15 14:32:45</td>
+                        <td>2</td>
+                        <td>
+                            <button class="action-btn">View</button>
+                            <button class="action-btn reprocess-btn">Reprocess</button>
+                            <button class="action-btn delete-btn">Delete</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>dl-123457</td>
+                        <td>events</td>
+                        <td>task.completed</td>
+                        <td>Serialization error</td>
+                        <td>2023-06-15 14:33:12</td>
+                        <td>1</td>
+                        <td>
+                            <button class="action-btn">View</button>
+                            <button class="action-btn reprocess-btn">Reprocess</button>
+                            <button class="action-btn delete-btn">Delete</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div id="metrics" class="tab-content">
+            <h2>System Metrics</h2>
+            <div class="controls">
+                <button id="refresh-metrics-btn">Refresh Metrics</button>
+                <select id="time-range">
+                    <option value="1h">Last Hour</option>
+                    <option value="6h">Last 6 Hours</option>
+                    <option value="24h" selected>Last 24 Hours</option>
+                    <option value="7d">Last 7 Days</option>
+                    <option value="30d">Last 30 Days</option>
+                </select>
+            </div>
+
+            <div class="dashboard-grid">
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h3 class="card-title">Message Throughput</h3>
+                    </div>
+                    <div class="chart-container" id="throughput-chart">
+                        <!-- Chart will be rendered here -->
+                        <img src="https://via.placeholder.com/350x200?text=Message+Throughput+Chart" alt="Message Throughput Chart" style="width: 100%; height: 100%; object-fit: cover;">
+                    </div>
+                </div>
+
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h3 class="card-title">Queue Sizes</h3>
+                    </div>
+                    <div class="chart-container" id="queue-sizes-chart">
+                        <!-- Chart will be rendered here -->
+                        <img src="https://via.placeholder.com/350x200?text=Queue+Sizes+Chart" alt="Queue Sizes Chart" style="width: 100%; height: 100%; object-fit: cover;">
+                    </div>
+                </div>
+
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h3 class="card-title">Processing Times</h3>
+                    </div>
+                    <div class="chart-container" id="processing-times-chart">
+                        <!-- Chart will be rendered here -->
+                        <img src="https://via.placeholder.com/350x200?text=Processing+Times+Chart" alt="Processing Times Chart" style="width: 100%; height: 100%; object-fit: cover;">
+                    </div>
+                </div>
+
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h3 class="card-title">Error Rates</h3>
+                    </div>
+                    <div class="chart-container" id="error-rates-chart">
+                        <!-- Chart will be rendered here -->
+                        <img src="https://via.placeholder.com/350x200?text=Error+Rates+Chart" alt="Error Rates Chart" style="width: 100%; height: 100%; object-fit: cover;">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Remove active class from all tabs and tab contents
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+                // Add active class to clicked tab and corresponding content
+                tab.classList.add('active');
+                document.getElementById(tab.dataset.tab).classList.add('active');
+            });
+        });
+
+        // Auto-refresh functionality
+        let refreshInterval;
+        const refreshIntervalSelect = document.getElementById('refresh-interval');
+
+        function startAutoRefresh() {
+            const interval = parseInt(refreshIntervalSelect.value);
+            clearInterval(refreshInterval);
+
+            if (interval > 0) {
+                refreshInterval = setInterval(() => {
+                    refreshAllData();
+                }, interval);
+            }
+        }
+
+        refreshIntervalSelect.addEventListener('change', startAutoRefresh);
+        startAutoRefresh();
+
+        // Refresh button
+        document.getElementById('refresh-btn').addEventListener('click', refreshAllData);
+
+        // Individual card refresh buttons
+        document.querySelectorAll('.card-refresh').forEach(button => {
+            button.addEventListener('click', () => {
+                const cardId = button.dataset.card;
+                refreshCard(cardId);
+            });
+        });
+
+        // Task-specific refresh
+        document.getElementById('refresh-tasks-btn').addEventListener('click', refreshTasks);
+
+        // Dead letter-specific refresh
+        document.getElementById('refresh-dead-letters-btn').addEventListener('click', refreshDeadLetters);
+
+        // Metrics-specific refresh
+        document.getElementById('refresh-metrics-btn').addEventListener('click', refreshMetrics);
+
+        // Functions to refresh data
+        function refreshAllData() {
+            console.log('Refreshing all data...');
+            refreshCard('system-status');
+            refreshCard('message-counts');
+            refreshCard('task-status');
+            refreshCard('recent-messages');
+            refreshTasks();
+            refreshDeadLetters();
+            refreshMetrics();
+        }
+
+        function refreshCard(cardId) {
+            console.log(`Refreshing card: ${cardId}`);
+            const card = document.querySelector(`.dashboard-card .card-header button[data-card="${cardId}"]`).closest('.dashboard-card');
+            card.style.opacity = '0.6';
+
+            // Make API call based on card ID
+            let apiEndpoint = '';
+
+            switch(cardId) {
+                case 'system-status':
+                    apiEndpoint = '/v1/messaging-metrics/system-status';
+                    fetch(apiEndpoint)
+                        .then(response => response.json())
+                        .then(data => {
+                            // Update system status card
+                            const statusElements = card.querySelectorAll('.metric-value');
+
+                            // Connection status
+                            statusElements[0].innerHTML = `<span class="status-indicator status-${data.connection_status === 'Connected' ? 'healthy' : 'error'}"></span> ${data.connection_status}`;
+
+                            // Worker status
+                            statusElements[1].innerHTML = `<span class="status-indicator status-healthy"></span> ${data.worker_status}`;
+
+                            // Message processing status
+                            statusElements[2].innerHTML = `<span class="status-indicator status-healthy"></span> ${data.message_processing_status}`;
+
+                            // Dead letter queue
+                            const dlqStatus = data.dead_letter_count === 0 ? 'healthy' : 'warning';
+                            statusElements[3].innerHTML = `<span class="status-indicator status-${dlqStatus}"></span> ${data.dead_letter_count} messages`;
+
+                            card.style.opacity = '1';
+                        })
+                        .catch(error => {
+                            console.error('Error fetching system status:', error);
+                            card.style.opacity = '1';
+                        });
+                    break;
+
+                case 'message-counts':
+                    apiEndpoint = '/v1/messaging-metrics/message-counts';
+                    fetch(apiEndpoint)
+                        .then(response => response.json())
+                        .then(data => {
+                            // Update message counts card
+                            const countElements = card.querySelectorAll('.metric-value');
+
+                            // Tasks
+                            countElements[0].textContent = data.tasks.toLocaleString();
+
+                            // Events
+                            countElements[1].textContent = data.events.toLocaleString();
+
+                            // Commands
+                            countElements[2].textContent = data.commands.toLocaleString();
+
+                            // Total
+                            countElements[3].textContent = data.total.toLocaleString();
+
+                            card.style.opacity = '1';
+                        })
+                        .catch(error => {
+                            console.error('Error fetching message counts:', error);
+                            card.style.opacity = '1';
+                        });
+                    break;
+
+                case 'task-status':
+                    apiEndpoint = '/v1/messaging-metrics/task-status';
+                    fetch(apiEndpoint)
+                        .then(response => response.json())
+                        .then(data => {
+                            // Update task status card
+                            const statusElements = card.querySelectorAll('.metric-value');
+
+                            // Pending
+                            statusElements[0].textContent = data.pending.toLocaleString();
+
+                            // Running
+                            statusElements[1].textContent = data.running.toLocaleString();
+
+                            // Completed
+                            statusElements[2].textContent = data.completed.toLocaleString();
+
+                            // Failed
+                            statusElements[3].textContent = data.failed.toLocaleString();
+
+                            card.style.opacity = '1';
+                        })
+                        .catch(error => {
+                            console.error('Error fetching task status:', error);
+                            card.style.opacity = '1';
+                        });
+                    break;
+
+                case 'recent-messages':
+                    apiEndpoint = '/v1/messaging-metrics/recent-messages';
+                    fetch(apiEndpoint)
+                        .then(response => response.json())
+                        .then(data => {
+                            // Update recent messages list
+                            const messagesList = card.querySelector('.message-list');
+                            messagesList.innerHTML = '';
+
+                            data.messages.forEach(message => {
+                                const messageItem = document.createElement('div');
+                                messageItem.className = 'message-item';
+
+                                const messageType = message.type.toLowerCase();
+                                const messageContent = document.createElement('div');
+                                messageContent.innerHTML = `<span class="message-type message-type-${messageType}">${message.type}</span> ${message.subtype}`;
+
+                                const messageTime = document.createElement('div');
+                                messageTime.className = 'message-time';
+                                messageTime.textContent = new Date(message.timestamp).toLocaleString();
+
+                                messageItem.appendChild(messageContent);
+                                messageItem.appendChild(messageTime);
+                                messagesList.appendChild(messageItem);
+                            });
+
+                            card.style.opacity = '1';
+                        })
+                        .catch(error => {
+                            console.error('Error fetching recent messages:', error);
+                            card.style.opacity = '1';
+                        });
+                    break;
+
+                default:
+                    // If no API endpoint is defined, just restore opacity
+                    setTimeout(() => {
+                        card.style.opacity = '1';
+                    }, 500);
+            }
+        }
+
+        function refreshTasks() {
+            console.log('Refreshing tasks...');
+            const tasksTable = document.getElementById('tasks-table-body');
+            tasksTable.style.opacity = '0.6';
+
+            // Get the status filter
+            const statusFilter = document.getElementById('task-status-filter').value;
+
+            // Build the API endpoint
+            let apiEndpoint = '/v1/db-tasks';
+            if (statusFilter !== 'all') {
+                apiEndpoint += `?status=${statusFilter}`;
+            }
+
+            // Fetch tasks
+            fetch(apiEndpoint)
+                .then(response => response.json())
+                .then(data => {
+                    // Clear the table
+                    tasksTable.innerHTML = '';
+
+                    // Add tasks to the table
+                    data.tasks.forEach(task => {
+                        const row = document.createElement('tr');
+
+                        // ID
+                        const idCell = document.createElement('td');
+                        idCell.textContent = task.id;
+                        row.appendChild(idCell);
+
+                        // Type
+                        const typeCell = document.createElement('td');
+                        typeCell.textContent = task.type;
+                        row.appendChild(typeCell);
+
+                        // Status
+                        const statusCell = document.createElement('td');
+                        statusCell.textContent = task.status;
+                        row.appendChild(statusCell);
+
+                        // Progress
+                        const progressCell = document.createElement('td');
+                        progressCell.textContent = `${task.progress}%`;
+                        row.appendChild(progressCell);
+
+                        // Created
+                        const createdCell = document.createElement('td');
+                        createdCell.textContent = new Date(task.created_at).toLocaleString();
+                        row.appendChild(createdCell);
+
+                        // Updated
+                        const updatedCell = document.createElement('td');
+                        updatedCell.textContent = new Date(task.updated_at).toLocaleString();
+                        row.appendChild(updatedCell);
+
+                        // Actions
+                        const actionsCell = document.createElement('td');
+
+                        // View button
+                        const viewButton = document.createElement('button');
+                        viewButton.className = 'action-btn';
+                        viewButton.textContent = 'View';
+                        viewButton.addEventListener('click', () => {
+                            window.location.href = `/v1/db-tasks/${task.id}`;
+                        });
+                        actionsCell.appendChild(viewButton);
+
+                        // Cancel button (only for pending or running tasks)
+                        if (task.status === 'PENDING' || task.status === 'RUNNING') {
+                            const cancelButton = document.createElement('button');
+                            cancelButton.className = 'action-btn delete-btn';
+                            cancelButton.textContent = 'Cancel';
+                            cancelButton.addEventListener('click', () => {
+                                if (confirm(`Are you sure you want to cancel task ${task.id}?`)) {
+                                    fetch(`/v1/db-tasks/${task.id}/cancel`, {
+                                        method: 'POST'
+                                    })
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        alert(`Task ${task.id} cancelled successfully`);
+                                        refreshTasks();
+                                    })
+                                    .catch(error => {
+                                        console.error('Error cancelling task:', error);
+                                        alert(`Error cancelling task: ${error}`);
+                                    });
+                                }
+                            });
+                            actionsCell.appendChild(cancelButton);
+                        }
+
+                        // Retry button (only for failed tasks)
+                        if (task.status === 'FAILED') {
+                            const retryButton = document.createElement('button');
+                            retryButton.className = 'action-btn reprocess-btn';
+                            retryButton.textContent = 'Retry';
+                            retryButton.addEventListener('click', () => {
+                                if (confirm(`Are you sure you want to retry task ${task.id}?`)) {
+                                    // This would be implemented in a real system
+                                    alert(`Retrying task ${task.id}`);
+                                }
+                            });
+                            actionsCell.appendChild(retryButton);
+                        }
+
+                        row.appendChild(actionsCell);
+
+                        tasksTable.appendChild(row);
+                    });
+
+                    tasksTable.style.opacity = '1';
+                })
+                .catch(error => {
+                    console.error('Error fetching tasks:', error);
+                    tasksTable.style.opacity = '1';
+                });
+        }
+
+        function refreshDeadLetters() {
+            console.log('Refreshing dead letters...');
+            const deadLettersTable = document.getElementById('dead-letters-table-body');
+            deadLettersTable.style.opacity = '0.6';
+
+            // Get the filter
+            const filter = document.getElementById('dead-letter-filter').value;
+
+            // Build the API endpoint
+            let apiEndpoint = '/v1/db-tasks/dead-letters';
+            if (filter === 'reprocessed') {
+                apiEndpoint += '?reprocessed=true';
+            } else if (filter === 'not-reprocessed') {
+                apiEndpoint += '?reprocessed=false';
+            }
+
+            // Fetch dead letters
+            fetch(apiEndpoint)
+                .then(response => response.json())
+                .then(data => {
+                    // Clear the table
+                    deadLettersTable.innerHTML = '';
+
+                    // Add dead letters to the table
+                    data.messages.forEach(message => {
+                        const row = document.createElement('tr');
+
+                        // ID
+                        const idCell = document.createElement('td');
+                        idCell.textContent = message.id;
+                        row.appendChild(idCell);
+
+                        // Exchange
+                        const exchangeCell = document.createElement('td');
+                        exchangeCell.textContent = message.exchange;
+                        row.appendChild(exchangeCell);
+
+                        // Routing Key
+                        const routingKeyCell = document.createElement('td');
+                        routingKeyCell.textContent = message.routing_key;
+                        row.appendChild(routingKeyCell);
+
+                        // Error
+                        const errorCell = document.createElement('td');
+                        errorCell.textContent = message.error;
+                        row.appendChild(errorCell);
+
+                        // Created
+                        const createdCell = document.createElement('td');
+                        createdCell.textContent = new Date(message.created_at).toLocaleString();
+                        row.appendChild(createdCell);
+
+                        // Retry Count
+                        const retryCountCell = document.createElement('td');
+                        retryCountCell.textContent = message.retry_count;
+                        row.appendChild(retryCountCell);
+
+                        // Actions
+                        const actionsCell = document.createElement('td');
+
+                        // View button
+                        const viewButton = document.createElement('button');
+                        viewButton.className = 'action-btn';
+                        viewButton.textContent = 'View';
+                        viewButton.addEventListener('click', () => {
+                            alert(`Message details: ${JSON.stringify(message, null, 2)}`);
+                        });
+                        actionsCell.appendChild(viewButton);
+
+                        // Reprocess button (only for non-reprocessed messages)
+                        if (!message.reprocessed) {
+                            const reprocessButton = document.createElement('button');
+                            reprocessButton.className = 'action-btn reprocess-btn';
+                            reprocessButton.textContent = 'Reprocess';
+                            reprocessButton.addEventListener('click', () => {
+                                if (confirm(`Are you sure you want to reprocess message ${message.id}?`)) {
+                                    fetch(`/v1/db-tasks/dead-letters/${message.id}/reprocess`, {
+                                        method: 'POST'
+                                    })
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        alert(`Message ${message.id} reprocessed successfully`);
+                                        refreshDeadLetters();
+                                    })
+                                    .catch(error => {
+                                        console.error('Error reprocessing message:', error);
+                                        alert(`Error reprocessing message: ${error}`);
+                                    });
+                                }
+                            });
+                            actionsCell.appendChild(reprocessButton);
+                        }
+
+                        // Delete button
+                        const deleteButton = document.createElement('button');
+                        deleteButton.className = 'action-btn delete-btn';
+                        deleteButton.textContent = 'Delete';
+                        deleteButton.addEventListener('click', () => {
+                            if (confirm(`Are you sure you want to delete message ${message.id}?`)) {
+                                fetch(`/v1/db-tasks/dead-letters/${message.id}`, {
+                                    method: 'DELETE'
+                                })
+                                .then(response => response.json())
+                                .then(data => {
+                                    alert(`Message ${message.id} deleted successfully`);
+                                    refreshDeadLetters();
+                                })
+                                .catch(error => {
+                                    console.error('Error deleting message:', error);
+                                    alert(`Error deleting message: ${error}`);
+                                });
+                            }
+                        });
+                        actionsCell.appendChild(deleteButton);
+
+                        row.appendChild(actionsCell);
+
+                        deadLettersTable.appendChild(row);
+                    });
+
+                    deadLettersTable.style.opacity = '1';
+                })
+                .catch(error => {
+                    console.error('Error fetching dead letters:', error);
+                    deadLettersTable.style.opacity = '1';
+                });
+        }
+
+        function refreshMetrics() {
+            console.log('Refreshing metrics...');
+            const metricsCharts = document.querySelectorAll('#metrics .chart-container');
+            metricsCharts.forEach(chart => {
+                chart.style.opacity = '0.6';
+            });
+
+            // Get the time range
+            const timeRange = document.getElementById('time-range').value;
+
+            // Fetch metrics
+            fetch(`/v1/messaging-metrics/metrics?time_range=${timeRange}`)
+                .then(response => response.json())
+                .then(data => {
+                    // In a real implementation, this would update the charts with the data
+                    // For now, we'll just restore opacity
+                    metricsCharts.forEach(chart => {
+                        chart.style.opacity = '1';
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching metrics:', error);
+                    metricsCharts.forEach(chart => {
+                        chart.style.opacity = '1';
+                    });
+                });
+        }
+
+        // In a real implementation, we would connect to the WebSocket for real-time updates
+        // and implement the API calls to fetch data from the server
+    </script>
+</body>
+</html>
