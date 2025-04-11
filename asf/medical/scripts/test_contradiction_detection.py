@@ -1,29 +1,19 @@
-#!/usr/bin/env python
-"""
-Test script for the contradiction detection feature.
-
-This script tests the contradiction detection service and API endpoints.
-"""
-
 import sys
 import json
 import asyncio
 import logging
 from pathlib import Path
 
-# Add the parent directory to the path so we can import our modules
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
-from asf.medical.ml.services.enhanced_contradiction_service import EnhancedContradictionService
+from asf.medical.ml.services.unified_contradiction_service import UnifiedUnifiedUnifiedContradictionService
 
-# Set up logging
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
-# Test data
 TEST_CLAIMS = [
     {
         "claim1": "Statin therapy reduces the risk of cardiovascular events in patients with high cholesterol.",
@@ -129,60 +119,8 @@ TEST_ARTICLES = [
 ]
 
 async def test_contradiction_service():
-    """Test the contradiction service."""
-    logger.info("Testing contradiction service...")
-
-    # Initialize service
-    service = EnhancedContradictionService()
-
-    # Test each claim pair
-    for i, test_case in enumerate(TEST_CLAIMS):
-        logger.info(f"Test case {i+1}:")
-        logger.info(f"Claim 1: {test_case['claim1']}")
-        logger.info(f"Claim 2: {test_case['claim2']}")
-
-        # Detect contradiction
-        result = await service.detect_contradiction(
-            claim1=test_case["claim1"],
-            claim2=test_case["claim2"],
-            metadata1=test_case["metadata1"],
-            metadata2=test_case["metadata2"]
-        )
-
-        # Print result
-        logger.info(f"Result: {'Contradiction' if result['is_contradiction'] else 'No contradiction'}")
-        logger.info(f"Score: {result['contradiction_score']:.2f}")
-        logger.info(f"Type: {result['contradiction_type']}")
-        logger.info(f"Confidence: {result['confidence']}")
-        if result["explanation"]:
-            logger.info(f"Explanation: {result['explanation']}")
-        logger.info("---")
-
-    # Test batch contradiction detection
-    logger.info("Testing batch contradiction detection...")
-    contradictions = await service.detect_contradictions_in_articles(
-        articles=TEST_ARTICLES,
-        threshold=0.7
-    )
-
-    # Print results
-    logger.info(f"Found {len(contradictions)} contradictions in {len(TEST_ARTICLES)} articles")
-    for i, contradiction in enumerate(contradictions):
-        logger.info(f"Contradiction {i+1}:")
-        logger.info(f"Article 1: {contradiction['article1']['title']}")
-        logger.info(f"Article 2: {contradiction['article2']['title']}")
-        logger.info(f"Score: {contradiction['contradiction']['contradiction_score']:.2f}")
-        logger.info(f"Type: {contradiction['contradiction']['contradiction_type']}")
-        logger.info(f"Confidence: {contradiction['contradiction']['confidence']}")
-        if contradiction["contradiction"]["explanation"]:
-            logger.info(f"Explanation: {contradiction['contradiction']['explanation']}")
-        logger.info("---")
-
-async def test_api_request():
-    """Test creating an API request."""
     logger.info("Testing API request creation...")
 
-    # Create request dictionary
     request = {
         "claim1": "Statin therapy reduces the risk of cardiovascular events in patients with high cholesterol.",
         "claim2": "Statin therapy does not reduce the risk of cardiovascular events in patients with high cholesterol.",
@@ -203,21 +141,7 @@ async def test_api_request():
         "threshold": 0.7
     }
 
-    # Print request
     logger.info(f"API request: {json.dumps(request, indent=2)}")
     logger.info("API request validation successful")
 
 async def main():
-    """Main function."""
-    logger.info("Starting contradiction detection tests...")
-
-    # Test contradiction service
-    await test_contradiction_service()
-
-    # Test API request
-    await test_api_request()
-
-    logger.info("All tests completed successfully")
-
-if __name__ == "__main__":
-    asyncio.run(main())

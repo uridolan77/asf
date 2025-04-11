@@ -26,46 +26,23 @@ class AsyncEventQueue:
         self.logger = logging.getLogger("ASF.Layer4.AsyncEventQueue")
         
     async def put(self, event, priority=None):
-        """
-        Add an event to the queue with priority support.
-        
-        Args:
-            event: The event to add to the queue
-            priority: Optional priority override (0-1, higher is higher priority)
-                     If None, uses event.priority if available
-        
-        Returns:
-            True if successful
-        """
-        # Determine priority
         if priority is None and hasattr(event, 'priority'):
             priority = event.priority
         else:
             priority = 0.5  # Default priority
             
-        # Record priority for metrics
         priority_bin = round(priority * 10) / 10  # Round to nearest 0.1
         self.priority_distribution[priority_bin] += 1
         
-        # Use counter to maintain FIFO order for same priority
         self.event_count += 1
         self.total_submitted += 1
         
-        # Invert priority so lower values are processed first
         inverted_priority = 1.0 - priority
         
-        # Put in queue with (priority, count, event) structure
         await self.queue.put((inverted_priority, self.event_count, event))
         return True
         
     async def get(self):
-        """
-        Get the next event from the queue based on priority.
-        
-        Returns:
-            The next event
-        """
-        # Get from queue, ignoring priority and count
         _, _, event = await self.queue.get()
         return event
         
@@ -83,16 +60,6 @@ class AsyncEventQueue:
             
         Returns:
             Event or None if timeout
-        """
-        try:
-            # Use wait_for with timeout
-            _, _, event = await asyncio.wait_for(self.queue.get(), timeout)
-            return event
-        except asyncio.TimeoutError:
-            return None
-            
-    async def put_batch(self, events, base_priority=0.5):
-        """
         Add multiple events to the queue.
         
         Args:
@@ -101,14 +68,6 @@ class AsyncEventQueue:
             
         Returns:
             Number of events added
-        """
-        for event in events:
-            priority = getattr(event, 'priority', base_priority)
-            await self.put(event, priority)
-        return len(events)
-        
-    def qsize(self):
-        """Get current queue size."""
         return self.queue.qsize()
         
     def empty(self):
@@ -120,12 +79,6 @@ class AsyncEventQueue:
         return self.queue.full()
         
     async def drain(self):
-        """
-        Drain the queue by processing all pending events.
-        
-        Returns:
-            Number of events drained
-        """
         drained = 0
         while not self.queue.empty():
             await self.queue.get()
@@ -149,15 +102,6 @@ class AsyncEventQueue:
         }
         
     async def wait_for_completion(self, timeout=None):
-        """
-        Wait for all current items to be processed.
-        
-        Args:
-            timeout: Optional timeout in seconds
-            
-        Returns:
-            True if completed, False if timeout
-        """
         try:
             await asyncio.wait_for(self.queue.join(), timeout)
             return True

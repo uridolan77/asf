@@ -54,22 +54,17 @@ class PredictiveSymbolicPotential(SymbolicPotential):
         """Predict activation, then actualize and calculate error"""
         context_hash = joblib.hash(context)
         
-        # First make prediction
         predicted = self.predict_activation(context)
         
-        # Then get actual activation
         actual = super().actualize(context, potential_network)
         
-        # Calculate prediction error if prediction was made
         if predicted is not None:
             error = abs(predicted - actual)
             self.prediction_errors[context_hash].append(error)
             
-            # Limit history size
             if len(self.prediction_errors[context_hash]) > 20:
                 self.prediction_errors[context_hash] = self.prediction_errors[context_hash][-20:]
             
-            # Update precision (inverse variance)
             if len(self.prediction_errors[context_hash]) > 1:
                 variance = np.var(self.prediction_errors[context_hash])
                 precision = 1.0 / (variance + 1e-6)  # Avoid division by zero

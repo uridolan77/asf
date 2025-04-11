@@ -13,16 +13,13 @@ import torch
 import numpy as np
 from typing import Dict, List, Optional, Tuple, Union, Any
 
-# Add parent directory to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# Import components
 from asf.medical.layer1_knowledge_substrate.temporal.tsmixer import TSMixer, TSMixerEncoder
 from asf.medical.layer1_knowledge_substrate.embeddings.lorentz_embeddings import LorentzEmbedding
 from asf.medical.orchestration.ray_orchestrator import RayOrchestrator, RayConfig
 from asf.medical.models.shap_explainer import ContradictionExplainer, ContradictionVisualizer
 
-# Configure logging
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
@@ -33,10 +30,8 @@ class TestIntegration(unittest.TestCase):
 
     def setUp(self):
         """Set up test fixtures."""
-        # Initialize components
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-        # Create TSMixer model
         self.tsmixer = TSMixer(
             seq_len=24,
             num_features=5,
@@ -44,18 +39,15 @@ class TestIntegration(unittest.TestCase):
             forecast_horizon=12
         ).to(self.device)
 
-        # Create Lorentz embedding
         self.lorentz_embedding = LorentzEmbedding(
             num_embeddings=1000,
             embedding_dim=32,
             k=-1.0
         ).to(self.device)
 
-        # Create Ray orchestrator
         self.ray_config = RayConfig(use_ray=False)  # Use local execution for testing
         self.orchestrator = RayOrchestrator(config=self.ray_config)
 
-        # Register test functions
         self.orchestrator.register_function(self._add, "add")
         self.orchestrator.register_function(self._multiply, "multiply")
 
@@ -83,25 +75,18 @@ class TestIntegration(unittest.TestCase):
 
     def test_lorentz_embedding(self):
         """Test Lorentz embedding."""
-        # Create random indices
         indices = torch.randint(0, 1000, (16,)).to(self.device)
 
-        # Get embeddings
         embeddings = self.lorentz_embedding(indices)
 
-        # Check output shape
         self.assertEqual(embeddings.shape, (16, 32))
 
-        # Check output is not NaN
         self.assertFalse(torch.isnan(embeddings).any())
 
-        # Check embeddings are on the manifold
-        # For Lorentz manifold with k=-1, we need x_0^2 - sum(x_i^2) = 1
         x_0_squared = embeddings[:, 0] ** 2
         x_i_squared_sum = torch.sum(embeddings[:, 1:] ** 2, dim=1)
         manifold_constraint = x_0_squared - x_i_squared_sum
 
-        # Check constraint is close to 1
         self.assertTrue(torch.allclose(manifold_constraint, torch.ones_like(manifold_constraint), rtol=1e-5, atol=1e-5))
 
     def test_ray_orchestrator(self):
@@ -142,7 +127,6 @@ class TestIntegration(unittest.TestCase):
 
     def test_contradiction_explanation(self):
         """Test contradiction explanation."""
-        # Create mock model and tokenizer
         class MockModel:
             def __call__(self, **kwargs):
                 class MockOutput:
@@ -157,14 +141,12 @@ class TestIntegration(unittest.TestCase):
                     "attention_mask": torch.tensor([[1, 1, 1, 1, 1, 1]])
                 }
 
-        # Create explainer
         explainer = ContradictionExplainer(
             model=MockModel(),
             tokenizer=MockTokenizer(),
             device=self.device
         )
 
-        # Create explanation
         explanation = explainer.explain_contradiction(
             claim1="The treatment significantly reduced mortality rates.",
             claim2="The treatment did not show any significant effect on mortality.",
@@ -172,22 +154,17 @@ class TestIntegration(unittest.TestCase):
             use_shap=False  # Disable SHAP for testing
         )
 
-        # Check explanation
         self.assertEqual(explanation.claim1, "The treatment significantly reduced mortality rates.")
         self.assertEqual(explanation.claim2, "The treatment did not show any significant effect on mortality.")
         self.assertEqual(explanation.contradiction_score, 0.8)
 
-        # Create visualizer
         visualizer = ContradictionVisualizer()
 
-        # Generate HTML report
         output_path = "test_report.html"
         visualizer.generate_html_report(explanation, output_path)
 
-        # Check file exists
         self.assertTrue(os.path.exists(output_path))
 
-        # Clean up
         os.remove(output_path)
 
 if __name__ == "__main__":

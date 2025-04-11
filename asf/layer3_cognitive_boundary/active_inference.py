@@ -1,5 +1,3 @@
-# Create a new file: active_inference.py
-
 import asyncio
 import time
 import logging
@@ -25,32 +23,16 @@ class ActiveInferenceController:
         }
         
     async def anticipate_state(self, planned_operations, time_horizon=1.0):
-        """
-        Anticipate future semantic network state based on planned operations.
-        
-        Args:
-            planned_operations: List of planned semantic operations
-            time_horizon: Time window for anticipation (in seconds)
-            
-        Returns:
-            Anticipated semantic state
-        """
-        # Generate operation ID for tracking
         operation_id = f"ops_{int(time.time() * 1000)}"
         
-        # Anticipate contradictions
         contradiction_result = await self.semantic_layer.conflict_detection.anticipate_contradictions(
             planned_operations
         )
         
-        # Anticipate category formations/changes
-        # (In a real implementation, would call into CategoryFormationSystem)
         category_anticipations = await self._anticipate_category_changes(planned_operations)
         
-        # Anticipate concept formations
         concept_anticipations = await self._anticipate_concept_formations(planned_operations)
         
-        # Create a composite anticipated state
         anticipated_state = {
             'operation_id': operation_id,
             'timestamp': time.time(),
@@ -61,57 +43,36 @@ class ActiveInferenceController:
             'planned_operations': planned_operations
         }
         
-        # Store for later evaluation
         self.anticipated_states[operation_id] = anticipated_state
         
         return anticipated_state
         
     async def perform_active_inference(self, anticipated_state, optimization_targets=None):
-        """
-        Perform active inference to minimize prediction error.
-        Modifies planned operations to optimize future state.
-        
-        Args:
-            anticipated_state: Previously anticipated state
-            optimization_targets: Optional custom optimization weights
-            
-        Returns:
-            Modified operations and expected improvements
-        """
         if not anticipated_state:
             return {'status': 'error', 'message': 'No anticipated state provided'}
             
-        # Use provided optimization targets or defaults
         targets = optimization_targets or self.optimization_targets
         
-        # Original operations
         planned_operations = anticipated_state.get('planned_operations', [])
         
-        # Create different operation variants to test
         operation_variants = await self._generate_operation_variants(planned_operations)
         
-        # Evaluate each variant
         variant_scores = []
         
         for variant_name, variant_ops in operation_variants.items():
-            # Anticipate state with this variant
             variant_state = await self.anticipate_state(variant_ops, time_horizon=0.5)
             
-            # Score the variant
             score = self._score_anticipated_state(variant_state, targets)
             
             variant_scores.append((variant_name, variant_ops, score))
         
-        # Sort by score (higher is better)
         variant_scores.sort(key=lambda x: x[2], reverse=True)
         
         if not variant_scores:
             return {'status': 'error', 'message': 'No viable operation variants found'}
             
-        # Select best variant
         best_name, best_ops, best_score = variant_scores[0]
         
-        # Record in history
         self.active_inference_history.append({
             'timestamp': time.time(),
             'original_operation_count': len(planned_operations),
@@ -130,26 +91,13 @@ class ActiveInferenceController:
         }
         
     async def evaluate_anticipations(self, actual_state, operation_id):
-        """
-        Evaluate anticipation accuracy against actual state.
-        Updates precision values based on prediction errors.
-        
-        Args:
-            actual_state: Actual observed state
-            operation_id: ID of the anticipated operation to evaluate
-            
-        Returns:
-            Evaluation results
-        """
         if operation_id not in self.anticipated_states:
             return {'status': 'error', 'message': 'No such anticipated state'}
             
         anticipated = self.anticipated_states[operation_id]
         
-        # Track errors for different prediction types
         errors = {}
         
-        # Evaluate contradiction predictions
         if 'anticipated_contradictions' in anticipated and 'actual_contradictions' in actual_state:
             contradiction_error = self._calculate_set_prediction_error(
                 anticipated['anticipated_contradictions'],
@@ -157,23 +105,17 @@ class ActiveInferenceController:
             )
             errors['contradictions'] = contradiction_error
             
-            # Track error history
             self.prediction_errors['contradictions'].append(contradiction_error)
             
-            # Limit history size
             if len(self.prediction_errors['contradictions']) > 20:
                 self.prediction_errors['contradictions'] = self.prediction_errors['contradictions'][-20:]
         
-        # Similar evaluations for other prediction types
-        # ...
         
-        # Calculate overall prediction accuracy
         if errors:
             overall_error = sum(errors.values()) / len(errors)
         else:
             overall_error = 0.0
             
-        # Clean up old anticipations
         self._clean_old_anticipations()
         
         return {
@@ -190,28 +132,19 @@ class ActiveInferenceController:
         """
         score = 0.0
         
-        # Score contradiction reduction
         contradiction_count = len(state.get('anticipated_contradictions', []))
-        # Lower is better, so we use an inverse score
         contradiction_score = 1.0 / (1.0 + contradiction_count)
         score += contradiction_score * targets.get('contradiction_reduction', 0.4)
         
-        # Score category coherence
-        # (In a real implementation would have proper metrics)
         category_score = 0.7  # Placeholder
         score += category_score * targets.get('category_coherence', 0.3)
         
-        # Score structural efficiency
-        # (In a real implementation would have proper metrics)
         efficiency_score = 0.8  # Placeholder
         score += efficiency_score * targets.get('structural_efficiency', 0.3)
         
         return score
     
     async def _generate_operation_variants(self, operations):
-        """
-        Generate variations of operation sequences for testing.
-        """
         variants = {
             'original': operations,
             'reordered': self._reorder_operations(operations),
@@ -232,34 +165,12 @@ class ActiveInferenceController:
     
     def _prune_operations(self, operations):
         """Remove likely problematic operations."""
-        # Simple implementation - remove operations with very low confidence
         return [op for op in operations if op.get('confidence', 0.5) > 0.3]
     
     async def _enhance_operations(self, operations):
-        """Add preventive or corrective operations."""
-        # In a real implementation, would add operations that prevent contradictions
-        # Simple example: add a dummy operation
-        enhanced = operations.copy()
-        enhanced.append({
-            'type': 'metadata_update',
-            'metadata_key': 'active_inference_enhanced',
-            'metadata_value': True
-        })
-        return enhanced
-        
-    async def _anticipate_category_changes(self, operations):
-        """Anticipate how categories might form or change."""
-        # Placeholder - in real implementation would implement proper anticipation
         return []
         
     async def _anticipate_concept_formations(self, operations):
-        """Anticipate what concepts might form."""
-        # Placeholder - in real implementation would implement proper anticipation
-        return []
-    
-    def _calculate_set_prediction_error(self, predicted, actual):
-        """Calculate error between predicted and actual sets."""
-        # Simple implementation - normalized difference in count
         pred_count = len(predicted)
         actual_count = len(actual)
         

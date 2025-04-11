@@ -1,5 +1,3 @@
-# === FILE: mcp_sdk/extensions/internal/__init__.py ===
-
 from mcp_sdk.extensions.internal.client import InternalMCPClient
 from mcp_sdk.extensions.internal.models import (
     LayerMessage, 
@@ -25,7 +23,6 @@ __all__ = [
 ]
 
 
-# === FILE: mcp_sdk/extensions/internal/enums.py ===
 
 from enum import Enum, auto
 from typing import Dict, Any
@@ -48,14 +45,12 @@ class LayerType(Enum):
         """Get layer type from name."""
         name = name.upper()
         if name.startswith("LAYER"):
-            # Try to parse from number
             try:
                 num = int(name[5:].split("_")[0])
                 return next((l for l in cls if l.value == num), cls.UNKNOWN)
             except:
                 pass
                 
-        # Try to match by name
         for layer in cls:
             if layer.name.endswith(name):
                 return layer
@@ -217,23 +212,18 @@ class LayerRoutingInfo:
         Returns:
             True if the layer should process the message
         """
-        # Don't process if we've already processed it
         if current_layer in self.routing_path:
             return False
             
-        # If broadcast, process unless excluded
         if self.broadcast:
             return current_layer not in self.exclude_layers
             
-        # If targeted to specific layers
         if self.targets:
             return current_layer in self.targets
             
-        # If targeted to a single layer
         if self.target_layer:
             return current_layer == self.target_layer
             
-        # Default: don't process
         return False
 
 @dataclass
@@ -251,10 +241,8 @@ class LayerContext(Context):
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert context to dictionary."""
-        # Start with base context
         result = super().to_dict()
         
-        # Add layer-specific fields
         result['layer_routing'] = self.layer_routing.to_dict() 
         result['priority'] = self.priority.name
         result['processing_mode'] = self.processing_mode.name
@@ -341,22 +329,17 @@ class LayerMessage(Message):
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'LayerMessage':
         """Create message from dictionary."""
-        # Extract and convert content
         context_data = data.get('context', {})
         
-        # Create layer context
         if context_data:
             context = LayerContext.from_dict(context_data)
         else:
             context = LayerContext()
             
-        # Copy all normal message fields
         message = super().from_dict(data)
         
-        # Replace with layer context
         message.context = context
         
-        # Add layer data
         if 'layer_data' in data:
             message.layer_data = data['layer_data']
             
@@ -413,135 +396,26 @@ class LayerMessage(Message):
         """
         Duplicate this message to a new target layer.
         Useful for broadcasts or forwarding.
-        """
-        new_msg = LayerMessage(
-            id=str(uuid.uuid4()),  # New ID for the duplicated message
-            message_type=self.message_type,
-            content=self.content.copy() if self.content else {},
-            prediction=self.prediction,  # Reuse same prediction
-            sender_id=self.sender_id,
-            created_at=time.time(),  # New timestamp
-            correlation_id=self.correlation_id,  # Keep same correlation
-            ttl=self.ttl,
-            priority=self.priority,
-            trace_id=self.trace_id
-        )
-        
-        # Copy context but update routing
-        if isinstance(self.context, LayerContext):
-            new_context = LayerContext(
-                entity_id=self.context.entity_id,
-                environmental_id=self.context.environmental_id,
-                level=self.context.level,
-                conversation_id=self.context.conversation_id,
-                priority=self.context.priority,
-                processing_mode=self.context.processing_mode,
-                communication_type=self.context.communication_type,
-                require_ack=self.context.require_ack
-            )
-            
-            # Set up new routing
-            new_routing = LayerRoutingInfo(
-                source_layer=self.context.layer_routing.source_layer,
-                target_layer=target_layer,
-                hop_count=0,  # Reset hop count
-                max_hops=self.context.layer_routing.max_hops
-            )
-            
-            new_context.layer_routing = new_routing
-            new_msg.context = new_context
-        
-        # Copy layer-specific data
-        if self.layer_data:
-            new_msg.layer_data = self.layer_data.copy()
-            
-        return new_msg
-
-
-# === FILE: mcp_sdk/extensions/internal/client.py ===
-
-import asyncio
-import logging
-import time
-import uuid
-from typing import Dict, List, Any, Optional, Union, Callable, Awaitable, Set
-
-from mcp_sdk.client import MCPClient
-from mcp_sdk.config import MCPConfig
-from mcp_sdk.models import Message, Context, Prediction
-from mcp_sdk.enums import MessageType, ContextLevel
-
-from mcp_sdk.extensions.internal.models import (
-    LayerMessage, 
-    LayerContext, 
-    LayerRoutingInfo
-)
-from mcp_sdk.extensions.internal.enums import (
-    LayerType,
-    LayerPriority,
-    LayerProcessingMode,
-    LayerCommunicationType
-)
-
-class InternalMCPClient(MCPClient):
-    """
     Enhanced MCP client for inter-layer ASF communication.
     Extends the base MCPClient with layer-specific functionality.
-    """
-    def __init__(self, config: MCPConfig, layer_type: LayerType):
-        """
         Initialize the internal MCP client.
         
         Args:
             config: Configuration for the client
             layer_type: The type of layer this client represents
-        """
-        super().__init__(config)
-        self.layer_type = layer_type
-        self.connected_layers: Set[LayerType] = set()
-        self.logger = logging.getLogger(f"mcp_sdk.internal.{layer_type.name}")
-        
-        # Layer-specific message handlers
-        self.layer_handlers: Dict[LayerCommunicationType, 
-                               List[Callable[[LayerMessage], Awaitable[Optional[LayerMessage]]]]] = {
-            comm_type: [] for comm_type in LayerCommunicationType
-        }
-    
-    async def start(self) -> None:
-        """Start the client and background processing."""
         await super().start()
         self.logger.info(f"Internal MCP Client started for layer {self.layer_type.name}")
     
     async def connect_to_layer(self, layer_type: LayerType) -> bool:
-        """
-        Connect to another ASF layer.
-        
-        Args:
-            layer_type: The layer to connect to
-            
-        Returns:
-            True if connection successful
-        """
         if layer_type == self.layer_type:
             return False  # Can't connect to self
             
-        # In a real implementation, this would establish a connection
-        # For this example, we'll just track connected layers
         self.connected_layers.add(layer_type)
         self.logger.info(f"Connected to layer {layer_type.name}")
         
         return True
     
     async def disconnect_from_layer(self, layer_type: LayerType) -> bool:
-        """
-        Disconnect from another ASF layer.
-        
-        Args:
-            layer_type: The layer to disconnect from
-            
-        Returns:
-            True if disconnection successful
-        """
         if layer_type in self.connected_layers:
             self.connected_layers.remove(layer_type)
             self.logger.info(f"Disconnected from layer {layer_type.name}")
@@ -552,13 +426,6 @@ class InternalMCPClient(MCPClient):
     async def register_layer_handler(self, 
                                  communication_type: LayerCommunicationType,
                                  handler: Callable[[LayerMessage], Awaitable[Optional[LayerMessage]]]) -> None:
-        """
-        Register a handler for a specific layer communication type.
-        
-        Args:
-            communication_type: The type of communication to handle
-            handler: The handler function (async)
-        """
         if communication_type not in self.layer_handlers:
             self.layer_handlers[communication_type] = []
             
@@ -574,30 +441,12 @@ class InternalMCPClient(MCPClient):
                               priority: LayerPriority = LayerPriority.NORMAL,
                               layer_data: Optional[Dict[str, Any]] = None,
                               **kwargs) -> LayerMessage:
-        """
-        Create a new inter-layer message.
-        
-        Args:
-            message_type: Type of message
-            content: Message content
-            target_layer: Target layer
-            communication_type: Type of layer communication
-            processing_mode: How the message should be processed
-            priority: Priority level
-            layer_data: Layer-specific data
-            **kwargs: Additional message parameters
-            
-        Returns:
-            The created LayerMessage
-        """
-        # Create layer routing info
         routing = LayerRoutingInfo(
             source_layer=self.layer_type,
             target_layer=target_layer,
             max_hops=3
         )
         
-        # Create layer context
         context = LayerContext(
             entity_id=self.entity_id,
             level=ContextLevel.ENHANCED,
@@ -607,12 +456,10 @@ class InternalMCPClient(MCPClient):
             priority=priority
         )
         
-        # Handle deadline if time_budget provided
         if 'time_budget_ms' in kwargs:
             context.time_budget_ms = kwargs.pop('time_budget_ms')
             context.processing_deadline = time.time() + (context.time_budget_ms / 1000.0)
             
-        # Create the message
         message = LayerMessage(
             message_type=message_type,
             content=content,
@@ -622,7 +469,6 @@ class InternalMCPClient(MCPClient):
             **kwargs
         )
         
-        # Add to conversation history
         self._add_to_conversation(message)
         
         return message
@@ -631,46 +477,26 @@ class InternalMCPClient(MCPClient):
                             message: LayerMessage,
                             wait_for_response: bool = False,
                             timeout: Optional[float] = None) -> Optional[LayerMessage]:
-        """
-        Send an inter-layer message.
-        
-        Args:
-            message: The message to send
-            wait_for_response: Whether to wait for a response
-            timeout: Timeout in seconds (None for default)
-            
-        Returns:
-            Response message if wait_for_response is True, else None
-        """
-        # Check if target layer is connected
         target_layer = message.context.layer_routing.target_layer
         
         if target_layer and target_layer != self.layer_type and target_layer not in self.connected_layers:
             self.logger.warning(f"Attempting to send to disconnected layer {target_layer.name}")
             
-        # Add to conversation history
         self._add_to_conversation(message)
         
-        # Process through message queue
         await self._message_queue.put(message)
         
-        # Set up for handling response if needed
         if wait_for_response:
             timeout = timeout or self.config.default_timeout
             
-            # Create a future for the response
             response_future = asyncio.Future()
             self.pending_responses[message.id] = response_future
             
             try:
-                # Wait for response with timeout
                 response = await asyncio.wait_for(response_future, timeout)
                 
-                # Check if response is a LayerMessage
                 if response and not isinstance(response, LayerMessage):
-                    # Convert to LayerMessage if needed
                     if isinstance(response, Message):
-                        # Convert Message to LayerMessage
                         response_dict = response.to_dict()
                         response = LayerMessage.from_dict(response_dict)
                 
@@ -679,14 +505,12 @@ class InternalMCPClient(MCPClient):
             except asyncio.TimeoutError:
                 self.logger.warning(f"Timeout waiting for response to message {message.id}")
                 
-                # Clean up
                 if message.id in self.pending_responses:
                     del self.pending_responses[message.id]
                     
                 return None
                 
             finally:
-                # Clean up
                 if message.id in self.pending_responses:
                     del self.pending_responses[message.id]
         
@@ -697,19 +521,6 @@ class InternalMCPClient(MCPClient):
                                request_data: Dict[str, Any],
                                priority: LayerPriority = LayerPriority.NORMAL,
                                timeout: Optional[float] = None) -> Optional[LayerMessage]:
-        """
-        Send a request to another layer and wait for response.
-        
-        Args:
-            target_layer: Target layer
-            request_data: Request data
-            priority: Priority level
-            timeout: Timeout in seconds (None for default)
-            
-        Returns:
-            Response message or None if timeout
-        """
-        # Create the message
         message = await self.create_layer_message(
             message_type=MessageType.QUERY,
             content=request_data,
@@ -718,7 +529,6 @@ class InternalMCPClient(MCPClient):
             priority=priority
         )
         
-        # Send and wait for response
         return await self.send_layer_message(message, wait_for_response=True, timeout=timeout)
     
     async def broadcast_to_layers(self,
@@ -726,22 +536,9 @@ class InternalMCPClient(MCPClient):
                              message_type: MessageType = MessageType.SYSTEM,
                              excluded_layers: Optional[List[LayerType]] = None,
                              priority: LayerPriority = LayerPriority.NORMAL) -> Dict[str, Any]:
-        """
-        Broadcast a message to all connected layers.
-        
-        Args:
-            content: Message content
-            message_type: Type of message
-            excluded_layers: Layers to exclude from broadcast
-            priority: Priority level
-            
-        Returns:
-            Results of broadcast
-        """
         excluded = set(excluded_layers or [])
         excluded.add(self.layer_type)  # Don't broadcast to self
         
-        # Create routing info for broadcast
         routing = LayerRoutingInfo(
             source_layer=self.layer_type,
             broadcast=True,
@@ -749,7 +546,6 @@ class InternalMCPClient(MCPClient):
             max_hops=1  # Direct broadcast only
         )
         
-        # Create layer context
         context = LayerContext(
             entity_id=self.entity_id,
             level=ContextLevel.BASIC,
@@ -759,7 +555,6 @@ class InternalMCPClient(MCPClient):
             priority=priority
         )
         
-        # Create the message
         message = LayerMessage(
             message_type=message_type,
             content=content,
@@ -767,14 +562,10 @@ class InternalMCPClient(MCPClient):
             sender_id=self.entity_id
         )
         
-        # In a real implementation, this would send to all layers
-        # For this example, we'll just log and process locally
         self.logger.info(f"Broadcasting message {message.id} to all layers except {[l.name for l in excluded]}")
         
-        # Add to conversation history
         self._add_to_conversation(message)
         
-        # Process through message queue
         await self._message_queue.put(message)
         
         return {
@@ -788,19 +579,6 @@ class InternalMCPClient(MCPClient):
                                      notification_data: Dict[str, Any],
                                      message_type: MessageType = MessageType.SYSTEM,
                                      priority: LayerPriority = LayerPriority.NORMAL) -> Dict[str, Any]:
-        """
-        Send a one-way notification to another layer.
-        
-        Args:
-            target_layer: Target layer
-            notification_data: Notification data
-            message_type: Type of message
-            priority: Priority level
-            
-        Returns:
-            Result of sending notification
-        """
-        # Create the message
         message = await self.create_layer_message(
             message_type=message_type,
             content=notification_data,
@@ -809,7 +587,6 @@ class InternalMCPClient(MCPClient):
             priority=priority
         )
         
-        # Send without waiting for response
         await self.send_layer_message(message)
         
         return {
@@ -819,32 +596,19 @@ class InternalMCPClient(MCPClient):
         }
     
     async def process_layer_message(self, message: LayerMessage) -> Optional[LayerMessage]:
-        """
-        Process an inter-layer message.
-        
-        Args:
-            message: The message to process
-            
-        Returns:
-            Response message if any
-        """
-        # Check if message is for this layer
         if not self._should_process_message(message):
             self.logger.debug(f"Skipping message {message.id} not targeted at this layer")
             return None
             
         self.logger.debug(f"Processing layer message {message.id} of type {message.context.communication_type.name}")
         
-        # Check for deadline expiration
         if isinstance(message.context, LayerContext) and message.context.has_expired():
             self.logger.warning(f"Message {message.id} has expired (deadline passed)")
             return self._create_error_response(message, "Processing deadline exceeded")
             
-        # Update routing path
         if isinstance(message.context, LayerContext) and message.context.layer_routing:
             message.context.layer_routing.add_hop(self.layer_type)
             
-        # Check for layer-specific handlers
         if isinstance(message.context, LayerContext):
             comm_type = message.context.communication_type
             handlers = self.layer_handlers.get(comm_type, [])
@@ -857,7 +621,6 @@ class InternalMCPClient(MCPClient):
                 except Exception as e:
                     self.logger.error(f"Error in layer handler for {comm_type.name}: {str(e)}")
         
-        # Fall back to base message processing
         return await super().process_message(message)
     
     def _should_process_message(self, message: LayerMessage) -> bool:
@@ -871,74 +634,12 @@ class InternalMCPClient(MCPClient):
             True if this layer should process the message
         """
         if not isinstance(message.context, LayerContext) or not message.context.layer_routing:
-            # Not a layer message or missing routing info
             return True
             
-        # Check routing
         routing = message.context.layer_routing
         return routing.should_process(self.layer_type)
     
     async def _process_messages(self) -> None:
-        """Override of background task for processing messages."""
-        self.logger.info("Layer message processing task started")
-        
-        while self._running:
-            try:
-                # Get the next message
-                message = await self._message_queue.get()
-                
-                # Special handling for layer messages
-                if isinstance(message, LayerMessage):
-                    response = await self.process_layer_message(message)
-                    
-                    # If handler returns a response, send it
-                    if response:
-                        # Add to conversation history
-                        self._add_to_conversation(response)
-                        
-                        # If response is to a pending message, resolve the future
-                        if response.reply_to in self.pending_responses:
-                            future = self.pending_responses[response.reply_to]
-                            if not future.done():
-                                future.set_result(response)
-                else:
-                    # Normal message processing
-                    await super()._process_messages()
-                    
-                # Mark as done
-                self._message_queue.task_done()
-                
-            except asyncio.CancelledError:
-                break
-                
-            except Exception as e:
-                self.logger.error(f"Error in layer message processing: {str(e)}")
-                
-        self.logger.info("Layer message processing task stopped")
-
-
-# === FILE: mcp_sdk/extensions/internal/utils.py ===
-
-from typing import List, Dict, Any, Optional, Union, Set
-import asyncio
-import time
-
-from mcp_sdk.extensions.internal.models import (
-    LayerMessage, 
-    LayerContext, 
-    LayerRoutingInfo
-)
-from mcp_sdk.extensions.internal.enums import (
-    LayerType,
-    LayerPriority,
-    LayerProcessingMode,
-    LayerCommunicationType
-)
-
-async def collect_layer_responses(client, message_ids: List[str], 
-                               timeout: float = 10.0,
-                               min_responses: int = 1) -> Dict[str, Optional[LayerMessage]]:
-    """
     Wait for responses from multiple layers.
     
     Args:
@@ -949,54 +650,6 @@ async def collect_layer_responses(client, message_ids: List[str],
         
     Returns:
         Dictionary mapping message IDs to responses
-    """
-    # Create futures for each message
-    futures = {}
-    for msg_id in message_ids:
-        if msg_id not in client.pending_responses:
-            client.pending_responses[msg_id] = asyncio.Future()
-        futures[msg_id] = client.pending_responses[msg_id]
-        
-    # Wait for minimum responses or timeout
-    start_time = time.time()
-    results = {}
-    
-    while len(results) < min_responses and (time.time() - start_time) < timeout:
-        # Check which futures are done
-        for msg_id, future in list(futures.items()):
-            if future.done() and msg_id not in results:
-                try:
-                    results[msg_id] = future.result()
-                except Exception:
-                    results[msg_id] = None
-                    
-        # If we have enough responses, break
-        if len(results) >= min_responses:
-            break
-            
-        # Wait a bit before checking again
-        await asyncio.sleep(0.1)
-        
-    # Add any remaining futures that completed during final sleep
-    for msg_id, future in futures.items():
-        if future.done() and msg_id not in results:
-            try:
-                results[msg_id] = future.result()
-            except Exception:
-                results[msg_id] = None
-    
-    # Clean up
-    for msg_id in message_ids:
-        if msg_id in client.pending_responses:
-            del client.pending_responses[msg_id]
-            
-    return results
-
-def find_layer_connections(all_layers: Set[LayerType], 
-                        source_layer: LayerType, 
-                        target_layer: LayerType,
-                        max_hops: int = 3) -> List[List[LayerType]]:
-    """
     Find all possible connection paths between layers.
     
     Args:
@@ -1007,37 +660,6 @@ def find_layer_connections(all_layers: Set[LayerType],
         
     Returns:
         List of possible paths
-    """
-    # Simple BFS to find paths
-    queue = [[source_layer]]
-    paths = []
-    
-    while queue:
-        path = queue.pop(0)
-        current = path[-1]
-        
-        # Found target
-        if current == target_layer:
-            paths.append(path)
-            continue
-            
-        # Max hops reached
-        if len(path) > max_hops:
-            continue
-            
-        # Try all connections
-        for layer in all_layers:
-            if layer not in path:  # Avoid cycles
-                new_path = list(path)
-                new_path.append(layer)
-                queue.append(new_path)
-    
-    return paths
-
-def get_optimal_routing_path(source_layer: LayerType, 
-                          target_layer: LayerType,
-                          available_layers: Set[LayerType]) -> List[LayerType]:
-    """
     Get optimal routing path between layers.
     
     Args:
@@ -1047,24 +669,6 @@ def get_optimal_routing_path(source_layer: LayerType,
         
     Returns:
         Optimal routing path
-    """
-    # Direct connection if target is available
-    if target_layer in available_layers:
-        return [source_layer, target_layer]
-        
-    # Find all possible paths
-    paths = find_layer_connections(available_layers, source_layer, target_layer)
-    
-    # No path found
-    if not paths:
-        return [source_layer]
-        
-    # Find shortest path
-    shortest = min(paths, key=len)
-    return shortest
-
-def create_dependency_chain(messages: List[LayerMessage]) -> List[LayerMessage]:
-    """
     Create a dependency chain between messages.
     First message depends on nothing, second depends on first, etc.
     
@@ -1073,27 +677,6 @@ def create_dependency_chain(messages: List[LayerMessage]) -> List[LayerMessage]:
         
     Returns:
         Updated list of messages with dependencies
-    """
-    if not messages or len(messages) < 2:
-        return messages
-        
-    # Create dependency chain
-    for i in range(1, len(messages)):
-        prev_id = messages[i-1].id
-        
-        # Ensure context is LayerContext
-        if not isinstance(messages[i].context, LayerContext):
-            context_dict = messages[i].context.to_dict()
-            messages[i].context = LayerContext.from_dict(context_dict)
-            
-        # Add dependency
-        if prev_id not in messages[i].context.dependencies:
-            messages[i].context.dependencies.append(prev_id)
-            
-    return messages
-
-def merge_layer_data(message1: LayerMessage, message2: LayerMessage) -> Dict[str, Any]:
-    """
     Merge layer data from two messages.
     
     Args:
@@ -1102,15 +685,3 @@ def merge_layer_data(message1: LayerMessage, message2: LayerMessage) -> Dict[str
         
     Returns:
         Merged layer data
-    """
-    result = {}
-    
-    # Add data from first message
-    if message1.layer_data:
-        result.update(message1.layer_data)
-        
-    # Add data from second message, overriding duplicates
-    if message2.layer_data:
-        result.update(message2.layer_data)
-        
-    return result

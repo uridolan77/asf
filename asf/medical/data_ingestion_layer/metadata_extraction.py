@@ -11,10 +11,7 @@ import datetime
 import pandas as pd
 import requests
 import logging
-from typing import Dict, List, Optional, Union, Any, Tuple
-from urllib.parse import quote_plus
 
-# Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -31,27 +28,16 @@ class PublicationMetadataExtractor:
                  impact_factor_source: Optional[str] = None,
                  crossref_email: Optional[str] = None,
                  cache_dir: Optional[str] = None):
-        """
-        Initialize the metadata extractor.
-
-        Args:
-            impact_factor_source: Path to CSV file containing journal impact factors
-            crossref_email: Email for CrossRef API (recommended for better rate limits)
-            cache_dir: Directory to store cached metadata
-        """
         self.crossref_email = crossref_email
 
-        # Set up cache directory
         self.cache_dir = cache_dir or os.path.join(os.path.expanduser("~"), ".pubmed_cache")
         os.makedirs(self.cache_dir, exist_ok=True)
 
-        # Load impact factor data if available
         self.impact_factors = {}
         if impact_factor_source and os.path.exists(impact_factor_source):
             try:
                 if impact_factor_source.endswith('.csv'):
                     df = pd.read_csv(impact_factor_source)
-                    # Assume columns: Journal, ISSN, eISSN, Impact_Factor
                     for _, row in df.iterrows():
                         if 'Journal' in row and 'Impact_Factor' in row:
                             self.impact_factors[row['Journal'].lower()] = float(row['Impact_Factor'])
@@ -66,18 +52,23 @@ class PublicationMetadataExtractor:
             except Exception as e:
                 logger.error(f"Error loading impact factor data: {str(e)}")
 
-        # Cache for citation data and other metadata
         self.citation_cache_file = os.path.join(self.cache_dir, "citation_cache.json")
         self.metadata_cache_file = os.path.join(self.cache_dir, "metadata_cache.json")
 
-        # Load caches if they exist
         self.citation_cache = {}
         self.metadata_cache = {}
 
         self._load_caches()
 
     def _load_caches(self):
-        """Load citation and metadata caches from disk if they exist."""
+        """Load citation and metadata caches from disk if they exist.
+
+    Args:
+        # TODO: Add parameter descriptions
+
+    Returns:
+        # TODO: Add return description
+    """
         try:
             if os.path.exists(self.citation_cache_file):
                 with open(self.citation_cache_file, 'r') as f:
@@ -92,7 +83,14 @@ class PublicationMetadataExtractor:
             logger.error(f"Error loading caches: {str(e)}")
 
     def _save_caches(self):
-        """Save citation and metadata caches to disk."""
+        """Save citation and metadata caches to disk.
+
+    Args:
+        # TODO: Add parameter descriptions
+
+    Returns:
+        # TODO: Add return description
+    """
         try:
             with open(self.citation_cache_file, 'w') as f:
                 json.dump(self.citation_cache, f)
@@ -116,12 +114,10 @@ class PublicationMetadataExtractor:
             return None
 
         try:
-            # Handle YYYY-MM-DD format
             if '-' in pub_date:
                 parts = pub_date.split('-')
                 result = {'year': int(parts[0])}
                 if len(parts) > 1:
-                    # Handle month abbreviations or numbers
                     month_part = parts[1].strip()
                     month_map = {
                         'jan': 1, 'feb': 2, 'mar': 3, 'apr': 4, 'may': 5, 'jun': 6,
@@ -134,25 +130,20 @@ class PublicationMetadataExtractor:
                         try:
                             result['month'] = int(month_part)
                         except ValueError:
-                            # Just keep the year if month can't be parsed
                             pass
 
                 if len(parts) > 2:
                     try:
                         result['day'] = int(parts[2].strip())
                     except ValueError:
-                        # Ignore day if it can't be parsed
                         pass
 
                 return result
 
-            # Handle YYYY format
             elif len(pub_date.strip()) == 4 and pub_date.strip().isdigit():
                 return {'year': int(pub_date.strip())}
 
-            # Try to parse other formats
             else:
-                # Try common date formats
                 for fmt in ['%Y %b %d', '%Y-%m-%d', '%b %Y', '%Y %b', '%d %b %Y']:
                     try:
                         dt = datetime.datetime.strptime(pub_date, fmt)
@@ -165,7 +156,6 @@ class PublicationMetadataExtractor:
                     except ValueError:
                         continue
 
-                # Last resort: try to extract just the year
                 import re
                 year_match = re.search(r'\b(19|20)\d{2}\b', pub_date)
                 if year_match:
@@ -226,17 +216,13 @@ class PublicationMetadataExtractor:
         if not self.impact_factors:
             return None
 
-        # Try ISSN first if available
         if issn and issn in self.impact_factors:
             return self.impact_factors[issn]
 
-        # Then try journal title
         if journal_title:
-            # Try exact match
             if journal_title.lower() in self.impact_factors:
                 return self.impact_factors[journal_title.lower()]
 
-            # Try partial match
             journal_lower = journal_title.lower()
             for known_journal in self.impact_factors:
                 if isinstance(known_journal, str) and journal_lower in known_journal.lower() or known_journal.lower() in journal_lower:
@@ -259,8 +245,6 @@ class PublicationMetadataExtractor:
         if not impact_factor:
             return None
 
-        # These thresholds are approximate and vary by field
-        # In a real implementation, you would use field-specific thresholds
         thresholds = {
             'medicine': [5.0, 3.0, 1.5],  # Q1: >5.0, Q2: >3.0, Q3: >1.5, Q4: ≤1.5
             'biology': [4.0, 2.5, 1.0],
@@ -293,19 +277,15 @@ class PublicationMetadataExtractor:
             Citation count if available, None otherwise
         """
         if not refresh and pmid in self.citation_cache:
-            # Update cache if it's older than 30 days
             cache_time = self.citation_cache[pmid].get('timestamp', 0)
             if (datetime.datetime.now().timestamp() - cache_time) < 30 * 24 * 60 * 60:
                 return self.citation_cache[pmid].get('count')
 
-        # Try to get citation count from PubMed Central
         citation_count = self._get_pmc_citations(pmid)
 
-        # If that fails, try CrossRef
         if citation_count is None:
             citation_count = self._get_crossref_citations(pmid)
 
-        # Update cache
         if citation_count is not None:
             self.citation_cache[pmid] = {
                 'count': citation_count,
@@ -326,14 +306,12 @@ class PublicationMetadataExtractor:
             Citation count if available, None otherwise
         """
         try:
-            # Use ELink to get citing articles
             url = f"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/elink.fcgi?dbfrom=pubmed&db=pubmed&id={pmid}&linkname=pubmed_pubmed_citedin&retmode=json"
             response = requests.get(url)
             response.raise_for_status()
 
             data = response.json()
 
-            # Extract citation count from the links
             for linkset in data.get('linksets', []):
                 if 'linksetdbs' in linkset:
                     for linksetdb in linkset['linksetdbs']:
@@ -356,12 +334,10 @@ class PublicationMetadataExtractor:
             Citation count if available, None otherwise
         """
         try:
-            # First, we need to get the DOI for this PMID
             doi = self._get_doi_from_pmid(pmid)
             if not doi:
                 return None
 
-            # Query CrossRef API with the DOI
             url = f"https://api.crossref.org/works/{doi}"
             headers = {}
             if self.crossref_email:
@@ -372,7 +348,6 @@ class PublicationMetadataExtractor:
 
             data = response.json()
 
-            # Extract citation count
             return data.get('message', {}).get('is-referenced-by-count')
         except Exception as e:
             logger.error(f"Error getting CrossRef citations for {pmid}: {str(e)}")
@@ -395,7 +370,6 @@ class PublicationMetadataExtractor:
 
             data = response.json()
 
-            # Extract DOI from the summary
             article_ids = data.get('result', {}).get(pmid, {}).get('articleids', [])
             for article_id in article_ids:
                 if article_id.get('idtype') == 'doi':
@@ -418,13 +392,10 @@ class PublicationMetadataExtractor:
         """
         pub_types = []
 
-        # Check if this is XML data converted to dict or raw PubMed data
         if isinstance(pubmed_article, dict):
-            # Try to find publication types in PubmedArticle structure
             if 'publication_types' in pubmed_article:
                 return pubmed_article['publication_types']
 
-            # Sometimes pub types are in MeSH terms
             if 'mesh_terms' in pubmed_article:
                 mesh_terms = pubmed_article['mesh_terms']
                 pub_type_keywords = [
@@ -437,7 +408,6 @@ class PublicationMetadataExtractor:
                     if any(keyword.lower() in term.lower() for keyword in pub_type_keywords):
                         pub_types.append(term)
 
-        # If we couldn't find publication types, return a generic type
         if not pub_types:
             pub_types.append("Journal Article")
 
@@ -455,9 +425,7 @@ class PublicationMetadataExtractor:
         """
         affiliations = {}
 
-        # Handle different data structures
         if 'authors' in pubmed_article and isinstance(pubmed_article['authors'], list):
-            # Simple author list without affiliations
             for author in pubmed_article['authors']:
                 if isinstance(author, str):
                     affiliations[author] = []
@@ -476,8 +444,6 @@ class PublicationMetadataExtractor:
         Returns:
             List of research fields
         """
-        # This is a simplified categorization - in a real implementation,
-        # you would use a more comprehensive database of journal categories
         medical_keywords = [
             'medicine', 'medical', 'health', 'clinical', 'hospital',
             'therapy', 'disease', 'patient', 'nursing', 'surgery'
@@ -505,7 +471,6 @@ class PublicationMetadataExtractor:
         if any(keyword in journal_lower for keyword in chemistry_keywords):
             categories.append('Chemistry')
 
-        # Add a default category if none found
         if not categories:
             categories.append('Science')
 
@@ -523,13 +488,10 @@ class PublicationMetadataExtractor:
         """
         funding_info = []
 
-        # Simplified implementation - in a real implementation,
-        # you would parse the XML structure more thoroughly
         if 'funding' in pubmed_article:
             return pubmed_article['funding']
 
         if 'abstract' in pubmed_article and pubmed_article['abstract']:
-            # Look for funding mentions in the abstract
             abstract = pubmed_article['abstract'].lower()
             funding_keywords = [
                 'funded by', 'supported by', 'grant from',
@@ -538,7 +500,6 @@ class PublicationMetadataExtractor:
 
             for keyword in funding_keywords:
                 if keyword in abstract:
-                    # Extract sentence containing funding info
                     sentences = abstract.split('.')
                     for sentence in sentences:
                         if keyword in sentence:
@@ -561,17 +522,13 @@ class PublicationMetadataExtractor:
         """
         pmid = pubmed_article.get('pmid')
 
-        # First, check if we already have this in cache
         if pmid and pmid in self.metadata_cache:
-            # Check if cache is fresh (less than 7 days old)
             cache_time = self.metadata_cache[pmid].get('cache_timestamp', 0)
             if (datetime.datetime.now().timestamp() - cache_time) < 7 * 24 * 60 * 60:
                 return self.metadata_cache[pmid]
 
-        # Start with the original article data
         enriched = dict(pubmed_article)
 
-        # Add standardized publication date
         if 'publication_date' in pubmed_article:
             date_dict = self.standardize_publication_date(pubmed_article['publication_date'])
             if date_dict:
@@ -579,41 +536,31 @@ class PublicationMetadataExtractor:
                 enriched['iso_date'] = self.format_standardized_date(date_dict, 'iso')
                 enriched['human_date'] = self.format_standardized_date(date_dict, 'human')
 
-        # Add journal impact factor and quartile
         if 'journal' in pubmed_article:
             impact_factor = self.get_impact_factor(pubmed_article['journal'])
             enriched['impact_factor'] = impact_factor
 
             if impact_factor:
-                # Use medicine as default field for medical research synthesizer
                 quartile = self.get_journal_quartile(impact_factor, 'medicine')
                 enriched['journal_quartile'] = quartile
 
-        # Add citation count
         if pmid:
             enriched['citation_count'] = self.get_citation_count(pmid)
 
-        # Add publication type
         enriched['publication_types'] = self.extract_publication_type(pubmed_article)
 
-        # Add author affiliations
         enriched['author_affiliations'] = self.extract_author_affiliations(pubmed_article)
 
-        # Add journal categories
         if 'journal' in pubmed_article:
             enriched['journal_categories'] = self.categorize_journal(pubmed_article['journal'])
 
-        # Add funding information
         enriched['funding_info'] = self.extract_funding_info(pubmed_article)
 
-        # Calculate a simple authority score (0-100)
         authority_score = self._calculate_authority_score(enriched)
         enriched['authority_score'] = authority_score
 
-        # Add cache timestamp
         enriched['cache_timestamp'] = datetime.datetime.now().timestamp()
 
-        # Save to cache
         if pmid:
             self.metadata_cache[pmid] = enriched
             self._save_caches()
@@ -632,7 +579,6 @@ class PublicationMetadataExtractor:
         """
         score = 50  # Start with a neutral score
 
-        # Impact factor contribution (0-30 points)
         impact_factor = publication.get('impact_factor')
         if impact_factor:
             if impact_factor > 10:
@@ -646,7 +592,6 @@ class PublicationMetadataExtractor:
             else:
                 score += 5
 
-        # Journal quartile contribution (0-10 points)
         quartile = publication.get('journal_quartile')
         if quartile:
             if quartile == 1:
@@ -658,7 +603,6 @@ class PublicationMetadataExtractor:
             else:  # Q4
                 score += 1
 
-        # Citation count contribution (0-20 points)
         citations = publication.get('citation_count')
         if citations:
             if citations > 100:
@@ -672,7 +616,6 @@ class PublicationMetadataExtractor:
             else:
                 score += 2
 
-        # Publication type contribution (0-20 points)
         pub_types = publication.get('publication_types', [])
         pub_type_scores = {
             'systematic review': 20,
@@ -696,7 +639,6 @@ class PublicationMetadataExtractor:
 
         score += max_pub_type_score
 
-        # Publication recency contribution (0-10 points)
         if 'standard_date' in publication and 'year' in publication['standard_date']:
             year = publication['standard_date']['year']
             current_year = datetime.datetime.now().year
@@ -711,7 +653,6 @@ class PublicationMetadataExtractor:
             else:
                 score -= 5   # Very old (>10 years)
 
-        # Ensure score is within 0-100 range
         return max(0, min(100, score))
 
     def batch_enrich_publications(self, pubmed_articles: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -737,30 +678,25 @@ class PublicationMetadataExtractor:
         Returns:
             Dictionary with comparison results
         """
-        # Ensure publications have authority scores
         if 'authority_score' not in pub1:
             pub1 = self.enrich_publication_metadata(pub1)
         if 'authority_score' not in pub2:
             pub2 = self.enrich_publication_metadata(pub2)
 
-        # Calculate the difference in authority
         authority_diff = pub1['authority_score'] - pub2['authority_score']
 
-        # Determine which has higher authority
         higher_authority = "equal"
         if authority_diff > 0:
             higher_authority = "publication1"
         elif authority_diff < 0:
             higher_authority = "publication2"
 
-        # Describe the factors that contribute to higher authority
         factor_comparison = {}
 
         for factor in ['impact_factor', 'journal_quartile', 'citation_count']:
             if factor in pub1 and factor in pub2 and pub1[factor] is not None and pub2[factor] is not None:
                 factor_comparison[factor] = pub1[factor] - pub2[factor]
 
-        # Compare publication types
         pub1_types = set([pt.lower() for pt in pub1.get('publication_types', [])])
         pub2_types = set([pt.lower() for pt in pub2.get('publication_types', [])])
 
@@ -784,7 +720,6 @@ class PublicationMetadataExtractor:
             'publication2': pub2_highest_evidence
         }
 
-        # Compare recency
         pub1_year = pub1.get('standard_date', {}).get('year')
         pub2_year = pub2.get('standard_date', {}).get('year')
 
@@ -815,18 +750,15 @@ class PublicationMetadataExtractor:
         contradictions = []
         biomedlm_scorer = None
 
-        # Initialize BioMedLM scorer if requested
         if use_biomedlm:
             try:
                 from asf.medical.models.biomedlm_wrapper import BioMedLMScorer
-                # Initialize with negation detection enabled
                 biomedlm_scorer = BioMedLMScorer(use_negation_detection=True)
                 logger.info("Using BioMedLM with negation detection for contradiction scoring")
             except Exception as e:
                 logger.warning(f"Failed to initialize BioMedLM scorer: {e}. Falling back to keyword-based approach.")
                 biomedlm_scorer = None
 
-        # Keywords for fallback approach
         contradiction_phrases = [
             'however', 'in contrast', 'conversely', 'on the contrary',
             'contrary to', 'conflicts with', 'disagrees with', 'disputes',
@@ -836,13 +768,11 @@ class PublicationMetadataExtractor:
         positive_findings = ['effective', 'beneficial', 'improvement', 'increased', 'enhanced']
         negative_findings = ['ineffective', 'harmful', 'no improvement', 'decreased', 'reduced', 'no effect']
 
-        # Look for contradictions between pairs of publications
         for i in range(len(publications)):
             for j in range(i+1, len(publications)):
                 pub1 = publications[i]
                 pub2 = publications[j]
 
-                # Skip if missing abstracts
                 if not pub1.get('abstract') or not pub2.get('abstract'):
                     continue
 
@@ -850,17 +780,13 @@ class PublicationMetadataExtractor:
                 contradiction_score = 0.0
                 detailed_scores = {}
 
-                # Use BioMedLM for contradiction scoring if available
                 if biomedlm_scorer:
                     try:
-                        # Get abstracts for comparison
                         abstract1 = pub1.get('abstract', '')
                         abstract2 = pub2.get('abstract', '')
 
-                        # Use the best available contradiction detection method
                         contradiction_result = biomedlm_scorer.detect_contradiction(abstract1, abstract2)
 
-                        # Extract scores and contradiction status
                         contradiction_score = contradiction_result.get('contradiction_score', 0.0)
                         contradiction_found = contradiction_result.get('has_contradiction', False)
                         detailed_scores = contradiction_result
@@ -870,12 +796,10 @@ class PublicationMetadataExtractor:
                             if 'contradiction_type' in contradiction_result:
                                 logger.info(f"Contradiction type: {contradiction_result['contradiction_type']}")
 
-                            # Generate explanation if possible
                             try:
                                 explanation = biomedlm_scorer.explain_contradiction(abstract1, abstract2)
                                 if explanation and 'summary' in explanation:
                                     logger.info(f"Contradiction explanation: {explanation['summary']}")
-                                    # Add explanation to detailed scores
                                     detailed_scores['explanation'] = explanation
                             except Exception as e:
                                 logger.warning(f"Error generating contradiction explanation: {e}")
@@ -883,9 +807,7 @@ class PublicationMetadataExtractor:
                         logger.warning(f"Error using BioMedLM for contradiction scoring: {e}. Falling back to keyword-based approach.")
                         biomedlm_scorer = None  # Disable for future iterations if it fails
 
-                # Fallback to keyword-based approach if BioMedLM is not available or failed
                 if not biomedlm_scorer and not contradiction_found:
-                    # Look for explicitly mentioned contradictions
                     for phrase in contradiction_phrases:
                         if phrase in pub2.get('abstract', '').lower() and pub1.get('title', '').lower() in pub2.get('abstract', '').lower():
                             contradiction_found = True
@@ -896,9 +818,7 @@ class PublicationMetadataExtractor:
                             contradiction_score = 0.8  # Arbitrary score for keyword-based detection
                             break
 
-                    # Look for opposing findings on similar topics
                     if not contradiction_found:
-                        # Very simplified check for opposing findings
                         pub1_positive = any(term in pub1.get('abstract', '').lower() for term in positive_findings)
                         pub1_negative = any(term in pub1.get('abstract', '').lower() for term in negative_findings)
                         pub2_positive = any(term in pub2.get('abstract', '').lower() for term in positive_findings)
@@ -909,10 +829,8 @@ class PublicationMetadataExtractor:
                             contradiction_score = 0.75  # Arbitrary score for opposing findings
 
                 if contradiction_found:
-                    # Compare authority
                     authority_comparison = self.compare_publication_authority(pub1, pub2)
 
-                    # Create contradiction entry
                     contradiction_entry = {
                         'publication1': {
                             'pmid': pub1.get('pmid'),
@@ -931,15 +849,12 @@ class PublicationMetadataExtractor:
                         'confidence': 'high' if contradiction_score > 0.8 else ('medium' if contradiction_score > 0.6 else 'low')
                     }
 
-                    # Add detailed scores if available
                     if detailed_scores:
                         contradiction_entry['detailed_scores'] = detailed_scores
 
-                        # Add explanation if available
                         if 'explanation' in detailed_scores:
                             contradiction_entry['explanation'] = detailed_scores['explanation']
 
-                    # Add detection method
                     contradiction_entry['detection_method'] = 'biomedlm' if biomedlm_scorer else 'keyword'
 
                     contradictions.append(contradiction_entry)
@@ -961,8 +876,6 @@ def load_impact_factors_from_jcr(jcr_file_path: str) -> Dict[str, float]:
     try:
         df = pd.read_csv(jcr_file_path)
 
-        # JCR files typically contain columns like 'Journal', 'ISSN', and 'Impact Factor'
-        # Column names may vary, so we need to identify them
         journal_col = next((col for col in df.columns if 'journal' in col.lower()), None)
         issn_col = next((col for col in df.columns if 'issn' in col.lower()), None)
         impact_col = next((col for col in df.columns if 'impact' in col.lower() and 'factor' in col.lower()), None)
@@ -971,7 +884,6 @@ def load_impact_factors_from_jcr(jcr_file_path: str) -> Dict[str, float]:
             logger.error(f"Could not identify journal or impact factor columns in {jcr_file_path}")
             return impact_factors
 
-        # Load impact factors
         for _, row in df.iterrows():
             journal_name = row[journal_col]
             impact_factor = row[impact_col]
@@ -979,7 +891,6 @@ def load_impact_factors_from_jcr(jcr_file_path: str) -> Dict[str, float]:
             if pd.notna(journal_name) and pd.notna(impact_factor):
                 impact_factors[journal_name.lower()] = float(impact_factor)
 
-                # Also add ISSN if available
                 if issn_col and pd.notna(row[issn_col]):
                     impact_factors[row[issn_col]] = float(impact_factor)
 
@@ -990,15 +901,12 @@ def load_impact_factors_from_jcr(jcr_file_path: str) -> Dict[str, float]:
 
     return impact_factors
 
-# Example usage
 if __name__ == "__main__":
-    # Create metadata extractor
     extractor = PublicationMetadataExtractor(
         impact_factor_source="journal_impact_factors.csv",
         crossref_email="your_email@example.com"
     )
 
-    # Example publication
     publication = {
         "pmid": "34735427",
         "title": "Efficacy and Safety of COVID-19 Vaccines",
@@ -1008,10 +916,8 @@ if __name__ == "__main__":
         "journal": "New England Journal of Medicine"
     }
 
-    # Enrich with metadata
     enriched = extractor.enrich_publication_metadata(publication)
 
-    # Print enriched data
     print(f"Title: {enriched['title']}")
     print(f"Publication Date: {enriched.get('human_date')}")
     print(f"Impact Factor: {enriched.get('impact_factor')}")

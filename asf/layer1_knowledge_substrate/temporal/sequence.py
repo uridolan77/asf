@@ -11,7 +11,6 @@ class TemporalSequence:
         self.events = deque(maxlen=max_length)
         self.timestamps = deque(maxlen=max_length)
         self._max_length = max_length
-        # Cache for window lookups
         self._last_window_time = 0
         self._last_window_size = 0
         self._last_window_result = []
@@ -37,28 +36,22 @@ class TemporalSequence:
         """Return events within the specified time window from now"""
         current_time = time.time()
         
-        # Check if we can use cached result
         if (current_time - self._last_window_time < 0.1 and  # Cache valid for 100ms
             window_size == self._last_window_size and
             self._last_window_result):
             return self._last_window_result
         
-        # Local references for performance
         timestamps = self.timestamps
         events = self.events
         
-        # Optimize: use binary search to find cutoff index
         cutoff_time = current_time - window_size
         
-        # If sequence is empty
         if not timestamps:
             return []
         
-        # If all events are within window
         if timestamps[0] >= cutoff_time:
             result = list(events)
         else:
-            # Find index using binary search approximation
             left, right = 0, len(timestamps) - 1
             cutoff_idx = 0
             
@@ -70,10 +63,8 @@ class TemporalSequence:
                 else:
                     right = mid - 1
             
-            # Extract events from cutoff_idx to end
             result = list(events)[cutoff_idx:]
         
-        # Cache the result
         self._last_window_time = current_time
         self._last_window_size = window_size
         self._last_window_result = result

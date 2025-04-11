@@ -1,4 +1,3 @@
-# layer2_autopoietic_maintanance/utils.py
 import asyncio
 from typing import Dict, Any, Optional, List, Tuple, Union
 from neo4j import AsyncGraphDatabase, AsyncResult, AsyncTransaction

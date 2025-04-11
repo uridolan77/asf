@@ -6,8 +6,6 @@ in medical literature.
 """
 
 import logging
-from datetime import datetime
-from typing import Dict, List, Optional, Any, Tuple
 
 from asf.medical.ml.services.resolution.resolution_models import (
     ResolutionStrategy,
@@ -17,7 +15,6 @@ from asf.medical.ml.services.resolution.resolution_models import (
     STUDY_DESIGN_KEYWORDS
 )
 
-# Set up logging
 logger = logging.getLogger(__name__)
 
 def extract_metadata(article: Dict[str, Any]) -> Dict[str, Any]:
@@ -32,7 +29,6 @@ def extract_metadata(article: Dict[str, Any]) -> Dict[str, Any]:
     """
     metadata = {}
     
-    # Extract basic metadata
     if "pmid" in article:
         metadata["pmid"] = article["pmid"]
     if "doi" in article:
@@ -46,25 +42,21 @@ def extract_metadata(article: Dict[str, Any]) -> Dict[str, Any]:
     if "authors" in article:
         metadata["authors"] = article["authors"]
     
-    # Extract study design
     if "study_design" in article:
         metadata["study_design"] = article["study_design"]
     elif "abstract" in article:
         metadata["study_design"] = detect_study_design(article["abstract"])
     
-    # Extract sample size
     if "sample_size" in article:
         metadata["sample_size"] = article["sample_size"]
     elif "abstract" in article:
         metadata["sample_size"] = extract_sample_size(article["abstract"])
     
-    # Extract population
     if "population" in article:
         metadata["population"] = article["population"]
     elif "abstract" in article:
         metadata["population"] = extract_population(article["abstract"])
     
-    # Extract statistical information
     if "p_value" in article:
         metadata["p_value"] = article["p_value"]
     if "confidence_interval" in article:
@@ -72,7 +64,6 @@ def extract_metadata(article: Dict[str, Any]) -> Dict[str, Any]:
     if "effect_size" in article:
         metadata["effect_size"] = article["effect_size"]
     
-    # Extract methodological information
     if "blinding" in article:
         metadata["blinding"] = article["blinding"]
     if "randomization" in article:
@@ -113,8 +104,6 @@ def extract_sample_size(text: str) -> int:
     Returns:
         Extracted sample size
     """
-    # This is a placeholder for a more sophisticated extraction method
-    # In a real implementation, this would use regex or NLP to extract sample size
     return 0
 
 def extract_population(text: str) -> str:
@@ -127,8 +116,6 @@ def extract_population(text: str) -> str:
     Returns:
         Extracted population
     """
-    # This is a placeholder for a more sophisticated extraction method
-    # In a real implementation, this would use NLP to extract population
     return ""
 
 def calculate_confidence_from_hierarchy_diff(higher_pos: int, lower_pos: int) -> ResolutionConfidence:
@@ -165,17 +152,13 @@ def assess_population_relevance(population1: str, population2: str, differences:
     Returns:
         Population relevance assessment
     """
-    # Initialize result
     result = {
         "more_relevant_population": None,
         "relevance_score": 0.0,
         "relevance_factors": []
     }
     
-    # Check for specific population characteristics that might indicate
-    # higher clinical relevance
     
-    # 1. Check for specific disease populations vs. general population
     pop1_specific_disease = any(term in population1.lower() for term in [
         "patient", "disease", "disorder", "syndrome", "condition", "diagnosed"
     ])
@@ -192,7 +175,6 @@ def assess_population_relevance(population1: str, population2: str, differences:
         result["relevance_score"] += 0.3
         result["relevance_factors"].append("specific_disease_population")
     
-    # 2. Check for comorbidities
     pop1_comorbidities = any(term in population1.lower() for term in [
         "comorbid", "comorbidity", "multimorbidity", "multiple conditions"
     ])
@@ -201,19 +183,16 @@ def assess_population_relevance(population1: str, population2: str, differences:
     ])
     
     if pop1_comorbidities and not pop2_comorbidities:
-        # If current recommendation is not claim1, update it
         if result["more_relevant_population"] != "claim1":
             result["more_relevant_population"] = "claim1"
         result["relevance_score"] += 0.2
         result["relevance_factors"].append("comorbidities")
     elif pop2_comorbidities and not pop1_comorbidities:
-        # If current recommendation is not claim2, update it
         if result["more_relevant_population"] != "claim2":
             result["more_relevant_population"] = "claim2"
         result["relevance_score"] += 0.2
         result["relevance_factors"].append("comorbidities")
     
-    # 3. Check for real-world vs. highly selected population
     pop1_real_world = any(term in population1.lower() for term in [
         "real-world", "real world", "pragmatic", "community", "primary care"
     ])
@@ -222,19 +201,16 @@ def assess_population_relevance(population1: str, population2: str, differences:
     ])
     
     if pop1_real_world and not pop2_real_world:
-        # If current recommendation is not claim1, update it only if score is low
         if result["more_relevant_population"] != "claim1" or result["relevance_score"] < 0.3:
             result["more_relevant_population"] = "claim1"
         result["relevance_score"] += 0.2
         result["relevance_factors"].append("real_world_population")
     elif pop2_real_world and not pop1_real_world:
-        # If current recommendation is not claim2, update it only if score is low
         if result["more_relevant_population"] != "claim2" or result["relevance_score"] < 0.3:
             result["more_relevant_population"] = "claim2"
         result["relevance_score"] += 0.2
         result["relevance_factors"].append("real_world_population")
     
-    # If relevance score is too low, don't make a recommendation
     if result["relevance_score"] < 0.2:
         result["more_relevant_population"] = None
     

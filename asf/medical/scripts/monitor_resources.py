@@ -1,13 +1,3 @@
-#!/usr/bin/env python
-"""
-Script to monitor system resources used by the Medical Research Synthesizer.
-
-This script monitors CPU, memory, and disk usage and logs the results.
-It can be used as a simple monitoring tool or in CI/CD pipelines.
-"""
-
-import os
-import sys
 import time
 import json
 import argparse
@@ -15,9 +5,7 @@ import logging
 import platform
 import psutil
 from datetime import datetime
-from pathlib import Path
 
-# Set up logging
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -72,14 +60,11 @@ def get_process_info(process_name: str = None) -> list:
     processes = []
     for proc in psutil.process_iter(['pid', 'name', 'username', 'memory_percent', 'cpu_percent']):
         try:
-            # Get process info
             proc_info = proc.info
             
-            # Filter by process name if provided
             if process_name and process_name.lower() not in proc_info['name'].lower():
                 continue
             
-            # Add process info to list
             processes.append({
                 "pid": proc_info['pid'],
                 "name": proc_info['name'],
@@ -90,7 +75,6 @@ def get_process_info(process_name: str = None) -> list:
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             pass
     
-    # Sort processes by memory usage
     return sorted(processes, key=lambda x: x['memory_percent'], reverse=True)
 
 def monitor_resources(interval: int, count: int, output_file: str = None, process_name: str = None) -> None:
@@ -103,25 +87,20 @@ def monitor_resources(interval: int, count: int, output_file: str = None, proces
         output_file: Optional output file for JSON data
         process_name: Optional process name filter
     """
-    # Get system information
     system_info = get_system_info()
     logger.info(f"System information: {json.dumps(system_info, indent=2)}")
     
-    # Initialize data
     data = {
         "system_info": system_info,
         "resource_usage": []
     }
     
-    # Monitor resources
     iteration = 0
     try:
         while count == 0 or iteration < count:
-            # Get resource usage
             resource_usage = get_resource_usage()
             logger.info(f"Resource usage: CPU: {resource_usage['cpu_percent']}%, Memory: {resource_usage['memory_percent']}%, Disk: {resource_usage['disk_percent']}%")
             
-            # Get process information
             if process_name:
                 processes = get_process_info(process_name)
                 if processes:
@@ -131,18 +110,14 @@ def monitor_resources(interval: int, count: int, output_file: str = None, proces
                 else:
                     logger.info(f"No processes matching '{process_name}' found")
             
-            # Add resource usage to data
             data["resource_usage"].append(resource_usage)
             
-            # Write data to file if provided
             if output_file:
                 with open(output_file, 'w') as f:
                     json.dump(data, f, indent=2)
             
-            # Increment iteration
             iteration += 1
             
-            # Sleep if not the last iteration
             if count == 0 or iteration < count:
                 time.sleep(interval)
     except KeyboardInterrupt:
@@ -151,7 +126,14 @@ def monitor_resources(interval: int, count: int, output_file: str = None, proces
     logger.info(f"Monitoring completed after {iteration} iterations")
 
 def main():
-    """Main function."""
+    """Main function.
+
+    Args:
+        # TODO: Add parameter descriptions
+
+    Returns:
+        # TODO: Add return description
+    """
     parser = argparse.ArgumentParser(description="Monitor system resources")
     parser.add_argument("--interval", type=int, default=5, help="Monitoring interval in seconds")
     parser.add_argument("--count", type=int, default=0, help="Number of monitoring iterations (0 for infinite)")

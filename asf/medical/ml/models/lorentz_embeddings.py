@@ -15,7 +15,6 @@ from geoopt.manifolds.lorentz import Lorentz
 from asf.medical.core.config import settings
 from asf.medical.ml.model_cache import model_cache
 
-# Set up logging
 logger = logging.getLogger(__name__)
 
 class LorentzEmbedding(torch.nn.Module):
@@ -36,16 +35,13 @@ class LorentzEmbedding(torch.nn.Module):
         """
         super().__init__()
 
-        # Manifold
         self.manifold = Lorentz(c=c)
 
-        # Embeddings
         self.embeddings = geoopt.ManifoldParameter(
             torch.randn(num_entities, dim + 1),
             manifold=self.manifold
         )
 
-        # Initialize embeddings on the manifold
         with torch.no_grad():
             self.embeddings.set_(self.manifold.random(num_entities, dim + 1))
 
@@ -98,7 +94,14 @@ class LorentzEmbeddingService:
         return cls._instance
 
     def __init__(self):
-        """Initialize the Lorentz embedding service."""
+        """Initialize the Lorentz embedding service.
+
+    Args:
+        # TODO: Add parameter descriptions
+
+    Returns:
+        # TODO: Add return description
+    """
         self.dim = 128
         self.c = 1.0
 
@@ -117,45 +120,6 @@ class LorentzEmbeddingService:
 
         Args:
             entities: List of entity names
-        """
-        # Create entity mappings
-        self._entity_to_idx = {entity: i for i, entity in enumerate(entities)}
-        self._idx_to_entity = {i: entity for i, entity in enumerate(entities)}
-
-        # Create a unique model ID based on entities
-        entity_hash = hash(tuple(sorted(entities)))
-        self._model_id = f"lorentz:{entity_hash}:{self.dim}:{self.c}"
-
-        # Create model factory function
-        def create_model():
-            logger.info(f"Creating Lorentz embedding model with {len(entities)} entities")
-            model = LorentzEmbedding(
-                num_entities=len(entities),
-                dim=self.dim,
-                c=self.c
-            )
-            model.to(self.device)
-            logger.info("Lorentz embedding model created")
-            return model
-
-        # Get or create model using cache
-        model_cache.get_or_create(
-            model_id=self._model_id,
-            factory=create_model,
-            metadata={
-                "num_entities": len(entities),
-                "dim": self.dim,
-                "c": self.c,
-                "device": self.device,
-                "memory_mb": 512  # 512MB placeholder
-            }
-        )
-
-        logger.info(f"Lorentz embedding model initialized with ID: {self._model_id}")
-
-    @property
-    def model(self):
-        """
         Get the Lorentz embedding model.
 
         Returns:
@@ -163,23 +127,8 @@ class LorentzEmbeddingService:
 
         Raises:
             ValueError: If the model has not been initialized
-        """
-        if self._model_id is None:
-            raise ValueError("Lorentz embedding model has not been initialized")
-
-        # Get model from cache
-        model = model_cache.get(self._model_id)
-        if model is None:
-            raise ValueError("Lorentz embedding model not found in cache")
-
-        return model
-
-    def unload_model(self):
-        """Unload the model from memory."""
         if self._model_id is not None:
-            # Remove model from cache
             model_cache.remove(self._model_id)
-            # Clear CUDA cache
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
             logger.info(f"Lorentz embedding model unloaded: {self._model_id}")
@@ -196,20 +145,6 @@ class LorentzEmbeddingService:
 
         Raises:
             ValueError: If the entity is not in the model
-        """
-        if entity not in self._entity_to_idx:
-            raise ValueError(f"Entity '{entity}' not in model")
-
-        idx = self._entity_to_idx[entity]
-        indices = torch.tensor([idx], dtype=torch.long).to(self.device)
-
-        with torch.no_grad():
-            embedding = self.model(indices)
-
-        return embedding.cpu().numpy()[0]
-
-    def get_distance(self, entity1: str, entity2: str) -> float:
-        """
         Get the distance between two entities.
 
         Args:
@@ -221,25 +156,6 @@ class LorentzEmbeddingService:
 
         Raises:
             ValueError: If either entity is not in the model
-        """
-        if entity1 not in self._entity_to_idx:
-            raise ValueError(f"Entity '{entity1}' not in model")
-        if entity2 not in self._entity_to_idx:
-            raise ValueError(f"Entity '{entity2}' not in model")
-
-        idx1 = self._entity_to_idx[entity1]
-        idx2 = self._entity_to_idx[entity2]
-
-        indices = torch.tensor([idx1, idx2], dtype=torch.long).to(self.device)
-
-        with torch.no_grad():
-            embeddings = self.model(indices)
-            distance = self.model.distance(embeddings[0], embeddings[1])
-
-        return distance.item()
-
-    def get_nearest_neighbors(self, entity: str, k: int = 10) -> List[Tuple[str, float]]:
-        """
         Get the k nearest neighbors of an entity.
 
         Args:
@@ -251,30 +167,3 @@ class LorentzEmbeddingService:
 
         Raises:
             ValueError: If the entity is not in the model
-        """
-        if entity not in self._entity_to_idx:
-            raise ValueError(f"Entity '{entity}' not in model")
-
-        idx = self._entity_to_idx[entity]
-        indices = torch.arange(len(self._entity_to_idx), dtype=torch.long).to(self.device)
-
-        with torch.no_grad():
-            query_embedding = self.model(torch.tensor([idx], dtype=torch.long).to(self.device))
-            all_embeddings = self.model(indices)
-
-            distances = self.model.distance(
-                query_embedding.expand(all_embeddings.size(0), -1),
-                all_embeddings
-            )
-
-        # Get top k
-        distances = distances.cpu().numpy()
-        indices = np.argsort(distances)[:k+1]  # +1 to include the query itself
-
-        # Filter out the query
-        neighbors = []
-        for i in indices:
-            if i != idx:
-                neighbors.append((self._idx_to_entity[i.item()], distances[i]))
-
-        return neighbors[:k]

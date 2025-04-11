@@ -1,5 +1,3 @@
-# === FILE: mcp_sdk/extensions/external/__init__.py ===
-
 from mcp_sdk.extensions.external.client import ExternalMCPClient
 from mcp_sdk.extensions.external.models import (
     EnrichedMessage, 
@@ -31,7 +29,6 @@ __all__ = [
 ]
 
 
-# === FILE: mcp_sdk/extensions/external/enums.py ===
 
 from enum import Enum, auto
 
@@ -288,28 +285,6 @@ class TransformationRule:
             
         Returns:
             Transformed data
-        """
-        result = {}
-        
-        # Apply field mappings
-        for src_field, tgt_field in self.field_mappings.items():
-            if src_field in data:
-                result[tgt_field] = data[src_field]
-                
-        # Apply field transformations
-        for field, transform_info in self.transformers.items():
-            if field in result:
-                result[field] = self._transform_field(result[field], transform_info)
-                
-        # Apply default values for missing fields
-        for field, default in self.default_values.items():
-            if field not in result:
-                result[field] = default
-                
-        return result
-        
-    def _transform_field(self, value: Any, transform_info: Dict[str, Any]) -> Any:
-        """
         Transform a field value based on transform info.
         
         Args:
@@ -318,48 +293,6 @@ class TransformationRule:
             
         Returns:
             Transformed value
-        """
-        # This is a simplified implementation
-        transform_type = transform_info.get('type', 'identity')
-        
-        if transform_type == 'identity':
-            return value
-            
-        elif transform_type == 'string_format':
-            format_str = transform_info.get('format', '{0}')
-            return format_str.format(value)
-            
-        elif transform_type == 'number_scale':
-            scale = transform_info.get('scale', 1.0)
-            return value * scale
-            
-        elif transform_type == 'enum_map':
-            mapping = transform_info.get('mapping', {})
-            return mapping.get(value, value)
-            
-        elif transform_type == 'datetime_format':
-            from datetime import datetime
-            src_format = transform_info.get('source_format')
-            tgt_format = transform_info.get('target_format')
-            
-            if isinstance(value, str) and src_format:
-                dt = datetime.strptime(value, src_format)
-            elif isinstance(value, (int, float)):
-                dt = datetime.fromtimestamp(value)
-            else:
-                return value
-                
-            if tgt_format:
-                return dt.strftime(tgt_format)
-            else:
-                return dt.isoformat()
-                
-        # Default: return unchanged
-        return value
-
-@dataclass
-class AugmentationInfo:
-    """Information about data augmentation."""
     augmentation_type: AugmentationType = AugmentationType.NONE
     augmented_fields: Set[str] = field(default_factory=set)
     augmentation_source: Optional[str] = None
@@ -438,10 +371,8 @@ class EnrichedContext(Context):
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert context to dictionary."""
-        # Start with base context
         result = super().to_dict()
         
-        # Add enriched context fields
         if self.source_metadata:
             result['source_metadata'] = self.source_metadata.to_dict()
             
@@ -534,10 +465,8 @@ class EnrichedMessage(Message):
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert message to dictionary."""
-        # Start with base message
         result = super().to_dict()
         
-        # Add enriched message fields
         if self.original_format:
             result['original_format'] = self.original_format
             
@@ -581,10 +510,8 @@ class EnrichedMessage(Message):
     
     def create_reply(self, content: Dict[str, Any], message_type: Optional[MessageType] = None) -> 'EnrichedMessage':
         """Create a reply to this message."""
-        # Get base reply
         reply = super().create_reply(content, message_type)
         
-        # Convert to EnrichedMessage
         enriched_reply = EnrichedMessage(
             id=reply.id,
             message_type=reply.message_type,
@@ -604,12 +531,10 @@ class EnrichedMessage(Message):
             trace_id=reply.trace_id
         )
         
-        # Convert context to EnrichedContext if it's not already
         if not isinstance(enriched_reply.context, EnrichedContext):
             context_dict = enriched_reply.context.to_dict()
             enriched_reply.context = EnrichedContext.from_dict(context_dict)
         
-        # Swap source and target metadata
         source_metadata = None
         target_metadata = None
         
@@ -629,22 +554,10 @@ class EnrichedMessage(Message):
                       augmented_data: Dict[str, Any],
                       augmented_fields: Set[str],
                       save_original: bool = True) -> None:
-        """
-        Add augmentation to the message.
-        
-        Args:
-            augmentation_type: Type of augmentation
-            augmented_data: The augmented data
-            augmented_fields: Set of field names that were augmented
-            save_original: Whether to save original content
-        """
-        # Record the augmentation in context
         if not isinstance(self.context, EnrichedContext):
-            # Convert to EnrichedContext
             context_dict = self.context.to_dict()
             self.context = EnrichedContext.from_dict(context_dict)
             
-        # Save original if needed
         original_data = None
         if save_original:
             original_data = {}
@@ -652,7 +565,6 @@ class EnrichedMessage(Message):
                 if field in self.content:
                     original_data[field] = self.content[field]
             
-        # Record augmentation
         self.context.record_augmentation(
             augmentation_type=augmentation_type,
             augmented_fields=augmented_fields,
@@ -660,10 +572,8 @@ class EnrichedMessage(Message):
             confidence=1.0
         )
         
-        # Store augmented data
         self.augmented_content.update(augmented_data)
         
-        # Update message content with augmented data
         for field, value in augmented_data.items():
             self.content[field] = value
     
@@ -678,21 +588,16 @@ class EnrichedMessage(Message):
         Returns:
             Transformed data
         """
-        # Apply transformation to content
         transformed = rule.apply_transformation(self.content)
         
-        # Store transformed data
         self.transformed_data.update(transformed)
         
-        # Update content if requested
         if apply_to_content:
             self.content.update(transformed)
             
-        # Add rule to context if it's enriched
         if isinstance(self.context, EnrichedContext):
             self.context.add_transformation_rule(rule)
             
-            # Update augmentation info if it exists
             if self.context.augmentation_info:
                 if rule.rule_id not in self.context.augmentation_info.transformations_applied:
                     self.context.augmentation_info.transformations_applied.append(rule.rule_id)
@@ -700,7 +605,6 @@ class EnrichedMessage(Message):
         return transformed
 
 
-# === FILE: mcp_sdk/extensions/external/client.py ===
 
 import asyncio
 import logging
@@ -744,46 +648,24 @@ class ExternalMCPClient(MCPClient):
         super().__init__(config)
         self.logger = logging.getLogger("mcp_sdk.external")
         
-        # Registered sources
         self.sources: Dict[str, SourceMetadata] = {}
         
-        # Transformation rules
         self.transformation_rules: Dict[str, TransformationRule] = {}
         
-        # Augmentation handlers
         self.augmentation_handlers: Dict[AugmentationType, 
                                     List[Callable[[EnrichedMessage], Awaitable[EnrichedMessage]]]] = {
             aug_type: [] for aug_type in AugmentationType
         }
         
-        # Source-specific handlers
         self.source_handlers: Dict[str, List[Callable[[EnrichedMessage], Awaitable[Optional[EnrichedMessage]]]]] = {}
     
     async def register_source(self, source_metadata: SourceMetadata) -> str:
-        """
-        Register an external source.
-        
-        Args:
-            source_metadata: Metadata about the source
-            
-        Returns:
-            Source ID
-        """
         source_id = source_metadata.source_id
         self.sources[source_id] = source_metadata
         self.logger.info(f"Registered source: {source_id} ({source_metadata.source_type.name})")
         return source_id
     
     async def register_transformation_rule(self, rule: TransformationRule) -> str:
-        """
-        Register a transformation rule.
-        
-        Args:
-            rule: The transformation rule
-            
-        Returns:
-            Rule ID
-        """
         rule_id = rule.rule_id
         self.transformation_rules[rule_id] = rule
         self.logger.info(f"Registered transformation rule: {rule_id} ({rule.transformation_type.name})")
@@ -792,13 +674,6 @@ class ExternalMCPClient(MCPClient):
     async def register_augmentation_handler(self, 
                                        augmentation_type: AugmentationType,
                                        handler: Callable[[EnrichedMessage], Awaitable[EnrichedMessage]]) -> None:
-        """
-        Register a handler for a specific augmentation type.
-        
-        Args:
-            augmentation_type: Type of augmentation
-            handler: The handler function (async)
-        """
         if augmentation_type not in self.augmentation_handlers:
             self.augmentation_handlers[augmentation_type] = []
             
@@ -808,13 +683,6 @@ class ExternalMCPClient(MCPClient):
     async def register_source_handler(self, 
                                   source_id: str,
                                   handler: Callable[[EnrichedMessage], Awaitable[Optional[EnrichedMessage]]]) -> None:
-        """
-        Register a handler for a specific source.
-        
-        Args:
-            source_id: Source ID
-            handler: The handler function (async)
-        """
         if source_id not in self.source_handlers:
             self.source_handlers[source_id] = []
             
@@ -830,23 +698,6 @@ class ExternalMCPClient(MCPClient):
                                   security_level: SecurityLevel = SecurityLevel.STANDARD,
                                   extra_context: Optional[Dict[str, Any]] = None,
                                   **kwargs) -> EnrichedMessage:
-        """
-        Create a new enriched message.
-        
-        Args:
-            message_type: Type of message
-            content: Message content
-            source_id: Source ID (must be registered)
-            target_id: Target ID (optional)
-            context_level: Level of context to include
-            security_level: Security level
-            extra_context: Additional context information
-            **kwargs: Additional message parameters
-            
-        Returns:
-            The created EnrichedMessage
-        """
-        # Get source metadata if registered
         source_metadata = None
         target_metadata = None
         
@@ -856,7 +707,6 @@ class ExternalMCPClient(MCPClient):
         if target_id and target_id in self.sources:
             target_metadata = self.sources[target_id]
             
-        # Create enriched context
         context = EnrichedContext(
             entity_id=self.entity_id,
             environmental_id=target_id,
@@ -870,7 +720,6 @@ class ExternalMCPClient(MCPClient):
             }
         )
         
-        # Create the message
         message = EnrichedMessage(
             message_type=message_type,
             content=content,
@@ -880,7 +729,6 @@ class ExternalMCPClient(MCPClient):
             **kwargs
         )
         
-        # Add to conversation history
         self._add_to_conversation(message)
         
         return message
@@ -891,84 +739,47 @@ class ExternalMCPClient(MCPClient):
                                apply_augmentations: bool = True,
                                wait_for_response: bool = False,
                                timeout: Optional[float] = None) -> Optional[EnrichedMessage]:
-        """
-        Send an enriched message with transformations and augmentations.
-        
-        Args:
-            message: The message to send
-            apply_transformations: Whether to apply transformation rules
-            apply_augmentations: Whether to apply augmentations
-            wait_for_response: Whether to wait for a response
-            timeout: Timeout in seconds (None for default)
-            
-        Returns:
-            Response message if wait_for_response is True, else None
-        """
-        # Apply transformations if requested
         if apply_transformations:
             message = await self._apply_transformations(message)
             
-        # Apply augmentations if requested
         if apply_augmentations:
             message = await self._apply_augmentations(message)
             
-        # Add to conversation history
         self._add_to_conversation(message)
         
-        # Process through registered handlers
         await self._message_queue.put(message)
         
-        # If not waiting for response, return immediately
         if not wait_for_response:
             return None
             
-        # Wait for response with timeout
         timeout = timeout or self.config.default_timeout
         
-        # Create a future for the response
         response_future = asyncio.Future()
         self.pending_responses[message.id] = response_future
         
         try:
-            # Wait for response with timeout
             response = await asyncio.wait_for(response_future, timeout)
             
-            # Ensure response is an EnrichedMessage
             if response and not isinstance(response, EnrichedMessage):
-                # Convert to EnrichedMessage if needed
                 if isinstance(response, Message):
-                    # Convert Message to EnrichedMessage
                     response_dict = response.to_dict()
                     response = EnrichedMessage.from_dict(response_dict)
                     
             return response
             
         except asyncio.TimeoutError:
-            # Remove the pending response
             if message.id in self.pending_responses:
                 del self.pending_responses[message.id]
                 
             return None
             
         finally:
-            # Clean up
             if message.id in self.pending_responses:
                 del self.pending_responses[message.id]
     
     async def process_external_message(self, 
                                    message: Union[Dict[str, Any], Message, EnrichedMessage],
                                    source_id: Optional[str] = None) -> Optional[EnrichedMessage]:
-        """
-        Process a message from an external source with enrichment and transformations.
-        
-        Args:
-            message: The message to process
-            source_id: Optional source ID for context
-            
-        Returns:
-            Response message if any
-        """
-        # Convert to EnrichedMessage if needed
         if isinstance(message, dict):
             try:
                 message = EnrichedMessage.from_dict(message)
@@ -976,22 +787,18 @@ class ExternalMCPClient(MCPClient):
                 self.logger.error(f"Error converting dictionary to message: {str(e)}")
                 return None
         elif isinstance(message, Message) and not isinstance(message, EnrichedMessage):
-            # Convert Message to EnrichedMessage
             message_dict = message.to_dict()
             message = EnrichedMessage.from_dict(message_dict)
             
-        # Add source metadata if provided
         if source_id and source_id in self.sources:
             source_metadata = self.sources[source_id]
             
-            # Ensure we have an EnrichedContext
             if not isinstance(message.context, EnrichedContext):
                 context_dict = message.context.to_dict()
                 message.context = EnrichedContext.from_dict(context_dict)
                 
             message.context.source_metadata = source_metadata
             
-        # Process through source-specific handlers if available
         if hasattr(message.context, 'source_metadata') and message.context.source_metadata:
             source_id = message.context.source_metadata.source_id
             
@@ -1004,7 +811,6 @@ class ExternalMCPClient(MCPClient):
                     except Exception as e:
                         self.logger.error(f"Error in source handler for {source_id}: {str(e)}")
         
-        # Process through normal message handlers
         return await super().process_message(message)
     
     async def query_external_source(self,
@@ -1013,27 +819,12 @@ class ExternalMCPClient(MCPClient):
                                apply_transformations: bool = True,
                                apply_augmentations: bool = True,
                                timeout: Optional[float] = None) -> Optional[EnrichedMessage]:
-        """
-        Send a query to an external source.
-        
-        Args:
-            source_id: Source ID (must be registered)
-            query_data: Query data
-            apply_transformations: Whether to apply transformation rules
-            apply_augmentations: Whether to apply augmentations
-            timeout: Timeout in seconds (None for default)
-            
-        Returns:
-            Response message
-        """
         if source_id not in self.sources:
             self.logger.warning(f"Unknown source: {source_id}")
             return None
             
-        # Get source metadata
         source_metadata = self.sources[source_id]
         
-        # Create enriched context
         context = EnrichedContext(
             entity_id=self.entity_id,
             environmental_id=source_id,
@@ -1042,7 +833,6 @@ class ExternalMCPClient(MCPClient):
             target_metadata=source_metadata
         )
         
-        # Create the message
         message = EnrichedMessage(
             message_type=MessageType.QUERY,
             content=query_data,
@@ -1051,7 +841,6 @@ class ExternalMCPClient(MCPClient):
             recipient_id=source_id
         )
         
-        # Send the message
         return await self.send_enriched_message(
             message,
             apply_transformations=apply_transformations,
@@ -1061,62 +850,35 @@ class ExternalMCPClient(MCPClient):
         )
     
     async def _apply_transformations(self, message: EnrichedMessage) -> EnrichedMessage:
-        """
-        Apply relevant transformation rules to a message.
-        
-        Args:
-            message: The message to transform
-            
-        Returns:
-            Transformed message
-        """
-        # Skip if no transformation rules
         if not self.transformation_rules:
             return message
             
-        # Check source and target to determine applicable rules
         source_format = None
         target_format = None
         
-        # Get source format
         if hasattr(message.context, 'source_metadata') and message.context.source_metadata:
             source_metadata = message.context.source_metadata
             if hasattr(source_metadata, 'connection_info'):
                 source_format = source_metadata.connection_info.get('format')
                 
-        # Get target format
         if hasattr(message.context, 'target_metadata') and message.context.target_metadata:
             target_metadata = message.context.target_metadata
             if hasattr(target_metadata, 'connection_info'):
                 target_format = target_metadata.connection_info.get('format')
                 
-        # Apply relevant rules
         for rule in self.transformation_rules.values():
-            # Check if rule is applicable
             if ((rule.source_format is None or rule.source_format == source_format) and
                 (rule.target_format is None or rule.target_format == target_format)):
                 
-                # Apply the rule
                 message.apply_transformation_rule(rule)
                 
         return message
     
     async def _apply_augmentations(self, message: EnrichedMessage) -> EnrichedMessage:
-        """
-        Apply registered augmentations to a message.
-        
-        Args:
-            message: The message to augment
-            
-        Returns:
-            Augmented message
-        """
-        # Skip if no augmentation handlers
         augmentation_types = list(self.augmentation_handlers.keys())
         if not augmentation_types:
             return message
             
-        # Apply each augmentation type in sequence
         for aug_type in augmentation_types:
             if aug_type == AugmentationType.NONE:
                 continue
@@ -1131,39 +893,6 @@ class ExternalMCPClient(MCPClient):
         return message
     
     async def get_source_stats(self) -> Dict[str, Any]:
-        """Get statistics about registered sources."""
-        source_types = {}
-        for source_id, metadata in self.sources.items():
-            source_type = metadata.source_type.name
-            if source_type not in source_types:
-                source_types[source_type] = 0
-            source_types[source_type] += 1
-            
-        return {
-            'total_sources': len(self.sources),
-            'source_types': source_types,
-            'transformation_rules': len(self.transformation_rules)
-        }
-
-
-# === FILE: mcp_sdk/extensions/external/augmentors.py ===
-
-import asyncio
-from typing import Dict, Any, List, Optional, Set, Callable, Awaitable, Union
-import json
-import time
-
-from mcp_sdk.extensions.external.models import (
-    EnrichedMessage, 
-    EnrichedContext, 
-    AugmentationInfo
-)
-from mcp_sdk.extensions.external.enums import (
-    AugmentationType
-)
-
-class Augmentor:
-    """Base class for message augmentors."""
     def __init__(self):
         """Initialize the augmentor."""
         self.augmentation_type = AugmentationType.NONE
@@ -1177,16 +906,6 @@ class Augmentor:
             
         Returns:
             Augmented message
-        """
-        # This should be implemented by subclasses
-        return message
-    
-    def _record_augmentation(self, 
-                           message: EnrichedMessage,
-                           augmented_fields: Set[str],
-                           original_data: Optional[Dict[str, Any]] = None,
-                           confidence: float = 1.0) -> None:
-        """
         Record an augmentation in the message.
         
         Args:
@@ -1194,16 +913,6 @@ class Augmentor:
             augmented_fields: Set of field names that were augmented
             original_data: Original data before augmentation
             confidence: Confidence in the augmentation
-        """
-        message.add_augmentation(
-            augmentation_type=self.augmentation_type,
-            augmented_data={},  # This will be updated by the specific augmentor
-            augmented_fields=augmented_fields,
-            save_original=original_data is None
-        )
-
-class EnrichmentAugmentor(Augmentor):
-    """Augmentor that enriches message content with additional information."""
     def __init__(self, enrichment_function: Callable[[Dict[str, Any]], Awaitable[Dict[str, Any]]]):
         """
         Initialize the enrichment augmentor.
@@ -1216,32 +925,18 @@ class EnrichmentAugmentor(Augmentor):
         self.enrichment_function = enrichment_function
     
     async def augment(self, message: EnrichedMessage) -> EnrichedMessage:
-        """
-        Enrich a message with additional information.
-        
-        Args:
-            message: The message to enrich
-            
-        Returns:
-            Enriched message
-        """
-        # Get original content
         original_content = message.content.copy()
         
-        # Apply enrichment function
         enriched_content = await self.enrichment_function(original_content)
         
-        # Identify augmented fields
         augmented_fields = set()
         for key in enriched_content:
             if key not in original_content or enriched_content[key] != original_content[key]:
                 augmented_fields.add(key)
                 
-        # Skip if no fields were actually enriched
         if not augmented_fields:
             return message
             
-        # Add enrichment
         message.add_augmentation(
             augmentation_type=self.augmentation_type,
             augmented_data=enriched_content,
@@ -1264,15 +959,6 @@ class TranslationAugmentor(Augmentor):
             translation_function: Async function that translates content
             source_format: Source format/language
             target_format: Target format/language
-        """
-        super().__init__()
-        self.augmentation_type = AugmentationType.TRANSLATION
-        self.translation_function = translation_function
-        self.source_format = source_format
-        self.target_format = target_format
-    
-    async def augment(self, message: EnrichedMessage) -> EnrichedMessage:
-        """
         Translate a message.
         
         Args:
@@ -1280,90 +966,32 @@ class TranslationAugmentor(Augmentor):
             
         Returns:
             Translated message
-        """
-        # Get original content
-        original_content = message.content.copy()
-        
-        # Apply translation function
-        translated_content = await self.translation_function(
-            original_content, 
-            self.source_format, 
-            self.target_format
-        )
-        
-        # Identify augmented fields
-        augmented_fields = set()
-        for key in translated_content:
-            if key not in original_content or translated_content[key] != original_content[key]:
-                augmented_fields.add(key)
-                
-        # Skip if no fields were actually translated
-        if not augmented_fields:
-            return message
-            
-        # Add translation
-        message.add_augmentation(
-            augmentation_type=self.augmentation_type,
-            augmented_data=translated_content,
-            augmented_fields=augmented_fields,
-            save_original=True
-        )
-        
-        # Store original format
-        message.original_format = self.source_format
-        
-        return message
-
-class SummarizationAugmentor(Augmentor):
-    """Augmentor that summarizes message content."""
     def __init__(self, 
               summarization_function: Callable[[Dict[str, Any]], Awaitable[Dict[str, Any]]],
               fields_to_summarize: List[str]):
-        """
-        Initialize the summarization augmentor.
-        
-        Args:
-            summarization_function: Async function that summarizes content
-            fields_to_summarize: List of field names to summarize
-        """
         super().__init__()
         self.augmentation_type = AugmentationType.SUMMARIZATION
         self.summarization_function = summarization_function
         self.fields_to_summarize = fields_to_summarize
     
     async def augment(self, message: EnrichedMessage) -> EnrichedMessage:
-        """
-        Summarize a message.
-        
-        Args:
-            message: The message to summarize
-            
-        Returns:
-            Summarized message
-        """
-        # Get original content
         original_content = message.content.copy()
         
-        # Extract fields to summarize
         to_summarize = {}
         for field in self.fields_to_summarize:
             if field in original_content:
                 to_summarize[field] = original_content[field]
                 
-        # Skip if no fields to summarize
         if not to_summarize:
             return message
             
-        # Apply summarization function
         summarized_content = await self.summarization_function(to_summarize)
         
-        # Add summaries to the content with "_summary" suffix
         augmented_data = {}
         for field, value in summarized_content.items():
             summary_field = f"{field}_summary"
             augmented_data[summary_field] = value
             
-        # Add summarization
         augmented_fields = set(augmented_data.keys())
         message.add_augmentation(
             augmentation_type=self.augmentation_type,
@@ -1385,14 +1013,6 @@ class ExpansionAugmentor(Augmentor):
         Args:
             expansion_function: Async function that expands content
             fields_to_expand: List of field names to expand
-        """
-        super().__init__()
-        self.augmentation_type = AugmentationType.EXPANSION
-        self.expansion_function = expansion_function
-        self.fields_to_expand = fields_to_expand
-    
-    async def augment(self, message: EnrichedMessage) -> EnrichedMessage:
-        """
         Expand a message with additional details.
         
         Args:
@@ -1400,47 +1020,6 @@ class ExpansionAugmentor(Augmentor):
             
         Returns:
             Expanded message
-        """
-        # Get original content
-        original_content = message.content.copy()
-        
-        # Extract fields to expand
-        to_expand = {}
-        for field in self.fields_to_expand:
-            if field in original_content:
-                to_expand[field] = original_content[field]
-                
-        # Skip if no fields to expand
-        if not to_expand:
-            return message
-            
-        # Apply expansion function
-        expanded_content = await self.expansion_function(to_expand)
-        
-        # Identify augmented fields - just the new fields that aren't in original
-        augmented_fields = set()
-        augmented_data = {}
-        for key, value in expanded_content.items():
-            if key not in original_content:
-                augmented_fields.add(key)
-                augmented_data[key] = value
-                
-        # Skip if no fields were actually expanded
-        if not augmented_fields:
-            return message
-            
-        # Add expansion
-        message.add_augmentation(
-            augmentation_type=self.augmentation_type,
-            augmented_data=augmented_data,
-            augmented_fields=augmented_fields,
-            save_original=False  # Original fields are preserved
-        )
-        
-        return message
-
-class CorrectionAugmentor(Augmentor):
-    """Augmentor that corrects errors or inconsistencies in message content."""
     def __init__(self, correction_function: Callable[[Dict[str, Any]], Awaitable[Dict[str, Any]]]):
         """
         Initialize the correction augmentor.
@@ -1453,32 +1032,18 @@ class CorrectionAugmentor(Augmentor):
         self.correction_function = correction_function
     
     async def augment(self, message: EnrichedMessage) -> EnrichedMessage:
-        """
-        Correct a message.
-        
-        Args:
-            message: The message to correct
-            
-        Returns:
-            Corrected message
-        """
-        # Get original content
         original_content = message.content.copy()
         
-        # Apply correction function
         corrected_content = await self.correction_function(original_content)
         
-        # Identify augmented fields
         augmented_fields = set()
         for key in corrected_content:
             if key not in original_content or corrected_content[key] != original_content[key]:
                 augmented_fields.add(key)
                 
-        # Skip if no fields were actually corrected
         if not augmented_fields:
             return message
             
-        # Add correction
         message.add_augmentation(
             augmentation_type=self.augmentation_type,
             augmented_data=corrected_content,
@@ -1496,13 +1061,6 @@ class AnnotationAugmentor(Augmentor):
         
         Args:
             annotation_function: Async function that adds annotations
-        """
-        super().__init__()
-        self.augmentation_type = AugmentationType.ANNOTATION
-        self.annotation_function = annotation_function
-    
-    async def augment(self, message: EnrichedMessage) -> EnrichedMessage:
-        """
         Annotate a message.
         
         Args:
@@ -1510,78 +1068,27 @@ class AnnotationAugmentor(Augmentor):
             
         Returns:
             Annotated message
-        """
-        # Get original content
-        original_content = message.content.copy()
-        
-        # Apply annotation function
-        annotations = await self.annotation_function(original_content)
-        
-        # Add annotations with "_annotation" suffix
-        augmented_data = {}
-        for field, annotation in annotations.items():
-            annotation_field = f"{field}_annotation"
-            augmented_data[annotation_field] = annotation
-            
-        # Skip if no annotations were generated
-        if not augmented_data:
-            return message
-            
-        # Add annotations
-        augmented_fields = set(augmented_data.keys())
-        message.add_augmentation(
-            augmentation_type=self.augmentation_type,
-            augmented_data=augmented_data,
-            augmented_fields=augmented_fields,
-            save_original=False  # Original fields are preserved
-        )
-        
-        return message
-
-class FilteringAugmentor(Augmentor):
-    """Augmentor that filters or redacts information from message content."""
     def __init__(self, 
               filtering_function: Callable[[Dict[str, Any]], Awaitable[Dict[str, Any]]],
               reason: str):
-        """
-        Initialize the filtering augmentor.
-        
-        Args:
-            filtering_function: Async function that filters content
-            reason: Reason for filtering
-        """
         super().__init__()
         self.augmentation_type = AugmentationType.FILTERING
         self.filtering_function = filtering_function
         self.reason = reason
     
     async def augment(self, message: EnrichedMessage) -> EnrichedMessage:
-        """
-        Filter or redact information from a message.
-        
-        Args:
-            message: The message to filter
-            
-        Returns:
-            Filtered message
-        """
-        # Get original content
         original_content = message.content.copy()
         
-        # Apply filtering function
         filtered_content = await self.filtering_function(original_content)
         
-        # Identify filtered fields
         augmented_fields = set()
         for key in original_content:
             if key not in filtered_content or filtered_content[key] != original_content[key]:
                 augmented_fields.add(key)
                 
-        # Skip if no fields were actually filtered
         if not augmented_fields:
             return message
             
-        # Add filtering with reason
         message.add_augmentation(
             augmentation_type=self.augmentation_type,
             augmented_data=filtered_content,
@@ -1589,7 +1096,6 @@ class FilteringAugmentor(Augmentor):
             save_original=True
         )
         
-        # Add reason to extra context
         if isinstance(message.context, EnrichedContext):
             if 'filtering' not in message.context.extra_context:
                 message.context.extra_context['filtering'] = {}
@@ -1607,13 +1113,6 @@ class ReorganizationAugmentor(Augmentor):
         
         Args:
             reorganization_function: Async function that reorganizes content
-        """
-        super().__init__()
-        self.augmentation_type = AugmentationType.REORGANIZATION
-        self.reorganization_function = reorganization_function
-    
-    async def augment(self, message: EnrichedMessage) -> EnrichedMessage:
-        """
         Reorganize a message.
         
         Args:
@@ -1621,72 +1120,27 @@ class ReorganizationAugmentor(Augmentor):
             
         Returns:
             Reorganized message
-        """
-        # Get original content
-        original_content = message.content.copy()
-        
-        # Apply reorganization function
-        reorganized_content = await self.reorganization_function(original_content)
-        
-        # Skip if content didn't change
-        if reorganized_content == original_content:
-            return message
-            
-        # Add reorganization
-        augmented_fields = set(reorganized_content.keys())
-        message.add_augmentation(
-            augmentation_type=self.augmentation_type,
-            augmented_data=reorganized_content,
-            augmented_fields=augmented_fields,
-            save_original=True
-        )
-        
-        return message
-
-class FusionAugmentor(Augmentor):
-    """Augmentor that combines information from multiple sources."""
     def __init__(self, 
               fusion_function: Callable[[Dict[str, Any], List[Dict[str, Any]]], Awaitable[Dict[str, Any]]],
               additional_sources: List[Dict[str, Any]]):
-        """
-        Initialize the fusion augmentor.
-        
-        Args:
-            fusion_function: Async function that fuses content from multiple sources
-            additional_sources: List of additional data sources to fuse
-        """
         super().__init__()
         self.augmentation_type = AugmentationType.FUSION
         self.fusion_function = fusion_function
         self.additional_sources = additional_sources
     
     async def augment(self, message: EnrichedMessage) -> EnrichedMessage:
-        """
-        Fuse information from multiple sources into a message.
-        
-        Args:
-            message: The message to augment
-            
-        Returns:
-            Fused message
-        """
-        # Get original content
         original_content = message.content.copy()
         
-        # Apply fusion function
         fused_content = await self.fusion_function(original_content, self.additional_sources)
         
-        # Identify augmented fields
         augmented_fields = set()
         for key in fused_content:
             if key not in original_content or fused_content[key] != original_content[key]:
                 augmented_fields.add(key)
                 
-        # Skip if no fields were actually fused
         if not augmented_fields:
             return message
             
-        # Add fusion
         message.add_augmentation(
             augmentation_type=self.augmentation_type,
             augmented_data=fused_content,
@@ -1694,7 +1148,6 @@ class FusionAugmentor(Augmentor):
             save_original=True
         )
         
-        # Add source information to extra context
         if isinstance(message.context, EnrichedContext):
             if 'fusion' not in message.context.extra_context:
                 message.context.extra_context['fusion'] = {}
@@ -1704,7 +1157,6 @@ class FusionAugmentor(Augmentor):
         return message
 
 
-# === FILE: mcp_sdk/extensions/external/adapters.py ===
 
 import asyncio
 import json
@@ -1735,12 +1187,6 @@ class ProtocolAdapter:
         Args:
             source_protocol: Source protocol
             target_protocol: Target protocol
-        """
-        self.source_protocol = source_protocol
-        self.target_protocol = target_protocol
-    
-    async def adapt_to_mcp(self, external_data: Any) -> Optional[EnrichedMessage]:
-        """
         Adapt external data to MCP message.
         
         Args:
@@ -1748,12 +1194,6 @@ class ProtocolAdapter:
             
         Returns:
             MCP message or None if adaptation failed
-        """
-        # This should be implemented by subclasses
-        return None
-    
-    async def adapt_from_mcp(self, message: EnrichedMessage) -> Optional[Any]:
-        """
         Adapt MCP message to external protocol.
         
         Args:
@@ -1761,12 +1201,6 @@ class ProtocolAdapter:
             
         Returns:
             Data in external protocol format
-        """
-        # This should be implemented by subclasses
-        return None
-
-class HTTPAdapter(ProtocolAdapter):
-    """Adapter for HTTP protocol."""
     def __init__(self):
         """Initialize the HTTP adapter."""
         super().__init__(ProtocolType.HTTP)
@@ -1780,64 +1214,6 @@ class HTTPAdapter(ProtocolAdapter):
             
         Returns:
             MCP message
-        """
-        from mcp_sdk.enums import MessageType, ContextLevel
-        from mcp_sdk.extensions.external.models import EnrichedMessage, EnrichedContext, SourceMetadata
-        from mcp_sdk.extensions.external.enums import SourceType, ProtocolType, SecurityLevel
-        
-        # Extract HTTP components
-        method = http_data.get('method', 'GET')
-        url = http_data.get('url', '')
-        headers = http_data.get('headers', {})
-        body = http_data.get('body', {})
-        
-        # Create source metadata
-        source_metadata = SourceMetadata(
-            source_id=http_data.get('source_id', f"http_{int(time.time())}"),
-            source_type=SourceType.API,
-            protocol=ProtocolType.HTTP,
-            location=url,
-            security_level=SecurityLevel.STANDARD,
-            connection_info={
-                'method': method,
-                'headers': headers
-            }
-        )
-        
-        # Determine message type based on HTTP method
-        message_type = MessageType.QUERY
-        if method == 'POST':
-            message_type = MessageType.ACTION
-        elif method == 'PUT':
-            message_type = MessageType.UPDATE
-        elif method == 'DELETE':
-            message_type = MessageType.SYSTEM
-            
-        # Create enriched context
-        context = EnrichedContext(
-            level=ContextLevel.ENHANCED,
-            source_metadata=source_metadata,
-            extra_context={
-                'http': {
-                    'method': method,
-                    'url': url,
-                    'headers': headers
-                }
-            }
-        )
-        
-        # Create enriched message
-        message = EnrichedMessage(
-            message_type=message_type,
-            content=body,
-            context=context,
-            original_format='http'
-        )
-        
-        return message
-    
-    async def adapt_from_mcp(self, message: EnrichedMessage) -> Optional[Dict[str, Any]]:
-        """
         Adapt MCP message to HTTP response.
         
         Args:
@@ -1845,29 +1221,6 @@ class HTTPAdapter(ProtocolAdapter):
             
         Returns:
             HTTP response data
-        """
-        # Create HTTP response
-        http_response = {
-            'status': 200,
-            'headers': {
-                'Content-Type': 'application/json'
-            },
-            'body': message.content
-        }
-        
-        # Adjust status based on message type
-        if message.message_type.name == 'ERROR':
-            http_response['status'] = 400
-            
-        # Add headers based on context
-        if isinstance(message.context, EnrichedContext) and message.context.extra_context:
-            http_headers = message.context.extra_context.get('http_response_headers', {})
-            http_response['headers'].update(http_headers)
-            
-        return http_response
-
-class WebSocketAdapter(ProtocolAdapter):
-    """Adapter for WebSocket protocol."""
     def __init__(self):
         """Initialize the WebSocket adapter."""
         super().__init__(ProtocolType.WEBSOCKET)
@@ -1881,58 +1234,6 @@ class WebSocketAdapter(ProtocolAdapter):
             
         Returns:
             MCP message
-        """
-        from mcp_sdk.enums import MessageType, ContextLevel
-        from mcp_sdk.extensions.external.models import EnrichedMessage, EnrichedContext, SourceMetadata
-        from mcp_sdk.extensions.external.enums import SourceType, ProtocolType, SecurityLevel
-        
-        # Extract WebSocket components
-        client_id = ws_data.get('client_id', f"ws_{int(time.time())}")
-        message_content = ws_data.get('message', {})
-        event_type = ws_data.get('event_type', 'message')
-        
-        # Create source metadata
-        source_metadata = SourceMetadata(
-            source_id=client_id,
-            source_type=SourceType.SERVICE,
-            protocol=ProtocolType.WEBSOCKET,
-            security_level=SecurityLevel.STANDARD,
-            connection_info={
-                'event_type': event_type
-            }
-        )
-        
-        # Determine message type based on event type
-        message_type = MessageType.QUERY
-        if event_type == 'update':
-            message_type = MessageType.UPDATE
-        elif event_type == 'command':
-            message_type = MessageType.ACTION
-            
-        # Create enriched context
-        context = EnrichedContext(
-            level=ContextLevel.ENHANCED,
-            source_metadata=source_metadata,
-            extra_context={
-                'websocket': {
-                    'client_id': client_id,
-                    'event_type': event_type
-                }
-            }
-        )
-        
-        # Create enriched message
-        message = EnrichedMessage(
-            message_type=message_type,
-            content=message_content,
-            context=context,
-            original_format='websocket'
-        )
-        
-        return message
-    
-    async def adapt_from_mcp(self, message: EnrichedMessage) -> Optional[Dict[str, Any]]:
-        """
         Adapt MCP message to WebSocket message.
         
         Args:
@@ -1940,25 +1241,6 @@ class WebSocketAdapter(ProtocolAdapter):
             
         Returns:
             WebSocket message data
-        """
-        # Create WebSocket message
-        ws_message = {
-            'event': 'message',
-            'data': message.content
-        }
-        
-        # Adjust event based on message type
-        if message.message_type.name == 'RESPONSE':
-            ws_message['event'] = 'response'
-        elif message.message_type.name == 'ERROR':
-            ws_message['event'] = 'error'
-        elif message.message_type.name == 'UPDATE':
-            ws_message['event'] = 'update'
-            
-        return ws_message
-
-class MQTTAdapter(ProtocolAdapter):
-    """Adapter for MQTT protocol."""
     def __init__(self):
         """Initialize the MQTT adapter."""
         super().__init__(ProtocolType.MQTT)
@@ -1972,62 +1254,6 @@ class MQTTAdapter(ProtocolAdapter):
             
         Returns:
             MCP message
-        """
-        from mcp_sdk.enums import MessageType, ContextLevel
-        from mcp_sdk.extensions.external.models import EnrichedMessage, EnrichedContext, SourceMetadata
-        from mcp_sdk.extensions.external.enums import SourceType, ProtocolType, SecurityLevel
-        
-        # Extract MQTT components
-        topic = mqtt_data.get('topic', '')
-        payload = mqtt_data.get('payload', {})
-        qos = mqtt_data.get('qos', 0)
-        
-        # Create source metadata
-        source_metadata = SourceMetadata(
-            source_id=f"mqtt_{topic.replace('/', '_')}",
-            source_type=SourceType.STREAM,
-            protocol=ProtocolType.MQTT,
-            location=topic,
-            security_level=SecurityLevel.STANDARD,
-            connection_info={
-                'topic': topic,
-                'qos': qos
-            }
-        )
-        
-        # Determine message type based on topic pattern
-        message_type = MessageType.OBSERVATION
-        if topic.endswith('/query'):
-            message_type = MessageType.QUERY
-        elif topic.endswith('/action'):
-            message_type = MessageType.ACTION
-        elif topic.endswith('/update'):
-            message_type = MessageType.UPDATE
-            
-        # Create enriched context
-        context = EnrichedContext(
-            level=ContextLevel.ENHANCED,
-            source_metadata=source_metadata,
-            extra_context={
-                'mqtt': {
-                    'topic': topic,
-                    'qos': qos
-                }
-            }
-        )
-        
-        # Create enriched message
-        message = EnrichedMessage(
-            message_type=message_type,
-            content=payload,
-            context=context,
-            original_format='mqtt'
-        )
-        
-        return message
-    
-    async def adapt_from_mcp(self, message: EnrichedMessage) -> Optional[Dict[str, Any]]:
-        """
         Adapt MCP message to MQTT message.
         
         Args:
@@ -2035,31 +1261,3 @@ class MQTTAdapter(ProtocolAdapter):
             
         Returns:
             MQTT message data
-        """
-        # Determine topic from context
-        topic = 'mcp/default'
-        qos = 1
-        
-        if isinstance(message.context, EnrichedContext) and message.context.extra_context:
-            mqtt_info = message.context.extra_context.get('mqtt', {})
-            reply_topic = mqtt_info.get('reply_topic')
-            
-            if reply_topic:
-                topic = reply_topic
-            elif 'topic' in mqtt_info:
-                base_topic = mqtt_info['topic'].split('/')
-                if len(base_topic) > 1:
-                    topic = '/'.join(base_topic[:-1]) + '/response'
-                else:
-                    topic = base_topic[0] + '/response'
-                    
-            qos = mqtt_info.get('qos', 1)
-            
-        # Create MQTT message
-        mqtt_message = {
-            'topic': topic,
-            'payload': message.content,
-            'qos': qos
-        }
-            
-        return mqtt_message

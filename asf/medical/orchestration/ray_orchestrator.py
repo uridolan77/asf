@@ -14,7 +14,6 @@ from typing import Dict, List, Optional, Tuple, Union, Any, Callable
 import json
 from pydantic import BaseModel, Field
 
-# Import Ray for distributed computing
 try:
     import ray
     HAS_RAY = True
@@ -22,7 +21,6 @@ except ImportError:
     HAS_RAY = False
     logging.warning("Ray not installed. Falling back to local execution.")
 
-# Configure logging
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
@@ -74,25 +72,10 @@ class RayOrchestrator:
     
     This class provides methods for task scheduling, execution, and monitoring
     using Ray as the underlying distributed computing framework.
-    """
-    
-    def __init__(self, config: RayConfig = None):
-        """
         Initialize the Ray orchestrator.
         
         Args:
             config: Configuration for Ray orchestration
-        """
-        self.config = config or RayConfig()
-        self.tasks = {}
-        self.functions = {}
-        self.initialized = False
-        
-        if self.config.use_ray and HAS_RAY:
-            self._initialize_ray()
-    
-    def _initialize_ray(self):
-        """Initialize Ray with the provided configuration."""
         if not HAS_RAY:
             logger.warning("Ray not installed. Falling back to local execution.")
             return
@@ -136,15 +119,12 @@ class RayOrchestrator:
         function_name = name or function.__name__
         
         if HAS_RAY and self.config.use_ray:
-            # Register as a Ray remote function
             remote_options = {}
             
-            # Create a Ray remote function
             ray_function = ray.remote(**remote_options)(function)
             self.functions[function_name] = ray_function
             logger.info(f"Registered function '{function_name}' as Ray remote function")
         else:
-            # Register as a local function
             self.functions[function_name] = function
             logger.info(f"Registered function '{function_name}' as local function")
     
@@ -160,23 +140,6 @@ class RayOrchestrator:
         priority: int = 0,
         resources: Dict[str, float] = None
     ) -> str:
-        """
-        Create a new task.
-        
-        Args:
-            name: Name of the task
-            function_name: Name of the function to execute
-            args: Positional arguments for the function
-            kwargs: Keyword arguments for the function
-            dependencies: List of task IDs that this task depends on
-            timeout: Timeout for the task execution in seconds
-            max_retries: Maximum number of retries for the task
-            priority: Priority of the task (higher values have higher priority)
-            resources: Resource requirements for the task
-            
-        Returns:
-            Task ID
-        """
         if function_name not in self.functions:
             raise ValueError(f"Function '{function_name}' not registered")
         
@@ -216,7 +179,6 @@ class RayOrchestrator:
         
         task = self.tasks[task_id]
         
-        # Check if dependencies are completed
         for dep_id in task.dependencies:
             if dep_id not in self.tasks:
                 raise ValueError(f"Dependency task '{dep_id}' not found")
@@ -225,7 +187,6 @@ class RayOrchestrator:
             if dep_task.status != TaskStatus.COMPLETED:
                 raise ValueError(f"Dependency task '{dep_id}' not completed")
         
-        # Update task status
         task.status = TaskStatus.RUNNING
         task.start_time = time.time()
         
@@ -233,32 +194,25 @@ class RayOrchestrator:
         
         try:
             if HAS_RAY and self.config.use_ray and self.initialized:
-                # Execute as Ray remote function
                 ray_options = {}
                 
                 if task.resources:
                     ray_options.update(task.resources)
                 
-                # Apply options to the remote function
                 if ray_options:
                     function = function.options(**ray_options)
                 
-                # Execute the function
                 result_ref = function.remote(*task.args, **task.kwargs)
                 
-                # Wait for the result with timeout
                 if task.timeout:
                     ready_refs, _ = ray.wait([result_ref], timeout=task.timeout)
                     if not ready_refs:
                         raise TimeoutError(f"Task '{task_id}' timed out after {task.timeout} seconds")
                 
-                # Get the result
                 result = ray.get(result_ref)
             else:
-                # Execute locally
                 result = function(*task.args, **task.kwargs)
             
-            # Update task status
             task.status = TaskStatus.COMPLETED
             task.result = result
             task.end_time = time.time()
@@ -268,14 +222,12 @@ class RayOrchestrator:
             return result
         
         except Exception as e:
-            # Update task status
             task.status = TaskStatus.FAILED
             task.error = str(e)
             task.end_time = time.time()
             
             logger.error(f"Task '{task_id}' failed: {e}")
             
-            # Retry if needed
             if task.retry_count < task.max_retries:
                 task.retry_count += 1
                 logger.info(f"Retrying task '{task_id}' (attempt {task.retry_count}/{task.max_retries})")
@@ -284,21 +236,11 @@ class RayOrchestrator:
             raise
     
     async def execute_task_async(self, task_id: str) -> Any:
-        """
-        Execute a task asynchronously.
-        
-        Args:
-            task_id: ID of the task to execute
-            
-        Returns:
-            Result of the task execution
-        """
         if task_id not in self.tasks:
             raise ValueError(f"Task '{task_id}' not found")
         
         task = self.tasks[task_id]
         
-        # Check if dependencies are completed
         for dep_id in task.dependencies:
             if dep_id not in self.tasks:
                 raise ValueError(f"Dependency task '{dep_id}' not found")
@@ -307,7 +249,6 @@ class RayOrchestrator:
             if dep_task.status != TaskStatus.COMPLETED:
                 raise ValueError(f"Dependency task '{dep_id}' not completed")
         
-        # Update task status
         task.status = TaskStatus.RUNNING
         task.start_time = time.time()
         
@@ -315,20 +256,16 @@ class RayOrchestrator:
         
         try:
             if HAS_RAY and self.config.use_ray and self.initialized:
-                # Execute as Ray remote function
                 ray_options = {}
                 
                 if task.resources:
                     ray_options.update(task.resources)
                 
-                # Apply options to the remote function
                 if ray_options:
                     function = function.options(**ray_options)
                 
-                # Execute the function
                 result_ref = function.remote(*task.args, **task.kwargs)
                 
-                # Wait for the result with timeout
                 if task.timeout:
                     ready_refs, _ = await asyncio.to_thread(
                         ray.wait, [result_ref], timeout=task.timeout
@@ -336,16 +273,13 @@ class RayOrchestrator:
                     if not ready_refs:
                         raise TimeoutError(f"Task '{task_id}' timed out after {task.timeout} seconds")
                 
-                # Get the result
                 result = await asyncio.to_thread(ray.get, result_ref)
             else:
-                # Execute locally
                 if asyncio.iscoroutinefunction(function):
                     result = await function(*task.args, **task.kwargs)
                 else:
                     result = await asyncio.to_thread(function, *task.args, **task.kwargs)
             
-            # Update task status
             task.status = TaskStatus.COMPLETED
             task.result = result
             task.end_time = time.time()
@@ -355,14 +289,12 @@ class RayOrchestrator:
             return result
         
         except Exception as e:
-            # Update task status
             task.status = TaskStatus.FAILED
             task.error = str(e)
             task.end_time = time.time()
             
             logger.error(f"Task '{task_id}' failed: {e}")
             
-            # Retry if needed
             if task.retry_count < task.max_retries:
                 task.retry_count += 1
                 logger.info(f"Retrying task '{task_id}' (attempt {task.retry_count}/{task.max_retries})")
@@ -382,7 +314,6 @@ class RayOrchestrator:
         """
         results = {}
         
-        # Build dependency graph
         graph = {}
         for task_id in tasks:
             if task_id not in self.tasks:
@@ -391,7 +322,6 @@ class RayOrchestrator:
             task = self.tasks[task_id]
             graph[task_id] = task.dependencies
         
-        # Topological sort
         def visit(task_id, visited, temp, order):
             if task_id in temp:
                 raise ValueError(f"Circular dependency detected for task '{task_id}'")
@@ -416,7 +346,6 @@ class RayOrchestrator:
             if task_id not in visited:
                 visit(task_id, visited, temp, order)
         
-        # Execute tasks in order
         for task_id in order:
             if task_id in tasks:
                 results[task_id] = self.execute_task(task_id)
@@ -424,18 +353,8 @@ class RayOrchestrator:
         return results
     
     async def execute_workflow_async(self, tasks: List[str]) -> Dict[str, Any]:
-        """
-        Execute a workflow of tasks asynchronously.
-        
-        Args:
-            tasks: List of task IDs to execute
-            
-        Returns:
-            Dictionary mapping task IDs to results
-        """
         results = {}
         
-        # Build dependency graph
         graph = {}
         for task_id in tasks:
             if task_id not in self.tasks:
@@ -444,7 +363,6 @@ class RayOrchestrator:
             task = self.tasks[task_id]
             graph[task_id] = task.dependencies
         
-        # Topological sort
         def visit(task_id, visited, temp, order):
             if task_id in temp:
                 raise ValueError(f"Circular dependency detected for task '{task_id}'")
@@ -469,7 +387,6 @@ class RayOrchestrator:
             if task_id not in visited:
                 visit(task_id, visited, temp, order)
         
-        # Group tasks by level (tasks with same dependencies)
         levels = []
         remaining = set(order)
         
@@ -485,15 +402,12 @@ class RayOrchestrator:
             levels.append(level)
             remaining -= level
         
-        # Execute tasks level by level
         for level in levels:
             level_tasks = [task_id for task_id in level if task_id in tasks]
             if level_tasks:
-                # Execute tasks in parallel
                 tasks_coros = [self.execute_task_async(task_id) for task_id in level_tasks]
                 level_results = await asyncio.gather(*tasks_coros, return_exceptions=True)
                 
-                # Process results
                 for task_id, result in zip(level_tasks, level_results):
                     if isinstance(result, Exception):
                         logger.error(f"Task '{task_id}' failed: {result}")
@@ -551,7 +465,6 @@ class RayOrchestrator:
         task = self.tasks[task_id]
         
         if task.status == TaskStatus.RUNNING:
-            # Cannot cancel running tasks in Ray
             logger.warning(f"Cannot cancel running task '{task_id}'")
             return False
         
@@ -563,7 +476,14 @@ class RayOrchestrator:
         return False
     
     def shutdown(self):
-        """Shutdown the Ray cluster."""
+        """Shutdown the Ray cluster.
+
+    Args:
+        # TODO: Add parameter descriptions
+
+    Returns:
+        # TODO: Add return description
+    """
         if HAS_RAY and ray.is_initialized():
             ray.shutdown()
             logger.info("Ray cluster shut down")
@@ -576,34 +496,10 @@ class RayTaskScheduler:
     
     This class provides methods for scheduling and managing tasks
     in a Ray-based distributed environment.
-    """
-    
-    def __init__(self, orchestrator: RayOrchestrator):
-        """
         Initialize the task scheduler.
         
         Args:
             orchestrator: Ray orchestrator instance
-        """
-        self.orchestrator = orchestrator
-        self.scheduled_tasks = {}
-        self.running = False
-        self.loop = None
-    
-    def schedule_task(
-        self,
-        name: str,
-        function_name: str,
-        args: List[Any] = None,
-        kwargs: Dict[str, Any] = None,
-        dependencies: List[str] = None,
-        timeout: Optional[float] = None,
-        max_retries: int = 3,
-        priority: int = 0,
-        resources: Dict[str, float] = None,
-        schedule_time: Optional[float] = None
-    ) -> str:
-        """
         Schedule a task for execution.
         
         Args:
@@ -620,34 +516,9 @@ class RayTaskScheduler:
             
         Returns:
             Task ID
-        """
-        task_id = self.orchestrator.create_task(
-            name=name,
-            function_name=function_name,
-            args=args,
-            kwargs=kwargs,
-            dependencies=dependencies,
-            timeout=timeout,
-            max_retries=max_retries,
-            priority=priority,
-            resources=resources
-        )
-        
-        self.scheduled_tasks[task_id] = {
-            "task_id": task_id,
-            "schedule_time": schedule_time or time.time()
-        }
-        
-        logger.info(f"Scheduled task '{name}' with ID '{task_id}'")
-        
-        return task_id
-    
-    async def _run_scheduler(self):
-        """Run the task scheduler."""
         self.running = True
         
         while self.running:
-            # Get tasks that are ready to run
             current_time = time.time()
             ready_tasks = []
             
@@ -655,16 +526,13 @@ class RayTaskScheduler:
                 if schedule_info["schedule_time"] <= current_time:
                     ready_tasks.append(task_id)
             
-            # Sort tasks by priority
             ready_tasks.sort(
                 key=lambda task_id: self.orchestrator.get_task(task_id).priority,
                 reverse=True
             )
             
-            # Execute ready tasks
             for task_id in ready_tasks:
                 try:
-                    # Check if dependencies are met
                     task = self.orchestrator.get_task(task_id)
                     dependencies_met = True
                     
@@ -675,85 +543,44 @@ class RayTaskScheduler:
                             break
                     
                     if dependencies_met:
-                        # Remove from scheduled tasks
                         del self.scheduled_tasks[task_id]
                         
-                        # Execute the task
                         logger.info(f"Executing scheduled task '{task_id}'")
                         asyncio.create_task(self.orchestrator.execute_task_async(task_id))
                 
                 except Exception as e:
                     logger.error(f"Error executing scheduled task '{task_id}': {e}")
             
-            # Sleep for a short time
             await asyncio.sleep(0.1)
     
     def start(self):
-        """Start the task scheduler."""
-        if self.running:
-            logger.warning("Task scheduler already running")
-            return
-        
-        self.loop = asyncio.get_event_loop()
-        self.loop.create_task(self._run_scheduler())
-        logger.info("Task scheduler started")
-    
-    def stop(self):
-        """Stop the task scheduler."""
-        self.running = False
-        logger.info("Task scheduler stopped")
+        """Start the task scheduler.
 
+    Args:
+        # TODO: Add parameter descriptions
 
-class RayWorker:
-    """
+    Returns:
+        # TODO: Add return description
+
+    Args:
+        # TODO: Add parameter descriptions
+
+    Returns:
+        # TODO: Add return description
     Worker for Ray-based distributed processing.
     
     This class represents a worker in a Ray cluster, which can execute
     tasks assigned by the orchestrator.
-    """
-    
-    def __init__(self, config: Dict[str, Any] = None):
-        """
         Initialize the Ray worker.
         
         Args:
             config: Worker configuration
-        """
-        self.config = config or {}
-        self.initialized = False
-        
-        if HAS_RAY:
-            self._initialize_ray()
-    
-    def _initialize_ray(self):
-        """Initialize Ray with the provided configuration."""
-        if not HAS_RAY:
-            logger.warning("Ray not installed. Worker cannot be initialized.")
-            return
-        
-        if not ray.is_initialized():
-            ray_init_kwargs = {}
-            
-            # Get configuration from environment variables
-            address = os.environ.get("RAY_ADDRESS")
-            if address:
-                ray_init_kwargs["address"] = address
-            
-            # Override with provided configuration
-            ray_init_kwargs.update(self.config)
-            
-            try:
-                ray.init(**ray_init_kwargs)
-                logger.info(f"Ray worker initialized with {ray_init_kwargs}")
-                self.initialized = True
-            except Exception as e:
-                logger.error(f"Failed to initialize Ray worker: {e}")
-                self.initialized = False
-    
-    @staticmethod
-    @ray.remote
-    def execute_function(function_name: str, args: List[Any], kwargs: Dict[str, Any]) -> Any:
-        """
+
+    Args:
+        # TODO: Add parameter descriptions
+
+    Returns:
+        # TODO: Add return description
         Execute a function.
         
         Args:
@@ -763,21 +590,6 @@ class RayWorker:
             
         Returns:
             Result of the function execution
-        """
-        try:
-            # Import the function dynamically
-            module_name, func_name = function_name.rsplit(".", 1)
-            module = __import__(module_name, fromlist=[func_name])
-            function = getattr(module, func_name)
-            
-            # Execute the function
-            return function(*args, **kwargs)
-        except Exception as e:
-            logger.error(f"Error executing function '{function_name}': {e}")
-            raise
-    
-    def shutdown(self):
-        """Shutdown the Ray worker."""
         if HAS_RAY and ray.is_initialized():
             ray.shutdown()
             logger.info("Ray worker shut down")

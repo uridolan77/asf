@@ -5,20 +5,16 @@ This module provides a comprehensive client for the ClinicalTrials.gov API v2.
 """
 
 import requests
-import json
 import time
 import logging
 from typing import Dict, List, Optional, Any, Union
-import urllib.parse
 
-# Optional pandas support
 try:
     import pandas as pd
     HAS_PANDAS = True
 except ImportError:
     HAS_PANDAS = False
 
-# Set up logging
 logger = logging.getLogger(__name__)
 
 class ClinicalTrialsClient:
@@ -42,14 +38,6 @@ class ClinicalTrialsClient:
         backoff_factor: float = 0.5,
         timeout: int = DEFAULT_TIMEOUT
     ):
-        """
-        Initialize the ClinicalTrials API connector
-        
-        Args:
-            max_retries: Maximum number of retry attempts for failed requests
-            backoff_factor: Exponential backoff factor for retry attempts
-            timeout: Request timeout in seconds
-        """
         self.max_retries = max_retries
         self.backoff_factor = backoff_factor
         self.timeout = timeout
@@ -80,28 +68,6 @@ class ClinicalTrialsClient:
         phase: List[str] = None,
         to_dataframe: bool = False
     ) -> Union[Dict[str, Any], 'pd.DataFrame']:
-        """
-        Search for studies using the ClinicalTrials.gov API
-        
-        Args:
-            query: Search query string
-            fields: List of fields to include in the response
-            page_size: Number of results per page
-            page: Page number
-            format: Response format (json or csv)
-            search_areas: Areas to search in (e.g., "Condition", "Intervention")
-            min_rank: Minimum rank for results
-            max_rank: Maximum rank for results
-            country_codes: List of country codes to filter by
-            status: List of study statuses to filter by
-            study_type: List of study types to filter by
-            phase: List of study phases to filter by
-            to_dataframe: Whether to convert results to a pandas DataFrame
-            
-        Returns:
-            Dict containing search results or pandas DataFrame if to_dataframe=True
-        """
-        # Build query parameters
         params = {
             "query": query,
             "pageSize": min(page_size, self.MAX_PAGE_SIZE),
@@ -109,7 +75,6 @@ class ClinicalTrialsClient:
             "format": format
         }
         
-        # Add optional parameters
         if fields:
             params["fields"] = ",".join(fields)
         
@@ -134,10 +99,8 @@ class ClinicalTrialsClient:
         if phase:
             params["phase"] = ",".join(phase)
         
-        # Make request
         results = self._make_request("GET", "/studies", params=params)
         
-        # Convert to DataFrame if requested
         if to_dataframe and HAS_PANDAS:
             if "studies" in results and results["studies"]:
                 return pd.DataFrame(results["studies"])
@@ -152,25 +115,11 @@ class ClinicalTrialsClient:
         fields: List[str] = None,
         format: str = "json"
     ) -> Dict[str, Any]:
-        """
-        Get details for a specific study by NCT ID
-        
-        Args:
-            nct_id: The NCT ID of the study
-            fields: List of fields to include in the response
-            format: Response format (json or csv)
-            
-        Returns:
-            Dict containing study details
-        """
-        # Build query parameters
         params = {"format": format}
         
-        # Add optional parameters
         if fields:
             params["fields"] = ",".join(fields)
         
-        # Make request
         return self._make_request("GET", f"/studies/{nct_id}", params=params)
     
     def get_study_metadata(self) -> Dict[str, Any]:
@@ -211,81 +160,47 @@ class ClinicalTrialsClient:
         start_date: Optional[str] = None,
         completion_date: Optional[str] = None
     ) -> str:
-        """
-        Build an advanced query string for the ClinicalTrials.gov API
-        
-        Args:
-            condition: Medical condition
-            intervention: Treatment or intervention
-            title: Words in the study title
-            outcome: Outcome measures
-            sponsor: Study sponsor
-            location: Study location
-            status: Study status (e.g., "Recruiting", "Completed")
-            phase: Study phase (e.g., "Phase 1", "Phase 2")
-            study_type: Type of study (e.g., "Interventional", "Observational")
-            gender: Participant gender ("Male", "Female", "All")
-            min_age: Minimum participant age in years
-            max_age: Maximum participant age in years
-            start_date: Study start date (YYYY-MM-DD)
-            completion_date: Study completion date (YYYY-MM-DD)
-            
-        Returns:
-            Advanced query string
-        """
         query_parts = []
         
-        # Add condition
         if condition:
             query_parts.append(f"CONDITION:{condition}")
         
-        # Add intervention
         if intervention:
             query_parts.append(f"INTERVENTION:{intervention}")
         
-        # Add title
         if title:
             query_parts.append(f"TITLE:{title}")
         
-        # Add outcome
         if outcome:
             query_parts.append(f"OUTCOME:{outcome}")
         
-        # Add sponsor
         if sponsor:
             query_parts.append(f"SPONSOR:{sponsor}")
         
-        # Add location
         if location:
             query_parts.append(f"LOCATION:{location}")
         
-        # Add status
         if status:
             status_query = " OR ".join([f"STATUS:{s}" for s in status])
             query_parts.append(f"({status_query})")
         
-        # Add phase
         if phase:
             phase_query = " OR ".join([f"PHASE:{p}" for p in phase])
             query_parts.append(f"({phase_query})")
         
-        # Add study type
         if study_type:
             type_query = " OR ".join([f"STUDY_TYPE:{t}" for t in study_type])
             query_parts.append(f"({type_query})")
         
-        # Add gender
         if gender:
             query_parts.append(f"GENDER:{gender}")
         
-        # Add age range
         if min_age is not None:
             query_parts.append(f"MIN_AGE:{min_age}")
         
         if max_age is not None:
             query_parts.append(f"MAX_AGE:{max_age}")
         
-        # Add dates
         if start_date:
             query_parts.append(f"START_DATE:{start_date}")
         
@@ -301,21 +216,8 @@ class ClinicalTrialsClient:
         params: Dict[str, Any] = None,
         data: Dict[str, Any] = None
     ) -> Dict[str, Any]:
-        """
-        Make a request to the ClinicalTrials.gov API
-        
-        Args:
-            method: HTTP method (GET, POST, etc.)
-            endpoint: API endpoint
-            params: Query parameters
-            data: Request body data
-            
-        Returns:
-            Response data as a dictionary
-        """
         url = f"{self.BASE_URL}{endpoint}"
         
-        # Initialize retry counter
         retries = 0
         
         while retries <= self.max_retries:
@@ -328,10 +230,8 @@ class ClinicalTrialsClient:
                     timeout=self.timeout
                 )
                 
-                # Check for successful response
                 response.raise_for_status()
                 
-                # Parse response
                 if response.content:
                     return response.json()
                 else:
@@ -340,14 +240,11 @@ class ClinicalTrialsClient:
             except requests.exceptions.RequestException as e:
                 retries += 1
                 
-                # If we've reached max retries, raise the exception
                 if retries > self.max_retries:
                     logger.error(f"Request failed after {self.max_retries} retries: {e}")
                     raise
                 
-                # Calculate backoff time
                 backoff_time = self.backoff_factor * (2 ** (retries - 1))
                 logger.warning(f"Request failed, retrying in {backoff_time:.2f} seconds: {e}")
                 
-                # Wait before retrying
                 time.sleep(backoff_time)

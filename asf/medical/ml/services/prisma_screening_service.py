@@ -6,15 +6,10 @@ the PRISMA (Preferred Reporting Items for Systematic Reviews and Meta-Analyses) 
 """
 
 import logging
-import re
-import asyncio
-from typing import Dict, List, Optional, Any, Union, Tuple, Set
 from enum import Enum
 
 from asf.medical.ml.models.biomedlm import BioMedLMService
-from asf.medical.core.config import settings
 
-# Set up logging
 logger = logging.getLogger(__name__)
 
 class ScreeningStage(str, Enum):
@@ -47,7 +42,6 @@ class PRISMAScreeningService:
         """
         self.biomedlm_service = biomedlm_service
         
-        # Initialize screening criteria
         self.criteria = {
             ScreeningStage.IDENTIFICATION: {
                 "include": [],
@@ -63,7 +57,6 @@ class PRISMAScreeningService:
             }
         }
         
-        # Initialize PRISMA flow data
         self.flow_data = {
             "identification": {
                 "records_identified": 0,
@@ -104,23 +97,10 @@ class PRISMAScreeningService:
         stage: ScreeningStage,
         custom_criteria: Optional[Dict[str, List[str]]] = None
     ) -> Dict[str, Any]:
-        """
-        Screen an article according to PRISMA guidelines.
-        
-        Args:
-            article: Article data
-            stage: Screening stage
-            custom_criteria: Custom criteria to use instead of the default ones
-            
-        Returns:
-            Screening result
-        """
         logger.info(f"Screening article {article.get('pmid', 'unknown')} at {stage} stage")
         
-        # Use custom criteria if provided, otherwise use default
         criteria = custom_criteria if custom_criteria else self.criteria[stage]
         
-        # Initialize result
         result = {
             "article_id": article.get("pmid", ""),
             "title": article.get("title", ""),
@@ -132,30 +112,23 @@ class PRISMAScreeningService:
             "notes": ""
         }
         
-        # Extract text for screening based on stage
         if stage == ScreeningStage.IDENTIFICATION:
-            # At identification stage, we only look at title
             text = article.get("title", "")
         elif stage == ScreeningStage.SCREENING:
-            # At screening stage, we look at title and abstract
             text = f"{article.get('title', '')} {article.get('abstract', '')}"
         elif stage == ScreeningStage.ELIGIBILITY:
-            # At eligibility stage, we look at full text if available
             text = article.get("full_text", f"{article.get('title', '')} {article.get('abstract', '')}")
         else:
             text = f"{article.get('title', '')} {article.get('abstract', '')}"
         
-        # Check inclusion criteria
         for criterion in criteria["include"]:
             if await self._check_criterion(text, criterion):
                 result["matched_include_criteria"].append(criterion)
         
-        # Check exclusion criteria
         for criterion in criteria["exclude"]:
             if await self._check_criterion(text, criterion):
                 result["matched_exclude_criteria"].append(criterion)
         
-        # Make decision
         if result["matched_exclude_criteria"]:
             result["decision"] = ScreeningDecision.EXCLUDE
             result["notes"] = f"Excluded due to: {', '.join(result['matched_exclude_criteria'])}"
@@ -169,7 +142,6 @@ class PRISMAScreeningService:
             result["notes"] = "No criteria matched"
             result["confidence"] = 0.5  # Low confidence when uncertain
         
-        # Update PRISMA flow data
         self._update_flow_data(stage, result["decision"])
         
         logger.info(f"Screening decision for article {article.get('pmid', 'unknown')}: {result['decision']}")
@@ -181,17 +153,6 @@ class PRISMAScreeningService:
         stage: ScreeningStage,
         custom_criteria: Optional[Dict[str, List[str]]] = None
     ) -> List[Dict[str, Any]]:
-        """
-        Screen multiple articles according to PRISMA guidelines.
-        
-        Args:
-            articles: List of article data
-            stage: Screening stage
-            custom_criteria: Custom criteria to use instead of the default ones
-            
-        Returns:
-            List of screening results
-        """
         logger.info(f"Screening {len(articles)} articles at {stage} stage")
         
         results = []
@@ -202,28 +163,14 @@ class PRISMAScreeningService:
         return results
     
     async def _check_criterion(self, text: str, criterion: str) -> bool:
-        """
-        Check if a text matches a criterion.
-        
-        Args:
-            text: Text to check
-            criterion: Criterion to check against
-            
-        Returns:
-            True if the text matches the criterion, False otherwise
-        """
-        # If BioMedLM is available, use it for semantic matching
         if self.biomedlm_service:
             try:
-                # Calculate similarity between text and criterion
                 similarity = self.biomedlm_service.calculate_similarity(text, criterion)
                 return similarity > 0.7  # Threshold for semantic matching
             except Exception as e:
                 logger.error(f"Error using BioMedLM for criterion matching: {str(e)}")
-                # Fall back to simple text matching
                 return criterion.lower() in text.lower()
         else:
-            # Simple text matching
             return criterion.lower() in text.lower()
     
     def _update_flow_data(self, stage: ScreeningStage, decision: ScreeningDecision):
@@ -249,7 +196,6 @@ class PRISMAScreeningService:
             if decision == ScreeningDecision.EXCLUDE:
                 self.flow_data["eligibility"]["full_text_excluded"] += 1
                 
-                # Track exclusion reasons
                 if "notes" in decision and decision["notes"]:
                     reason = decision["notes"]
                     if reason in self.flow_data["eligibility"]["exclusion_reasons"]:
@@ -277,7 +223,6 @@ class PRISMAScreeningService:
         Returns:
             Data for generating a PRISMA flow diagram
         """
-        # Calculate remaining records at each stage
         remaining_after_identification = (
             self.flow_data["identification"]["records_identified"] - 
             self.flow_data["identification"]["records_removed_before_screening"]
@@ -288,7 +233,6 @@ class PRISMAScreeningService:
             self.flow_data["screening"]["records_excluded"]
         )
         
-        # Create flow diagram data
         diagram_data = {
             "identification": {
                 "records_identified": self.flow_data["identification"]["records_identified"],

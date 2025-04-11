@@ -1,10 +1,3 @@
-#!/usr/bin/env python
-"""
-Test script for TSMixer integration with temporal contradiction detection.
-
-This script tests the TSMixer integration with the temporal contradiction detection service.
-"""
-
 import sys
 import json
 import asyncio
@@ -13,17 +6,14 @@ import datetime
 from pathlib import Path
 from typing import Dict, List, Any, Optional, Tuple
 
-# Set up logging
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
-# Add the parent directory to the path so we can import our modules
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
-# Define enums for testing
 class ContradictionType:
     NONE = "none"
     DIRECT = "direct"
@@ -39,9 +29,8 @@ class ContradictionConfidence:
     LOW = "low"
     UNKNOWN = "unknown"
 
-# Try to import the real services, but use mocks if they're not available
 try:
-    from asf.medical.ml.services.enhanced_contradiction_service import EnhancedContradictionService
+    from asf.medical.ml.services.unified_contradiction_service import UnifiedUnifiedUnifiedContradictionService
     from asf.medical.ml.services.temporal_service import TemporalService
     from asf.medical.ml.models.biomedlm import BioMedLMService
     USING_REAL_SERVICES = True
@@ -49,7 +38,6 @@ except ImportError:
     logger.warning("Failed to import required modules. Using mock implementations.")
     USING_REAL_SERVICES = False
 
-# Test data with temporal contradictions
 TEST_CLAIMS = [
     {
         "claim1": "Statin therapy reduces the risk of cardiovascular events in patients with high cholesterol.",
@@ -175,11 +163,13 @@ class MockTSMixerService:
     """Mock TSMixer service for testing."""
 
     def __init__(self):
-        """Initialize the mock TSMixer service."""
-        logger.info("Mock TSMixer service initialized")
+        """Initialize the mock TSMixer service.
 
-    def analyze_temporal_sequence(self, sequence, embedding_fn=None):
-        """
+    Args:
+        # TODO: Add parameter descriptions
+
+    Returns:
+        # TODO: Add return description
         Analyze a temporal sequence of claims.
 
         Args:
@@ -188,88 +178,30 @@ class MockTSMixerService:
 
         Returns:
             Analysis results
-        """
-        # Sort sequence by timestamp
-        sequence = sorted(sequence, key=lambda x: x["timestamp"])
-
-        # Calculate contradiction scores
-        contradiction_scores = []
-        for i in range(len(sequence) - 1):
-            # Calculate time difference in years
-            try:
-                time1 = datetime.datetime.strptime(sequence[i]["timestamp"], "%Y-%m-%d").timestamp()
-                time2 = datetime.datetime.strptime(sequence[i+1]["timestamp"], "%Y-%m-%d").timestamp()
-                time_diff_years = abs(time2 - time1) / (365 * 24 * 60 * 60)
-            except:
-                time_diff_years = 0
-
-            # Check for numerical differences in claims
-            import re
-            if "text" in sequence[i] and "text" in sequence[i+1]:
-                text1 = sequence[i]["text"]
-                text2 = sequence[i+1]["text"]
-
-                numbers1 = re.findall(r'\d+(?:\.\d+)?%?', text1)
-                numbers2 = re.findall(r'\d+(?:\.\d+)?%?', text2)
-                has_different_numbers = False
-
-                if numbers1 and numbers2 and len(numbers1) == len(numbers2):
-                    for n1, n2 in zip(numbers1, numbers2):
-                        if n1 != n2:
-                            has_different_numbers = True
-                            break
-
-                # If claims have different numbers, increase the contradiction score
-                if has_different_numbers:
-                    contradiction_score = 1.0
-                else:
-                    # Calculate contradiction score based on time difference
-                    # The longer the time difference, the higher the contradiction score
-                    contradiction_score = min(1.0, time_diff_years / 10.0)
-            else:
-                # Calculate contradiction score based on time difference
-                # The longer the time difference, the higher the contradiction score
-                contradiction_score = min(1.0, time_diff_years / 10.0)
-
-            contradiction_scores.append(contradiction_score)
-
-        # Calculate trend
-        if len(contradiction_scores) > 1:
-            # Simple linear trend
-            trend = (contradiction_scores[-1] - contradiction_scores[0]) / len(contradiction_scores)
-
-            # Determine trend direction and magnitude
-            direction = "increasing" if trend > 0 else "decreasing" if trend < 0 else "stable"
-            magnitude = "strong" if abs(trend) > 0.1 else "moderate" if abs(trend) > 0.05 else "weak"
-        else:
-            trend = 0
-            direction = "stable"
-            magnitude = "weak"
-
-        # Return analysis results
-        return {
-            "contradiction_scores": contradiction_scores,
-            "trend": {
-                "slope": trend,
-                "direction": direction,
-                "magnitude": magnitude
-            }
-        }
-
-class MockBioMedLMService:
-    """Mock BioMedLM service for testing."""
 
     def __init__(self):
-        """Initialize the mock BioMedLM service."""
+        """Initialize the mock BioMedLM service.
+
+    Args:
+        # TODO: Add parameter descriptions
+
+    Returns:
+        # TODO: Add return description
+    """
         logger.info("Mock BioMedLM service initialized")
 
     def calculate_similarity(self, text1, text2):
-        """Calculate similarity between two texts."""
-        # Simple similarity calculation
+        """Calculate similarity between two texts.
+
+    Args:
+        # TODO: Add parameter descriptions
+
+    Returns:
+        # TODO: Add return description
+    """
         if text1 == text2:
             return 1.0
 
-        # Calculate Jaccard similarity
         words1 = set(text1.lower().split())
         words2 = set(text2.lower().split())
 
@@ -279,8 +211,14 @@ class MockBioMedLMService:
         return intersection / union if union > 0 else 0.0
 
     def encode(self, text):
-        """Encode text into a vector."""
-        # Return a dummy vector
+        """Encode text into a vector.
+
+    Args:
+        # TODO: Add parameter descriptions
+
+    Returns:
+        # TODO: Add return description
+    """
         import numpy as np
         np.random.seed(hash(text) % 2**32)
         return np.random.rand(768)
@@ -289,37 +227,39 @@ class MockTemporalService:
     """Mock temporal service for testing."""
 
     def __init__(self):
-        """Initialize the mock temporal service."""
-        logger.info("Mock temporal service initialized")
-        self.tsmixer_service = MockTSMixerService()
+        """Initialize the mock temporal service.
 
-    def calculate_temporal_confidence(self, date_str, domain="default"):
-        """Calculate temporal confidence for a date."""
-        # Simple confidence calculation
-        try:
-            date = datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
-            today = datetime.date.today()
-            years_diff = (today - date).days / 365.0
+    Args:
+        # TODO: Add parameter descriptions
 
-            # Older dates have lower confidence
-            return max(0.0, 1.0 - (years_diff / 10.0))
-        except:
-            return 0.5
+    Returns:
+        # TODO: Add return description
 
-    async def analyze_temporal_sequence(self, sequence):
-        """Analyze a temporal sequence of claims."""
-        return self.tsmixer_service.analyze_temporal_sequence(sequence)
+    Args:
+        # TODO: Add parameter descriptions
 
-class MockContradictionService:
-    """Mock contradiction service for testing."""
+    Returns:
+        # TODO: Add return description
+
+    Args:
+        # TODO: Add parameter descriptions
+
+    Returns:
+        # TODO: Add return description
 
     def __init__(self, biomedlm_service=None, temporal_service=None):
-        """Initialize the mock contradiction service."""
+        """Initialize the mock contradiction service.
+
+    Args:
+        # TODO: Add parameter descriptions
+
+    Returns:
+        # TODO: Add return description
+    """
         logger.info("Mock contradiction service initialized")
         self.biomedlm_service = biomedlm_service or MockBioMedLMService()
         self.temporal_service = temporal_service or MockTemporalService()
 
-        # Thresholds for contradiction detection
         self.thresholds = {
             ContradictionType.DIRECT: 0.7,
             ContradictionType.NEGATION: 0.8,
@@ -339,154 +279,22 @@ class MockContradictionService:
         use_temporal: bool = True,
         use_tsmixer: bool = True
     ) -> Dict[str, Any]:
-        """Detect contradiction between two claims."""
-        # Initialize result
-        result = {
-            "is_contradiction": False,
-            "contradiction_score": 0.0,
-            "contradiction_type": ContradictionType.NONE,
-            "confidence": ContradictionConfidence.UNKNOWN,
-            "explanation": None,
-            "methods_used": [],
-            "details": {}
-        }
-
-        # Calculate similarity
-        similarity = self.biomedlm_service.calculate_similarity(claim1, claim2)
-
-        # Check for temporal contradiction
-        if use_temporal and metadata1 and metadata2:
-            # Extract publication dates
-            try:
-                pub_date1 = datetime.datetime.strptime(metadata1.get("publication_date", ""), "%Y-%m-%d")
-                pub_date2 = datetime.datetime.strptime(metadata2.get("publication_date", ""), "%Y-%m-%d")
-
-                # Calculate time difference in days
-                time_diff = abs((pub_date2 - pub_date1).days)
-
-                # Check for numerical differences in claims
-                import re
-                numbers1 = re.findall(r'\d+(?:\.\d+)?%?', claim1)
-                numbers2 = re.findall(r'\d+(?:\.\d+)?%?', claim2)
-                has_different_numbers = False
-
-                if numbers1 and numbers2 and len(numbers1) == len(numbers2):
-                    for n1, n2 in zip(numbers1, numbers2):
-                        if n1 != n2:
-                            has_different_numbers = True
-                            break
-
-                # Check if one claim is a subset of the other
-                is_subset = claim1 in claim2 or claim2 in claim1
-
-                # If time difference is significant and claims are similar or have different numbers, it's a temporal contradiction
-                if time_diff > 365 * 5 and (similarity > 0.7 or has_different_numbers or is_subset):  # More than 5 years
-                    # Use TSMixer if requested
-                    if use_tsmixer:
-                        # Create sequence for TSMixer
-                        sequence = [
-                            {
-                                "text": claim1,
-                                "timestamp": metadata1.get("publication_date", ""),
-                                "domain": metadata1.get("domain", "default")
-                            },
-                            {
-                                "text": claim2,
-                                "timestamp": metadata2.get("publication_date", ""),
-                                "domain": metadata2.get("domain", "default")
-                            }
-                        ]
-
-                        # Add related claims if available
-                        if "related_claims" in metadata1:
-                            sequence.extend(metadata1["related_claims"])
-                        if "related_claims" in metadata2:
-                            sequence.extend(metadata2["related_claims"])
-
-                        # Analyze sequence
-                        tsmixer_analysis = await self.temporal_service.analyze_temporal_sequence(sequence)
-
-                        # Extract contradiction scores
-                        contradiction_scores = tsmixer_analysis.get("contradiction_scores", [])
-
-                        if contradiction_scores:
-                            # Use the last score
-                            contradiction_score = contradiction_scores[-1]
-
-                            # Get trend
-                            trend = tsmixer_analysis.get("trend", {})
-                            trend_direction = trend.get("direction", "stable")
-                            trend_magnitude = trend.get("magnitude", "weak")
-
-                            # Set result
-                            result["is_contradiction"] = True
-                            result["contradiction_score"] = contradiction_score
-                            result["contradiction_type"] = ContradictionType.TEMPORAL
-
-                            # Set confidence based on trend magnitude
-                            if trend_magnitude == "strong":
-                                result["confidence"] = ContradictionConfidence.HIGH
-                            elif trend_magnitude == "moderate":
-                                result["confidence"] = ContradictionConfidence.MEDIUM
-                            else:
-                                result["confidence"] = ContradictionConfidence.LOW
-
-                            # Generate explanation
-                            time_diff_years = time_diff / 365.0
-                            result["explanation"] = f"Temporal contradiction detected by TSMixer: Claims show a {trend_magnitude} {trend_direction} trend over {time_diff_years:.1f} years. The more recent publication likely reflects updated evidence or changing medical knowledge."
-
-                            # Add methods used
-                            result["methods_used"] = ["temporal", "tsmixer"]
-
-                            # Add details
-                            result["details"] = {
-                                "tsmixer": {
-                                    "contradiction_scores": contradiction_scores,
-                                    "trend": trend
-                                }
-                            }
-                    else:
-                        # Simple temporal contradiction detection
-                        time_score = min(1.0, time_diff / (365 * 10))  # Cap at 10 years
-
-                        # Set result
-                        result["is_contradiction"] = True
-                        result["contradiction_score"] = time_score
-                        result["contradiction_type"] = ContradictionType.TEMPORAL
-                        result["confidence"] = ContradictionConfidence.MEDIUM
-
-                        # Generate explanation
-                        time_diff_years = time_diff / 365.0
-                        result["explanation"] = f"Temporal contradiction detected: Claims are similar but published {time_diff_years:.1f} years apart. The more recent publication may reflect updated evidence or changing medical knowledge."
-
-                        # Add methods used
-                        result["methods_used"] = ["temporal"]
-            except Exception as e:
-                logger.error(f"Error detecting temporal contradiction: {str(e)}")
-
-        return result
-
-async def test_tsmixer_contradiction_detection():
-    """Test TSMixer integration with temporal contradiction detection."""
     logger.info("Testing TSMixer integration with temporal contradiction detection...")
 
-    # Initialize services
     biomedlm_service = MockBioMedLMService()
     temporal_service = MockTemporalService()
 
-    # Use the real ContradictionService if available, otherwise use the mock
     if USING_REAL_SERVICES:
-        contradiction_service = EnhancedContradictionService(
+        contradiction_service = EnhancedUnifiedUnifiedContradictionService(
             biomedlm_service=biomedlm_service,
             temporal_service=temporal_service
         )
     else:
-        contradiction_service = MockContradictionService(
+        contradiction_service = MockUnifiedUnifiedContradictionService(
             biomedlm_service=biomedlm_service,
             temporal_service=temporal_service
         )
 
-    # Test each claim pair
     for i, test_case in enumerate(TEST_CLAIMS):
         logger.info(f"Test case {i+1}:")
         logger.info(f"Claim 1: {test_case['claim1']}")
@@ -494,7 +302,6 @@ async def test_tsmixer_contradiction_detection():
         logger.info(f"Publication date 1: {test_case['metadata1'].get('publication_date')}")
         logger.info(f"Publication date 2: {test_case['metadata2'].get('publication_date')}")
 
-        # Detect contradiction with TSMixer
         result_with_tsmixer = await contradiction_service.detect_contradiction(
             claim1=test_case["claim1"],
             claim2=test_case["claim2"],
@@ -505,7 +312,6 @@ async def test_tsmixer_contradiction_detection():
             use_tsmixer=True
         )
 
-        # Detect contradiction without TSMixer
         result_without_tsmixer = await contradiction_service.detect_contradiction(
             claim1=test_case["claim1"],
             claim2=test_case["claim2"],
@@ -516,7 +322,6 @@ async def test_tsmixer_contradiction_detection():
             use_tsmixer=False
         )
 
-        # Print results
         logger.info("With TSMixer:")
         logger.info(f"  Result: {'Contradiction' if result_with_tsmixer['is_contradiction'] else 'No contradiction'}")
         logger.info(f"  Score: {result_with_tsmixer['contradiction_score']:.4f}")
@@ -535,7 +340,6 @@ async def test_tsmixer_contradiction_detection():
         if result_without_tsmixer["explanation"]:
             logger.info(f"  Explanation: {result_without_tsmixer['explanation']}")
 
-        # Check if result matches expected result
         expected = test_case["expected_contradiction"]
         actual_with_tsmixer = result_with_tsmixer["is_contradiction"]
         actual_without_tsmixer = result_without_tsmixer["is_contradiction"]
@@ -548,17 +352,3 @@ async def test_tsmixer_contradiction_detection():
     logger.info("TSMixer contradiction detection tests completed")
 
 async def main():
-    """Main function."""
-    logger.info("Starting TSMixer contradiction detection tests...")
-
-    try:
-        # Test TSMixer integration with temporal contradiction detection
-        await test_tsmixer_contradiction_detection()
-
-        logger.info("All tests completed successfully")
-    except Exception as e:
-        logger.error(f"Error during tests: {str(e)}")
-        raise
-
-if __name__ == "__main__":
-    asyncio.run(main())

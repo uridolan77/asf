@@ -23,7 +23,6 @@ import requests
 from typing import Dict, List, Optional, Union, Any
 from dotenv import load_dotenv
 
-# Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -39,30 +38,6 @@ class UMLSClient:
         
         Args:
             api_key: UMLS API key. If not provided, will attempt to load from environment variables.
-        """
-        # Load environment variables
-        load_dotenv()
-        
-        # Set API credentials
-        self.api_key = api_key or os.getenv('UMLS_API_KEY')
-        self.username = os.getenv('UMLS_USERNAME')
-        self.password = os.getenv('UMLS_PASSWORD')
-        
-        if not self.api_key:
-            logger.warning("No UMLS API key provided. Authentication may fail.")
-        
-        # UMLS API endpoints
-        self.base_url = "https://uts-ws.nlm.nih.gov/rest"
-        self.auth_endpoint = "https://utslogin.nlm.nih.gov/cas/v1/api-key"
-        
-        # Authentication token
-        self.tgt = None
-        self.service_ticket = None
-        self.token_timestamp = 0
-        self.token_lifetime = 7200  # 2 hours in seconds
-    
-    def _need_new_token(self) -> bool:
-        """Check if a new authentication token is needed."""
         current_time = time.time()
         return (not self.tgt or 
                 current_time - self.token_timestamp > self.token_lifetime)
@@ -85,14 +60,12 @@ class UMLSClient:
         try:
             auth_params = {'apikey': self.api_key}
             
-            # Request a ticket granting ticket (TGT)
             response = requests.post(
                 self.auth_endpoint,
                 data=auth_params
             )
             response.raise_for_status()
             
-            # Extract the TGT from the response
             self.tgt = response.text
             self.token_timestamp = time.time()
             
@@ -114,7 +87,6 @@ class UMLSClient:
             return None
         
         try:
-            # Request a service ticket using the TGT
             service_params = {'service': self.base_url}
             response = requests.post(
                 self.tgt,
@@ -122,7 +94,6 @@ class UMLSClient:
             )
             response.raise_for_status()
             
-            # Extract the service ticket
             service_ticket = response.text
             return service_ticket
             
@@ -146,21 +117,17 @@ class UMLSClient:
             return None
         
         try:
-            # Construct the search URL
             search_url = f"{self.base_url}/search/current"
             
-            # Set up query parameters
             params = {
                 'string': term,
                 'searchType': search_type,
                 'ticket': service_ticket
             }
             
-            # Make the request
             response = requests.get(search_url, params=params)
             response.raise_for_status()
             
-            # Parse and return the results
             results = response.json()
             logger.info(f"Successfully searched for term: '{term}'")
             return results
@@ -184,17 +151,13 @@ class UMLSClient:
             return None
         
         try:
-            # Construct the concept URL
             concept_url = f"{self.base_url}/content/current/CUI/{cui}"
             
-            # Set up query parameters
             params = {'ticket': service_ticket}
             
-            # Make the request
             response = requests.get(concept_url, params=params)
             response.raise_for_status()
             
-            # Parse and return the results
             concept_info = response.json()
             logger.info(f"Successfully retrieved information for CUI: {cui}")
             return concept_info
@@ -218,17 +181,13 @@ class UMLSClient:
             return None
         
         try:
-            # Construct the semantic types URL
             semantic_url = f"{self.base_url}/content/current/CUI/{cui}/SemanticTypes"
             
-            # Set up query parameters
             params = {'ticket': service_ticket}
             
-            # Make the request
             response = requests.get(semantic_url, params=params)
             response.raise_for_status()
             
-            # Parse and return the results
             semantic_info = response.json()
             logger.info(f"Successfully retrieved semantic types for CUI: {cui}")
             return semantic_info.get('result', [])
@@ -253,19 +212,15 @@ class UMLSClient:
             return None
         
         try:
-            # Construct the relations URL
             relations_url = f"{self.base_url}/content/current/CUI/{cui}/relations"
             
-            # Set up query parameters
             params = {'ticket': service_ticket}
             if relation_type:
                 params['relationTypes'] = relation_type
             
-            # Make the request
             response = requests.get(relations_url, params=params)
             response.raise_for_status()
             
-            # Parse and return the results
             relations_info = response.json()
             logger.info(f"Successfully retrieved relations for CUI: {cui}")
             return relations_info.get('result', [])
@@ -290,17 +245,13 @@ class UMLSClient:
             return None
         
         try:
-            # Construct the source concepts URL
             source_url = f"{self.base_url}/content/current/CUI/{cui}/source/{source}"
             
-            # Set up query parameters
             params = {'ticket': service_ticket}
             
-            # Make the request
             response = requests.get(source_url, params=params)
             response.raise_for_status()
             
-            # Parse and return the results
             source_info = response.json()
             logger.info(f"Successfully retrieved {source} concepts for CUI: {cui}")
             return source_info.get('result', [])
@@ -325,19 +276,15 @@ class UMLSClient:
             return None
         
         try:
-            # Construct the definitions URL
             definitions_url = f"{self.base_url}/content/current/CUI/{cui}/definitions"
             
-            # Set up query parameters
             params = {'ticket': service_ticket}
             if source:
                 params['source'] = source
             
-            # Make the request
             response = requests.get(definitions_url, params=params)
             response.raise_for_status()
             
-            # Parse and return the results
             definitions_info = response.json()
             logger.info(f"Successfully retrieved definitions for CUI: {cui}")
             return definitions_info.get('result', [])
@@ -371,7 +318,6 @@ class UMLSClient:
             'term2_info': None
         }
         
-        # Search for both terms
         term1_search = self.search_term(term1)
         term2_search = self.search_term(term2)
         
@@ -379,32 +325,24 @@ class UMLSClient:
             result['explanation'] = "Could not find one or both terms in UMLS"
             return result
         
-        # Get the CUIs of the top results
         try:
             cui1 = term1_search['result']['results'][0]['ui']
             cui2 = term2_search['result']['results'][0]['ui']
             
-            # Get concept information
             concept1 = self.get_concept(cui1)
             concept2 = self.get_concept(cui2)
             
             result['term1_info'] = concept1
             result['term2_info'] = concept2
             
-            # Get semantic types
             sem_types1 = self.get_semantic_types(cui1)
             sem_types2 = self.get_semantic_types(cui2)
             
-            # Get relationships
             relations1 = self.get_relations(cui1)
             relations2 = self.get_relations(cui2)
             
-            # This is where you'd implement your contradiction detection logic
-            # For now, we'll just check if they have the same semantic type but opposite relationships
             
-            # Simplified detection logic (would need to be expanded)
             if sem_types1 and sem_types2:
-                # Check if they share semantic types
                 st1_names = [st['name'] for st in sem_types1]
                 st2_names = [st['name'] for st in sem_types2]
                 
@@ -424,7 +362,6 @@ class UMLSClient:
             return result
 
 
-# Example usage for CAP-specific application
 def extract_pneumonia_concepts():
     """
     Extract pneumonia-related concepts from UMLS.
@@ -432,14 +369,12 @@ def extract_pneumonia_concepts():
     """
     client = UMLSClient()
     
-    # Search for pneumonia
     pneumonia_results = client.search_term("pneumonia")
     if not pneumonia_results:
         logger.error("Failed to find pneumonia concepts")
         return None
     
     try:
-        # Get the CUI for community-acquired pneumonia
         pneumonia_cui = None
         for result in pneumonia_results['result']['results']:
             if "community-acquired pneumonia" in result['name'].lower():
@@ -447,15 +382,12 @@ def extract_pneumonia_concepts():
                 break
         
         if not pneumonia_cui:
-            # If CAP isn't found directly, use general pneumonia
             pneumonia_cui = pneumonia_results['result']['results'][0]['ui']
         
-        # Get detailed information
         pneumonia_info = client.get_concept(pneumonia_cui)
         pneumonia_semantics = client.get_semantic_types(pneumonia_cui)
         pneumonia_relations = client.get_relations(pneumonia_cui)
         
-        # Get treatments and pathogens through relations
         treatments = []
         pathogens = []
         
@@ -467,7 +399,6 @@ def extract_pneumonia_concepts():
             related_concept = client.get_concept(related_cui)
             related_semantics = client.get_semantic_types(related_cui)
             
-            # Classify based on semantic types
             for sem in related_semantics:
                 sem_type = sem.get('name', '').lower()
                 if 'bacterium' in sem_type or 'virus' in sem_type:
@@ -488,7 +419,6 @@ def extract_pneumonia_concepts():
 
 
 if __name__ == "__main__":
-    # Simple demonstration
     client = UMLSClient()
     
     print("Searching for 'community-acquired pneumonia'...")
@@ -497,7 +427,6 @@ if __name__ == "__main__":
     if results and 'result' in results:
         print(f"Found {results['result']['results'][0]['name']} with CUI: {results['result']['results'][0]['ui']}")
         
-        # Check for potential contradictions in treatments
         print("\nChecking for contradictions in treatments...")
         contradiction = client.find_contradictions(
             "macrolide antibiotics pneumonia", 

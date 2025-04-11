@@ -1,4 +1,3 @@
-# asf/knowledge_substrate/causal/variable.py
 class CausalVariable:
     """
     Represents a variable in a causal model with its current state and relationships.

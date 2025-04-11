@@ -5,7 +5,6 @@ This module provides endpoints for creating and managing knowledge bases.
 """
 
 import logging
-from typing import Dict, Any, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status, Request, Response, BackgroundTasks
 
 from asf.medical.api.models.base import APIResponse, ErrorResponse
@@ -14,15 +13,12 @@ from asf.medical.api.models.knowledge_base import (
     KnowledgeBaseResponse
 )
 from asf.medical.api.dependencies import get_knowledge_base_service
-from asf.medical.api.auth import get_current_active_user, get_admin_user
 from asf.medical.services.knowledge_base_service import KnowledgeBaseService
 from asf.medical.storage.models import User
 from asf.medical.core.monitoring import async_timed, log_error
 
-# Initialize router
 router = APIRouter(prefix="/knowledge-base", tags=["knowledge_base"])
 
-# Set up logging
 logger = logging.getLogger(__name__)
 
 @router.post("", response_model=APIResponse[KnowledgeBaseResponse])
@@ -34,22 +30,13 @@ async def create_knowledge_base(
     req: Request = None,
     res: Response = None
 ):
-    """
-    Create a new knowledge base.
-    
-    This endpoint creates a new knowledge base with the given name and query,
-    which can be updated automatically on a schedule.
-    """
     try:
-        # Add request ID to response headers for tracing
         request_id = req.headers.get("X-Request-ID") if req else None
         if request_id and res:
             res.headers["X-Request-ID"] = request_id
         
-        # Log the request
         logger.info(f"Create knowledge base request: name='{request.name}', query='{request.query}', user_id={current_user.id}")
         
-        # Create the knowledge base
         result = await kb_service.create_knowledge_base(
             name=request.name,
             query=request.query,
@@ -57,7 +44,6 @@ async def create_knowledge_base(
             user_id=current_user.id
         )
         
-        # Log the result
         logger.info(f"Knowledge base created: {result['kb_id']} (name='{result['name']}')")
         
         return APIResponse(
@@ -72,7 +58,6 @@ async def create_knowledge_base(
             }
         )
     except ValueError as e:
-        # Handle validation errors
         log_error(e, {"name": request.name, "query": request.query, "user_id": current_user.id})
         logger.warning(f"Validation error in knowledge base creation: {str(e)}")
         return ErrorResponse(
@@ -81,7 +66,6 @@ async def create_knowledge_base(
             code="VALIDATION_ERROR"
         )
     except Exception as e:
-        # Handle unexpected errors
         log_error(e, {"name": request.name, "query": request.query, "user_id": current_user.id})
         logger.error(f"Error creating knowledge base: {str(e)}")
         raise HTTPException(
@@ -95,19 +79,11 @@ async def list_knowledge_bases(
     kb_service: KnowledgeBaseService = Depends(get_knowledge_base_service),
     current_user: User = Depends(get_current_active_user)
 ):
-    """
-    List all knowledge bases.
-    
-    This endpoint returns a list of all knowledge bases accessible to the current user.
-    """
     try:
-        # Log the request
         logger.info(f"List knowledge bases request: user_id={current_user.id}")
         
-        # Get the knowledge bases
         result = await kb_service.list_knowledge_bases(user_id=current_user.id)
         
-        # Log the result
         logger.info(f"Knowledge bases listed: {len(result)} found")
         
         return APIResponse(
@@ -120,7 +96,6 @@ async def list_knowledge_bases(
             }
         )
     except Exception as e:
-        # Handle unexpected errors
         log_error(e, {"user_id": current_user.id})
         logger.error(f"Error listing knowledge bases: {str(e)}")
         raise HTTPException(
@@ -135,16 +110,9 @@ async def get_knowledge_base(
     kb_service: KnowledgeBaseService = Depends(get_knowledge_base_service),
     current_user: User = Depends(get_current_active_user)
 ):
-    """
-    Get a knowledge base by ID.
-    
-    This endpoint retrieves a knowledge base by its ID.
-    """
     try:
-        # Log the request
         logger.info(f"Get knowledge base request: kb_id={kb_id}, user_id={current_user.id}")
         
-        # Get the knowledge base
         result = await kb_service.get_knowledge_base_by_id(kb_id)
         
         if not result:
@@ -155,7 +123,6 @@ async def get_knowledge_base(
                 code="NOT_FOUND"
             )
         
-        # Check if the user has access to this knowledge base
         if result.get("user_id") != current_user.id and current_user.role != "admin":
             logger.warning(f"User {current_user.id} does not have access to knowledge base {kb_id}")
             return ErrorResponse(
@@ -164,7 +131,6 @@ async def get_knowledge_base(
                 code="ACCESS_DENIED"
             )
         
-        # Log the result
         logger.info(f"Knowledge base retrieved: kb_id={kb_id}")
         
         return APIResponse(
@@ -177,7 +143,6 @@ async def get_knowledge_base(
             }
         )
     except Exception as e:
-        # Handle unexpected errors
         log_error(e, {"kb_id": kb_id, "user_id": current_user.id})
         logger.error(f"Error retrieving knowledge base: {str(e)}")
         raise HTTPException(
@@ -193,16 +158,9 @@ async def update_knowledge_base(
     kb_service: KnowledgeBaseService = Depends(get_knowledge_base_service),
     current_user: User = Depends(get_current_active_user)
 ):
-    """
-    Update a knowledge base.
-    
-    This endpoint updates a knowledge base with new articles matching the original query.
-    """
     try:
-        # Log the request
         logger.info(f"Update knowledge base request: kb_id={kb_id}, user_id={current_user.id}")
         
-        # Get the knowledge base
         kb = await kb_service.get_knowledge_base_by_id(kb_id)
         
         if not kb:
@@ -213,7 +171,6 @@ async def update_knowledge_base(
                 code="NOT_FOUND"
             )
         
-        # Check if the user has access to this knowledge base
         if kb.get("user_id") != current_user.id and current_user.role != "admin":
             logger.warning(f"User {current_user.id} does not have access to knowledge base {kb_id}")
             return ErrorResponse(
@@ -222,10 +179,8 @@ async def update_knowledge_base(
                 code="ACCESS_DENIED"
             )
         
-        # Update the knowledge base in the background
         background_tasks.add_task(kb_service.update_knowledge_base, kb_id)
         
-        # Log the result
         logger.info(f"Knowledge base update started: kb_id={kb_id}")
         
         return APIResponse(
@@ -242,7 +197,6 @@ async def update_knowledge_base(
             }
         )
     except Exception as e:
-        # Handle unexpected errors
         log_error(e, {"kb_id": kb_id, "user_id": current_user.id})
         logger.error(f"Error updating knowledge base: {str(e)}")
         raise HTTPException(
@@ -257,16 +211,9 @@ async def delete_knowledge_base(
     kb_service: KnowledgeBaseService = Depends(get_knowledge_base_service),
     current_user: User = Depends(get_current_active_user)
 ):
-    """
-    Delete a knowledge base.
-    
-    This endpoint deletes a knowledge base by its ID.
-    """
     try:
-        # Log the request
         logger.info(f"Delete knowledge base request: kb_id={kb_id}, user_id={current_user.id}")
         
-        # Get the knowledge base
         kb = await kb_service.get_knowledge_base_by_id(kb_id)
         
         if not kb:
@@ -277,7 +224,6 @@ async def delete_knowledge_base(
                 code="NOT_FOUND"
             )
         
-        # Check if the user has access to this knowledge base
         if kb.get("user_id") != current_user.id and current_user.role != "admin":
             logger.warning(f"User {current_user.id} does not have access to knowledge base {kb_id}")
             return ErrorResponse(
@@ -286,7 +232,6 @@ async def delete_knowledge_base(
                 code="ACCESS_DENIED"
             )
         
-        # Delete the knowledge base
         success = await kb_service.delete_knowledge_base(kb_id)
         
         if not success:
@@ -297,7 +242,6 @@ async def delete_knowledge_base(
                 code="DELETE_ERROR"
             )
         
-        # Log the result
         logger.info(f"Knowledge base deleted: kb_id={kb_id}")
         
         return APIResponse(
@@ -314,7 +258,6 @@ async def delete_knowledge_base(
             }
         )
     except Exception as e:
-        # Handle unexpected errors
         log_error(e, {"kb_id": kb_id, "user_id": current_user.id})
         logger.error(f"Error deleting knowledge base: {str(e)}")
         raise HTTPException(

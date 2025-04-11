@@ -6,12 +6,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from typing import Dict, List, Optional, Any
 from pydantic import BaseModel
 
-from asf.medical.ml.services.enhanced_contradiction_service import EnhancedContradictionService
 from asf.medical.ml.services.resolution.contradiction_resolution_service import MedicalContradictionResolutionService
 from asf.medical.ml.services.resolution.resolution_models import ResolutionStrategy
 from asf.medical.api.dependencies import get_current_user
 
-# Define models
 class ContradictionResolutionRequest(BaseModel):
     """Request model for contradiction resolution."""
     claim1: str
@@ -31,15 +29,13 @@ class ContradictionResolutionResponse(BaseModel):
     explanation: Dict[str, Any]
     timestamp: str
 
-# Create router
 router = APIRouter(
     prefix="/api/v1/contradiction-resolution",
     tags=["contradiction-resolution"],
     responses={404: {"description": "Not found"}}
 )
 
-# Initialize services
-contradiction_service = EnhancedContradictionService()
+contradiction_service = EnhancedUnifiedUnifiedContradictionService()
 resolution_service = MedicalContradictionResolutionService()
 
 @router.post("/resolve", response_model=ContradictionResolutionResponse)
@@ -47,20 +43,7 @@ async def resolve_contradiction(
     request: ContradictionResolutionRequest,
     current_user = Depends(get_current_user)
 ):
-    """
-    Resolve a contradiction between two claims.
-    
-    This endpoint detects contradictions between two claims and provides a resolution
-    based on evidence-based medicine principles.
-    
-    Args:
-        request: Contradiction resolution request
-        
-    Returns:
-        Contradiction resolution result
-    """
     try:
-        # Detect contradiction
         contradiction = await contradiction_service.detect_contradiction(
             claim1=request.claim1,
             claim2=request.claim2,
@@ -68,14 +51,12 @@ async def resolve_contradiction(
             metadata2=request.metadata2
         )
         
-        # Check if contradiction was detected
         if not contradiction.get("is_contradiction", False):
             raise HTTPException(
                 status_code=400,
                 detail="No contradiction was detected between the provided claims."
             )
         
-        # Resolve contradiction
         if request.use_combined_evidence:
             resolution = await resolution_service.resolve_contradiction_with_combined_evidence(contradiction)
         else:
@@ -107,25 +88,10 @@ async def batch_resolve_contradictions(
     use_combined_evidence: bool = Query(False, description="Whether to use combined evidence approach"),
     current_user = Depends(get_current_user)
 ):
-    """
-    Resolve a batch of contradictions.
-    
-    This endpoint resolves multiple contradictions using the specified strategy.
-    
-    Args:
-        contradictions: List of contradictions to resolve
-        strategy: Resolution strategy to use
-        use_combined_evidence: Whether to use combined evidence approach
-        
-    Returns:
-        List of contradiction resolution results
-    """
     try:
-        # Validate contradictions
         if not contradictions:
             raise HTTPException(status_code=400, detail="No contradictions provided")
         
-        # Convert strategy string to enum if provided
         strategy_enum = None
         if strategy:
             try:
@@ -136,14 +102,11 @@ async def batch_resolve_contradictions(
                     detail=f"Invalid resolution strategy: {strategy}. Valid strategies are: {', '.join([s.value for s in ResolutionStrategy])}"
                 )
         
-        # Resolve contradictions
         resolutions = []
         for contradiction in contradictions:
-            # Validate contradiction
             if not contradiction.get("is_contradiction", False):
                 continue
             
-            # Resolve contradiction
             if use_combined_evidence:
                 resolution = await resolution_service.resolve_contradiction_with_combined_evidence(contradiction)
             else:
@@ -168,14 +131,6 @@ async def batch_resolve_contradictions(
 async def get_resolution_history(
     current_user = Depends(get_current_user)
 ):
-    """
-    Get the contradiction resolution history.
-    
-    This endpoint returns the history of contradiction resolutions.
-    
-    Returns:
-        List of contradiction resolution history entries
-    """
     try:
         history = resolution_service.get_resolution_history()
         return {
@@ -191,18 +146,6 @@ async def add_resolution_feedback(
     feedback: Dict[str, Any],
     current_user = Depends(get_current_user)
 ):
-    """
-    Add feedback to a contradiction resolution.
-    
-    This endpoint adds feedback to a contradiction resolution in the history.
-    
-    Args:
-        contradiction_id: ID of the contradiction
-        feedback: Feedback data
-        
-    Returns:
-        Success message
-    """
     try:
         success = resolution_service.add_resolution_feedback(
             contradiction_id=contradiction_id,

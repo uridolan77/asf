@@ -14,7 +14,6 @@ import torch.nn.functional as F
 
 from asf.medical.core.config import settings
 
-# Set up logging
 logger = logging.getLogger(__name__)
 
 class TSMixerLayer(nn.Module):
@@ -35,19 +34,15 @@ class TSMixerLayer(nn.Module):
         """
         super().__init__()
         
-        # Temporal mixing
         self.temporal_fc1 = nn.Linear(input_dim, hidden_dim)
         self.temporal_fc2 = nn.Linear(hidden_dim, input_dim)
         
-        # Feature mixing
         self.feature_fc1 = nn.Linear(input_dim, hidden_dim)
         self.feature_fc2 = nn.Linear(hidden_dim, input_dim)
         
-        # Layer normalization
         self.layer_norm1 = nn.LayerNorm(input_dim)
         self.layer_norm2 = nn.LayerNorm(input_dim)
         
-        # Dropout
         self.dropout = nn.Dropout(dropout)
     
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -60,7 +55,6 @@ class TSMixerLayer(nn.Module):
         Returns:
             Output tensor of shape (batch_size, seq_len, input_dim)
         """
-        # Temporal mixing
         residual = x
         x = self.layer_norm1(x)
         x = x.transpose(1, 2)  # (batch_size, input_dim, seq_len)
@@ -71,7 +65,6 @@ class TSMixerLayer(nn.Module):
         x = x.transpose(1, 2)  # (batch_size, seq_len, input_dim)
         x = x + residual
         
-        # Feature mixing
         residual = x
         x = self.layer_norm2(x)
         x = self.feature_fc1(x)  # (batch_size, seq_len, hidden_dim)
@@ -97,31 +90,17 @@ class TSMixer(nn.Module):
         num_layers: int = 4,
         dropout: float = 0.1
     ):
-        """
-        Initialize the TSMixer model.
-        
-        Args:
-            input_dim: Input dimension
-            hidden_dim: Hidden dimension
-            output_dim: Output dimension
-            num_layers: Number of TSMixer layers
-            dropout: Dropout rate
-        """
         super().__init__()
         
-        # Input projection
         self.input_projection = nn.Linear(input_dim, hidden_dim)
         
-        # TSMixer layers
         self.layers = nn.ModuleList([
             TSMixerLayer(hidden_dim, hidden_dim, dropout)
             for _ in range(num_layers)
         ])
         
-        # Output projection
         self.output_projection = nn.Linear(hidden_dim, output_dim)
         
-        # Layer normalization
         self.layer_norm = nn.LayerNorm(hidden_dim)
     
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -134,17 +113,13 @@ class TSMixer(nn.Module):
         Returns:
             Output tensor of shape (batch_size, seq_len, output_dim)
         """
-        # Input projection
         x = self.input_projection(x)  # (batch_size, seq_len, hidden_dim)
         
-        # TSMixer layers
         for layer in self.layers:
             x = layer(x)
         
-        # Layer normalization
         x = self.layer_norm(x)
         
-        # Output projection
         x = self.output_projection(x)  # (batch_size, seq_len, output_dim)
         
         return x
@@ -171,7 +146,14 @@ class TSMixerService:
         return cls._instance
     
     def __init__(self):
-        """Initialize the TSMixer service."""
+        """Initialize the TSMixer service.
+
+    Args:
+        # TODO: Add parameter descriptions
+
+    Returns:
+        # TODO: Add return description
+    """
         self.input_dim = 768  # Embedding dimension
         self.hidden_dim = 512
         self.output_dim = 1  # Contradiction score
@@ -190,22 +172,6 @@ class TSMixerService:
         
         Returns:
             The TSMixer model
-        """
-        if self._model is None:
-            logger.info("Creating TSMixer model")
-            self._model = TSMixer(
-                input_dim=self.input_dim,
-                hidden_dim=self.hidden_dim,
-                output_dim=self.output_dim,
-                num_layers=self.num_layers,
-                dropout=self.dropout
-            )
-            self._model.to(self.device)
-            logger.info("TSMixer model created")
-        return self._model
-    
-    def unload_model(self):
-        """Unload the model from memory."""
         if self._model is not None:
             del self._model
             self._model = None
@@ -217,39 +183,22 @@ class TSMixerService:
         sequence: List[Dict[str, Any]],
         embedding_fn: callable
     ) -> Dict[str, Any]:
-        """
-        Analyze a temporal sequence of claims.
-        
-        Args:
-            sequence: List of claims with timestamps
-            embedding_fn: Function to embed claims
-            
-        Returns:
-            Analysis results
-        """
-        # Sort sequence by timestamp
         sequence = sorted(sequence, key=lambda x: x["timestamp"])
         
-        # Embed claims
         embeddings = []
         for item in sequence:
             embedding = embedding_fn(item["claim"])
             embeddings.append(embedding)
         
-        # Convert to tensor
         embeddings = torch.tensor(embeddings, dtype=torch.float32).to(self.device)
         
-        # Add batch dimension
         embeddings = embeddings.unsqueeze(0)  # (1, seq_len, input_dim)
         
-        # Forward pass
         with torch.no_grad():
             outputs = self.model(embeddings)
         
-        # Extract contradiction scores
         contradiction_scores = outputs.squeeze().cpu().numpy()
         
-        # Create result
         result = {
             "contradiction_scores": contradiction_scores.tolist(),
             "temporal_analysis": {

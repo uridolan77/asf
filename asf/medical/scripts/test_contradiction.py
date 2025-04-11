@@ -10,25 +10,22 @@ import os
 import sys
 from typing import Dict, List, Any
 
-# Add the parent directory to the path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from asf.medical.ml.services.enhanced_contradiction_service import (
-    EnhancedContradictionService, ContradictionType, ContradictionConfidence
+    EnhancedUnifiedUnifiedContradictionService, ContradictionType, ContradictionConfidence
 )
 from asf.medical.ml.models.biomedlm import BioMedLMService
 from asf.medical.ml.models.shap_explainer import SHAPExplainer
 from asf.medical.ml.services.temporal_service import TemporalService
 from asf.medical.ml.models.tsmixer import TSMixerService
 
-# Set up logging
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
-# Test data
 TEST_CLAIMS = [
     {
         "claim1": "Statin therapy reduces the risk of cardiovascular events in patients with high cholesterol.",
@@ -81,78 +78,8 @@ TEST_ARTICLES = [
 ]
 
 async def test_claim_contradiction():
-    """Test contradiction detection between claims."""
-    logger.info("Testing contradiction detection between claims...")
-    
-    # Initialize services
-    try:
-        biomedlm_service = BioMedLMService()
-        logger.info("Initialized BioMedLM service")
-    except Exception as e:
-        logger.warning(f"Could not initialize BioMedLM service: {str(e)}. Using basic contradiction detection.")
-        biomedlm_service = None
-    
-    try:
-        tsmixer_service = TSMixerService()
-        temporal_service = TemporalService(tsmixer_service=tsmixer_service)
-        logger.info("Initialized temporal service")
-    except Exception as e:
-        logger.warning(f"Could not initialize temporal service: {str(e)}. Temporal contradiction detection will be limited.")
-        temporal_service = None
-    
-    try:
-        shap_explainer = SHAPExplainer()
-        logger.info("Initialized SHAP explainer")
-    except Exception as e:
-        logger.warning(f"Could not initialize SHAP explainer: {str(e)}. Explanations will be limited.")
-        shap_explainer = None
-    
-    contradiction_service = EnhancedContradictionService(
-        biomedlm_service=biomedlm_service,
-        temporal_service=temporal_service,
-        shap_explainer=shap_explainer
-    )
-    
-    # Test contradiction detection for each pair of claims
-    for i, test_case in enumerate(TEST_CLAIMS):
-        logger.info(f"Test case {i+1}:")
-        logger.info(f"  Claim 1: {test_case['claim1']}")
-        logger.info(f"  Claim 2: {test_case['claim2']}")
-        logger.info(f"  Expected contradiction: {test_case['expected_contradiction']}")
-        logger.info(f"  Expected type: {test_case['expected_type']}")
-        
-        # Detect contradiction
-        result = await contradiction_service.detect_contradiction(
-            claim1=test_case['claim1'],
-            claim2=test_case['claim2'],
-            use_all_methods=True
-        )
-        
-        # Print result
-        logger.info(f"  Result:")
-        logger.info(f"    Is contradiction: {result['is_contradiction']}")
-        logger.info(f"    Contradiction score: {result['contradiction_score']}")
-        logger.info(f"    Contradiction type: {result['contradiction_type']}")
-        logger.info(f"    Confidence: {result['confidence']}")
-        logger.info(f"    Methods used: {result['methods_used']}")
-        logger.info(f"    Explanation: {result['explanation']}")
-        
-        # Check if result matches expectation
-        if result['is_contradiction'] == test_case['expected_contradiction']:
-            logger.info("  ✓ Contradiction detection matches expectation")
-        else:
-            logger.warning("  ✗ Contradiction detection does not match expectation")
-        
-        if result['is_contradiction'] and result['contradiction_type'] == test_case['expected_type']:
-            logger.info("  ✓ Contradiction type matches expectation")
-        elif result['is_contradiction']:
-            logger.warning(f"  ✗ Contradiction type does not match expectation (got {result['contradiction_type']}, expected {test_case['expected_type']})")
-
-async def test_article_contradictions():
-    """Test contradiction detection in articles."""
     logger.info("Testing contradiction detection in articles...")
     
-    # Initialize services
     try:
         biomedlm_service = BioMedLMService()
         logger.info("Initialized BioMedLM service")
@@ -175,20 +102,18 @@ async def test_article_contradictions():
         logger.warning(f"Could not initialize SHAP explainer: {str(e)}. Explanations will be limited.")
         shap_explainer = None
     
-    contradiction_service = EnhancedContradictionService(
+    contradiction_service = EnhancedUnifiedUnifiedContradictionService(
         biomedlm_service=biomedlm_service,
         temporal_service=temporal_service,
         shap_explainer=shap_explainer
     )
     
-    # Detect contradictions in articles
     contradictions = await contradiction_service.detect_contradictions_in_articles(
         articles=TEST_ARTICLES,
         threshold=0.6,
         use_all_methods=True
     )
     
-    # Print results
     logger.info(f"Found {len(contradictions)} contradictions in {len(TEST_ARTICLES)} articles")
     
     for i, contradiction in enumerate(contradictions):
@@ -201,16 +126,3 @@ async def test_article_contradictions():
         logger.info(f"  Explanation: {contradiction['explanation']}")
 
 async def main():
-    """Main function."""
-    logger.info("Starting enhanced contradiction detection test...")
-    
-    # Test contradiction detection between claims
-    await test_claim_contradiction()
-    
-    # Test contradiction detection in articles
-    await test_article_contradictions()
-    
-    logger.info("Enhanced contradiction detection test completed")
-
-if __name__ == "__main__":
-    asyncio.run(main())

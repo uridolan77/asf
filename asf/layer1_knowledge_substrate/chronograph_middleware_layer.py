@@ -24,21 +24,18 @@ from prometheus_client import (
     start_http_server,
 )
 
-# Constants
 RETRY_BACKOFF_SECONDS = 1
 MAX_RETRIES = 3
 KAFKA_TOPIC = "chrono-ingest"
 CACHE_TTL_SECONDS = 60
 TOKEN_ALGORITHM = "RS256"
 
-# Logging Configuration
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger("chronograph-v2")
 
 
-# --- Configuration ---
 class KafkaConfig(BaseModel):
     bootstrap_servers: str = Field("localhost:9092", env="KAFKA_SERVERS")
 
@@ -97,7 +94,6 @@ class Config(BaseSettings):
         env_prefix = ""  # No prefix for environment variables
 
 
-# --- Exceptions ---
 class ChronoError(Exception):
     """Base Chronograph exception."""
 
@@ -167,24 +163,12 @@ class DatabaseManager:
         logger.info("Database connections established.")
 
     async def close(self):
-        """Close database connections."""
-        if self.timescale_pool:
-            await self.timescale_pool.close()
-        if self.neo4j_driver:
-            await self.neo4j_driver.close()
-        logger.info("Database connections closed.")
-
-    async def execute_timescale_query(
-        self, query: str, *args, as_of: Optional[datetime] = None
-    ) -> List[asyncpg.Record]:
-        """Execute a query on TimescaleDB with retry logic."""
         retry_count = 0
         while retry_count < MAX_RETRIES:
             try:
                 async with self.timescale_pool.acquire() as conn:
                     async with conn.transaction():
                         if as_of:
-                            # Set the transaction snapshot for time travel
                             await conn.execute(
                                 f"SET TRANSACTION SNAPSHOT '{as_of.isoformat()}'"
                             )
@@ -200,78 +184,20 @@ class DatabaseManager:
                 await asyncio.sleep(RETRY_BACKOFF_SECONDS * (2**retry_count))
 
     async def execute_neo4j_query(self, query: str, params: Dict = None) -> List:
-        """Executes a Neo4j query and returns the results."""
-        retry_count = 0
-        if params is None:
-            params = {}  # Ensure params is not None
-        while retry_count <= MAX_RETRIES:
-            try:
-                async with self.neo4j_driver.session() as session:
-                    result = await session.run(query, params)
-                    records = await result.data()
-                    return records
-            except Exception as e:
-                retry_count += 1
-                logger.warning(
-                    f"Neo4j query failed (attempt {retry_count}/{MAX_RETRIES}): {e}"
-                )
-                if retry_count >= MAX_RETRIES:
-                    raise ChronoDatabaseError(f"Neo4j query failed: {e}")
-                await asyncio.sleep(RETRY_BACKOFF_SECONDS * (2**retry_count))
-        return []  # Should not reach here, but included for completeness
-
-    async def create_entity(self, entity_data: Dict) -> str:
-        """Atomically create an entity in both Neo4j and TimescaleDB."""
         entity_id = str(uuid.uuid4())
         timestamp = datetime.utcnow().isoformat()
 
-        # Neo4j graph structure (using parameters to prevent Cypher injection)
         neo4j_query = """
             CREATE (e:Entity {id: $id, labels: $labels, properties: $properties})
             RETURN e
-        """
-        neo4j_params = {
-            "id": entity_id,
-            "labels": entity_data.get("labels", []),
-            "properties": entity_data.get("properties", {}),
-        }
-        try:
-            await self.execute_neo4j_query(neo4j_query, neo4j_params)
-        except Exception as e:
-            logger.error("Neo4j create failed, rolling back.", exc_info=True)
-            raise
-
-        # Timescale temporal data (using parameters to prevent SQL injection)
-        timescale_query = """
             INSERT INTO entities (id, timestamp, data)
             VALUES ($1, $2, $3)
-        """
-        timescale_params = (entity_id, timestamp, json.dumps(entity_data))
-        try:
-            await self.execute_timescale_query(timescale_query, *timescale_params)
-        except Exception as e:
-            logger.error("TimescaleDB create failed, rolling back.", exc_info=True)
-            raise
-        return entity_id
-
-
-# --- Cache Manager ---
-class LRUCache:
-    """A simple in-memory LRU cache."""
 
     def __init__(self, max_size: int = 1024):
         self.cache = OrderedDict()
         self.max_size = max_size
 
     async def get(self, key: str) -> Optional[Any]:
-        """Retrieve an item from the cache.  Moves item to the end (most recently used)."""
-        if key in self.cache:
-            self.cache.move_to_end(key)
-            return self.cache[key]
-        return None
-
-    async def set(self, key: str, value: Any):
-        """Add or update an item in the cache. Evicts the least recently used if full."""
         if key in self.cache:
             self.cache.move_to_end(key)
         self.cache[key] = value
@@ -279,13 +205,6 @@ class LRUCache:
             self.cache.popitem(last=False)  # Remove least recently used
 
     async def invalidate(self, key: str):
-        """Remove an item from the cache."""
-        if key in self.cache:
-            del self.cache[key]
-
-
-class CacheManager:
-    """Manages multiple cache tiers (in-memory LRU and Redis)."""
 
     def __init__(self, config: Config):
         self.redis_config = config.redis
@@ -293,48 +212,11 @@ class CacheManager:
         self.redis = None  # Will be initialized in connect()
 
     async def connect(self):
-        """Establish Redis connection."""
-        self.redis = Redis(
-            host=self.redis_config.host,
-            port=self.redis_config.port,
-            db=self.redis_config.db,
-            decode_responses=True,
-        )
-        await self.redis.ping()  # Test connection
-        logger.info("Redis connection established.")
-
-    async def close(self):
-        """Close Redis connection."""
         if self.redis:
             await self.redis.close()
         logger.info("Redis connection closed.")
 
     async def get(self, key: str) -> Optional[Any]:
-        """Retrieve an item from the cache (LRU first, then Redis)."""
-        # Try LRU cache first
-        value = await self.lru_cache.get(key)
-        if value is not None:
-            return value
-
-        # Try Redis
-        if self.redis:
-            try:
-                value = await self.redis.get(key)
-                if value is not None:
-                    try:
-                        value = json.loads(value)  # Deserialize JSON
-                    except json.JSONDecodeError:
-                        pass  # Value might not be JSON
-                    await self.lru_cache.set(key, value)  # Cache in LRU
-                    return value
-            except Exception as e:
-                logger.error(f"Redis GET error: {e}")
-                # Fallback to not using cache if Redis is unavailable
-                return None
-        return None
-
-    async def set(self, key: str, value: Any, ttl: int = CACHE_TTL_SECONDS):
-        """Store an item in the cache (both LRU and Redis)."""
         await self.lru_cache.set(key, value)
         if self.redis:
             try:
@@ -347,18 +229,6 @@ class CacheManager:
                     logger.error(f"Redis SET error: {e}")
 
     async def invalidate(self, key: str):
-        """Invalidate a cache entry in both LRU and Redis"""
-        await self.lru_cache.invalidate(key)
-        if self.redis:
-            try:
-                await self.redis.delete(key)
-            except Exception as e:
-                logger.error(f"Redis DELETE error: {e}")
-
-
-    # --- Security Manager ---
-    class SecurityManager:
-        """Handles JWT generation, validation, and key rotation."""
 
         def __init__(self, config: Config):
             self.security_config = config.security
@@ -378,24 +248,10 @@ class CacheManager:
             self.rotation_task = None
 
         async def start_key_rotation(self):
-            """Start the key rotation task."""
-            self.rotation_task = asyncio.create_task(self._rotate_keys())
-
-        async def stop_key_rotation(self):
-            if self.rotation_task:
-                self.rotation_task.cancel()
-                try:
-                    await self.rotation_task
-                except asyncio.CancelledError:
-                    pass
-
-        async def _rotate_keys(self):
-            """Periodically rotate keys (simulated)."""
             while True:
                 await asyncio.sleep(
                     self.security_config.key_rotation_interval_hours * 3600
                 )
-                # Generate new key pair (in real implementation, use secure methods)
                 new_key_id = f"key-{len(self.keys) + 1}"
                 logger.info(f"Rotating keys. New key ID: {new_key_id}")
 
@@ -421,7 +277,6 @@ class CacheManager:
                 )
 
                 self.current_key_id = new_key_id
-                # Clean up old keys (keep at least one previous key for token validation)
                 if len(self.keys) > 2:
                     old_key_id = f"key-{len(self.keys) - 2}"
                     del self.keys[old_key_id]
@@ -485,7 +340,6 @@ class CacheManager:
             except ChronoSecurityError as e:
                 raise ChronoSecurityError(f"Refresh token validation failed:{e}")
 
-    # --- Kafka Manager ---
     class KafkaManager:
         """Manages Kafka producer and consumer."""
 
@@ -521,15 +375,6 @@ class CacheManager:
             logger.info("Kafka connections established.")
 
         async def close(self):
-            """Close Kafka connections."""
-            if self.producer:
-                await self.producer.stop()
-            if self.consumer:
-                await self.consumer.stop()
-            logger.info("Kafka connections closed.")
-
-        def _serialize_message(self, message: Any) -> bytes:
-            """Serialize a message to bytes using Zstandard."""
             if isinstance(message, dict):
                 message_str = json.dumps(message)
             else:
@@ -562,22 +407,6 @@ class CacheManager:
                     await asyncio.sleep(RETRY_BACKOFF_SECONDS * (2**retry_count))
 
         async def consume_messages(self):
-            """Consume messages from Kafka (basic example)."""
-            try:
-                async for msg in self.consumer:
-                    logger.info(
-                        f"Consumed message: topic={msg.topic}, partition={msg.partition}, "
-                        f"offset={msg.offset}, key={msg.key}, value={msg.value}"
-                    )
-                    # Process the message here (e.g., store it in the database)
-            except aiokafka.errors.KafkaError as e:
-                logger.error(f"Kafka consumer error: {e}")
-                raise ChronoKafkaError(f"Kafka consumer error: {e}")
-
-
-    # --- Metrics Manager ---
-    class MetricsManager:
-        """Handles Prometheus metrics."""
 
         def __init__(self, config: Config):
             self.config = config
@@ -715,19 +544,6 @@ class ChronographMiddleware:
         self.metrics = MetricsManager(self.config)
 
     async def startup(self):
-        """Initialize connections and start services."""
-        self.metrics.start_http_server()
-        await self.database.connect()
-        await self.cache.connect()
-        await self.kafka.connect()
-        await self.security.start_key_rotation()
-        # Start consuming messages in the background
-        asyncio.create_task(self.kafka.consume_messages())
-
-        logger.info("Chronograph Middleware started.")
-
-    async def shutdown(self):
-        """Gracefully shut down services."""
         await self.security.stop_key_rotation()
         await self.kafka.close()
         await self.cache.close()
@@ -735,55 +551,12 @@ class ChronographMiddleware:
         logger.info("Chronograph Middleware shut down.")
 
     async def ingest_data(self, data_points: List[Dict], token: str):
-        """Ingest data into the system."""
-        try:
-            self.security.validate_token(token)  # Validate token
-        except ChronoSecurityError as e:
-            raise ChronoSecurityError(f"Authentication failed: {e}")
-
-        try:
-            for data_point in data_points:
-                # Basic validation (add more as needed)
-                if not all(
-                    key in data_point for key in ["entity_id", "timestamp", "value"]
-                ):
-                    raise ChronoIngestionError(
-                        "Invalid data point: Missing required fields"
-                    )
-                # Convert timestamp to datetime object if it's a string
-                if isinstance(data_point["timestamp"], str):
-                    try:
-                        data_point["timestamp"] = datetime.fromisoformat(
-                            data_point["timestamp"]
-                        )
-                    except ValueError:
-                        raise ChronoIngestionError(
-                            "Invalid timestamp format. Use ISO 8601."
-                        )
-                if data_point["timestamp"].tzinfo is None:  # ensure timezone aware
-                    data_point["timestamp"] = data_point["timestamp"].replace(
-                        tzinfo=timezone.utc
-                    )
-
-            # Send data to Kafka
-            await self.kafka.send_message(KAFKA_TOPIC, data_points)
-            self.metrics.ingested_counter.inc(len(data_points))
-
-        except Exception as e:
-            logger.error(f"Data ingestion error: {e}")
-            raise ChronoIngestionError(f"Data ingestion failed: {e}")
-
-    async def execute_query(
-        self, query: str, params: Dict, token: str, as_of: Optional[datetime] = None
-    ) -> List[Dict]:
-        """Execute a query against the database."""
 
         try:
             self.security.validate_token(token)  # Validate token
         except ChronoSecurityError as e:
             raise ChronoSecurityError(f"Authentication failed: {e}")
 
-        # Check cache first
         cache_key = self._generate_cache_key(query, params, as_of)
         cached_result = await self.cache.get(cache_key)
         if cached_result:
@@ -791,137 +564,28 @@ class ChronographMiddleware:
             return cached_result
         self.metrics.cache_misses_counter.inc()
 
-        # Execute query (using a simplified approach for demonstration)
         with self.metrics.query_latency_summary.time():
             if "neo4j" in query.lower():
                 result = await self.database.execute_neo4j_query(query, params)
             elif "timescale" in query.lower() or "select" in query.lower():
-                # Assuming timescale if it contains 'select', adapt as necessary
                 result = await self.database.execute_timescale_query(query, *params.values(), as_of=as_of)
             else:
                 raise ChronoQueryError("Unsupported query type")
 
-        # Cache the result
         await self.cache.set(cache_key, result)
         return result
 
     def _generate_cache_key(
         self, query: str, params: Dict, as_of: Optional[datetime] = None
     ) -> str:
-        """Generate a unique cache key."""
-        params_str = json.dumps(params, sort_keys=True)  # Consistent key generation
-        as_of_str = as_of.isoformat() if as_of else "latest"
-        return f"query:{query}:params:{params_str}:as_of:{as_of_str}"
-
-    async def create_entity(self, entity_data: Dict, token: str) -> str:
-        """Create a new entity in the system"""
         try:
             self.security.validate_token(token)  # Validate token
         except ChronoSecurityError as e:
             raise ChronoSecurityError(f"Authentication failed: {e}")
 
         entity_id = await self.database.create_entity(entity_data)
-        # Invalidate relevant cache entries.  A more sophisticated approach
-        # would be to update the cache instead of invalidating it.
         await self.cache.invalidate(f"entity:{entity_id}")
         return entity_id
 
 
     async def main():
-        """Main function to run the middleware."""
-        config = Config()
-        # Run with Mocked Services for Testing
-        #middleware = ChronographMiddleware(config, MockDatabaseManager(config), MockKafkaManager(config))
-
-        #Run with real services
-        middleware = ChronographMiddleware(config)
-
-        try:
-            await middleware.startup()
-
-            # Example Usage (for testing purposes)
-            # --- Authentication and Token Generation ---
-            user_id = "test_user"
-            access_token = middleware.security.generate_token({"sub": user_id})
-            refresh_token = middleware.security.generate_refresh_token(user_id)
-
-            print(f"Access Token: {access_token}")
-            print(f"Refresh Token: {refresh_token}")
-
-            try:  # Test token
-                payload = middleware.security.validate_token(access_token)
-                print(f"Token Payload: {payload}")
-            except ChronoSecurityError as e:
-                print(f"Token Validation Error: {e}")
-
-            # --- Refresh Token ---
-            try:
-                new_access, new_refresh = middleware.security.refresh_access_token(
-                    refresh_token
-                )
-                print(f"New Access Token: {new_access}")
-                print(f"New Refresh Token: {new_refresh}")
-
-            except ChronoSecurityError as e:
-                print(f"Refresh Token Error: {e}")
-            # --- Data Ingestion ---
-
-            data = [
-                {
-                    "entity_id": "entity_1",
-                    "timestamp": datetime.utcnow().isoformat(),
-                    "value": 10.5,
-                },
-                {
-                    "entity_id": "entity_1",
-                    "timestamp": (datetime.utcnow() + timedelta(seconds=1)).isoformat(),
-                    "value": 12.2,
-                },
-            ]
-            await middleware.ingest_data(data, access_token)
-            print("Data Ingested")
-            await asyncio.sleep(2)  # Wait for Kafka
-
-            # --- Entity Creation ---
-            new_entity = {
-                "labels": ["Test", "Example"],
-                "properties": {"name": "My Entity", "value": 42},
-            }
-            entity_id = await middleware.create_entity(new_entity, access_token)
-            print("Created entity with id:", entity_id)
-            # --- Querying (TimescaleDB) ---
-
-            # Example TimescaleDB query (replace with your actual query)
-            timescale_query = "SELECT * FROM entities WHERE id = $1"
-            timescale_params = {"entity_id": "entity_1"}
-
-            results = await middleware.execute_query(
-                timescale_query, timescale_params, access_token
-            )
-            print("TimescaleDB Query Results:", results)
-
-            # --- Querying (Neo4j) ---
-
-            neo4j_query = "MATCH (e:Entity) RETURN e"
-            results = await middleware.execute_query(neo4j_query, {}, access_token)  # no params
-            print("Neo4j Query Results:", results)
-
-            # --- Querying with Temporal Rollback (TimescaleDB) ---
-            as_of_time = datetime.utcnow() - timedelta(
-                seconds=1
-            )  # Query as of 1 seconds ago
-            results_as_of = await middleware.execute_query(
-                timescale_query, timescale_params, access_token, as_of=as_of_time
-            )
-            print("TimescaleDB Query Results (as of):", results_as_of)
-
-            await asyncio.sleep(10)  # Keep the application running for a bit
-
-        except Exception as e:
-            logger.exception(f"An error occurred: {e}")
-        finally:
-            await middleware.shutdown()
-
-
-if __name__ == "__main__":
-    asyncio.run(main())

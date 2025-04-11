@@ -13,15 +13,12 @@ import torch
 import json
 from unittest.mock import MagicMock, patch
 
-# Add parent directory to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# Import components
 from asf.medical.models.shap_explainer import (
     ContradictionExplanation, ContradictionExplainer, ContradictionVisualizer
 )
 
-# Configure logging
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
@@ -65,7 +62,6 @@ class TestContradictionExplanation(unittest.TestCase):
             }
         }
         
-        # Create explanation
         self.explanation = ContradictionExplanation(
             claim1=self.claim1,
             claim2=self.claim2,
@@ -94,13 +90,10 @@ class TestContradictionExplanation(unittest.TestCase):
     
     def test_to_json(self):
         """Test conversion to JSON."""
-        # Convert to JSON
         explanation_json = self.explanation.to_json()
         
-        # Parse JSON
         explanation_dict = json.loads(explanation_json)
         
-        # Check dictionary contains all fields
         self.assertEqual(explanation_dict["claim1"], self.claim1)
         self.assertEqual(explanation_dict["claim2"], self.claim2)
         self.assertEqual(explanation_dict["contradiction_score"], self.contradiction_score)
@@ -139,7 +132,6 @@ class TestContradictionExplanation(unittest.TestCase):
     
     def test_from_json(self):
         """Test creation from JSON."""
-        # Create JSON
         explanation_json = json.dumps({
             "claim1": self.claim1,
             "claim2": self.claim2,
@@ -151,10 +143,8 @@ class TestContradictionExplanation(unittest.TestCase):
             "visualization_data": self.visualization_data
         })
         
-        # Create explanation from JSON
         explanation = ContradictionExplanation.from_json(explanation_json)
         
-        # Check explanation fields
         self.assertEqual(explanation.claim1, self.claim1)
         self.assertEqual(explanation.claim2, self.claim2)
         self.assertEqual(explanation.contradiction_score, self.contradiction_score)
@@ -169,27 +159,22 @@ class TestContradictionExplainer(unittest.TestCase):
     
     def setUp(self):
         """Set up test fixtures."""
-        # Create mock model and tokenizer
         self.model = MagicMock()
         self.tokenizer = MagicMock()
         
-        # Mock model output
         self.model.return_value = MagicMock(logits=torch.tensor([[0.2, 0.8]]))
         
-        # Mock tokenizer output
         self.tokenizer.return_value = {
             "input_ids": torch.tensor([[101, 2054, 2003, 1037, 3231, 102]]),
             "attention_mask": torch.tensor([[1, 1, 1, 1, 1, 1]])
         }
         
-        # Create explainer
         self.explainer = ContradictionExplainer(
             model=self.model,
             tokenizer=self.tokenizer,
             device="cpu"
         )
         
-        # Test claims
         self.claim1 = "The treatment significantly reduced mortality rates."
         self.claim2 = "The treatment did not show any significant effect on mortality."
         self.contradiction_score = 0.85
@@ -221,16 +206,13 @@ class TestContradictionExplainer(unittest.TestCase):
     
     def test_detect_negation_patterns(self):
         """Test negation pattern detection."""
-        # Detect negation patterns
         patterns = self.explainer._detect_negation_patterns(
             claim1=self.claim1,
             claim2=self.claim2
         )
         
-        # Check patterns
         self.assertTrue(len(patterns) > 0)
         
-        # Check for direct negation
         direct_negations = [p for p in patterns if p["type"] == "direct_negation"]
         self.assertTrue(len(direct_negations) > 0)
         self.assertEqual(direct_negations[0]["word"], "not")
@@ -327,7 +309,6 @@ class TestContradictionVisualizer(unittest.TestCase):
     @patch("asf.medical.models.shap_explainer.HAS_SHAP", False)
     def test_visualize_shap_without_shap(self):
         """Test SHAP visualization without SHAP."""
-        # This should not raise an exception
         self.visualizer.visualize_shap(self.explanation)
     
     def test_generate_html_report(self):

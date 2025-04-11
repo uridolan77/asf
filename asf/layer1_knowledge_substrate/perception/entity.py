@@ -18,7 +18,6 @@ class PerceptualEntity:
         self.temporal_metadata = AdaptiveTemporalMetadata()
         self.cross_modal_links = set()  # IDs of linked entities from other modalities
         
-        # Add any initial features
         if initial_features:
             for name, value in initial_features.items():
                 self.add_feature(name, value)
@@ -63,12 +62,3 @@ class PerceptualEntity:
     def get_feature_vector(self):
         """
         Get a vector representation of all features for similarity calculation
-        """
-        # Implementation depends on feature types - this is simplified
-        feature_values = []
-        for name, feature in self.features.items():
-            if isinstance(feature.value, (list, np.ndarray)):
-                feature_values.extend(feature.value)
-            else:
-                feature_values.append(feature.value)
-        return np.array(feature_values)

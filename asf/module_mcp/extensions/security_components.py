@@ -28,17 +28,13 @@ class MCPSecurityHandler:
         """
         Add security information to an outgoing message
         """
-        # Create a copy to avoid modifying the original
         secured_message = message.copy()
         
-        # Ensure we have a timestamp
         if "timestamp" not in secured_message:
             secured_message["timestamp"] = int(time.time())
             
-        # Add a nonce for replay protection
         secured_message["nonce"] = secrets.token_hex(8)
         
-        # If we have a shared secret for this source, add signature
         if source_id in self.shared_secrets:
             secured_message["signature"] = self._create_signature(
                 secured_message, 
@@ -52,17 +48,14 @@ class MCPSecurityHandler:
         Validate the security aspects of an incoming message
         Returns (is_valid, error_reason)
         """
-        # Check for required fields
         if "timestamp" not in message:
             return False, "Missing timestamp"
             
-        # Check message freshness (prevent replay attacks)
         current_time = int(time.time())
         message_time = message["timestamp"]
         
         if isinstance(message_time, str):
             try:
-                # Handle ISO format timestamps
                 from datetime import datetime
                 message_time = datetime.fromisoformat(message_time.replace('Z', '+00:00')).timestamp()
             except ValueError:
@@ -71,17 +64,13 @@ class MCPSecurityHandler:
         if abs(current_time - message_time) > self.message_ttl:
             return False, "Message expired or from the future"
             
-        # If we're requiring signatures
         if self.require_signatures:
-            # If we don't know the source, we can't validate the signature
             if not source_id:
                 return False, "Unknown message source, cannot validate signature"
                 
-            # If this source is in the trusted list, we can skip signature check
             if source_id in self.trusted_sources:
                 return True, None
                 
-            # Otherwise, verify signature if present
             if "signature" not in message:
                 return False, "Missing signature"
                 
@@ -102,7 +91,6 @@ class MCPSecurityHandler:
         """
         Create an HMAC signature for a message
         """
-        # Sort keys for consistent signing
         message_str = json.dumps(message, sort_keys=True)
         
         signature = hmac.new(
@@ -119,9 +107,6 @@ class MCPSecurityHandler:
         scopes: List[str], 
         expiration: int = 3600
     ) -> str:
-        """
-        Create a JWT token for a source with the given scopes
-        """
         if not self.jwt_secret:
             raise ValueError("JWT secret not configured")
             
@@ -191,7 +176,6 @@ class TLSConfig:
         else:
             context.check_hostname = self.check_hostname
             
-        # Use more secure TLS protocols
         context.options |= ssl.OP_NO_TLSv1 | ssl.OP_NO_TLSv1_1
         
         return context
@@ -253,7 +237,6 @@ class MCPAuthorizationManager:
         for role in self.source_roles[source_id]:
             all_permissions.extend(self.roles.get(role, []))
             
-        # Remove duplicates
         return list(set(all_permissions))
         
     def check_permission(self, source_id: str, required_permission: str) -> bool:
@@ -262,15 +245,12 @@ class MCPAuthorizationManager:
         """
         permissions = self.get_source_permissions(source_id)
         
-        # Check for wildcard permission
         if "*" in permissions:
             return True
             
-        # Check for exact permission match
         if required_permission in permissions:
             return True
             
-        # Check for namespace permission (e.g., "sensors.*" matches "sensors.read")
         for permission in permissions:
             if permission.endswith(".*") and required_permission.startswith(permission[:-1]):
                 return True
@@ -283,15 +263,10 @@ class MCPAuthorizationManager:
         source_id: str, 
         permission_mapper: Callable[[Dict], str]
     ) -> bool:
-        """
-        Authorize a message from a source using a mapping function
-        to determine the required permission
-        """
         required_permission = permission_mapper(message)
         return self.check_permission(source_id, required_permission)
 
 
-# Example permission mapper for MCP messages
 def default_permission_mapper(message: Dict[str, Any]) -> str:
     """
     Maps an MCP message to a required permission string
@@ -314,5 +289,4 @@ def default_permission_mapper(message: Dict[str, Any]) -> str:
         event_type = message.get("eventType", "unknown")
         return f"events.publish.{event_type}"
         
-    # Default case
     return f"{message_type.lower()}"

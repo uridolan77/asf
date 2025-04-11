@@ -4,7 +4,6 @@ Analysis models for the Medical Research Synthesizer API.
 This module defines the Pydantic models for analysis requests and responses.
 """
 
-from typing import List, Dict, Any, Optional
 from pydantic import BaseModel, Field
 
 class ContradictionAnalysisRequest(BaseModel):

@@ -35,19 +35,15 @@ def cosine_similarity_batch(queries, corpus):
         Similarities tensor of shape [Q, C]
     """
     if isinstance(queries, np.ndarray) and isinstance(corpus, np.ndarray):
-        # Normalize
         queries_norm = normalize_tensor(queries, dim=1)
         corpus_norm = normalize_tensor(corpus, dim=1)
         
-        # Calculate similarity
         return np.matmul(queries_norm, corpus_norm.T)
     
     elif isinstance(queries, torch.Tensor) and isinstance(corpus, torch.Tensor):
-        # Normalize
         queries_norm = F.normalize(queries, p=2, dim=1)
         corpus_norm = F.normalize(corpus, p=2, dim=1)
         
-        # Calculate similarity
         return torch.matmul(queries_norm, corpus_norm.t())
     
     else:
@@ -109,18 +105,14 @@ def adaptive_precision_tensor(tensor, precision='auto'):
         else:
             tensor = torch.tensor(tensor)
     
-    # Determine precision
     if precision == 'auto':
-        # Check value range
         max_val = torch.max(torch.abs(tensor)).item()
         
         if max_val > 65504 or max_val < 6e-5:
-            # Values too large or small for float16
             precision = 'float32'
         else:
             precision = 'float16'
     
-    # Convert to specified precision
     if precision == 'float32':
         return tensor.float()
     elif precision == 'float16':
@@ -141,27 +133,21 @@ def mixed_precision_matmul(a, b, precision='auto'):
     Returns:
         Result of matrix multiplication
     """
-    # Determine if we should use GPU
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     
-    # Convert inputs to tensors if needed
     if not isinstance(a, torch.Tensor):
         a = torch.tensor(a, device=device)
     if not isinstance(b, torch.Tensor):
         b = torch.tensor(b, device=device)
     
-    # Ensure tensors are on the same device
     a = a.to(device)
     b = b.to(device)
     
-    # Apply precision settings
     a_mp = adaptive_precision_tensor(a, precision)
     b_mp = adaptive_precision_tensor(b, precision)
     
-    # Perform matrix multiplication
     result = torch.matmul(a_mp, b_mp)
     
-    # Convert back to float32 for stability
     return result.float()
 
 def sparse_tensor_add(a, b, inplace=False):
@@ -180,14 +166,12 @@ def sparse_tensor_add(a, b, inplace=False):
         raise ValueError("Both tensors must be sparse")
     
     if inplace:
-        # Add values at corresponding indices
         indices_a = a.indices()
         values_a = a.values()
         
         indices_b = b.indices()
         values_b = b.values()
         
-        # Handle overlapping indices
         result = torch.sparse_coo_tensor(
             torch.cat([indices_a, indices_b], dim=1),
             torch.cat([values_a, values_b]),
@@ -198,7 +182,6 @@ def sparse_tensor_add(a, b, inplace=False):
         a._values().copy_(result._values())
         return a
     else:
-        # Use built-in addition
         return a + b
 
 def convert_to_csr(sparse_tensor):
@@ -214,28 +197,22 @@ def convert_to_csr(sparse_tensor):
     if not sparse_tensor.is_sparse:
         raise ValueError("Input must be a sparse tensor")
     
-    # Make sure it's coalesced (no duplicate indices)
     sparse_tensor = sparse_tensor.coalesce()
     
-    # For PyTorch 1.9+ we can use to_sparse_csr directly
     if hasattr(sparse_tensor, 'to_sparse_csr'):
         return sparse_tensor.to_sparse_csr()
     
-    # For older PyTorch versions, we need to convert to scipy and back
     indices = sparse_tensor._indices().cpu().numpy()
     values = sparse_tensor._values().cpu().numpy()
     shape = sparse_tensor.size()
     
-    # Convert to scipy CSR
     import scipy.sparse as sp
     scipy_csr = sp.csr_matrix((values, (indices[0], indices[1])), shape=shape)
     
-    # Convert back to PyTorch
     indptr = torch.tensor(scipy_csr.indptr, dtype=torch.long)
     indices = torch.tensor(scipy_csr.indices, dtype=torch.long)
     data = torch.tensor(scipy_csr.data, dtype=torch.float)
     
-    # Create csr tensor - implementation depends on PyTorch version
     return torch.sparse_coo_tensor(
         torch.stack([indptr[:-1], indices]),
         data,
@@ -258,26 +235,20 @@ def sparse_slice(sparse_tensor, dim, start, end):
     if not sparse_tensor.is_sparse:
         raise ValueError("Input must be a sparse tensor")
     
-    # Get indices and values
     indices = sparse_tensor._indices()
     values = sparse_tensor._values()
     
-    # Find indices within the slice range
     mask = (indices[dim] >= start) & (indices[dim] < end)
     
-    # Filter indices and values
     filtered_indices = indices[:, mask]
     filtered_values = values[mask]
     
-    # Adjust indices for the new tensor
     if start != 0:
         filtered_indices[dim] -= start
     
-    # Create new sizes
     new_size = list(sparse_tensor.size())
     new_size[dim] = end - start
     
-    # Create and return new sparse tensor
     return torch.sparse_coo_tensor(
         filtered_indices, 
         filtered_values,
@@ -295,33 +266,24 @@ def efficient_sparse_matmul(a, b):
     Returns:
         Result of matrix multiplication
     """
-    # Case 1: Both sparse - use special handling
     if a.is_sparse and b.is_sparse:
-        # If available, use specialized sparse-sparse mm
         if hasattr(torch.sparse, 'mm'):
             return torch.sparse.mm(a, b)
-        # Otherwise, convert one to dense
         else:
             return torch.mm(a.to_dense(), b)
     
-    # Case 2: a is sparse, b is dense
     elif a.is_sparse and not b.is_sparse:
         if hasattr(a, 'is_sparse_csr') and a.is_sparse_csr:
-            # Use specialized CSR operation if available
             if hasattr(torch.sparse, 'mm'):
                 return torch.sparse.mm(a, b)
             else:
                 return torch.mm(a.to_dense(), b)
         else:
-            # For COO format
             return torch.sparse.mm(a, b)
     
-    # Case 3: a is dense, b is sparse
     elif not a.is_sparse and b.is_sparse:
-        # Transpose to use efficient sparse mm
         return torch.sparse.mm(b.t(), a.t()).t()
     
-    # Case 4: Both dense - use standard mm
     else:
         return torch.mm(a, b)
 
@@ -339,13 +301,10 @@ def tensor_to_device(tensor, device=None):
     if device is None:
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     
-    # No-op if already on the right device
     if tensor.device == device:
         return tensor
     
-    # Handle sparse tensors specially
     if tensor.is_sparse:
-        # For sparse tensors, it's more efficient to recreate on the target device
         indices = tensor._indices()
         values = tensor._values()
         
@@ -355,7 +314,6 @@ def tensor_to_device(tensor, device=None):
             tensor.size()
         )
     
-    # Standard device transfer for dense tensors
     return tensor.to(device)
 
 def batch_sparse_dense_matmul(sparse_matrices, dense_matrices, batch_size=16):
@@ -375,14 +333,11 @@ def batch_sparse_dense_matmul(sparse_matrices, dense_matrices, batch_size=16):
     
     results = []
     for i in range(0, len(sparse_matrices), batch_size):
-        # Get batch
         sparse_batch = sparse_matrices[i:i+batch_size]
         dense_batch = dense_matrices[i:i+batch_size]
         
-        # Process batch
         batch_results = []
         for sparse, dense in zip(sparse_batch, dense_batch):
-            # Perform multiplication
             if sparse.is_sparse:
                 result = torch.sparse.mm(sparse, dense)
             else:
@@ -408,18 +363,14 @@ def sparse_to_scipy(sparse_tensor):
     if not sparse_tensor.is_sparse:
         raise ValueError("Input must be a sparse tensor")
     
-    # Make sure it's coalesced
     sparse_tensor = sparse_tensor.coalesce()
     
-    # Get indices and values
     indices = sparse_tensor._indices().cpu().numpy()
     values = sparse_tensor._values().cpu().numpy()
     shape = sparse_tensor.size()
     
-    # Convert to scipy COO first
     scipy_coo = sp.coo_matrix((values, (indices[0], indices[1])), shape=shape)
     
-    # Convert to CSR for better efficiency
     return scipy_coo.tocsr()
 
 def scipy_to_torch_sparse(scipy_matrix, device=None):
@@ -438,17 +389,14 @@ def scipy_to_torch_sparse(scipy_matrix, device=None):
     if device is None:
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     
-    # Convert to COO if not already
     if not isinstance(scipy_matrix, sp.coo_matrix):
         scipy_matrix = scipy_matrix.tocoo()
     
-    # Get indices and values
     indices = torch.tensor(np.vstack((scipy_matrix.row, scipy_matrix.col)), 
                            dtype=torch.long, device=device)
     values = torch.tensor(scipy_matrix.data, dtype=torch.float, device=device)
     shape = torch.Size(scipy_matrix.shape)
     
-    # Create sparse tensor
     return torch.sparse_coo_tensor(indices, values, shape)
 
 def save_sparse_tensor(sparse_tensor, file_path):
@@ -465,15 +413,12 @@ def save_sparse_tensor(sparse_tensor, file_path):
     if not sparse_tensor.is_sparse:
         raise ValueError("Input must be a sparse tensor")
     
-    # Make sure the tensor is coalesced
     sparse_tensor = sparse_tensor.coalesce()
     
-    # Get components
     indices = sparse_tensor._indices().cpu()
     values = sparse_tensor._values().cpu()
     size = sparse_tensor.size()
     
-    # Save components
     torch.save({
         'indices': indices,
         'values': values,
@@ -496,10 +441,8 @@ def load_sparse_tensor(file_path, device=None):
     if device is None:
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     
-    # Load components
     data = torch.load(file_path, map_location=device)
     
-    # Create sparse tensor
     return torch.sparse_coo_tensor(
         data['indices'],
         data['values'],

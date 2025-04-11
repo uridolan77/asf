@@ -8,10 +8,7 @@ any single user from consuming too many resources.
 import time
 import asyncio
 import logging
-from typing import Dict, Optional, Any, List, Tuple
-from datetime import datetime, timedelta
 
-# Configure logging
 logger = logging.getLogger(__name__)
 
 class GlobalRateLimiter:
@@ -46,20 +43,9 @@ class GlobalRateLimiter:
         default_window: int = 60,  # 1 minute window
         namespace: str = "asf:medical:rate_limit:"
     ):
-        """
-        Initialize the global rate limiter.
-        
-        Args:
-            redis_url: Redis URL for distributed rate limiting (default: from env var REDIS_URL)
-            default_rate: Default rate limit in requests per window (default: 60)
-            default_burst: Default burst limit in requests (default: 10)
-            default_window: Default window size in seconds (default: 60)
-            namespace: Cache namespace prefix (default: "asf:medical:rate_limit:")
-        """
         if self._initialized:
             return
         
-        # Get Redis URL from environment variable if not provided
         import os
         self.redis_url = redis_url or os.environ.get("REDIS_URL")
         
@@ -69,13 +55,11 @@ class GlobalRateLimiter:
         self.namespace = namespace
         self.redis = None
         
-        # Local rate limiting (fallback if Redis is not available)
         self.local_limits = {}
         self.local_tokens = {}
         self.local_last_refill = {}
         self.lock = asyncio.Lock()
         
-        # Initialize Redis if URL is provided
         if self.redis_url:
             try:
                 import redis.asyncio as aioredis
@@ -108,37 +92,19 @@ class GlobalRateLimiter:
         window: Optional[int] = None,
         cost: int = 1
     ) -> Tuple[bool, Dict[str, Any]]:
-        """
-        Check if a key is rate limited.
-        
-        Args:
-            key: Rate limit key (e.g., user ID, IP address)
-            rate: Rate limit in requests per window (default: self.default_rate)
-            burst: Burst limit in requests (default: self.default_burst)
-            window: Window size in seconds (default: self.default_window)
-            cost: Cost of the request (default: 1)
-            
-        Returns:
-            Tuple of (is_limited, limit_info)
-        """
-        # Use default values if not provided
         rate = rate or self.default_rate
         burst = burst or self.default_burst
         window = window or self.default_window
         
-        # Apply namespace
         namespaced_key = f"{self.namespace}{key}"
         
-        # Try Redis first if available
         if self.redis:
             try:
-                # Use Redis for distributed rate limiting
                 return await self._check_redis_rate_limit(namespaced_key, rate, burst, window, cost)
             except Exception as e:
                 logger.error(f"Error checking Redis rate limit: {str(e)}")
                 logger.warning("Falling back to local rate limiting")
         
-        # Fall back to local rate limiting
         return await self._check_local_rate_limit(namespaced_key, rate, burst, window, cost)
     
     async def _check_redis_rate_limit(
@@ -149,49 +115,28 @@ class GlobalRateLimiter:
         window: int,
         cost: int
     ) -> Tuple[bool, Dict[str, Any]]:
-        """
-        Check if a key is rate limited using Redis.
-        
-        Args:
-            key: Rate limit key
-            rate: Rate limit in requests per window
-            burst: Burst limit in requests
-            window: Window size in seconds
-            cost: Cost of the request
-            
-        Returns:
-            Tuple of (is_limited, limit_info)
-        """
-        # Get current time
         now = time.time()
         
-        # Get current tokens
         tokens_key = f"{key}:tokens"
         last_refill_key = f"{key}:last_refill"
         
-        # Get current tokens and last refill time
         async with self.redis.pipeline() as pipe:
             await pipe.get(tokens_key)
             await pipe.get(last_refill_key)
             tokens_str, last_refill_str = await pipe.execute()
         
-        # Parse values
         tokens = float(tokens_str) if tokens_str else burst
         last_refill = float(last_refill_str) if last_refill_str else now
         
-        # Refill tokens based on time elapsed
         time_elapsed = now - last_refill
         new_tokens = time_elapsed * (rate / window)
         tokens = min(tokens + new_tokens, burst)
         
-        # Check if enough tokens are available
         is_limited = tokens < cost
         
         if not is_limited:
-            # Consume tokens
             tokens -= cost
         
-        # Update tokens and last refill time
         async with self.redis.pipeline() as pipe:
             await pipe.set(tokens_key, tokens)
             await pipe.set(last_refill_key, now)
@@ -199,17 +144,13 @@ class GlobalRateLimiter:
             await pipe.expire(last_refill_key, window * 2)  # Set expiry to 2x window
             await pipe.execute()
         
-        # Calculate reset time
         if tokens < cost:
-            # Calculate time until enough tokens are available
             time_until_refill = (cost - tokens) * (window / rate)
             reset_time = now + time_until_refill
         else:
-            # Calculate time until full refill
             time_until_full = (burst - tokens) * (window / rate)
             reset_time = now + time_until_full
         
-        # Create limit info
         limit_info = {
             "limit": rate,
             "remaining": int(tokens / cost),
@@ -228,54 +169,32 @@ class GlobalRateLimiter:
         window: int,
         cost: int
     ) -> Tuple[bool, Dict[str, Any]]:
-        """
-        Check if a key is rate limited using local storage.
-        
-        Args:
-            key: Rate limit key
-            rate: Rate limit in requests per window
-            burst: Burst limit in requests
-            window: Window size in seconds
-            cost: Cost of the request
-            
-        Returns:
-            Tuple of (is_limited, limit_info)
-        """
         async with self.lock:
-            # Get current time
             now = time.time()
             
-            # Initialize if key doesn't exist
             if key not in self.local_tokens:
                 self.local_limits[key] = {"rate": rate, "burst": burst, "window": window}
                 self.local_tokens[key] = burst
                 self.local_last_refill[key] = now
             
-            # Refill tokens based on time elapsed
             last_refill = self.local_last_refill[key]
             time_elapsed = now - last_refill
             new_tokens = time_elapsed * (rate / window)
             self.local_tokens[key] = min(self.local_tokens[key] + new_tokens, burst)
             self.local_last_refill[key] = now
             
-            # Check if enough tokens are available
             is_limited = self.local_tokens[key] < cost
             
             if not is_limited:
-                # Consume tokens
                 self.local_tokens[key] -= cost
             
-            # Calculate reset time
             if self.local_tokens[key] < cost:
-                # Calculate time until enough tokens are available
                 time_until_refill = (cost - self.local_tokens[key]) * (window / rate)
                 reset_time = now + time_until_refill
             else:
-                # Calculate time until full refill
                 time_until_full = (burst - self.local_tokens[key]) * (window / rate)
                 reset_time = now + time_until_full
             
-            # Create limit info
             limit_info = {
                 "limit": rate,
                 "remaining": int(self.local_tokens[key] / cost),
@@ -287,22 +206,10 @@ class GlobalRateLimiter:
             return is_limited, limit_info
     
     async def get_limits(self, key: str) -> Dict[str, Any]:
-        """
-        Get rate limit information for a key.
-        
-        Args:
-            key: Rate limit key (e.g., user ID, IP address)
-            
-        Returns:
-            Dict[str, Any]: Rate limit information
-        """
-        # Apply namespace
         namespaced_key = f"{self.namespace}{key}"
         
-        # Try Redis first if available
         if self.redis:
             try:
-                # Get tokens and last refill time
                 tokens_key = f"{namespaced_key}:tokens"
                 last_refill_key = f"{namespaced_key}:last_refill"
                 
@@ -312,7 +219,6 @@ class GlobalRateLimiter:
                     tokens_str, last_refill_str = await pipe.execute()
                 
                 if tokens_str is None:
-                    # Key doesn't exist
                     return {
                         "limit": self.default_rate,
                         "remaining": self.default_rate,
@@ -321,11 +227,9 @@ class GlobalRateLimiter:
                         "burst": self.default_burst
                     }
                 
-                # Parse values
                 tokens = float(tokens_str) if tokens_str else self.default_burst
                 last_refill = float(last_refill_str) if last_refill_str else time.time()
                 
-                # Calculate reset time
                 now = time.time()
                 time_until_full = (self.default_burst - tokens) * (self.default_window / self.default_rate)
                 reset_time = now + time_until_full
@@ -341,10 +245,8 @@ class GlobalRateLimiter:
                 logger.error(f"Error getting Redis rate limit info: {str(e)}")
                 logger.warning("Falling back to local rate limit info")
         
-        # Fall back to local rate limit info
         async with self.lock:
             if namespaced_key not in self.local_tokens:
-                # Key doesn't exist
                 return {
                     "limit": self.default_rate,
                     "remaining": self.default_rate,
@@ -353,7 +255,6 @@ class GlobalRateLimiter:
                     "burst": self.default_burst
                 }
             
-            # Calculate reset time
             now = time.time()
             time_until_full = (self.default_burst - self.local_tokens[namespaced_key]) * (self.default_window / self.default_rate)
             reset_time = now + time_until_full
@@ -367,22 +268,10 @@ class GlobalRateLimiter:
             }
     
     async def reset_limits(self, key: str) -> bool:
-        """
-        Reset rate limit for a key.
-        
-        Args:
-            key: Rate limit key (e.g., user ID, IP address)
-            
-        Returns:
-            bool: True if the rate limit was reset, False otherwise
-        """
-        # Apply namespace
         namespaced_key = f"{self.namespace}{key}"
         
-        # Try Redis first if available
         if self.redis:
             try:
-                # Delete tokens and last refill time
                 tokens_key = f"{namespaced_key}:tokens"
                 last_refill_key = f"{namespaced_key}:last_refill"
                 
@@ -396,7 +285,6 @@ class GlobalRateLimiter:
                 logger.error(f"Error resetting Redis rate limit: {str(e)}")
                 logger.warning("Falling back to local rate limit reset")
         
-        # Fall back to local rate limit reset
         async with self.lock:
             if namespaced_key in self.local_tokens:
                 del self.local_tokens[namespaced_key]
@@ -413,33 +301,16 @@ class GlobalRateLimiter:
         burst: Optional[int] = None,
         window: Optional[int] = None
     ) -> Dict[str, Any]:
-        """
-        Update rate limit for a key.
-        
-        Args:
-            key: Rate limit key (e.g., user ID, IP address)
-            rate: Rate limit in requests per window (default: unchanged)
-            burst: Burst limit in requests (default: unchanged)
-            window: Window size in seconds (default: unchanged)
-            
-        Returns:
-            Dict[str, Any]: Updated rate limit information
-        """
-        # Apply namespace
         namespaced_key = f"{self.namespace}{key}"
         
-        # Get current limits
         current_limits = await self.get_limits(key)
         
-        # Update limits
         new_rate = rate if rate is not None else current_limits["limit"]
         new_burst = burst if burst is not None else current_limits["burst"]
         new_window = window if window is not None else current_limits["window"]
         
-        # Try Redis first if available
         if self.redis:
             try:
-                # Store limits in Redis
                 limits_key = f"{namespaced_key}:limits"
                 limits = {
                     "rate": new_rate,
@@ -450,7 +321,6 @@ class GlobalRateLimiter:
                 await self.redis.set(limits_key, json.dumps(limits))
                 await self.redis.expire(limits_key, new_window * 2)  # Set expiry to 2x window
                 
-                # Reset tokens to burst
                 tokens_key = f"{namespaced_key}:tokens"
                 last_refill_key = f"{namespaced_key}:last_refill"
                 
@@ -472,7 +342,6 @@ class GlobalRateLimiter:
                 logger.error(f"Error updating Redis rate limit: {str(e)}")
                 logger.warning("Falling back to local rate limit update")
         
-        # Fall back to local rate limit update
         async with self.lock:
             self.local_limits[namespaced_key] = {
                 "rate": new_rate,
@@ -490,8 +359,6 @@ class GlobalRateLimiter:
                 "burst": new_burst
             }
 
-# Create a singleton instance
 global_rate_limiter = GlobalRateLimiter()
 
-# Import JSON for Redis operations
 import json

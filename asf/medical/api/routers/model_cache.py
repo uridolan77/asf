@@ -13,10 +13,8 @@ from pydantic import BaseModel
 from asf.medical.api.dependencies import get_admin_user
 from asf.medical.ml.model_cache import model_cache
 
-# Configure logging
 logger = logging.getLogger(__name__)
 
-# Create router
 router = APIRouter(
     prefix="/v1/model-cache",
     tags=["model-cache"],
@@ -24,7 +22,6 @@ router = APIRouter(
     responses={404: {"description": "Not found"}},
 )
 
-# Models
 class ModelCacheStats(BaseModel):
     """Model cache statistics."""
     size: int
@@ -38,36 +35,20 @@ class ModelCacheResponse(BaseModel):
     message: str
     data: Dict[str, Any] = {}
 
-# Routes
 @router.get("/stats", response_model=ModelCacheStats)
 async def get_model_cache_stats():
-    """
-    Get model cache statistics.
-
-    Returns:
-        Model cache statistics
-    """
     try:
         stats = model_cache.get_stats()
         return ModelCacheStats(**stats)
     except Exception as e:
-        logger.error(f"Error getting model cache stats: {str(e)}")
-        raise HTTPException(
+    logger.error(f\"Error getting model cache stats: {str(e)}\")
+    raise DatabaseError(f\"Error getting model cache stats: {str(e)}\") HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error getting model cache stats: {str(e)}",
         )
 
 @router.delete("/models/{model_id}", response_model=ModelCacheResponse)
 async def remove_model(model_id: str):
-    """
-    Remove a model from the cache.
-
-    Args:
-        model_id: Model ID
-
-    Returns:
-        Response with status and message
-    """
     try:
         model_cache.remove(model_id)
         return ModelCacheResponse(
@@ -75,20 +56,14 @@ async def remove_model(model_id: str):
             message=f"Model removed from cache: {model_id}",
         )
     except Exception as e:
-        logger.error(f"Error removing model from cache: {str(e)}")
-        raise HTTPException(
+    logger.error(f\"Error removing model from cache: {str(e)}\")
+    raise DatabaseError(f\"Error removing model from cache: {str(e)}\") HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error removing model from cache: {str(e)}",
         )
 
 @router.delete("/clear", response_model=ModelCacheResponse)
 async def clear_model_cache():
-    """
-    Clear all models from the cache.
-
-    Returns:
-        Response with status and message
-    """
     try:
         model_cache.clear()
         return ModelCacheResponse(
@@ -96,8 +71,8 @@ async def clear_model_cache():
             message="Model cache cleared",
         )
     except Exception as e:
-        logger.error(f"Error clearing model cache: {str(e)}")
-        raise HTTPException(
+    logger.error(f\"Error clearing model cache: {str(e)}\")
+    raise DatabaseError(f\"Error clearing model cache: {str(e)}\") HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error clearing model cache: {str(e)}",
         )

@@ -4,11 +4,8 @@ Export Tasks
 This module defines background tasks for exporting data in various formats.
 """
 
-import os
-import tempfile
 import logging
 import shutil
-import json
 from typing import List, Dict, Any, Optional
 
 import dramatiq
@@ -17,10 +14,8 @@ from asf.medical.api.export_utils_consolidated import (
     export_to_pdf, export_contradiction_analysis_to_pdf
 )
 
-# Configure logging
 logger = logging.getLogger(__name__)
 
-# Store of task results
 task_results = {}
 
 @dramatiq.actor(max_retries=3, time_limit=300000)  # 5 minutes
@@ -36,7 +31,6 @@ def generate_pdf_report(results: List[Dict[str, Any]], query_text: str, output_p
     try:
         logger.info(f"Starting PDF generation for query: {query_text}")
         
-        # Update task status
         task_id = dramatiq.middleware.current_message.message_id
         task_results[task_id] = {
             "status": "processing", 
@@ -44,13 +38,10 @@ def generate_pdf_report(results: List[Dict[str, Any]], query_text: str, output_p
             "output_path": output_path
         }
         
-        # Generate the PDF
         pdf_output = export_to_pdf(results, query_text)
         
-        # Copy the PDF to the output path
         shutil.copy(pdf_output.path, output_path)
         
-        # Update task status
         task_results[task_id] = {
             "status": "completed", 
             "progress": 100,
@@ -61,7 +52,6 @@ def generate_pdf_report(results: List[Dict[str, Any]], query_text: str, output_p
         return {"status": "completed", "file_path": output_path}
     
     except Exception as e:
-        # Update task status
         task_id = dramatiq.middleware.current_message.message_id
         task_results[task_id] = {
             "status": "failed", 
@@ -85,7 +75,6 @@ def generate_contradiction_pdf_report(analysis: Dict[str, Any], query_text: str,
     try:
         logger.info(f"Starting contradiction PDF generation for query: {query_text}")
         
-        # Update task status
         task_id = dramatiq.middleware.current_message.message_id
         task_results[task_id] = {
             "status": "processing", 
@@ -93,13 +82,10 @@ def generate_contradiction_pdf_report(analysis: Dict[str, Any], query_text: str,
             "output_path": output_path
         }
         
-        # Generate the PDF
         pdf_output = export_contradiction_analysis_to_pdf(analysis, query_text)
         
-        # Copy the PDF to the output path
         shutil.copy(pdf_output.path, output_path)
         
-        # Update task status
         task_results[task_id] = {
             "status": "completed", 
             "progress": 100,
@@ -110,7 +96,6 @@ def generate_contradiction_pdf_report(analysis: Dict[str, Any], query_text: str,
         return {"status": "completed", "file_path": output_path}
     
     except Exception as e:
-        # Update task status
         task_id = dramatiq.middleware.current_message.message_id
         task_results[task_id] = {
             "status": "failed", 

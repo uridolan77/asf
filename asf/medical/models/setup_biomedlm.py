@@ -11,7 +11,6 @@ from pathlib import Path
 import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
-# Configure logging
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
@@ -31,12 +30,10 @@ def setup_biomedlm(model_name: str = "microsoft/BioMedLM", cache_dir: str = None
     """
     logger.info(f"Setting up BioMedLM model: {model_name}")
     
-    # Create cache directory if it doesn't exist
     if cache_dir:
         os.makedirs(cache_dir, exist_ok=True)
         logger.info(f"Using cache directory: {cache_dir}")
     
-    # Check if model is already downloaded
     if cache_dir and not force_download:
         model_path = Path(cache_dir) / model_name.split("/")[-1]
         if model_path.exists():
@@ -49,7 +46,6 @@ def setup_biomedlm(model_name: str = "microsoft/BioMedLM", cache_dir: str = None
             except Exception as e:
                 logger.warning(f"Failed to load model from cache: {e}. Downloading from source.")
     
-    # Download model and tokenizer
     try:
         logger.info(f"Downloading tokenizer for {model_name}...")
         tokenizer = AutoTokenizer.from_pretrained(model_name, cache_dir=cache_dir)
@@ -59,7 +55,6 @@ def setup_biomedlm(model_name: str = "microsoft/BioMedLM", cache_dir: str = None
         
         logger.info("Successfully downloaded model and tokenizer.")
         
-        # Save model and tokenizer to cache directory if specified
         if cache_dir:
             model_path = Path(cache_dir) / model_name.split("/")[-1]
             logger.info(f"Saving model to {model_path}...")
@@ -82,16 +77,13 @@ def test_biomedlm(tokenizer, model):
     """
     logger.info("Testing BioMedLM model...")
     
-    # Example claims
     claim1 = "Aspirin is effective for treating headaches."
     claim2 = "Aspirin has no effect on headache symptoms."
     
-    # Prepare input
     inputs = tokenizer(
         claim1, claim2, return_tensors="pt", padding=True, truncation=True, max_length=512
     )
     
-    # Get model prediction
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
     inputs = {k: v.to(device) for k, v in inputs.items()}
@@ -99,11 +91,9 @@ def test_biomedlm(tokenizer, model):
     with torch.no_grad():
         outputs = model(**inputs)
     
-    # Get contradiction scores
     logits = outputs.logits
     probabilities = torch.softmax(logits, dim=1)
     
-    # Assuming binary classification (contradiction vs. non-contradiction)
     contradiction_score = probabilities[0, 1].item()
     agreement_score = probabilities[0, 0].item()
     
@@ -120,7 +110,14 @@ def test_biomedlm(tokenizer, model):
     logger.info("BioMedLM test completed.")
 
 def main():
-    """Main function."""
+    """Main function.
+
+    Args:
+        # TODO: Add parameter descriptions
+
+    Returns:
+        # TODO: Add return description
+    """
     parser = argparse.ArgumentParser(description="Set up BioMedLM model")
     parser.add_argument("--model", type=str, default="microsoft/BioMedLM", help="Model name")
     parser.add_argument("--cache-dir", type=str, default="./models", help="Cache directory")

@@ -18,10 +18,8 @@ def convert_to_predictive(layer):
     """Convert standard symbols and potentials to predictive variants"""
     logger.info(f"Converting {len(layer.symbols)} symbols to predictive variants")
     
-    # Convert symbols to predictive variants
     predictive_symbols = {}
     for symbol_id, symbol in layer.symbols.items():
-        # Create predictive symbol with same properties
         predictive_symbol = PredictiveSymbolElement(symbol.id, symbol.perceptual_anchors.copy())
         predictive_symbol.name = symbol.name
         predictive_symbol.confidence = symbol.confidence
@@ -32,7 +30,6 @@ def convert_to_predictive(layer):
         predictive_symbol.last_accessed = symbol.last_accessed
         predictive_symbol._nonlinearity = symbol._nonlinearity
         
-        # Convert potentials to predictive variants
         for potential_id, potential in symbol.potentials.items():
             predictive_potential = PredictiveSymbolicPotential(
                 potential.id,
@@ -40,20 +37,15 @@ def convert_to_predictive(layer):
                 potential.nonlinearity
             )
             
-            # Copy associations
             for assoc_id, assoc_strength in potential._associations.items():
                 predictive_potential.add_association(assoc_id, assoc_strength)
                 
-            # Copy activations
             predictive_potential._activations = potential._activations.copy()
             
-            # Add to symbol
             predictive_symbol.potentials[potential_id] = predictive_potential
             
-        # Add to collection
         predictive_symbols[symbol_id] = predictive_symbol
     
-    # Replace symbols in layer
     layer.symbols = predictive_symbols
     
     logger.info("Conversion to predictive variants complete")

@@ -6,7 +6,6 @@ contradiction resolution results.
 """
 
 import logging
-from typing import Dict, List, Optional, Any
 
 from asf.medical.ml.services.enhanced_contradiction_classifier import (
     ContradictionType,
@@ -20,7 +19,6 @@ from asf.medical.ml.services.resolution.resolution_models import (
     CLINICAL_SIGNIFICANCE_TERMS
 )
 
-# Set up logging
 logger = logging.getLogger(__name__)
 
 def generate_explanation(
@@ -28,23 +26,10 @@ def generate_explanation(
     resolution: Dict[str, Any],
     strategy: ResolutionStrategy
 ) -> Dict[str, Any]:
-    """
-    Generate explanation for contradiction resolution.
-
-    Args:
-        contradiction: Classified contradiction
-        resolution: Resolution result
-        strategy: Resolution strategy used
-
-    Returns:
-        Explanation
-    """
-    # Extract basic information
     claim1 = contradiction.get("claim1", "")
     claim2 = contradiction.get("claim2", "")
     classification = contradiction.get("classification", {})
 
-    # Initialize explanation
     explanation = {
         "summary": "",
         "detailed_reasoning": "",
@@ -53,13 +38,11 @@ def generate_explanation(
         "references": []
     }
 
-    # Generate summary based on resolution recommendation
     recommendation = resolution.get("recommendation", RecommendationType.INCONCLUSIVE)
     confidence = resolution.get("confidence", ResolutionConfidence.LOW)
     recommended_claim = resolution.get("recommended_claim", "")
     recommendation_note = resolution.get("recommendation_note", "")
 
-    # Generate summary
     if recommendation == RecommendationType.FAVOR_CLAIM1:
         explanation["summary"] = f"The contradiction is resolved in favor of the first claim: '{claim1}'. "
         explanation["summary"] += f"Confidence: {confidence}."
@@ -76,7 +59,6 @@ def generate_explanation(
         explanation["summary"] = f"The contradiction could not be conclusively resolved. {recommended_claim} "
         explanation["summary"] += f"Confidence: {confidence}."
 
-    # Generate detailed reasoning based on strategy
     if strategy == ResolutionStrategy.EVIDENCE_HIERARCHY:
         explanation["detailed_reasoning"] = generate_evidence_hierarchy_explanation(resolution)
     elif strategy == ResolutionStrategy.SAMPLE_SIZE_WEIGHTING:
@@ -94,16 +76,13 @@ def generate_explanation(
     else:
         explanation["detailed_reasoning"] = f"The contradiction was analyzed using the {strategy} strategy. {recommendation_note}"
 
-    # Generate clinical implications
     clinical_significance = classification.get("clinical_significance", ClinicalSignificance.UNKNOWN)
     explanation["clinical_implications"] = generate_clinical_implications(
         contradiction, resolution, clinical_significance
     )
 
-    # Generate limitations
     explanation["limitations"] = generate_limitations(contradiction, resolution, strategy)
 
-    # Add references
     explanation["references"] = generate_references(contradiction, resolution, strategy)
 
     return explanation
@@ -174,7 +153,6 @@ def generate_sample_size_explanation(resolution: Dict[str, Any]) -> str:
     else:
         explanation += f"Both claims are supported by studies with similar sample sizes ({sample_size1} and {sample_size2} participants)."
 
-    # Add power information if available
     power1 = sample_comparison.get("claim1_power")
     power2 = sample_comparison.get("claim2_power")
 
@@ -212,7 +190,6 @@ def generate_recency_explanation(resolution: Dict[str, Any]) -> str:
     else:
         explanation += f"Both claims are supported by studies published in the same year ({year1})."
 
-    # Add age information if available
     age1 = recency_comparison.get("claim1_age")
     age2 = recency_comparison.get("claim2_age")
 
@@ -295,7 +272,6 @@ def generate_methodological_explanation(resolution: Dict[str, Any]) -> str:
     explanation = "The contradiction was resolved based on methodological quality considerations, "
     explanation += "which evaluates the rigor and reliability of the research methods used in each study. "
 
-    # Study design comparison
     if study_design:
         claim1_design = study_design.get("claim1_design", "unknown")
         claim2_design = study_design.get("claim2_design", "unknown")
@@ -310,7 +286,6 @@ def generate_methodological_explanation(resolution: Dict[str, Any]) -> str:
         else:
             explanation += "Both study designs are at similar levels in the evidence hierarchy. "
 
-    # Blinding comparison
     if blinding:
         claim1_blinding = blinding.get("claim1_blinding", "unknown")
         claim2_blinding = blinding.get("claim2_blinding", "unknown")
@@ -324,7 +299,6 @@ def generate_methodological_explanation(resolution: Dict[str, Any]) -> str:
         elif blinding_diff < 0:
             explanation += "The second study had more robust blinding procedures. "
 
-    # Randomization comparison
     if randomization:
         claim1_randomization = randomization.get("claim1_randomization", "unknown")
         claim2_randomization = randomization.get("claim2_randomization", "unknown")
@@ -338,7 +312,6 @@ def generate_methodological_explanation(resolution: Dict[str, Any]) -> str:
         elif randomization_diff < 0:
             explanation += "The second study had more robust randomization procedures. "
 
-    # Overall quality assessment
     if quality_assessment:
         claim1_score = quality_assessment.get("claim1_quality_score", 0)
         claim2_score = quality_assessment.get("claim2_quality_score", 0)
@@ -381,7 +354,6 @@ def generate_statistical_explanation(resolution: Dict[str, Any]) -> str:
     explanation = "The contradiction was resolved based on statistical significance considerations, "
     explanation += "which evaluates the strength and reliability of the statistical evidence supporting each claim. "
 
-    # P-value comparison
     if p_value1 is not None and p_value2 is not None:
         explanation += f"The first study reported a p-value of {p_value1}, "
         explanation += f"while the second reported a p-value of {p_value2}. "
@@ -400,7 +372,6 @@ def generate_statistical_explanation(resolution: Dict[str, Any]) -> str:
         else:
             explanation += "Neither study reports statistically significant results. "
 
-    # Effect size comparison
     if effect_size1 is not None and effect_size2 is not None:
         explanation += f"The effect size was {effect_size1} in the first study and {effect_size2} in the second. "
 
@@ -411,7 +382,6 @@ def generate_statistical_explanation(resolution: Dict[str, Any]) -> str:
         else:
             explanation += "Both studies demonstrated similar effect sizes. "
 
-    # Confidence interval comparison
     if isinstance(ci1, list) and len(ci1) == 2 and isinstance(ci2, list) and len(ci2) == 2:
         width1 = ci1[1] - ci1[0]
         width2 = ci2[1] - ci2[0]
@@ -504,7 +474,6 @@ def generate_clinical_implications(contradiction: Dict[str, Any], resolution: Di
 
     implications = "Clinical Implications: "
 
-    # Add clinical significance assessment
     if clinical_significance == ClinicalSignificance.HIGH:
         implications += "This contradiction has high clinical significance, "
         implications += "meaning it could substantially impact patient outcomes, treatment decisions, or diagnostic accuracy. "
@@ -517,7 +486,6 @@ def generate_clinical_implications(contradiction: Dict[str, Any], resolution: Di
     else:
         implications += "The clinical significance of this contradiction is unknown. "
 
-    # Add recommendation-specific implications
     if recommendation == RecommendationType.FAVOR_CLAIM1 or recommendation == RecommendationType.FAVOR_CLAIM2:
         if confidence == ResolutionConfidence.HIGH:
             implications += f"Clinicians should strongly consider the recommended claim ({recommended_claim}) "
@@ -554,7 +522,6 @@ def generate_limitations(contradiction: Dict[str, Any], resolution: Dict[str, An
     """
     limitations = "Limitations: "
 
-    # Add strategy-specific limitations
     if strategy == ResolutionStrategy.EVIDENCE_HIERARCHY:
         limitations += "The evidence hierarchy approach has limitations. "
         limitations += "Higher-level study designs don't always guarantee better quality research, "
@@ -590,7 +557,6 @@ def generate_limitations(contradiction: Dict[str, Any], resolution: Dict[str, An
         limitations += "It assumes that all resolution strategies are equally valid and applicable to the contradiction at hand. "
         limitations += "The approach may also be affected by limitations in the underlying data and methods used in each strategy."
 
-    # Add general limitations
     limitations += " Additionally, this resolution is based on the available information, "
     limitations += "which may be incomplete. The assessment doesn't account for unpublished studies or data, "
     limitations += "and may be affected by publication bias. The resolution should be updated as new evidence emerges."
@@ -609,9 +575,6 @@ def generate_references(contradiction: Dict[str, Any], resolution: Dict[str, Any
     Returns:
         List of references
     """
-    # This is a placeholder for a more sophisticated reference generation method
-    # In a real implementation, this would include references to relevant literature
-    # on evidence-based medicine, contradiction resolution, and the specific medical topic
 
     references = [
         "Guyatt GH, et al. GRADE: an emerging consensus on rating quality of evidence and strength of recommendations. BMJ. 2008;336(7650):924-926.",
@@ -619,7 +582,6 @@ def generate_references(contradiction: Dict[str, Any], resolution: Dict[str, Any
         "Ioannidis JPA. Contradicted and initially stronger effects in highly cited clinical research. JAMA. 2005;294(2):218-228."
     ]
 
-    # Add strategy-specific references
     if strategy == ResolutionStrategy.EVIDENCE_HIERARCHY:
         references.append("Burns PB, et al. The levels of evidence and their role in evidence-based medicine. Plast Reconstr Surg. 2011;128(1):305-310.")
     elif strategy == ResolutionStrategy.SAMPLE_SIZE_WEIGHTING:

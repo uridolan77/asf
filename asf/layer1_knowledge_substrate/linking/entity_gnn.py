@@ -11,12 +11,7 @@ from torch_geometric.nn import GATConv
 from torch_geometric.data import Data, Batch
 from pydantic import BaseModel, Field, validator
 
-# Assuming asf.__core.enums, ChronographMiddleware, ChronoGnosisLayer
-# from asf.__core.enums import PerceptualInputType
-# from chronograph_middleware_layer import ChronographMiddleware
-# from chronograph_gnosis_layer import ChronoGnosisLayer
 
-# Mocked for standalone execution
 class PerceptualInputType(str):  # Mock
     TEXT = "text"
     IMAGE = "image"
@@ -32,7 +27,6 @@ class ChronographMiddleware:  # Mock
         print(f"Mock Chronograph: record({entity_id}, {state_data})")
 
     async def get_neighbors(self, entity_id: str) -> List[Tuple[str, str, float]]:
-      #returns neighbors, relationship type, and strength.
       print(f"MOCK: Getting neighbors for {entity_id}")
       return []
 
@@ -45,7 +39,6 @@ class ChronographMiddleware:  # Mock
       print(f"MOCK: update_entity_confidence({entity_id}, {alpha}, {beta}, {last_updated})")
     async def get_all_entities(self) -> List[Dict]:
         print("MOCK: get_all_entities")
-        # Return some mock entities
         return [
           {"id": "entity_1", "input_type": PerceptualInputType.TEXT, "features": {"embedding": [0.1]*128}, "cross_modal_links": ["entity_2"]},
           {"id": "entity_2", "input_type": PerceptualInputType.IMAGE, "features": {"embedding": [0.2]*128}, "cross_modal_links": ["entity_1"]},
@@ -107,86 +100,28 @@ class EntityLinkingGNN:
         self.gnosis = gnosis
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu') # Use GPU if available
 
-        # Graph Attention Network
         self.gat = GATConv(self.config.feature_dim, self.config.hidden_dim, heads=self.config.gat_heads).to(self.device)
         self.output_layer = nn.Linear(self.config.hidden_dim * self.config.gat_heads, self.config.feature_dim).to(self.device)
 
-        # Relation type embeddings
         self.relation_embeddings = nn.Embedding(self.config.num_relation_types, self.config.hidden_dim).to(self.device)
 
-        # Entity cache (stores tensors)
         self.entity_embedding_cache: Dict[str, torch.Tensor] = {}
 
     async def _create_entity_graph(self, entities: List[PerceptualEntity], relations: List[Tuple[int, int, int]]) -> Data:
-      """Creates a PyTorch Geometric Data object representing the entity graph."""
-      # Create mapping of entity ID to index
-      entity_id_to_index = {entity.id: i for i, entity in enumerate(entities)}
 
-      # Extract entity features (using cached embeddings if available)
-      x = []
-      for entity in entities:
-          embedding = self.entity_embedding_cache.get(entity.id)
-          if embedding is None:
-              embedding = torch.tensor(entity.get_feature_vector(), dtype=torch.float32, device=self.device)
-          else:
-              embedding = embedding.to(self.device)  # Ensure correct device
-          x.append(embedding)
-      x = torch.stack(x)
-
-      # Create edge index and edge attributes
-      edge_index = []
-      edge_attr = []
-      for source_id, target_id, rel_type in relations:
-          if source_id in entity_id_to_index and target_id in entity_id_to_index: #Handle missing
-            source_index = entity_id_to_index[source_id]
-            target_index = entity_id_to_index[target_id]
-            # Bidirectional edges
-            edge_index.append([source_index, target_index])
-            edge_index.append([target_index, source_index])
-            edge_attr.append(rel_type)
-            edge_attr.append(rel_type)  # Duplicate for bidirectional
-
-      edge_index = torch.tensor(edge_index, dtype=torch.long, device=self.device).t().contiguous()
-      edge_attr = torch.tensor(edge_attr, dtype=torch.long, device=self.device)
-
-      return Data(x=x, edge_index=edge_index, edge_attr=edge_attr)
-
-    async def _update_entity_embeddings(self, entities: List[PerceptualEntity], relations:  List[Tuple[str, str, int]]):
-        """Updates entity embeddings using the GNN."""
-
-        # Create graph
         graph_data = await self._create_entity_graph(entities, relations)
 
-        # Apply GAT layer
         x, edge_index, edge_attr = graph_data.x, graph_data.edge_index, graph_data.edge_attr
         rel_embeddings = self.relation_embeddings(edge_attr)
         h = self.gat(x, edge_index, edge_attr=rel_embeddings)
         h = F.relu(h)
         output = self.output_layer(h)
 
-        # Update entity embeddings in cache and database
         for i, entity in enumerate(entities):
             self.entity_embedding_cache[entity.id] = output[i].detach().cpu() # Move back to CPU
             await self.chronograph.update_entity_embedding(entity.id, output[i].detach().cpu().tolist()) #Persist
 
     async def get_entity_embedding(self, entity_id: str) -> Optional[torch.Tensor]:
-        """Retrieves the cached embedding for an entity, or loads from db"""
-        if entity_id in self.entity_embedding_cache:
-            return self.entity_embedding_cache[entity_id]
-
-        # If not in cache, try to get from database
-        entity_data = await self.chronograph.get_entity(entity_id)
-        if entity_data and "embedding" in entity_data:
-            embedding = torch.tensor(entity_data["embedding"], dtype=torch.float32)
-            self.entity_embedding_cache[entity_id] = embedding # Cache it
-            return embedding
-        return None
-
-
-    async def find_similar_entities(
-        self, query_entity_id: str, all_entities: List[PerceptualEntity], top_k: int = 5
-    ) -> List[Tuple[PerceptualEntity, float]]:
-        """Finds entities similar to the query entity."""
 
         query_embedding = await self.get_entity_embedding(query_entity_id)
         if query_embedding is None:
@@ -203,30 +138,11 @@ class EntityLinkingGNN:
         return similarities[:top_k]
 
     async def _get_relation_type(self, modality1: str, modality2: str) -> int:
-        """Determine relation type based on modality pair."""
-        #Simplified for the mock
-        modality_pairs = {
-            (PerceptualInputType.TEXT, PerceptualInputType.IMAGE): 0,
-            (PerceptualInputType.IMAGE, PerceptualInputType.TEXT): 0,
-            (PerceptualInputType.TEXT, PerceptualInputType.AUDIO): 1,
-            (PerceptualInputType.AUDIO, PerceptualInputType.TEXT): 1,
-            (PerceptualInputType.IMAGE, PerceptualInputType.AUDIO): 2,
-            (PerceptualInputType.AUDIO, PerceptualInputType.IMAGE): 2,
-            # Default
-            "default": 9,
-        }
-        key = (modality1, modality2)
-        return modality_pairs.get(key, modality_pairs["default"])
-
-
-    async def suggest_cross_modal_links(self, similarity_threshold: Optional[float] = None) -> List[Tuple[str, str, float]]:
-        """Suggests potential cross-modal links between entities."""
 
         if similarity_threshold is None:
           similarity_threshold = self.config.similarity_threshold
 
         all_entities_data = await self.chronograph.get_all_entities()
-        # Convert to PerceptualEntity objects, fetching embeddings if needed.
         all_entities = []
         for entity_data in all_entities_data:
             entity = PerceptualEntity(
@@ -235,7 +151,6 @@ class EntityLinkingGNN:
                 entity_data["features"],
                 entity_data.get("cross_modal_links", []) # Handle potential missing key
             )
-            # Pre-populate the cache to avoid redundant database calls
             if "embedding" in entity_data:
                 self.entity_embedding_cache[entity.id] = torch.tensor(entity_data["embedding"], dtype=torch.float32)
 
@@ -243,14 +158,12 @@ class EntityLinkingGNN:
 
 
 
-        # Group entities by modality
         entities_by_modality: Dict[str, List[PerceptualEntity]] = {}
         for entity in all_entities:
             if entity.input_type not in entities_by_modality:
                 entities_by_modality[entity.input_type] = []
             entities_by_modality[entity.input_type].append(entity)
 
-        # Build graph of entities with existing cross-modal links
         existing_relations = []
         for i, entity_i in enumerate(all_entities):
             for j, entity_j in enumerate(all_entities):
@@ -260,11 +173,9 @@ class EntityLinkingGNN:
                     )
                     existing_relations.append((entity_i.id, entity_j.id, rel_type))
 
-        # Update embeddings *once* using existing relations
         if existing_relations:  # Only update if there are existing relations
            await self._update_entity_embeddings(all_entities, existing_relations)
 
-        # Find potential new links across modalities
         suggested_links: List[Tuple[str, str, float]] = []
         for mod1, entities1 in entities_by_modality.items():
             for mod2, entities2 in entities_by_modality.items():
@@ -281,7 +192,6 @@ class EntityLinkingGNN:
                                     if similarity > similarity_threshold:
                                         rel_type = await self._get_relation_type(entity1.input_type, entity2.input_type)
                                         suggested_links.append((entity1.id, entity2.id, similarity))
-                                        # Add to Chronograph *immediately*
                                         await self.chronograph.add_entity_link(entity1.id, entity2.id, rel_type, similarity)
 
 
@@ -289,20 +199,17 @@ class EntityLinkingGNN:
         return suggested_links
 
 async def main():
-    # Initialize
     chronograph = ChronographMiddleware()
     gnosis = ChronoGnosisLayer()
     config = EntityLinkingGNNConfig()
     linker = EntityLinkingGNN(chronograph, gnosis, config)
 
 
-    # Suggest links
     suggested_links = await linker.suggest_cross_modal_links()
     print("\nSuggested Cross-Modal Links:")
     for link in suggested_links:
         print(f"  {link[0]} <--> {link[1]} (Similarity: {link[2]:.4f})")
 
-    # Find similar entities for entity_1
     all_entities_data = await chronograph.get_all_entities()
     all_entities = [PerceptualEntity(e["id"], e["input_type"], e["features"], e.get("cross_modal_links",[])) for e in all_entities_data]
 

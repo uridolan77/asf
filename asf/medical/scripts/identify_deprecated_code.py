@@ -1,23 +1,3 @@
-#!/usr/bin/env python
-"""
-Script to identify deprecated code in the Medical Research Synthesizer.
-
-This script scans the codebase for deprecated code patterns, such as:
-- Files with similar names (e.g., file.py and file_v2.py)
-- Functions or classes marked with @deprecated decorator
-- Functions or classes with "deprecated" in the name or docstring
-- Commented-out code blocks
-- TODO comments
-- FIXME comments
-- Unused imports
-- Unused variables
-- Unused functions
-- Unused classes
-
-Usage:
-    python -m asf.medical.scripts.identify_deprecated_code
-"""
-
 import os
 import re
 import ast
@@ -25,7 +5,6 @@ import sys
 from pathlib import Path
 from typing import List, Dict, Set, Tuple, Optional
 
-# Patterns to look for
 DEPRECATED_FILE_PATTERNS = [r"_new\.py$", r"_old\.py$", r"\.bak$", r"\.old$"]
 DEPRECATED_COMMENT_PATTERNS = [
     r"#\s*TODO",
@@ -72,7 +51,8 @@ def check_deprecated_comments(files: List[str]) -> Dict[str, List[Tuple[int, str
             if file_comments:
                 deprecated_comments[file] = file_comments
         except Exception as e:
-            print(f"Error reading {file}: {e}")
+    logger.error(f\"Error reading {file}: {str(e)}\")
+    raise DatabaseError(f\"Error reading {file}: {str(e)}\")
     return deprecated_comments
 
 def find_duplicate_routes(files: List[str]) -> Dict[str, List[str]]:
@@ -93,7 +73,8 @@ def find_duplicate_routes(files: List[str]) -> Dict[str, List[str]]:
                     else:
                         routes[route] = file
         except Exception as e:
-            print(f"Error reading {file}: {e}")
+    logger.error(f\"Error reading {file}: {str(e)}\")
+    raise DatabaseError(f\"Error reading {file}: {str(e)}\")
 
     return duplicate_routes
 
@@ -146,72 +127,16 @@ def find_unused_imports(files: List[str]) -> Dict[str, List[str]]:
                 unused_imports[file] = file_unused_imports
 
         except Exception as e:
-            print(f"Error analyzing {file}: {e}")
+    logger.error(f\"Error analyzing {file}: {str(e)}\")
+    raise DatabaseError(f\"Error analyzing {file}: {str(e)}\")
 
     return unused_imports
 
 def main():
-    """Main function to run the script."""
-    if len(sys.argv) > 1:
-        directory = sys.argv[1]
-    else:
-        # Default to the asf/medical directory
-        directory = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "medical")
+    """Main function to run the script.
 
-    print(f"Scanning directory: {directory}")
+    Args:
+        # TODO: Add parameter descriptions
 
-    # Find all Python files
-    python_files = find_python_files(directory)
-    print(f"Found {len(python_files)} Python files")
-
-    # Check for deprecated filenames
-    deprecated_files = check_deprecated_filenames(python_files)
-    if deprecated_files:
-        print("\n=== Files with deprecated naming patterns ===")
-        for file in deprecated_files:
-            print(f"  - {file}")
-
-    # Check for deprecated comments
-    deprecated_comments = check_deprecated_comments(python_files)
-    if deprecated_comments:
-        print("\n=== Files with deprecated comments ===")
-        for file, comments in deprecated_comments.items():
-            print(f"  - {file}")
-            for line_num, comment in comments:
-                print(f"    Line {line_num}: {comment}")
-
-    # Find duplicate routes
-    duplicate_routes = find_duplicate_routes(python_files)
-    if duplicate_routes:
-        print("\n=== Duplicate route definitions ===")
-        for route, files in duplicate_routes.items():
-            print(f"  - Route '{route}' defined in:")
-            for file in files:
-                print(f"    - {file}")
-
-    # Find unused imports
-    unused_imports = find_unused_imports(python_files)
-    if unused_imports:
-        print("\n=== Files with potentially unused imports ===")
-        for file, imports in unused_imports.items():
-            print(f"  - {file}")
-            for imp in imports:
-                print(f"    - {imp}")
-
-    # Summary
-    print("\n=== Summary ===")
-    print(f"Files with deprecated naming patterns: {len(deprecated_files)}")
-    print(f"Files with deprecated comments: {len(deprecated_comments)}")
-    print(f"Duplicate route definitions: {len(duplicate_routes)}")
-    print(f"Files with potentially unused imports: {len(unused_imports)}")
-
-    # Suggest next steps
-    print("\n=== Suggested Next Steps ===")
-    print("1. Review and remove or refactor files with deprecated naming patterns")
-    print("2. Address deprecated comments by either implementing the TODO or removing deprecated code")
-    print("3. Consolidate duplicate route definitions to ensure a single source of truth")
-    print("4. Clean up unused imports to improve code clarity")
-    print("5. Run tests after each change to ensure functionality is preserved")
-
-if __name__ == "__main__":
-    main()
+    Returns:
+        # TODO: Add return description

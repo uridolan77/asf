@@ -1,5 +1,3 @@
-# Enhanced CategoryFormationSystem with active inference
-
 import torch
 import torch.nn.functional as F
 import uuid
@@ -24,37 +22,20 @@ class CategoryFormationSystem:
         self.logger = logging.getLogger("ASF.Layer3.CategoryFormation")
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         
-        # Seth's Data Paradox enhancements
         self.category_predictions = {}  # Node set hash -> predicted categories
         self.category_errors = defaultdict(list)  # Input hash -> prediction errors
         self.category_precision = {}  # Input hash -> precision
         
     async def predict_categories(self, partial_nodes, method="similarity", params=None):
-        """
-        Predict category formation from partial node set.
-        Implements Seth's predictive processing principle.
-        
-        Args:
-            partial_nodes: Dict of node IDs to nodes (subset of total)
-            method: Categorization method
-            params: Additional parameters
-            
-        Returns:
-            Predicted categories
-        """
         params = params or {}
         node_set_hash = self._hash_node_set(partial_nodes.keys(), method)
         
-        # Check cache for identical node set
         if node_set_hash in self.category_predictions:
             return self.category_predictions[node_set_hash]
         
-        # For similarity-based prediction, we need embeddings
         if method == "similarity":
-            # Extract node embeddings
             node_ids = list(partial_nodes.keys())
             
-            # Use tensor-based similarity
             embeddings_list = []
             valid_node_ids = []
             
@@ -70,18 +51,14 @@ class CategoryFormationSystem:
             if not embeddings_list:
                 return {"status": "error", "message": "No valid embeddings for prediction"}
             
-            # Stack tensors
             embeddings_tensor = torch.stack(embeddings_list).to(self.device)
             
-            # Normalize embeddings
             norms = torch.norm(embeddings_tensor, dim=1, keepdim=True)
             norms[norms == 0] = 1.0  # Avoid division by zero
             normalized_embeddings = embeddings_tensor / norms
             
-            # Calculate similarity matrix
             similarity_matrix = torch.mm(normalized_embeddings, normalized_embeddings.t()).cpu().numpy()
             
-            # Predict clusters
             min_cluster_size = params.get('min_cluster_size', 3)
             similarity_threshold = params.get('similarity_threshold', 0.7)
             
@@ -92,23 +69,18 @@ class CategoryFormationSystem:
                 similarity_threshold=similarity_threshold
             )
             
-            # Create predicted categories
             predicted_categories = []
             
             for i, cluster in enumerate(predicted_clusters):
-                # Get nodes in this cluster
                 cluster_nodes = [partial_nodes[valid_node_ids[idx]] for idx in cluster if idx < len(valid_node_ids)]
                 
                 if len(cluster_nodes) < min_cluster_size:
                     continue
                 
-                # Find common properties
                 common_properties = self._find_common_properties(cluster_nodes)
                 
-                # Generate category label
                 category_label = self._generate_category_label(common_properties, cluster_nodes)
                 
-                # Record predicted category
                 predicted_categories.append({
                     'id': f"predicted_category_{i}",
                     'label': category_label,
@@ -118,7 +90,6 @@ class CategoryFormationSystem:
                     'confidence': 0.7  # Default confidence for predictions
                 })
             
-            # Create prediction result
             prediction_result = {
                 "status": "success",
                 "categories": predicted_categories,
@@ -126,25 +97,20 @@ class CategoryFormationSystem:
                 "categorized_nodes": sum(len(cat['members']) for cat in predicted_categories)
             }
             
-            # Store in cache
             self.category_predictions[node_set_hash] = prediction_result
             
             return prediction_result
             
         elif method == "property":
-            # Property-based prediction is simpler but less accurate
-            # Find common properties across partial nodes
             all_properties = set()
             for node in partial_nodes.values():
                 all_properties.update(node.properties.keys())
                 
-            # Group nodes by property
             property_to_nodes = defaultdict(list)
             for node_id, node in partial_nodes.items():
                 for prop in node.properties:
                     property_to_nodes[prop].append(node_id)
             
-            # Predict categories based on common properties
             predicted_categories = []
             
             for prop, members in property_to_nodes.items():
@@ -165,7 +131,6 @@ class CategoryFormationSystem:
                             'confidence': 0.7
                         })
             
-            # Create prediction result
             prediction_result = {
                 "status": "success",
                 "categories": predicted_categories,
@@ -173,43 +138,26 @@ class CategoryFormationSystem:
                 "categorized_nodes": sum(len(cat['members']) for cat in predicted_categories)
             }
             
-            # Store in cache
             self.category_predictions[node_set_hash] = prediction_result
             
             return prediction_result
         
         else:
-            # Fall back to similarity
             return await self.predict_categories(partial_nodes, "similarity", params)
     
     async def refine_categories_via_active_inference(self, initial_categories, source_nodes=None):
-        """
-        Refine categories through active inference to minimize prediction error.
-        Implements Seth's active inference principle.
-        
-        Args:
-            initial_categories: Initial category formation
-            source_nodes: Source nodes used for category formation
-            
-        Returns:
-            Refined categories
-        """
         if not initial_categories or 'categories' not in initial_categories:
             return initial_categories
         
         if not source_nodes:
-            # Can't refine without source nodes
             return initial_categories
         
         categories = initial_categories['categories']
         
-        # Calculate initial prediction error
         initial_error = self._calculate_category_prediction_error(categories, source_nodes)
         
-        # Generate candidate refinements
         candidates = self._generate_category_refinements(categories, source_nodes)
         
-        # Evaluate candidates
         best_categories = categories
         best_error = initial_error
         
@@ -220,7 +168,6 @@ class CategoryFormationSystem:
                 best_error = error
                 best_categories = candidate
         
-        # If we found a better arrangement, create result
         if best_error < initial_error:
             refined_result = dict(initial_categories)
             refined_result['categories'] = best_categories
@@ -232,7 +179,6 @@ class CategoryFormationSystem:
             
             return refined_result
         
-        # No improvement
         return initial_categories
     
     def _calculate_category_prediction_error(self, categories, source_nodes):
@@ -293,8 +239,6 @@ class CategoryFormationSystem:
         """Generate candidate category refinements."""
         candidates = []
         
-        # Strategy 1: Move nodes between categories
-        # Find boundary nodes (nodes that could belong to multiple categories)
         node_categories = defaultdict(list)
         category_nodes = {}
         
@@ -303,13 +247,10 @@ class CategoryFormationSystem:
             for member_id in cat['members']:
                 node_categories[member_id].append(i)
         
-        # Try moving boundary nodes
         for node_id, cat_indices in node_categories.items():
             if len(cat_indices) == 1 and node_id in source_nodes:
-                # Node belongs to only one category - consider moving it
                 current_cat_idx = cat_indices[0]
                 
-                # Find most similar category
                 node = source_nodes[node_id]
                 best_similarity = -1
                 best_target_idx = -1
@@ -318,7 +259,6 @@ class CategoryFormationSystem:
                     if target_idx == current_cat_idx:
                         continue
                     
-                    # Calculate average similarity to this category
                     similarities = []
                     for member_id in members:
                         if member_id in source_nodes:
@@ -336,18 +276,15 @@ class CategoryFormationSystem:
                             best_target_idx = target_idx
                 
                 if best_similarity > 0.5:  # Only if reasonably similar
-                    # Create a candidate with this node moved
                     candidate = []
                     
                     for i, cat in enumerate(categories):
                         new_cat = dict(cat)
                         
                         if i == current_cat_idx:
-                            # Remove from this category
                             new_cat['members'] = [m for m in cat['members'] if m != node_id]
                             new_cat['size'] = len(new_cat['members'])
                         elif i == best_target_idx:
-                            # Add to this category
                             new_cat['members'] = cat['members'] + [node_id]
                             new_cat['size'] = len(new_cat['members'])
                         
@@ -355,23 +292,19 @@ class CategoryFormationSystem:
                     
                     candidates.append(candidate)
         
-        # Strategy 2: Merge similar categories
         for i in range(len(categories)):
             for j in range(i+1, len(categories)):
                 cat1 = categories[i]
                 cat2 = categories[j]
                 
-                # Calculate overlap
                 members1 = set(cat1['members'])
                 members2 = set(cat2['members'])
                 
                 overlap = len(members1.intersection(members2))
                 
                 if overlap > 0 or self._are_categories_similar(cat1, cat2):
-                    # Create a merged category
                     merged_members = list(members1.union(members2))
                     
-                    # Create common properties
                     common_properties = {}
                     for prop in cat1['common_properties']:
                         if prop in cat2['common_properties'] and cat1['common_properties'][prop] == cat2['common_properties'][prop]:
@@ -385,7 +318,6 @@ class CategoryFormationSystem:
                         'common_properties': common_properties
                     }
                     
-                    # Create candidate with merged category
                     candidate = []
                     for k, cat in enumerate(categories):
                         if k != i and k != j:
@@ -426,6 +358,5 @@ class CategoryFormationSystem:
     
     def _hash_node_set(self, node_ids, method):
         """Create a stable hash for node sets."""
-        # Sort node IDs for consistency
         sorted_ids = sorted(str(nid) for nid in node_ids)
         return hash((tuple(sorted_ids), method))

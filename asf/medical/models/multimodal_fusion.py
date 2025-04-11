@@ -9,9 +9,7 @@ import logging
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Dict, List, Optional, Tuple, Union, Any
 
-# Configure logging
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
@@ -33,23 +31,11 @@ class MultimodalFusionModel(nn.Module):
         num_heads: int = 4,
         dropout: float = 0.1
     ):
-        """
-        Initialize the multimodal fusion model.
-        
-        Args:
-            text_dim: Dimension of text embeddings
-            metadata_dim: Dimension of metadata features
-            fusion_dim: Dimension of fusion space
-            num_heads: Number of attention heads
-            dropout: Dropout rate
-        """
         super().__init__()
         
-        # Projections to common fusion space
         self.text_projection = nn.Linear(text_dim, fusion_dim)
         self.metadata_projection = nn.Linear(metadata_dim, fusion_dim)
         
-        # Attention mechanism for fusion
         self.attention = nn.MultiheadAttention(
             embed_dim=fusion_dim, 
             num_heads=num_heads, 
@@ -57,11 +43,9 @@ class MultimodalFusionModel(nn.Module):
             batch_first=True
         )
         
-        # Layer normalization
         self.layer_norm1 = nn.LayerNorm(fusion_dim)
         self.layer_norm2 = nn.LayerNorm(fusion_dim)
         
-        # Feed-forward network
         self.ffn = nn.Sequential(
             nn.Linear(fusion_dim, fusion_dim * 4),
             nn.GELU(),
@@ -69,10 +53,8 @@ class MultimodalFusionModel(nn.Module):
             nn.Linear(fusion_dim * 4, fusion_dim)
         )
         
-        # Output projection
         self.output_projection = nn.Linear(fusion_dim, fusion_dim)
         
-        # Dropout
         self.dropout = nn.Dropout(dropout)
     
     def forward(
@@ -80,39 +62,21 @@ class MultimodalFusionModel(nn.Module):
         text_embedding: torch.Tensor, 
         metadata: torch.Tensor
     ) -> torch.Tensor:
-        """
-        Fuse text embeddings with metadata.
-        
-        Args:
-            text_embedding: Text embeddings [batch_size, text_dim]
-            metadata: Metadata features [batch_size, metadata_dim]
-            
-        Returns:
-            Fused representation [batch_size, fusion_dim]
-        """
-        # Project inputs to common fusion space
         text_proj = self.text_projection(text_embedding)
         meta_proj = self.metadata_projection(metadata)
         
-        # Combine as sequence for attention
-        # [batch_size, 2, fusion_dim]
         sequence = torch.stack([text_proj, meta_proj], dim=1)
         
-        # Self-attention for fusion
         attn_output, _ = self.attention(sequence, sequence, sequence)
         attn_output = self.dropout(attn_output)
         
-        # Residual connection and layer normalization
         sequence = self.layer_norm1(sequence + attn_output)
         
-        # Feed-forward network
         ffn_output = self.ffn(sequence)
         ffn_output = self.dropout(ffn_output)
         
-        # Residual connection and layer normalization
         sequence = self.layer_norm2(sequence + ffn_output)
         
-        # Pool and project
         fused = torch.mean(sequence, dim=1)
         output = self.output_projection(fused)
         
@@ -137,12 +101,10 @@ class MetadataExtractor:
         self.use_spacy = use_spacy
         self.spacy_model = None
         
-        # Initialize spaCy model if requested
         if self.use_spacy:
             try:
                 import spacy
                 
-                # Load spaCy model
                 self.spacy_model = spacy.load("en_core_sci_md")
                 logger.info("Initialized spaCy for metadata extraction")
             except ImportError:
@@ -152,7 +114,6 @@ class MetadataExtractor:
                 logger.warning(f"Failed to initialize spaCy: {e}. Falling back to rule-based approach.")
                 self.use_spacy = False
         
-        # Initialize rule-based components
         self.study_design_patterns = {
             "randomized controlled trial": 5.0,
             "rct": 5.0,
@@ -182,7 +143,6 @@ class MetadataExtractor:
             "preclinical": 1.0
         }
         
-        # Sample size patterns
         self.sample_size_patterns = [
             r"n\s*=\s*(\d+)",
             r"sample size\s*(?:of|:|was)?\s*(\d+)",
@@ -193,7 +153,6 @@ class MetadataExtractor:
             r"total of\s*(\d+)\s*(?:patients|participants|subjects)"
         ]
         
-        # Compile regex patterns
         import re
         self.sample_size_regex = [re.compile(pattern, re.IGNORECASE) for pattern in self.sample_size_patterns]
     
@@ -209,7 +168,6 @@ class MetadataExtractor:
         """
         text_lower = text.lower()
         
-        # Find all matching study design patterns
         matches = []
         for pattern, score in self.study_design_patterns.items():
             if pattern in text_lower:
@@ -218,10 +176,8 @@ class MetadataExtractor:
                     "score": score
                 })
         
-        # Sort by score (highest first)
         matches.sort(key=lambda x: x["score"], reverse=True)
         
-        # Get the highest scoring design
         if matches:
             best_match = matches[0]
             return {
@@ -246,7 +202,6 @@ class MetadataExtractor:
         Returns:
             Dictionary with sample size information
         """
-        # Find all sample size matches
         matches = []
         for regex in self.sample_size_regex:
             for match in regex.finditer(text):
@@ -259,10 +214,8 @@ class MetadataExtractor:
                 except (ValueError, IndexError):
                     continue
         
-        # Sort by sample size (largest first)
         matches.sort(key=lambda x: x["sample_size"], reverse=True)
         
-        # Get the largest sample size
         if matches:
             best_match = matches[0]
             return {
@@ -287,13 +240,10 @@ class MetadataExtractor:
         Returns:
             Dictionary with all extracted metadata
         """
-        # Extract study design
         study_design = self.extract_study_design(text)
         
-        # Extract sample size
         sample_size = self.extract_sample_size(text)
         
-        # Combine all metadata
         metadata = {
             "study_design": study_design,
             "sample_size": sample_size
@@ -311,21 +261,17 @@ class MetadataExtractor:
         Returns:
             Tensor representation of metadata [metadata_dim]
         """
-        # Extract features
         design_score = metadata.get("study_design", {}).get("design_score", 0.0)
         sample_size = metadata.get("sample_size", {}).get("sample_size", 0)
         
-        # Normalize sample size (log scale)
         import math
         if sample_size > 0:
             normalized_sample_size = math.log10(sample_size) / 5.0  # Assuming max sample size is 10^5
         else:
             normalized_sample_size = 0.0
         
-        # Normalize design score
         normalized_design_score = design_score / 5.0  # Assuming max score is 5.0
         
-        # Create tensor
         metadata_tensor = torch.tensor(
             [normalized_design_score, normalized_sample_size],
             dtype=torch.float32
@@ -350,32 +296,19 @@ class MultimodalContradictionDetector:
         metadata_dim: int = 2,
         fusion_dim: int = 128
     ):
-        """
-        Initialize the multimodal contradiction detector.
-        
-        Args:
-            biomedlm_scorer: BioMedLMScorer instance
-            metadata_extractor: MetadataExtractor instance
-            text_dim: Dimension of text embeddings
-            metadata_dim: Dimension of metadata features
-            fusion_dim: Dimension of fusion space
-        """
         self.biomedlm_scorer = biomedlm_scorer
         
-        # Initialize metadata extractor if not provided
         if metadata_extractor is None:
             self.metadata_extractor = MetadataExtractor()
         else:
             self.metadata_extractor = metadata_extractor
         
-        # Initialize fusion model
         self.fusion_model = MultimodalFusionModel(
             text_dim=text_dim,
             metadata_dim=metadata_dim,
             fusion_dim=fusion_dim
         )
         
-        # Initialize device
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.fusion_model.to(self.device)
     
@@ -390,31 +323,25 @@ class MultimodalContradictionDetector:
             Text embedding tensor
         """
         if self.biomedlm_scorer is None:
-            # Return random embedding if BioMedLM is not available
             return torch.randn(768, device=self.device)
         
         try:
-            # Get embedding from BioMedLM
             import torch
             
-            # Use tokenizer to get input IDs
             inputs = self.biomedlm_scorer.tokenizer(
                 text, return_tensors="pt", padding=True, truncation=True, max_length=512
             )
             inputs = {k: v.to(self.device) for k, v in inputs.items()}
             
-            # Get model outputs
             with torch.no_grad():
                 outputs = self.biomedlm_scorer.model(**inputs, output_hidden_states=True)
             
-            # Get the [CLS] token embedding from the last hidden state
             last_hidden_state = outputs.hidden_states[-1]
             cls_embedding = last_hidden_state[:, 0, :]  # [batch_size, hidden_size]
             
             return cls_embedding.squeeze(0)  # [hidden_size]
         except Exception as e:
             logger.error(f"Error getting text embedding: {e}")
-            # Return random embedding in case of error
             return torch.randn(768, device=self.device)
     
     def detect_contradiction(self, text1: str, text2: str) -> Dict[str, Any]:
@@ -428,41 +355,32 @@ class MultimodalContradictionDetector:
         Returns:
             Dictionary with contradiction detection results
         """
-        # Extract metadata
         metadata1 = self.metadata_extractor.extract_metadata(text1)
         metadata2 = self.metadata_extractor.extract_metadata(text2)
         
-        # Encode metadata
         metadata_tensor1 = self.metadata_extractor.encode_metadata(metadata1)
         metadata_tensor2 = self.metadata_extractor.encode_metadata(metadata2)
         
-        # Move to device
         metadata_tensor1 = metadata_tensor1.to(self.device)
         metadata_tensor2 = metadata_tensor2.to(self.device)
         
-        # Get text embeddings
         text_embedding1 = self.get_text_embedding(text1)
         text_embedding2 = self.get_text_embedding(text2)
         
-        # Fuse text and metadata
         with torch.no_grad():
             fused_embedding1 = self.fusion_model(text_embedding1, metadata_tensor1)
             fused_embedding2 = self.fusion_model(text_embedding2, metadata_tensor2)
         
-        # Compute similarity between fused embeddings
         similarity = F.cosine_similarity(fused_embedding1, fused_embedding2, dim=0).item()
         
-        # Compute contradiction score (inverse of similarity)
         contradiction_score = 1.0 - (similarity + 1.0) / 2.0
         
-        # Get base contradiction score from BioMedLM if available
         biomedlm_result = None
         if self.biomedlm_scorer is not None:
             try:
                 biomedlm_result = self.biomedlm_scorer.detect_contradiction_with_negation(text1, text2)
                 biomedlm_score = biomedlm_result.get("contradiction_score", 0.5)
                 
-                # Combine scores (weighted average)
                 combined_score = 0.7 * biomedlm_score + 0.3 * contradiction_score
             except Exception as e:
                 logger.error(f"Error getting BioMedLM contradiction score: {e}")
@@ -470,10 +388,8 @@ class MultimodalContradictionDetector:
         else:
             combined_score = contradiction_score
         
-        # Determine if contradiction exists
         has_contradiction = combined_score > 0.7
         
-        # Create result
         result = {
             "text1": text1,
             "text2": text2,
@@ -485,7 +401,6 @@ class MultimodalContradictionDetector:
             "method": "multimodal_fusion"
         }
         
-        # Add BioMedLM result if available
         if biomedlm_result is not None:
             result["biomedlm_result"] = biomedlm_result
         

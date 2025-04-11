@@ -17,23 +17,6 @@ class SymbolicPotential:
 
 
     async def save(self, db_driver: Optional[DatabaseDriver] = None):
-        """Saves the potential to the database."""
-        db_driver = db_driver or self.db_driver
-        if not db_driver:
-            raise ValueError("Database driver not set.")
-
-        potential_data = {
-            "potential_id": self.potential_id,
-            "activation_value": self.activation_value,
-            "meaning_potential": self.meaning_potential,  #  Neo4j handles dictionaries
-            "contextual_relevance": self.contextual_relevance,
-        }
-        await db_driver.add_node("Potential", potential_data)
-
-
-    @classmethod
-    async def load(cls, potential_id: str, db_driver: DatabaseDriver) -> "SymbolicPotential":
-        """Loads a potential from the database."""
         potential_data = await db_driver.get_node("Potential", "potential_id", potential_id)
         if not potential_data:
             return None

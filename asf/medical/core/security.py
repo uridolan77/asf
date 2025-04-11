@@ -5,14 +5,12 @@ This module provides security-related functions and utilities.
 """
 
 from datetime import datetime, timedelta
-from typing import Any, Dict, Optional, Union
 
 from jose import jwt
 from passlib.context import CryptContext
 
 from asf.medical.core.config import settings
 
-# Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -43,17 +41,6 @@ def get_password_hash(password: str) -> str:
 def create_access_token(
     subject: Union[str, Any], expires_delta: Optional[timedelta] = None, token_type: str = "access"
 ) -> str:
-    """
-    Create a JWT access token.
-
-    Args:
-        subject: Token subject (usually user ID or email)
-        expires_delta: Token expiration time
-        token_type: Token type (access or refresh)
-
-    Returns:
-        JWT token
-    """
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
@@ -77,16 +64,6 @@ def create_access_token(
 def create_refresh_token(
     subject: Union[str, Any], expires_delta: Optional[timedelta] = None
 ) -> str:
-    """
-    Create a JWT refresh token.
-
-    Args:
-        subject: Token subject (usually user ID or email)
-        expires_delta: Token expiration time
-
-    Returns:
-        JWT refresh token
-    """
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:

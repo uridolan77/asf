@@ -6,7 +6,6 @@ contradictions in medical literature.
 """
 
 from enum import Enum
-from typing import Dict, List, Optional, Any, Union
 
 class ResolutionStrategy(str, Enum):
     """Resolution strategies for medical contradictions."""

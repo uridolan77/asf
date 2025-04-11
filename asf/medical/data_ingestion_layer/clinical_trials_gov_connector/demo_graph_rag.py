@@ -1,21 +1,9 @@
-#!/usr/bin/env python3
-"""
-GraphRAG Demo Script
-
-This script demonstrates the capabilities of the GraphRAG system for medical research
-by ingesting clinical trial data and answering questions about treatments and conditions.
-"""
-
 import os
 import sys
-import json
 import logging
-from typing import Dict, List, Any
 
-# Import the GraphRAG client
 from clinical_trials_client import ClinicalTrialsGraphRAGClient
 
-# Set up logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
@@ -23,25 +11,36 @@ logging.basicConfig(
 logger = logging.getLogger("graphrag_demo")
 
 def display_header(title: str):
-    """Display a formatted header."""
+    """Display a formatted header.
+
+    Args:
+        # TODO: Add parameter descriptions
+
+    Returns:
+        # TODO: Add return description
+    """
     print("\n" + "="*80)
     print(f"  {title}")
     print("="*80)
 
 def run_demo():
-    """Run the GraphRAG demo."""
-    # Check for OpenAI API key
+    """Run the GraphRAG demo.
+
+    Args:
+        # TODO: Add parameter descriptions
+
+    Returns:
+        # TODO: Add return description
+    """
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
         print("ERROR: Please set the OPENAI_API_KEY environment variable.")
         sys.exit(1)
     
-    # Initialize the client
     display_header("Initializing GraphRAG Client")
     client = ClinicalTrialsGraphRAGClient(openai_api_key=api_key)
     print("Client initialized successfully.")
     
-    # Ingest COVID-19 trials
     display_header("Ingesting COVID-19 Clinical Trials")
     covid_doc_ids = client.fetch_and_ingest_trials(
         query="COVID-19 treatment",
@@ -51,7 +50,6 @@ def run_demo():
     )
     print(f"Ingested {len(covid_doc_ids)} COVID-19 clinical trials.")
     
-    # Ingest diabetes trials
     display_header("Ingesting Diabetes Clinical Trials")
     diabetes_doc_ids = client.fetch_and_ingest_trials(
         query="Type 2 Diabetes treatment",
@@ -61,7 +59,6 @@ def run_demo():
     )
     print(f"Ingested {len(diabetes_doc_ids)} diabetes clinical trials.")
     
-    # Get system statistics
     display_header("System Statistics")
     stats = client.get_statistics()
     print(f"Total documents: {stats['total_documents']}")
@@ -69,10 +66,8 @@ def run_demo():
     print(f"Entity types: {', '.join(stats['entity_counts'].keys())}")
     print(f"Data sources: {len(stats['data_sources'])}")
     
-    # Search for COVID-19 treatments
     display_header("Searching: COVID-19 Treatment Efficacy")
     
-    # First, do a regular vector search
     vector_results = client.search_trials(
         query="What is the efficacy of remdesivir for COVID-19?",
         use_graph=False,
@@ -85,7 +80,6 @@ def run_demo():
         print(f"{i}. {result.get('title')} (NCT ID: {result.get('metadata', {}).get('nct_id', '')})")
         print(f"   Relevance: {1.0 - result.get('distance', 0):.2f}")
     
-    # Then, do a graph-based search
     graph_results = client.search_trials(
         query="What is the efficacy of remdesivir for COVID-19?",
         use_graph=True,
@@ -99,7 +93,6 @@ def run_demo():
         if 'connection' in result and isinstance(result['connection'], dict):
             print(f"   Connected via: {result['connection'].get('entity_type')}:{result['connection'].get('entity_value')}")
     
-    # Answer questions using RAG
     display_header("Answering Questions with GraphRAG")
     
     questions = [
@@ -124,7 +117,6 @@ def run_demo():
         for j, source in enumerate(response['sources'][:3], 1):  # Show only top 3 sources
             print(f"  {j}. {source.get('title')} (NCT ID: {source.get('nct_id')})")
     
-    # Demonstrate the value of graph-based retrieval
     display_header("Demonstrating GraphRAG Advantage")
     
     print("This example shows how GraphRAG can find related information through entity connections")
@@ -132,7 +124,6 @@ def run_demo():
     
     query = "What treatments are being studied for COVID-19 patients with diabetes?"
     
-    # Vector search
     print("\nTraditional Vector Search:")
     vector_answer = client.get_answer(
         query=query,
@@ -141,7 +132,6 @@ def run_demo():
     )
     print(f"Answer: {vector_answer['response']}")
     
-    # Graph search
     print("\nGraph-Based RAG:")
     graph_answer = client.get_answer(
         query=query,

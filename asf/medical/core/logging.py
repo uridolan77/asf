@@ -8,7 +8,6 @@ import logging
 import json
 import time
 import uuid
-from typing import Dict, Any, Optional
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 
@@ -22,16 +21,6 @@ class RequestIdMiddleware(BaseHTTPMiddleware):
     """
     
     async def dispatch(self, request: Request, call_next):
-        """
-        Add a request ID to the request and response.
-        
-        Args:
-            request: The incoming request
-            call_next: The next middleware or route handler
-            
-        Returns:
-            The response
-        """
         request_id = str(uuid.uuid4())
         request.state.request_id = request_id
         response = await call_next(request)
@@ -64,7 +53,6 @@ class JSONLogFormatter(logging.Formatter):
             "line": record.lineno
         }
         
-        # Add extra fields from record
         for key, value in record.__dict__.items():
             if key.startswith("_") or key in log_record:
                 continue
@@ -81,27 +69,22 @@ def setup_logging():
     Returns:
         The root logger
     """
-    # Get log level from settings
     log_level = getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO)
     
-    # Create handlers
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(JSONLogFormatter())
     
     file_handler = logging.FileHandler("medical_research_synthesizer.log")
     file_handler.setFormatter(JSONLogFormatter())
     
-    # Configure root logger
     root_logger = logging.getLogger()
     root_logger.setLevel(log_level)
     root_logger.addHandler(console_handler)
     root_logger.addHandler(file_handler)
     
-    # Configure app logger
     app_logger = logging.getLogger("asf")
     app_logger.setLevel(log_level)
     
-    # Disable propagation for some loggers
     for logger_name in ["uvicorn", "uvicorn.access"]:
         logging.getLogger(logger_name).propagate = False
     

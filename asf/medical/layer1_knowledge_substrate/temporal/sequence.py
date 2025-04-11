@@ -11,54 +11,59 @@ class TemporalSequence:
         self.events = deque(maxlen=max_length)
         self.timestamps = deque(maxlen=max_length)
         self._max_length = max_length
-        # Cache for window lookups
         self._last_window_time = 0
         self._last_window_size = 0
         self._last_window_result = []
     
     def add_event(self, event, timestamp=None):
-        """Add event to sequence with optional timestamp"""
+        """Add event to sequence with optional timestamp
+
+    Args:
+        # TODO: Add parameter descriptions
+
+    Returns:
+        # TODO: Add return description
+    """
         if timestamp is None:
             timestamp = time.time()
         
-        # Local references for performance
         events = self.events
         timestamps = self.timestamps
         
         events.append(event)
         timestamps.append(timestamp)
         
-        # Invalidate cache when new events are added
         self._last_window_time = 0
         
         return len(events)  # Return new size for convenience
     
     def get_events_in_window(self, window_size):
-        """Return events within the specified time window from now"""
+        """Return events within the specified time window from now
+
+    Args:
+        # TODO: Add parameter descriptions
+
+    Returns:
+        # TODO: Add return description
+    """
         current_time = time.time()
         
-        # Check if we can use cached result
         if (current_time - self._last_window_time < 0.1 and  # Cache valid for 100ms
             window_size == self._last_window_size and
             self._last_window_result):
             return self._last_window_result
         
-        # Local references for performance
         timestamps = self.timestamps
         events = self.events
         
-        # Optimize: use binary search to find cutoff index
         cutoff_time = current_time - window_size
         
-        # If sequence is empty
         if not timestamps:
             return []
         
-        # If all events are within window
         if timestamps[0] >= cutoff_time:
             result = list(events)
         else:
-            # Find index using binary search approximation
             left, right = 0, len(timestamps) - 1
             cutoff_idx = 0
             
@@ -70,10 +75,8 @@ class TemporalSequence:
                 else:
                     right = mid - 1
             
-            # Extract events from cutoff_idx to end
             result = list(events)[cutoff_idx:]
         
-        # Cache the result
         self._last_window_time = current_time
         self._last_window_size = window_size
         self._last_window_result = result
@@ -81,7 +84,14 @@ class TemporalSequence:
         return result
     
     def get_latest_events(self, n=1):
-        """Get the n most recent events"""
+        """Get the n most recent events
+
+    Args:
+        # TODO: Add parameter descriptions
+
+    Returns:
+        # TODO: Add return description
+    """
         if not self.events:
             return []
         
@@ -91,18 +101,39 @@ class TemporalSequence:
         return list(self.events)[-n:]
     
     def clear(self):
-        """Clear all events and timestamps"""
+        """Clear all events and timestamps
+
+    Args:
+        # TODO: Add parameter descriptions
+
+    Returns:
+        # TODO: Add return description
+    """
         self.events.clear()
         self.timestamps.clear()
         self._last_window_time = 0
         self._last_window_result = []
         
     def __len__(self):
-        """Return the number of events in sequence"""
+        """Return the number of events in sequence
+
+    Args:
+        # TODO: Add parameter descriptions
+
+    Returns:
+        # TODO: Add return description
+    """
         return len(self.events)
     
     def get_statistics(self):
-        """Return statistical information about the sequence"""
+        """Return statistical information about the sequence
+
+    Args:
+        # TODO: Add parameter descriptions
+
+    Returns:
+        # TODO: Add return description
+    """
         if not self.timestamps:
             return {
                 "count": 0,

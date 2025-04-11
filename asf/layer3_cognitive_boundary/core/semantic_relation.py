@@ -25,11 +25,9 @@ class SemanticRelation:
     temporal_metadata: AdaptiveTemporalMetadata = field(default_factory=AdaptiveTemporalMetadata)
     metadata: Dict[str, Any] = field(default_factory=dict)
     
-    # Enhanced properties
     attention_weight: float = 1.0  # For attention-weighted graph
     embedding: Optional[np.ndarray] = None  # Relation-specific embedding
     
-    # Predictive properties
     anticipated_weights: Dict[str, float] = field(default_factory=dict)
     weight_prediction_errors: Dict[str, list] = field(default_factory=lambda: defaultdict(list))
     weight_precision: Dict[str, float] = field(default_factory=dict)
@@ -56,31 +54,24 @@ class SemanticRelation:
         Returns:
             Anticipated weight
         """
-        # If we already have a prediction for this context, return it
         if context in self.anticipated_weights:
             return self.anticipated_weights[context]
         
         factors = factors or {}
         current_weight = self.weight
         
-        # Base prediction on current weight
         prediction = current_weight
         
-        # Adjust prediction based on factors
         if 'temporal_decay' in factors and factors['temporal_decay']:
-            # Predict temporal decay effect
             time_factor = np.exp(-0.1 * factors.get('elapsed_time', 0) / 86400)
             prediction *= time_factor
             
         if 'competing_relation' in factors:
-            # Predict effect of competing relation
             prediction *= 0.9
             
         if 'reinforcing_relation' in factors:
-            # Predict effect of reinforcing relation
             prediction = min(1.0, prediction * 1.1)
             
-        # Store prediction
         self.anticipated_weights[context] = prediction
         
         return prediction
@@ -100,20 +91,16 @@ class SemanticRelation:
         old_weight = self.weight
         self.weight = new_weight
         
-        # If we had a prediction for this context, calculate error
         error = None
         if context in self.anticipated_weights:
             predicted = self.anticipated_weights[context]
             error = abs(predicted - new_weight)
             
-            # Track error for precision calculation
             self.weight_prediction_errors[context].append(error)
             
-            # Limit history size
             if len(self.weight_prediction_errors[context]) > 20:
                 self.weight_prediction_errors[context] = self.weight_prediction_errors[context][-20:]
             
-            # Update precision (inverse variance)
             if len(self.weight_prediction_errors[context]) > 1:
                 variance = np.var(self.weight_prediction_errors[context])
                 precision = 1.0 / (variance + 1e-6)  # Avoid division by zero

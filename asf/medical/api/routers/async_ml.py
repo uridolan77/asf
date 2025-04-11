@@ -9,7 +9,6 @@ import json
 from typing import Dict, List, Any, Optional
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 
-from asf.medical.api.models.base import APIResponse, ErrorResponse
 from asf.medical.api.auth import get_current_active_user
 from asf.medical.storage.models import User
 from asf.medical.tasks.ml_inference_tasks import (
@@ -19,10 +18,8 @@ from asf.medical.tasks.ml_inference_tasks import (
 from asf.medical.core.persistent_task_storage import task_storage
 from asf.medical.core.monitoring import async_timed, log_error
 
-# Initialize router
 router = APIRouter(prefix="/async-ml", tags=["async-ml"])
 
-# Set up logging
 logger = logging.getLogger(__name__)
 
 @router.post("/contradiction/detect", response_model=APIResponse[Dict[str, Any]])
@@ -35,30 +32,12 @@ async def async_detect_contradiction(
     use_all_methods: bool = True,
     current_user: User = Depends(get_current_active_user)
 ):
-    """
-    Detect contradiction between two claims asynchronously.
-
-    This endpoint starts a background task to detect contradiction between two claims
-    and returns a task ID that can be used to check the status of the task.
-
-    Args:
-        claim1: First claim
-        claim2: Second claim
-        metadata1: Metadata for first claim
-        metadata2: Metadata for second claim
-        use_all_methods: Whether to use all available methods
-
-    Returns:
-        Task information
-    """
     try:
         logger.info(f"Starting asynchronous contradiction detection")
 
-        # Send the task to Dramatiq
         message = detect_contradiction.send(claim1, claim2, metadata1, metadata2, use_all_methods)
         task_id = message.message_id
 
-        # Return task information
         return APIResponse(
             success=True,
             message="Contradiction detection started",
@@ -72,7 +51,6 @@ async def async_detect_contradiction(
         )
 
     except Exception as e:
-        # Handle unexpected errors
         log_error(e, {"user_id": current_user.id})
         logger.error(f"Error starting contradiction detection: {str(e)}")
         raise HTTPException(
@@ -88,28 +66,12 @@ async def async_analyze_contradictions(
     use_all_methods: bool = True,
     current_user: User = Depends(get_current_active_user)
 ):
-    """
-    Analyze contradictions in a list of articles asynchronously.
-
-    This endpoint starts a background task to analyze contradictions in a list of articles
-    and returns a task ID that can be used to check the status of the task.
-
-    Args:
-        articles: List of articles
-        threshold: Threshold for contradiction detection
-        use_all_methods: Whether to use all available methods
-
-    Returns:
-        Task information
-    """
     try:
         logger.info(f"Starting asynchronous contradiction analysis for {len(articles)} articles")
 
-        # Send the task to Dramatiq
         message = analyze_contradictions_in_articles.send(articles, threshold, use_all_methods)
         task_id = message.message_id
 
-        # Return task information
         return APIResponse(
             success=True,
             message="Contradiction analysis started",
@@ -124,7 +86,6 @@ async def async_analyze_contradictions(
         )
 
     except Exception as e:
-        # Handle unexpected errors
         log_error(e, {"user_id": current_user.id})
         logger.error(f"Error starting contradiction analysis: {str(e)}")
         raise HTTPException(
@@ -139,27 +100,12 @@ async def async_generate_embeddings(
     model_name: str = Query("biomedlm", description="Model to use for embeddings"),
     current_user: User = Depends(get_current_active_user)
 ):
-    """
-    Generate embeddings for a list of texts asynchronously.
-
-    This endpoint starts a background task to generate embeddings for a list of texts
-    and returns a task ID that can be used to check the status of the task.
-
-    Args:
-        texts: List of texts to embed
-        model_name: Name of the model to use (biomedlm, lorentz)
-
-    Returns:
-        Task information
-    """
     try:
         logger.info(f"Starting asynchronous embedding generation for {len(texts)} texts")
 
-        # Send the task to Dramatiq
         message = generate_embeddings.send(texts, model_name)
         task_id = message.message_id
 
-        # Return task information
         return APIResponse(
             success=True,
             message="Embedding generation started",
@@ -174,7 +120,6 @@ async def async_generate_embeddings(
         )
 
     except Exception as e:
-        # Handle unexpected errors
         log_error(e, {"user_id": current_user.id})
         logger.error(f"Error starting embedding generation: {str(e)}")
         raise HTTPException(
@@ -188,39 +133,22 @@ async def get_ml_task_status(
     task_id: str,
     current_user: User = Depends(get_current_active_user)
 ):
-    """
-    Get the status of an ML task.
-
-    This endpoint returns the status of an ML task, including progress information
-    and, for completed tasks, the result.
-
-    Args:
-        task_id: The ID of the task
-
-    Returns:
-        Task status information
-    """
     try:
         logger.info(f"Getting status for ML task {task_id}")
 
-        # Get task result from in-memory cache first
         task_result = get_task_result(task_id)
 
-        # If not found in memory, try persistent storage
         if not task_result:
             task_result = task_storage.get_task_status(task_id)
 
         if task_result:
-            # If the task is completed, parse the result
             if task_result.get("status") == "completed" and "result" in task_result:
                 try:
                     result = json.loads(task_result["result"])
                     task_result["result"] = result
                 except json.JSONDecodeError:
-                    # If the result is not valid JSON, keep it as is
                     pass
 
-            # Return the task status
             return APIResponse(
                 success=True,
                 message=f"Task status: {task_result.get('status')}",
@@ -230,7 +158,6 @@ async def get_ml_task_status(
                 }
             )
 
-        # Task not found
         return APIResponse(
             success=False,
             message="Task not found",
@@ -241,7 +168,6 @@ async def get_ml_task_status(
         )
 
     except Exception as e:
-        # Handle unexpected errors
         log_error(e, {"user_id": current_user.id})
         logger.error(f"Error getting task status: {str(e)}")
         raise HTTPException(

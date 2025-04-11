@@ -14,21 +14,17 @@ class SparseTensorSymbolNetwork:
         self.potential_to_idx: Dict[str, int] = {}
         self.idx_to_potential: Dict[int, str] = {}
         
-        # Sparse adjacency data structures
         self._row_indices: List[int] = []
         self._col_indices: List[int] = []
         self._edge_values: List[float] = []
         self._edge_types: List[int] = []
         
-        # Cached tensor representations
         self._adjacency_tensor: Optional[List[torch.Tensor]] = None
         self._feature_tensor: Optional[torch.Tensor] = None
         self._need_rebuild: bool = True
         
-        # Configuration for tensor operations
         self.semantic_channels = 3  # Multiple channels for rich semantic representation
         
-        # Hardware acceleration support
         self.device = device or (torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu"))
     
     def add_symbol(self, symbol_id: str) -> int:
@@ -83,26 +79,20 @@ class SparseTensorSymbolNetwork:
         if not self._need_rebuild:
             return
             
-        # Convert to PyTorch sparse tensor with hardware acceleration
         indices = torch.tensor([self._row_indices, self._col_indices], 
                               dtype=torch.long, device=self.device)
         values = torch.tensor(self._edge_values, dtype=torch.float, device=self.device)
         edge_types = torch.tensor(self._edge_types, dtype=torch.long, device=self.device)
         
-        # Size includes both symbols and potentials
         size = (self.max_symbols * 2, self.max_symbols * 2)
         
-        # Create multi-channel adjacency tensor (GTCN-inspired)
-        # Each channel represents different semantic relationship aspects
         max_edge_type = max(self._edge_types) if self._edge_types else 0
         channels = min(max_edge_type + 1, self.semantic_channels)
         
         adjacency_tensors = []
         for channel in range(channels):
-            # Filter edges for this channel/type
             channel_mask = edge_types == channel
             if not torch.any(channel_mask):
-                # Empty channel
                 channel_tensor = torch.sparse.FloatTensor(
                     torch.zeros((2, 0), dtype=torch.long, device=self.device),
                     torch.tensor([], dtype=torch.float, device=self.device),
@@ -117,10 +107,8 @@ class SparseTensorSymbolNetwork:
                 )
             adjacency_tensors.append(channel_tensor)
             
-        # Store as list of sparse tensors (more efficient than 3D sparse tensor)
         self._adjacency_tensor = adjacency_tensors
         
-        # Initialize feature tensor
         total_nodes = len(self.symbol_to_idx) + len(self.potential_to_idx)
         self._feature_tensor = torch.zeros(
             (total_nodes, 16),
@@ -137,14 +125,12 @@ class SparseTensorSymbolNetwork:
         """
         self._build_tensors()
         
-        # Initialize activation vector
         activation_vector = torch.zeros(
             self.max_symbols * 2,
             dtype=torch.float,
             device=self.device
         )
         
-        # Set initial activations
         for node_id, activation in initial_activations.items():
             if node_id in self.symbol_to_idx:
                 idx = self.symbol_to_idx[node_id]
@@ -153,27 +139,19 @@ class SparseTensorSymbolNetwork:
                 idx = self.potential_to_idx[node_id] + self.max_symbols
                 activation_vector[idx] = activation
         
-        # Propagate activations through the network
         for _ in range(iterations):
-            # Propagate through each channel
             channel_results = []
             for channel_tensor in self._adjacency_tensor:
                 if channel_tensor._nnz() > 0:  # Check if tensor has any non-zero elements
-                    # Sparse matrix multiplication for efficiency
                     channel_result = torch.sparse.mm(channel_tensor, 
                                                    activation_vector.unsqueeze(1)).squeeze(1)
                     channel_results.append(channel_result)
             
             if channel_results:
-                # Stack results from all channels
                 stacked_results = torch.stack(channel_results, dim=0)
-                # Use maximization-based aggregation (MGC-inspired)
-                # This prevents over-smoothing compared to averaging
                 new_activations, _ = torch.max(stacked_results, dim=0)
-                # Update activations (with residual connection)
                 activation_vector = (activation_vector + new_activations) / 2
         
-        # Extract results for symbols
         result = {}
         for symbol_id, idx in self.symbol_to_idx.items():
             result[symbol_id] = activation_vector[idx].item()

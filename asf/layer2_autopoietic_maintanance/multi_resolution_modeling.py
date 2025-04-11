@@ -1,5 +1,3 @@
-# multi_resolution_modeling.py
-
 class MultiResolutionModelManager:
     """
     Manages multi-resolution models for knowledge representation and evolution.
@@ -45,7 +43,6 @@ class MultiResolutionModelManager:
             Status of the update process.
         """
         if model_id in self.models:
-            # Simplified example: Assume models have an `update` method
             self.models[model_id].update(data)
             return {"status": "success"}
         

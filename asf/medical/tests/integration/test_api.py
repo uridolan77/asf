@@ -6,21 +6,14 @@ This module provides integration tests for the API.
 
 import pytest
 import logging
-from typing import Dict, Any
 from fastapi.testclient import TestClient
 
 from asf.medical.api.main import app
-from asf.medical.ml.services.prisma_screening_service import ScreeningStage
-from asf.medical.ml.services.bias_assessment_service import BiasDomain, BiasRisk
-from asf.medical.ml.services.enhanced_contradiction_service import ContradictionType, ContradictionConfidence
 
-# Configure logging
 logger = logging.getLogger(__name__)
 
-# Create test client
 client = TestClient(app)
 
-# Test data
 TEST_USER_EMAIL = "test@example.com"
 TEST_USER_PASSWORD = "testpassword"
 TEST_ADMIN_EMAIL = "admin@example.com"
@@ -28,7 +21,14 @@ TEST_ADMIN_PASSWORD = "adminpassword"
 
 @pytest.fixture
 def user_token():
-    """Get a user token for testing."""
+    """Get a user token for testing.
+
+    Args:
+        # TODO: Add parameter descriptions
+
+    Returns:
+        # TODO: Add return description
+    """
     response = client.post(
         "/v1/auth/token",
         data={"username": TEST_USER_EMAIL, "password": TEST_USER_PASSWORD}
@@ -37,7 +37,14 @@ def user_token():
 
 @pytest.fixture
 def admin_token():
-    """Get an admin token for testing."""
+    """Get an admin token for testing.
+
+    Args:
+        # TODO: Add parameter descriptions
+
+    Returns:
+        # TODO: Add return description
+    """
     response = client.post(
         "/v1/auth/token",
         data={"username": TEST_ADMIN_EMAIL, "password": TEST_ADMIN_PASSWORD}
@@ -45,26 +52,54 @@ def admin_token():
     return response.json()["access_token"]
 
 def test_root():
-    """Test the root endpoint."""
+    """Test the root endpoint.
+
+    Args:
+        # TODO: Add parameter descriptions
+
+    Returns:
+        # TODO: Add return description
+    """
     response = client.get("/")
     assert response.status_code == 200
     assert "message" in response.json()
 
 def test_health():
-    """Test the health endpoint."""
+    """Test the health endpoint.
+
+    Args:
+        # TODO: Add parameter descriptions
+
+    Returns:
+        # TODO: Add return description
+    """
     response = client.get("/health")
     assert response.status_code == 200
     assert "status" in response.json()
     assert response.json()["status"] == "ok"
 
 def test_metrics():
-    """Test the metrics endpoint."""
+    """Test the metrics endpoint.
+
+    Args:
+        # TODO: Add parameter descriptions
+
+    Returns:
+        # TODO: Add return description
+    """
     response = client.get("/metrics")
     assert response.status_code == 200
     assert "metrics" in response.json()
 
 def test_auth_token():
-    """Test the auth token endpoint."""
+    """Test the auth token endpoint.
+
+    Args:
+        # TODO: Add parameter descriptions
+
+    Returns:
+        # TODO: Add return description
+    """
     response = client.post(
         "/v1/auth/token",
         data={"username": TEST_USER_EMAIL, "password": TEST_USER_PASSWORD}
@@ -76,7 +111,14 @@ def test_auth_token():
     assert "expires_in" in response.json()
 
 def test_auth_token_invalid():
-    """Test the auth token endpoint with invalid credentials."""
+    """Test the auth token endpoint with invalid credentials.
+
+    Args:
+        # TODO: Add parameter descriptions
+
+    Returns:
+        # TODO: Add return description
+    """
     response = client.post(
         "/v1/auth/token",
         data={"username": TEST_USER_EMAIL, "password": "wrongpassword"}
@@ -84,7 +126,14 @@ def test_auth_token_invalid():
     assert response.status_code == 401
 
 def test_search(user_token):
-    """Test the search endpoint."""
+    """Test the search endpoint.
+
+    Args:
+        # TODO: Add parameter descriptions
+
+    Returns:
+        # TODO: Add return description
+    """
     response = client.post(
         "/v1/search",
         json={"query": "statin therapy", "max_results": 5},
@@ -96,7 +145,14 @@ def test_search(user_token):
     assert "query" in response.json()
 
 def test_search_pico(user_token):
-    """Test the PICO search endpoint."""
+    """Test the PICO search endpoint.
+
+    Args:
+        # TODO: Add parameter descriptions
+
+    Returns:
+        # TODO: Add return description
+    """
     response = client.post(
         "/v1/search/pico",
         json={
@@ -114,7 +170,14 @@ def test_search_pico(user_token):
     assert "query" in response.json()
 
 def test_enhanced_contradiction_detect(user_token):
-    """Test the enhanced contradiction detection endpoint."""
+    """Test the enhanced contradiction detection endpoint.
+
+    Args:
+        # TODO: Add parameter descriptions
+
+    Returns:
+        # TODO: Add return description
+    """
     response = client.post(
         "/v1/enhanced-contradiction/detect",
         json={
@@ -135,7 +198,14 @@ def test_enhanced_contradiction_detect(user_token):
     assert "classification" in response.json()
 
 def test_enhanced_contradiction_analyze(user_token):
-    """Test the enhanced contradiction analysis endpoint."""
+    """Test the enhanced contradiction analysis endpoint.
+
+    Args:
+        # TODO: Add parameter descriptions
+
+    Returns:
+        # TODO: Add return description
+    """
     response = client.post(
         "/v1/enhanced-contradiction/analyze",
         json={
@@ -170,7 +240,14 @@ def test_enhanced_contradiction_analyze(user_token):
     assert "contradictions" in response.json()
 
 def test_contradiction_resolution_resolve(user_token):
-    """Test the contradiction resolution endpoint."""
+    """Test the contradiction resolution endpoint.
+
+    Args:
+        # TODO: Add parameter descriptions
+
+    Returns:
+        # TODO: Add return description
+    """
     response = client.post(
         "/v1/contradiction-resolution/resolve",
         json={
@@ -201,7 +278,14 @@ def test_contradiction_resolution_resolve(user_token):
     assert "timestamp" in response.json()
 
 def test_contradiction_resolution_combined(user_token):
-    """Test the contradiction resolution with combined evidence endpoint."""
+    """Test the contradiction resolution with combined evidence endpoint.
+
+    Args:
+        # TODO: Add parameter descriptions
+
+    Returns:
+        # TODO: Add return description
+    """
     response = client.post(
         "/v1/contradiction-resolution/resolve",
         json={
@@ -231,7 +315,14 @@ def test_contradiction_resolution_combined(user_token):
     assert "timestamp" in response.json()
 
 def test_contradiction_resolution_history(user_token):
-    """Test the contradiction resolution history endpoint."""
+    """Test the contradiction resolution history endpoint.
+
+    Args:
+        # TODO: Add parameter descriptions
+
+    Returns:
+        # TODO: Add return description
+    """
     response = client.get(
         "/v1/contradiction-resolution/history",
         headers={"Authorization": f"Bearer {user_token}"}
@@ -241,7 +332,14 @@ def test_contradiction_resolution_history(user_token):
     assert "history" in response.json()
 
 def test_screening(user_token):
-    """Test the screening endpoint."""
+    """Test the screening endpoint.
+
+    Args:
+        # TODO: Add parameter descriptions
+
+    Returns:
+        # TODO: Add return description
+    """
     response = client.post(
         "/v1/screening",
         json={
@@ -257,7 +355,14 @@ def test_screening(user_token):
     assert "explanation" in response.json()
 
 def test_bias_assessment(user_token):
-    """Test the bias assessment endpoint."""
+    """Test the bias assessment endpoint.
+
+    Args:
+        # TODO: Add parameter descriptions
+
+    Returns:
+        # TODO: Add return description
+    """
     response = client.post(
         "/v1/screening/bias-assessment",
         json={
@@ -274,7 +379,14 @@ def test_bias_assessment(user_token):
     assert "explanation" in response.json()
 
 def test_export(user_token):
-    """Test the export endpoint."""
+    """Test the export endpoint.
+
+    Args:
+        # TODO: Add parameter descriptions
+
+    Returns:
+        # TODO: Add return description
+    """
     response = client.post(
         "/v1/export",
         json={
@@ -286,7 +398,14 @@ def test_export(user_token):
     assert response.status_code in [200, 404]  # 404 if query doesn't exist
 
 def test_analysis(user_token):
-    """Test the analysis endpoint."""
+    """Test the analysis endpoint.
+
+    Args:
+        # TODO: Add parameter descriptions
+
+    Returns:
+        # TODO: Add return description
+    """
     response = client.post(
         "/v1/analysis/contradictions",
         json={
@@ -306,7 +425,14 @@ def test_analysis(user_token):
     assert "contradictions" in response.json()
 
 def test_knowledge_base(user_token):
-    """Test the knowledge base endpoint."""
+    """Test the knowledge base endpoint.
+
+    Args:
+        # TODO: Add parameter descriptions
+
+    Returns:
+        # TODO: Add return description
+    """
     response = client.get(
         "/v1/knowledge-base",
         headers={"Authorization": f"Bearer {user_token}"}
@@ -315,7 +441,14 @@ def test_knowledge_base(user_token):
     assert "knowledge_bases" in response.json()
 
 def test_admin_endpoint(admin_token):
-    """Test an admin endpoint."""
+    """Test an admin endpoint.
+
+    Args:
+        # TODO: Add parameter descriptions
+
+    Returns:
+        # TODO: Add return description
+    """
     response = client.get(
         "/v1/admin/users",
         headers={"Authorization": f"Bearer {admin_token}"}

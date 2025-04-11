@@ -13,7 +13,6 @@ from typing import Dict, Any, Optional, Callable, List, Tuple
 
 from asf.medical.core.config import settings
 
-# Configure logging
 logger = logging.getLogger(__name__)
 
 class ResourceLimiter:
@@ -32,16 +31,6 @@ class ResourceLimiter:
         max_concurrent_tasks: int = 5,
         check_interval: float = 1.0
     ):
-        """
-        Initialize the resource limiter.
-        
-        Args:
-            max_cpu_percent: Maximum CPU usage percentage (default: 80.0)
-            max_memory_percent: Maximum memory usage percentage (default: 80.0)
-            max_gpu_percent: Maximum GPU usage percentage (default: 80.0)
-            max_concurrent_tasks: Maximum number of concurrent tasks (default: 5)
-            check_interval: Interval in seconds for checking resource usage (default: 1.0)
-        """
         self.max_cpu_percent = float(os.environ.get("MAX_CPU_PERCENT", max_cpu_percent))
         self.max_memory_percent = float(os.environ.get("MAX_MEMORY_PERCENT", max_memory_percent))
         self.max_gpu_percent = float(os.environ.get("MAX_GPU_PERCENT", max_gpu_percent))
@@ -53,7 +42,6 @@ class ResourceLimiter:
         self.model_locks: Dict[str, threading.Lock] = {}
         self.model_usage: Dict[str, Dict[str, Any]] = {}
         
-        # Try to import GPU monitoring libraries
         self.has_gpu = False
         try:
             import torch
@@ -78,14 +66,11 @@ class ResourceLimiter:
         Returns:
             Dictionary with resource usage percentages
         """
-        # Get CPU usage
         cpu_percent = psutil.cpu_percent(interval=0.1)
         
-        # Get memory usage
         memory = psutil.virtual_memory()
         memory_percent = memory.percent
         
-        # Get GPU usage if available
         gpu_percent = 0.0
         if self.has_gpu and self.pynvml:
             try:
@@ -109,10 +94,8 @@ class ResourceLimiter:
         Returns:
             Tuple of (can_start, resource_usage)
         """
-        # Get current resource usage
         usage = self.get_resource_usage()
         
-        # Check if resources are available
         can_start = (
             usage["cpu_percent"] < self.max_cpu_percent and
             usage["memory_percent"] < self.max_memory_percent and
@@ -162,11 +145,9 @@ class ResourceLimiter:
         Returns:
             True if a slot was acquired, False otherwise
         """
-        # Wait for resources to become available
         if not self.wait_for_resources(timeout):
             return False
         
-        # Acquire task slot
         with self.task_lock:
             if self.concurrent_tasks >= self.max_concurrent_tasks:
                 return False
@@ -176,7 +157,14 @@ class ResourceLimiter:
             return True
     
     def release_task_slot(self):
-        """Release a task slot."""
+        """Release a task slot.
+
+    Args:
+        # TODO: Add parameter descriptions
+
+    Returns:
+        # TODO: Add return description
+    """
         with self.task_lock:
             if self.concurrent_tasks > 0:
                 self.concurrent_tasks -= 1
@@ -192,47 +180,15 @@ class ResourceLimiter:
             
         Returns:
             True if the lock was acquired, False otherwise
-        """
-        # Create lock if it doesn't exist
-        if model_name not in self.model_locks:
-            with self.task_lock:  # Use task_lock to protect model_locks dictionary
-                if model_name not in self.model_locks:
-                    self.model_locks[model_name] = threading.Lock()
-        
-        # Try to acquire the lock
-        return self.model_locks[model_name].acquire(timeout=timeout)
-    
-    def release_model_lock(self, model_name: str):
-        """
         Release a lock for a specific model.
         
         Args:
             model_name: Name of the model
-        """
-        if model_name in self.model_locks:
-            try:
-                self.model_locks[model_name].release()
-                logger.debug(f"Model lock released: {model_name}")
-            except RuntimeError:
-                logger.warning(f"Attempted to release an unlocked lock for model: {model_name}")
-    
-    def register_model_usage(self, model_name: str, memory_mb: float):
-        """
         Register memory usage for a model.
         
         Args:
             model_name: Name of the model
             memory_mb: Memory usage in MB
-        """
-        with self.task_lock:  # Use task_lock to protect model_usage dictionary
-            self.model_usage[model_name] = {
-                "memory_mb": memory_mb,
-                "last_used": time.time()
-            }
-            logger.debug(f"Registered model usage: {model_name}, {memory_mb} MB")
-    
-    def get_model_usage(self, model_name: str) -> Optional[Dict[str, Any]]:
-        """
         Get usage information for a model.
         
         Args:
@@ -240,20 +196,10 @@ class ResourceLimiter:
             
         Returns:
             Usage information or None if not found
-        """
-        return self.model_usage.get(model_name)
-    
-    def get_all_model_usage(self) -> Dict[str, Dict[str, Any]]:
-        """
         Get usage information for all models.
         
         Returns:
             Dictionary of model usage information
-        """
-        return self.model_usage.copy()
-    
-    def with_resource_limit(self, func: Callable, model_name: Optional[str] = None, timeout: float = 300.0):
-        """
         Decorator for limiting resources for a function.
         
         Args:
@@ -263,32 +209,3 @@ class ResourceLimiter:
             
         Returns:
             Decorated function
-        """
-        def wrapper(*args, **kwargs):
-            # Acquire task slot
-            if not self.acquire_task_slot(timeout):
-                raise RuntimeError("Could not acquire task slot")
-            
-            try:
-                # Acquire model lock if specified
-                if model_name:
-                    if not self.acquire_model_lock(model_name, timeout):
-                        raise RuntimeError(f"Could not acquire lock for model: {model_name}")
-                    
-                    try:
-                        # Call the function
-                        return func(*args, **kwargs)
-                    finally:
-                        # Release model lock
-                        self.release_model_lock(model_name)
-                else:
-                    # Call the function without model lock
-                    return func(*args, **kwargs)
-            finally:
-                # Release task slot
-                self.release_task_slot()
-        
-        return wrapper
-
-# Create a singleton instance
-resource_limiter = ResourceLimiter()

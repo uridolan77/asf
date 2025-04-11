@@ -7,181 +7,84 @@ This module provides a repository for user-related database operations.
 from typing import Optional, List, Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy.orm import Session
 import datetime
+import logging
 
 from asf.medical.storage.models import User
-from asf.medical.storage.repositories.base_repository import BaseRepository
-from asf.medical.storage.database import is_async
+from asf.medical.storage.repositories.enhanced_base_repository import EnhancedBaseRepository
+from asf.medical.core.exceptions import DatabaseError
 
-class UserRepository(BaseRepository[User]):
+logger = logging.getLogger(__name__)
+
+class UserRepository(EnhancedBaseRepository[User]):
     """
     Repository for user-related database operations.
     """
-    
+
     def __init__(self):
-        """Initialize the repository with the User model."""
+        """Initialize the repository with the User model.
+
+    Args:
+        # TODO: Add parameter descriptions
+
+    Returns:
+        # TODO: Add return description
+    """
         super().__init__(User)
-    
-    # Synchronous methods
-    def get_by_email(self, db: Session, email: str) -> Optional[User]:
-        """
-        Get a user by email.
-        
-        Args:
-            db: Database session
-            email: User email
-            
-        Returns:
-            The user or None if not found
-        """
-        if is_async:
-            raise ValueError("Cannot use synchronous methods with async database")
-        
-        return db.query(User).filter(User.email == email).first()
-    
-    def create_user(self, db: Session, email: str, hashed_password: str, role: str = "user") -> User:
-        """
-        Create a new user.
-        
-        Args:
-            db: Database session
-            email: User email
-            hashed_password: Hashed password
-            role: User role (default: "user")
-            
-        Returns:
-            The created user
-        """
-        if is_async:
-            raise ValueError("Cannot use synchronous methods with async database")
-        
-        user = User(
-            email=email,
-            hashed_password=hashed_password,
-            role=role,
-            created_at=datetime.datetime.utcnow(),
-            is_active=True
-        )
-        db.add(user)
-        db.commit()
-        db.refresh(user)
-        return user
-    
-    def update_last_login(self, db: Session, user_id: int) -> Optional[User]:
-        """
-        Update a user's last login timestamp.
-        
-        Args:
-            db: Database session
-            user_id: User ID
-            
-        Returns:
-            The updated user or None if not found
-        """
-        if is_async:
-            raise ValueError("Cannot use synchronous methods with async database")
-        
-        user = self.get(db, user_id)
-        if user:
-            user.last_login = datetime.datetime.utcnow()
-            db.commit()
-            db.refresh(user)
-        return user
-    
-    def deactivate_user(self, db: Session, user_id: int) -> Optional[User]:
-        """
-        Deactivate a user.
-        
-        Args:
-            db: Database session
-            user_id: User ID
-            
-        Returns:
-            The updated user or None if not found
-        """
-        if is_async:
-            raise ValueError("Cannot use synchronous methods with async database")
-        
-        user = self.get(db, user_id)
-        if user:
-            user.is_active = False
-            db.commit()
-            db.refresh(user)
-        return user
-    
-    # Asynchronous methods
+
     async def get_by_email_async(self, db: AsyncSession, email: str) -> Optional[User]:
-        """
-        Get a user by email asynchronously.
-        
-        Args:
-            db: Async database session
-            email: User email
-            
-        Returns:
-            The user or None if not found
-        """
-        result = await db.execute(select(User).filter(User.email == email))
-        return result.scalars().first()
-    
+        try:
+            stmt = select(User).where(User.email == email)
+            result = await db.execute(stmt)
+            return result.scalars().first()
+        except Exception as e:
+    logger.error(f\"Error getting user by email: {str(e)}\")
+    raise DatabaseError(f\"Error getting user by email: {str(e)}\") DatabaseError(f"Failed to get user by email: {str(e)}")
+
     async def create_user_async(self, db: AsyncSession, email: str, hashed_password: str, role: str = "user") -> User:
-        """
-        Create a new user asynchronously.
-        
-        Args:
-            db: Async database session
-            email: User email
-            hashed_password: Hashed password
-            role: User role (default: "user")
-            
-        Returns:
-            The created user
-        """
-        user = User(
-            email=email,
-            hashed_password=hashed_password,
-            role=role,
-            created_at=datetime.datetime.utcnow(),
-            is_active=True
-        )
-        db.add(user)
-        await db.commit()
-        await db.refresh(user)
-        return user
-    
-    async def update_last_login_async(self, db: AsyncSession, user_id: int) -> Optional[User]:
-        """
-        Update a user's last login timestamp asynchronously.
-        
-        Args:
-            db: Async database session
-            user_id: User ID
-            
-        Returns:
-            The updated user or None if not found
-        """
-        user = await self.get_async(db, user_id)
-        if user:
-            user.last_login = datetime.datetime.utcnow()
+        try:
+            user = User(
+                email=email,
+                hashed_password=hashed_password,
+                role=role,
+                is_active=True,
+                created_at=datetime.datetime.now(datetime.timezone.utc)
+            )
+            db.add(user)
             await db.commit()
             await db.refresh(user)
-        return user
-    
+            return user
+        except Exception as e:
+            await await db.rollback()
+            logger.error(f"Error creating user: {str(e)}")
+            raise DatabaseError(f"Failed to create user: {str(e)}")
+
+    async def update_last_login_async(self, db: AsyncSession, user_id: int) -> Optional[User]:
+        try:
+            user = await await self.get_async(db, user_id)
+            if not user:
+                return None
+
+            user.last_login = datetime.datetime.now(datetime.timezone.utc)
+            await db.commit()
+            await db.refresh(user)
+            return user
+        except Exception as e:
+            await await db.rollback()
+            logger.error(f"Error updating user last login: {str(e)}")
+            raise DatabaseError(f"Failed to update user last login: {str(e)}")
+
     async def deactivate_user_async(self, db: AsyncSession, user_id: int) -> Optional[User]:
-        """
-        Deactivate a user asynchronously.
-        
-        Args:
-            db: Async database session
-            user_id: User ID
-            
-        Returns:
-            The updated user or None if not found
-        """
-        user = await self.get_async(db, user_id)
-        if user:
+        try:
+            user = await await self.get_async(db, user_id)
+            if not user:
+                return None
+
             user.is_active = False
             await db.commit()
             await db.refresh(user)
-        return user
+            return user
+        except Exception as e:
+            await await db.rollback()
+            logger.error(f"Error deactivating user: {str(e)}")
+            raise DatabaseError(f"Failed to deactivate user: {str(e)}")

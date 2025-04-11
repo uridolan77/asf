@@ -15,7 +15,6 @@ class TemporalKnowledgeManager:
         """
         self.knowledge: Dict[str, Dict] = {}  # {knowledge_id: {domain: str, added_at: datetime, alpha: float, beta: float, justifications: list}}
         self.domain_decay_rates = domain_decay_rates
-        #self.next_id = 1  # Replaced with UUIDs
         self.decay_type = "linear" # Can be set to "linear" or "exponential"
 
     def add_temporal_knowledge(self, domain: str, knowledge_content: str, initial_confidence: float = 0.9, justifications: Optional[List[str]] = None) -> str:
@@ -69,7 +68,6 @@ class TemporalKnowledgeManager:
         time_elapsed = (current_time - knowledge_data['added_at']).total_seconds()
         decay_rate = self.domain_decay_rates.get(knowledge_data['domain'], 0.0001)
 
-        # Update beta based on time decay (beta increases, representing decreasing confidence)
         if self.decay_type == "linear":
             knowledge_data['beta'] += time_elapsed * decay_rate
         elif self.decay_type == "exponential":
@@ -77,7 +75,6 @@ class TemporalKnowledgeManager:
         else:
              raise ValueError("decay_type must be one of 'linear' or 'exponential'")
 
-        # Calculate the mean of the Beta distribution as the current confidence.
         current_confidence = knowledge_data['alpha'] / (knowledge_data['alpha'] + knowledge_data['beta'])
 
         return {
@@ -111,7 +108,6 @@ class TemporalKnowledgeManager:
         else:
             knowledge_data['beta'] += observation_strength
 
-        # Normalize alpha/beta (optional, but keeps values manageable)
         total = knowledge_data['alpha'] + knowledge_data['beta']
         knowledge_data['alpha'] = knowledge_data['alpha'] / total * 100
         knowledge_data['beta'] = knowledge_data['beta'] / total * 100
@@ -131,7 +127,6 @@ class TemporalKnowledgeManager:
             all_knowledge[knowledge_id] = self.get_knowledge(knowledge_id, current_time)
         return all_knowledge
 
-    # --- Persistence (Example with JSON - adapt to your database) ---
 
     def save_to_file(self, filename: str):
         """Saves the knowledge to a JSON file (for simple persistence)."""
@@ -152,7 +147,6 @@ class TemporalKnowledgeManager:
             self.knowledge = loaded_data['knowledge']
             self.domain_decay_rates = loaded_data['domain_decay_rates']
 
-    # --- Integration with KnowledgeSubstrateLayer (Example) ---
 
     def integrate_with_substrate(self, substrate):
         """Example of how to integrate with the KnowledgeSubstrateLayer."""

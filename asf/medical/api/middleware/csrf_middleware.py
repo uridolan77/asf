@@ -6,14 +6,10 @@ This module provides a middleware for protecting against CSRF attacks.
 
 import secrets
 import logging
-import time
-from typing import Dict, Optional, Any, Callable, List
-from fastapi import Request, Response, FastAPI, Cookie, Header
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
 
-# Configure logging
 logger = logging.getLogger(__name__)
 
 class CSRFMiddleware(BaseHTTPMiddleware):
@@ -36,19 +32,6 @@ class CSRFMiddleware(BaseHTTPMiddleware):
         cookie_max_age: int = 86400,  # 24 hours
         exempt_paths: List[str] = None
     ):
-        """
-        Initialize the CSRF middleware.
-        
-        Args:
-            app: ASGI application
-            cookie_name: Name of the CSRF cookie
-            header_name: Name of the CSRF header
-            cookie_secure: Whether the cookie should be secure (HTTPS only)
-            cookie_httponly: Whether the cookie should be HTTP only
-            cookie_samesite: SameSite attribute for the cookie
-            cookie_max_age: Max age of the cookie in seconds
-            exempt_paths: List of paths exempt from CSRF protection
-        """
         super().__init__(app)
         self.cookie_name = cookie_name
         self.header_name = header_name
@@ -60,26 +43,13 @@ class CSRFMiddleware(BaseHTTPMiddleware):
         logger.info(f"CSRF middleware initialized with cookie_name={cookie_name}, header_name={header_name}")
     
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
-        """
-        Dispatch the request.
-        
-        Args:
-            request: FastAPI request
-            call_next: Function to call the next middleware
-            
-        Returns:
-            Response: FastAPI response
-        """
-        # Skip CSRF protection for exempt paths
         path = request.url.path
         if any(path.startswith(exempt_path) for exempt_path in self.exempt_paths):
             return await call_next(request)
         
-        # Skip CSRF protection for safe methods (GET, HEAD, OPTIONS)
         if request.method.upper() in ["GET", "HEAD", "OPTIONS"]:
             response = await call_next(request)
             
-            # Set CSRF token cookie if it doesn't exist
             csrf_token = request.cookies.get(self.cookie_name)
             if not csrf_token:
                 csrf_token = secrets.token_urlsafe(32)
@@ -94,11 +64,9 @@ class CSRFMiddleware(BaseHTTPMiddleware):
             
             return response
         
-        # For unsafe methods (POST, PUT, DELETE, etc.), verify CSRF token
         csrf_cookie = request.cookies.get(self.cookie_name)
         csrf_header = request.headers.get(self.header_name)
         
-        # If no CSRF token in cookie or header, return 403 Forbidden
         if not csrf_cookie or not csrf_header:
             logger.warning(f"CSRF token missing: cookie={bool(csrf_cookie)}, header={bool(csrf_header)}")
             return JSONResponse(
@@ -106,7 +74,6 @@ class CSRFMiddleware(BaseHTTPMiddleware):
                 content={"detail": "CSRF token missing"}
             )
         
-        # If CSRF tokens don't match, return 403 Forbidden
         if csrf_cookie != csrf_header:
             logger.warning(f"CSRF token mismatch: cookie={csrf_cookie[:8]}..., header={csrf_header[:8]}...")
             return JSONResponse(
@@ -114,10 +81,8 @@ class CSRFMiddleware(BaseHTTPMiddleware):
                 content={"detail": "CSRF token mismatch"}
             )
         
-        # Process the request
         response = await call_next(request)
         
-        # Refresh CSRF token cookie
         response.set_cookie(
             key=self.cookie_name,
             value=csrf_cookie,
@@ -139,19 +104,6 @@ def add_csrf_middleware(
     cookie_max_age: int = 86400,
     exempt_paths: List[str] = None
 ):
-    """
-    Add CSRF middleware to a FastAPI application.
-    
-    Args:
-        app: FastAPI application
-        cookie_name: Name of the CSRF cookie
-        header_name: Name of the CSRF header
-        cookie_secure: Whether the cookie should be secure (HTTPS only)
-        cookie_httponly: Whether the cookie should be HTTP only
-        cookie_samesite: SameSite attribute for the cookie
-        cookie_max_age: Max age of the cookie in seconds
-        exempt_paths: List of paths exempt from CSRF protection
-    """
     app.add_middleware(
         CSRFMiddleware,
         cookie_name=cookie_name,

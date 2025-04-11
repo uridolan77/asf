@@ -1,4 +1,3 @@
-# asf/knowledge_substrate/extraction/base.py
 import torch
 import numpy as np
 import joblib
@@ -30,13 +29,10 @@ class FeatureExtractor:
         """
         Extract features and apply semiotic weighting
         """
-        # Extract raw features
         raw_features = self.extract_features(input_data)
         
-        # Convert to tensor format
         feature_keys = list(raw_features.keys())
         
-        # Handle empty features case
         if not feature_keys:
             return {}
         
@@ -45,13 +41,11 @@ class FeatureExtractor:
                 torch.tensor(raw_features[k], dtype=torch.float32) for k in feature_keys
             ])
             
-            # Apply semiotic weighting
             weighted_features, importance_scores = self.feature_weighter.weight_features(
                 feature_values,
                 context
             )
             
-            # Create weighted feature dictionary
             result = {}
             for i, key in enumerate(feature_keys):
                 result[key] = {
@@ -61,7 +55,8 @@ class FeatureExtractor:
             
             return result
         except Exception as e:
-            print(f"Error in feature weighting: {e}")
+    logger.error(f\"Error in feature weighting: {str(e)}\")
+    raise DatabaseError(f\"Error in feature weighting: {str(e)}\")
             return raw_features  # Fallback to unweighted features
     
     def get_key_features(self, input_data, top_k=5):

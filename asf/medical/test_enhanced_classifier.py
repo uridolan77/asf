@@ -6,10 +6,8 @@ import asyncio
 import sys
 import os
 
-# Add the parent directory to the Python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-# Define enums locally for testing
 class ContradictionType(str):
     DIRECT = "direct"
     NEGATION = "negation"
@@ -48,10 +46,8 @@ class StudyDesignHierarchy(str):
     EXPERT_OPINION = "expert_opinion"
     UNKNOWN = "unknown"
 
-# Mock the classifier for testing
 class EnhancedContradictionClassifier:
     async def classify_contradiction(self, contradiction):
-        # Simulate classification
         classification = {
             "contradiction_type": contradiction.get("contradiction_type", ContradictionType.UNKNOWN),
             "clinical_significance": ClinicalSignificance.HIGH,
@@ -123,78 +119,9 @@ class EnhancedContradictionClassifier:
             }
         }
 
-        # Add classification to contradiction
         contradiction["classification"] = classification
 
         return contradiction
 
-# We're using the mock classifier for testing
-# If you want to try importing the real one, uncomment this:
-# try:
-#     from medical.ml.services.enhanced_contradiction_classifier import (
-#         EnhancedContradictionClassifier,
-#         ContradictionType,
-#         ContradictionConfidence,
-#         ClinicalSignificance,
-#         EvidenceQuality
-#     )
-#     print("Using real classifier")
-# except ImportError:
-#     print("Using mock classifier")
 
 async def test_classifier():
-    """Test the enhanced contradiction classifier."""
-    print("Initializing enhanced contradiction classifier...")
-    classifier = EnhancedContradictionClassifier()
-
-    print("Creating sample contradiction...")
-    sample_contradiction = {
-        "claim1": "Statin therapy reduces the risk of cardiovascular events in patients with high cholesterol.",
-        "claim2": "Statin therapy does not reduce the risk of cardiovascular events in patients with high cholesterol.",
-        "is_contradiction": True,
-        "contradiction_score": 0.85,
-        "contradiction_type": ContradictionType.NEGATION,
-        "confidence": ContradictionConfidence.HIGH,
-        "methods_used": ["biomedlm", "negation"],
-        "explanation": "Claim 2 is a negation of Claim 1 with similarity 0.85.",
-        "metadata1": {
-            "publication_year": 2020,
-            "study_design": "randomized controlled trial",
-            "sample_size": 5000,
-            "population": "adults with high cholesterol",
-            "p_value": 0.01,
-            "journal": "New England Journal of Medicine",
-            "impact_factor": 70.6
-        },
-        "metadata2": {
-            "publication_year": 2015,
-            "study_design": "observational study",
-            "sample_size": 1000,
-            "population": "elderly patients with high cholesterol",
-            "p_value": 0.08,
-            "journal": "Journal of Clinical Investigation",
-            "impact_factor": 14.8
-        }
-    }
-
-    print("Classifying contradiction...")
-    classified = await classifier.classify_contradiction(sample_contradiction)
-
-    print("\nClassification results:")
-    print(f"Clinical significance: {classified['classification']['clinical_significance']}")
-    print(f"Evidence quality (claim1): {classified['classification']['evidence_quality']['claim1']}")
-    print(f"Evidence quality (claim2): {classified['classification']['evidence_quality']['claim2']}")
-    print(f"Temporal factor detected: {classified['classification']['temporal_factor']['detected']}")
-    print(f"Population difference detected: {classified['classification']['population_difference']['detected']}")
-    print(f"Methodological difference detected: {classified['classification']['methodological_difference']['detected']}")
-
-    print("\nDetailed classification:")
-    for key, value in classified["classification"].items():
-        print(f"{key}: {value}")
-
-    return classified
-
-if __name__ == "__main__":
-    print("Running enhanced contradiction classifier test...")
-    result = asyncio.run(test_classifier())
-    print("Test completed successfully!")

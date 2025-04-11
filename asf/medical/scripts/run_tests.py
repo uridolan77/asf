@@ -6,15 +6,20 @@ This script runs pytest on the tests directory.
 
 import os
 import sys
-import logging
 import argparse
 from pathlib import Path
 
-# Add the parent directory to the path so we can import our modules
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
 def main():
-    """Run tests."""
+    """Run tests.
+
+    Args:
+        # TODO: Add parameter descriptions
+
+    Returns:
+        # TODO: Add return description
+    """
     parser = argparse.ArgumentParser(description="Run tests for the Medical Research Synthesizer")
     parser.add_argument("--unit", action="store_true", help="Run only unit tests")
     parser.add_argument("--integration", action="store_true", help="Run only integration tests")
@@ -31,49 +36,39 @@ def main():
     parser.add_argument("--mark", type=str, help="Run tests with specific marker")
     args = parser.parse_args()
 
-    # Set up test command
     cmd = ["pytest"]
 
-    # Add verbosity
     if args.verbose:
         cmd.append("-v")
     elif args.xvs:
         cmd.append("-vv")
 
-    # Add coverage
     if args.coverage:
         cmd.append("--cov=asf.medical")
         cmd.append("--cov-report=term")
         cmd.append("--cov-report=html")
 
-    # Add JUnit XML report
     if args.junit_xml:
         cmd.append("--junitxml=test-results.xml")
 
-    # Add HTML report
     if args.html_report:
         cmd.append("--html=test-report.html")
         cmd.append("--self-contained-html")
 
-    # Show markers
     if args.markers:
         cmd.append("--markers")
         os.system(" ".join(cmd))
         return
 
-    # Collect only
     if args.collect_only:
         cmd.append("--collect-only")
 
-    # Add filter
     if args.filter:
         cmd.append(f"-k {args.filter}")
 
-    # Add marker
     if args.mark:
         cmd.append(f"-m {args.mark}")
 
-    # Add test selection
     if args.unit:
         cmd.append("tests/unit")
     elif args.integration:
@@ -85,11 +80,9 @@ def main():
     else:
         cmd.append("tests")
 
-    # Run tests
     print(f"Running command: {' '.join(cmd)}")
     result = os.system(" ".join(cmd))
 
-    # Return exit code
     sys.exit(result >> 8)
 
 if __name__ == "__main__":

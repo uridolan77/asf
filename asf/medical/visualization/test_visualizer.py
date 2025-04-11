@@ -8,9 +8,7 @@ import argparse
 import logging
 import json
 import os
-from typing import Dict, List, Any
 
-# Configure logging
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
@@ -26,13 +24,10 @@ def test_visualizer(biomedlm_scorer, output_dir: str = "./visualizations"):
     """
     logger.info("Testing contradiction visualizer...")
     
-    # Import visualizer
     from asf.medical.visualization.contradiction_visualizer import ContradictionVisualizer
     
-    # Initialize visualizer
     visualizer = ContradictionVisualizer(output_dir=output_dir)
     
-    # Test cases
     test_cases = [
         {
             "name": "negation_contradiction",
@@ -54,7 +49,6 @@ def test_visualizer(biomedlm_scorer, output_dir: str = "./visualizations"):
         }
     ]
     
-    # Run tests
     visualization_paths = []
     
     for i, test_case in enumerate(test_cases):
@@ -63,21 +57,17 @@ def test_visualizer(biomedlm_scorer, output_dir: str = "./visualizations"):
         logger.info(f"Claim 2: {test_case['claim2']}")
         logger.info(f"Expected type: {test_case['expected_type']}")
         
-        # Generate explanation
         explanation = biomedlm_scorer.explain_contradiction(
             test_case["claim1"], 
             test_case["claim2"]
         )
         
-        # Check if explanation was generated
         if not explanation:
             logger.warning("No explanation generated")
             continue
         
-        # Create output path
         output_path = os.path.join(output_dir, f"{test_case['name']}.png")
         
-        # Visualize explanation
         vis_path = visualizer.visualize_explanation(explanation, output_path)
         
         if vis_path:
@@ -100,26 +90,20 @@ def test_from_json(json_file: str, output_dir: str = "./visualizations"):
     """
     logger.info(f"Testing visualizer with explanations from {json_file}...")
     
-    # Import visualizer
     from asf.medical.visualization.contradiction_visualizer import ContradictionVisualizer
     
-    # Initialize visualizer
     visualizer = ContradictionVisualizer(output_dir=output_dir)
     
-    # Load explanations from JSON file
     with open(json_file, "r") as f:
         explanations = json.load(f)
     
-    # Visualize explanations
     visualization_paths = []
     
     for i, explanation in enumerate(explanations):
         logger.info(f"Explanation {i+1}")
         
-        # Create output path
         output_path = os.path.join(output_dir, f"explanation_{i+1}.png")
         
-        # Visualize explanation
         vis_path = visualizer.visualize_explanation(explanation, output_path)
         
         if vis_path:
@@ -133,7 +117,14 @@ def test_from_json(json_file: str, output_dir: str = "./visualizations"):
     return visualization_paths
 
 def main():
-    """Main function."""
+    """Main function.
+
+    Args:
+        # TODO: Add parameter descriptions
+
+    Returns:
+        # TODO: Add return description
+    """
     parser = argparse.ArgumentParser(description="Test contradiction visualizer")
     parser.add_argument("--model", type=str, default="microsoft/BioMedLM", help="Model name")
     parser.add_argument("--output-dir", type=str, default="./visualizations", help="Output directory for visualizations")
@@ -142,17 +133,13 @@ def main():
     args = parser.parse_args()
     
     try:
-        # Create output directory if it doesn't exist
         os.makedirs(args.output_dir, exist_ok=True)
         
         if args.json_file:
-            # Test with explanations from JSON file
             visualization_paths = test_from_json(args.json_file, args.output_dir)
         else:
-            # Import BioMedLMScorer
             from asf.medical.models.biomedlm_wrapper import BioMedLMScorer
             
-            # Initialize BioMedLMScorer
             logger.info(f"Initializing BioMedLMScorer with model: {args.model}")
             biomedlm_scorer = BioMedLMScorer(
                 model_name=args.model,
@@ -161,10 +148,8 @@ def main():
                 use_shap_explainer=True
             )
             
-            # Test visualizer
             visualization_paths = test_visualizer(biomedlm_scorer, args.output_dir)
         
-        # Print summary
         logger.info(f"Generated {len(visualization_paths)} visualizations")
         for path in visualization_paths:
             logger.info(f"  - {path}")

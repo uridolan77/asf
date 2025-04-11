@@ -67,39 +67,17 @@ class AutocatalyticNetwork:
     def evaluate_counterfactual(self,
                                 modified_connections: Dict[Tuple[int, int], float],
                                 external_input: Optional[np.ndarray] = None) -> Tuple[np.ndarray, bool, Dict]:
-        """
-        Evaluates a counterfactual scenario by modifying network connections.
-
-        Args:
-            modified_connections: A dictionary where keys are (source, target) node tuples
-                                 and values are the new connection strengths.
-            external_input: Optional external input for the counterfactual scenario.
-
-        Returns:
-            A tuple: (counterfactual_state, counterfactual_stable, impact_summary).
-                counterfactual_state: The final state of the network in the counterfactual.
-                counterfactual_stable:  True if stable, False otherwise.
-                impact_summary: A dictionary describing the impact of the changes:
-                    "changed_connections": The connections that were modified.
-                    "state_diff":  Nodes that changed state compared to the original.
-                    "output_change": A measure of the overall change in network output.
-
-        """
-        # 1. Create a *copy* of the network
         counterfactual_network = copy.deepcopy(self)
 
-        # 2. Apply the modifications to the *copy*
         for (source, target), new_strength in modified_connections.items():
             if 0 <= source < self.num_nodes and 0 <= target < self.num_nodes:
                 counterfactual_network.connectivity_matrix[source, target] = new_strength
             else:
                 raise ValueError(f"Invalid connection indices: ({source}, {target})")
 
-        # 3. Run the *modified* network to stability
         initial_state, initial_stable = self.run_to_stability(external_input=external_input) # Run Original to Stability
         counterfactual_state, counterfactual_stable = counterfactual_network.run_to_stability(external_input=external_input)
 
-        # 4. Compare the original and counterfactual states
         state_diff = np.where(counterfactual_state != initial_state)[0].tolist()
         output_change = np.sum(counterfactual_state) - np.sum(initial_state)
 
@@ -119,26 +97,9 @@ class AutocatalyticNetwork:
                                         modified_thresholds: Optional[Dict[int, float]] = None,
                                         modified_inputs: Optional[Dict[int, float]] = None
                                         ) -> Tuple[np.ndarray, bool, Dict]:
-        """
-        Extends counterfactual evaluation to allow changes in thresholds and initial states,
-        in addition to connections.
-
-        Args:
-            modified_connections: Changes to the connectivity matrix (as before).
-            modified_thresholds:  A dictionary where keys are node indices and values
-                                  are the new activation thresholds.
-            modified_inputs: A dictionary for CONSTANT external inputs. Keys are node indices,
-                             values are the input magnitudes.  Applied at *every* step.
-
-        Returns:
-            Same as evaluate_counterfactual, but impact_summary now includes:
-                "changed_thresholds": (if applicable)
-                "changed_inputs": (if applicable)
-        """
 
         counterfactual_network = copy.deepcopy(self)
 
-        # Apply connection modifications
         if modified_connections:
             for (source, target), new_strength in modified_connections.items():
                 if 0 <= source < self.num_nodes and 0 <= target < self.num_nodes:
@@ -146,7 +107,6 @@ class AutocatalyticNetwork:
                 else:
                     raise ValueError(f"Invalid connection indices: ({source}, {target})")
 
-        # Apply threshold modifications
         if modified_thresholds:
             for node, new_threshold in modified_thresholds.items():
                 if 0 <= node < self.num_nodes:
@@ -157,9 +117,7 @@ class AutocatalyticNetwork:
                 else:
                     raise ValueError(f"Invalid node index for threshold modification: {node}")
 
-        # Run to stability (with modified inputs if provided)
         if modified_inputs:
-          #Convert the dict to a numpy array.
           external_input_array = np.zeros(self.num_nodes)
           for node,inputValue in modified_inputs.items():
             if 0 <= node < self.num_nodes:
@@ -172,7 +130,6 @@ class AutocatalyticNetwork:
         initial_state, initial_stable = self.run_to_stability()  # No external input for initial state.
         counterfactual_state, counterfactual_stable = counterfactual_network.run_to_stability(external_input=external_input_array)
 
-        # --- Impact Analysis ---
         state_diff = np.where(counterfactual_state != initial_state)[0].tolist()
         output_change = np.sum(counterfactual_state) - np.sum(initial_state)
 
@@ -208,12 +165,10 @@ class AutocatalyticNetwork:
         for j in range(self.num_nodes):
           original_strength = self.connectivity_matrix[i,j]
 
-          #Test Increase
           modified_connections_inc = {(i,j): original_strength + 0.1}
           _, _, impact_summary_inc = self.evaluate_counterfactual(modified_connections_inc)
           impact_inc = abs(impact_summary_inc['output_change'])
 
-          #Test Decrease
           modified_connections_dec = {(i,j): original_strength - 0.1}
           _,_, impact_summary_dec = self.evaluate_counterfactual(modified_connections_dec)
           impact_dec = abs(impact_summary_dec['output_change'])
@@ -241,11 +196,9 @@ class AutocatalyticNetwork:
       """
       suggestions = []
 
-      #1. Connection Interventions
       for i in range(self.num_nodes):
         for j in range(self.num_nodes):
           if desired_state_change[j] > 0:  # Node j should be activated
-            # Suggest increasing activating or reducing inhibiting connections
             if self.connectivity_matrix[i, j] > 0:
                 suggestions.append({
                     "type": "connection",
@@ -261,7 +214,6 @@ class AutocatalyticNetwork:
                     "confidence": 0.4,
                 })
           elif desired_state_change[j] < 0:  # Node j should be deactivated
-            # Suggest decreasing activating or increasing inhibiting connections
             if self.connectivity_matrix[i, j] < 0:
                 suggestions.append({
                     "type": "connection",
@@ -276,7 +228,6 @@ class AutocatalyticNetwork:
                   "strength": -0.1, #Suggest Adding an inhibiting connection
                   "confidence": 0.4
                 })
-      # 2. Threshold Interventions
       for i in range(self.num_nodes):
           if desired_state_change[i] > 0:
             suggestions.append({
@@ -293,7 +244,6 @@ class AutocatalyticNetwork:
                 "confidence": 0.5,
             })
 
-      # 3. Input Interventions
       for i in range(self.num_nodes):
           if desired_state_change[i] > 0:
             suggestions.append({
@@ -312,8 +262,6 @@ class AutocatalyticNetwork:
 
       return suggestions
 
-# --- Example Usage ---
-# A simple network: A -> B -> C, with C inhibiting A
 connectivity = np.array([
     [0, 1, -1],  # A -> B, A -| C
     [0, 0, 1],  # B -> C
@@ -322,7 +270,6 @@ connectivity = np.array([
 
 network = AutocatalyticNetwork(connectivity)
 
-# --- Counterfactual: What if we break the connection from A to B? ---
 modified_connections = {(0, 1): 0}  # A no longer activates B
 counterfactual_state, counterfactual_stable, impact_summary = network.evaluate_counterfactual(modified_connections)
 
@@ -331,7 +278,6 @@ print("Original State:", impact_summary['initial_state'], "Stable:", impact_summ
 print("Counterfactual State:", counterfactual_state, "Stable:", counterfactual_stable)
 print("Impact Summary:", impact_summary)
 
-# --- Counterfactual: What if we make C activate A instead of inhibiting it? ---
 modified_connections = {(0, 2): 1}  # C now *activates* A
 counterfactual_state2, counterfactual_stable2, impact_summary2 = network.evaluate_counterfactual(modified_connections)
 
@@ -341,7 +287,6 @@ print("Counterfactual State:", counterfactual_state2, "Stable:", counterfactual_
 print("Impact Summary:", impact_summary2)
 
 
-# --- Extended Counterfactual: Modify threshold of node B and add external input to A ---
 modified_thresholds = {1: 0.3}  # Lower threshold for B
 modified_inputs = {0: 0.6}     # Constant input to A
 
@@ -355,14 +300,11 @@ print("Counterfactual State:", counterfactual_state3, "Stable:", counterfactual_
 print("Impact Summary:", impact_summary3)
 
 
-# --- Identify Critical Connections ---
 critical_connections = network.identify_critical_connections()
 print("\nCritical Connections:")
 for (source, target), impact in critical_connections:
     print(f"  Connection ({source}, {target}): Impact = {impact:.2f}")
 
-# --- Suggest Interventions ---
-# Example: We want to deactivate node 2 (C) and have no preference for others.
 desired_change = np.array([0, 0, -1])
 interventions = network.suggest_interventions(desired_change)
 print("\nSuggested Interventions:")

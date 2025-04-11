@@ -1,4 +1,3 @@
-# asf/knowledge_substrate/extraction/text.py
 import numpy as np
 from transformers import BertModel
 from asf.layer1_knowledge_substrate.extraction.base import FeatureExtractor

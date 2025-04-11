@@ -8,10 +8,7 @@ import argparse
 import logging
 import json
 import os
-from typing import Dict, List, Any
-import matplotlib.pyplot as plt
 
-# Configure logging
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
@@ -27,11 +24,9 @@ def test_contradiction_explainer(biomedlm_scorer, output_dir: str = None):
     """
     logger.info("Testing SHAP-based contradiction explainer...")
     
-    # Create output directory if specified
     if output_dir:
         os.makedirs(output_dir, exist_ok=True)
     
-    # Test cases
     test_cases = [
         {
             "name": "negation_contradiction",
@@ -63,7 +58,6 @@ def test_contradiction_explainer(biomedlm_scorer, output_dir: str = None):
         }
     ]
     
-    # Run tests
     results = []
     for i, test_case in enumerate(test_cases):
         logger.info(f"Test case {i+1}: {test_case['name']}")
@@ -72,7 +66,6 @@ def test_contradiction_explainer(biomedlm_scorer, output_dir: str = None):
         logger.info(f"Expected contradiction: {test_case['expected_contradiction']}")
         logger.info(f"Expected type: {test_case['expected_type']}")
         
-        # Generate explanation
         output_path = None
         if output_dir:
             output_path = os.path.join(output_dir, f"{test_case['name']}_explanation.png")
@@ -84,13 +77,11 @@ def test_contradiction_explainer(biomedlm_scorer, output_dir: str = None):
             output_path=output_path
         )
         
-        # Check if contradiction was detected
         contradiction_detected = explanation.get("contradiction_detected", False)
         
         logger.info(f"Contradiction detected: {contradiction_detected}")
         logger.info(f"Explanation type: {explanation.get('type', 'unknown')}")
         
-        # Print explanation summary
         if "summary" in explanation:
             logger.info("Explanation summary:")
             logger.info(explanation["summary"])
@@ -98,13 +89,11 @@ def test_contradiction_explainer(biomedlm_scorer, output_dir: str = None):
             logger.info("Explanation:")
             logger.info(explanation["explanation"])
         
-        # Check if visualization was generated
         if "visualization_path" in explanation:
             logger.info(f"Visualization saved to: {explanation['visualization_path']}")
         
         logger.info("")
         
-        # Store result
         test_result = {
             "name": test_case["name"],
             "claim1": test_case["claim1"],
@@ -118,7 +107,6 @@ def test_contradiction_explainer(biomedlm_scorer, output_dir: str = None):
         }
         results.append(test_result)
     
-    # Calculate success rate
     success_count = sum(1 for result in results if result["success"])
     success_rate = success_count / len(results)
     
@@ -135,20 +123,17 @@ def test_explanation_components(biomedlm_scorer):
     """
     logger.info("Testing explanation components...")
     
-    # Test negation explanation
     logger.info("Testing negation explanation...")
     negation_test = {
         "claim1": "The study found a significant effect of the treatment.",
         "claim2": "The study found no significant effect of the treatment."
     }
     
-    # Get contradiction result with negation detection
     contradiction_result = biomedlm_scorer.detect_contradiction_with_negation(
         negation_test["claim1"], 
         negation_test["claim2"]
     )
     
-    # Check if negation analysis is available
     if "negation_analysis" in contradiction_result:
         logger.info("Negation analysis available:")
         negation_analysis = contradiction_result["negation_analysis"]
@@ -162,24 +147,20 @@ def test_explanation_components(biomedlm_scorer):
     
     logger.info("")
     
-    # Test multimodal explanation
     logger.info("Testing multimodal explanation...")
     multimodal_test = {
         "claim1": "A randomized controlled trial with 500 patients showed a 20% reduction in symptoms.",
         "claim2": "A case report of 3 patients suggested the treatment might reduce symptoms."
     }
     
-    # Get contradiction result with multimodal fusion
     contradiction_result = biomedlm_scorer.detect_contradiction_multimodal(
         multimodal_test["claim1"], 
         multimodal_test["claim2"]
     )
     
-    # Check if metadata is available
     if "metadata1" in contradiction_result and "metadata2" in contradiction_result:
         logger.info("Metadata available:")
         
-        # Print metadata for claim 1
         metadata1 = contradiction_result["metadata1"]
         study_design1 = metadata1.get("study_design", {}).get("study_design", "unknown")
         design_score1 = metadata1.get("study_design", {}).get("design_score", 0.0)
@@ -189,7 +170,6 @@ def test_explanation_components(biomedlm_scorer):
         logger.info(f"  Study design: {study_design1} (score: {design_score1:.1f})")
         logger.info(f"  Sample size: {sample_size1}")
         
-        # Print metadata for claim 2
         metadata2 = contradiction_result["metadata2"]
         study_design2 = metadata2.get("study_design", {}).get("study_design", "unknown")
         design_score2 = metadata2.get("study_design", {}).get("design_score", 0.0)
@@ -203,20 +183,17 @@ def test_explanation_components(biomedlm_scorer):
     
     logger.info("")
     
-    # Test SHAP explanation
     logger.info("Testing SHAP explanation...")
     shap_test = {
         "claim1": "The drug significantly reduced blood pressure in hypertensive patients.",
         "claim2": "The medication had no effect on blood pressure in patients with hypertension."
     }
     
-    # Generate explanation with SHAP
     explanation = biomedlm_scorer.explain_contradiction(
         shap_test["claim1"], 
         shap_test["claim2"]
     )
     
-    # Check if SHAP values are available
     if "type" in explanation and explanation["type"] == "shap" and "shap_values" in explanation:
         logger.info("SHAP explanation available:")
         
@@ -230,7 +207,14 @@ def test_explanation_components(biomedlm_scorer):
     logger.info("")
 
 def main():
-    """Main function."""
+    """Main function.
+
+    Args:
+        # TODO: Add parameter descriptions
+
+    Returns:
+        # TODO: Add return description
+    """
     parser = argparse.ArgumentParser(description="Test contradiction explainer")
     parser.add_argument("--model", type=str, default="microsoft/BioMedLM", help="Model name")
     parser.add_argument("--output-dir", type=str, default="./explanations", help="Output directory for visualizations")
@@ -240,10 +224,8 @@ def main():
     args = parser.parse_args()
     
     try:
-        # Import BioMedLMScorer
         from asf.medical.models.biomedlm_wrapper import BioMedLMScorer
         
-        # Initialize BioMedLMScorer
         logger.info(f"Initializing BioMedLMScorer with model: {args.model}")
         biomedlm_scorer = BioMedLMScorer(
             model_name=args.model,
@@ -252,14 +234,11 @@ def main():
             use_shap_explainer=True
         )
         
-        # Run tests
         results = test_contradiction_explainer(biomedlm_scorer, args.output_dir)
         
-        # Test individual components if requested
         if args.test_components:
             test_explanation_components(biomedlm_scorer)
         
-        # Save results if requested
         if args.save_results:
             with open(args.save_results, "w") as f:
                 json.dump(results, f, indent=2)

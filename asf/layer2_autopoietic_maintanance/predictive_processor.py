@@ -36,33 +36,25 @@ class SymbolicPredictiveProcessor:
         if prediction['evaluated']:
             return None
             
-        # Calculate prediction error
         predicted = prediction['value']
         error = self._calculate_error(predicted, actual_value)
         
-        # Update prediction record
         prediction['evaluated'] = True
         prediction['actual_value'] = actual_value
         prediction['error'] = error
         prediction['evaluation_time'] = time.time()
         
-        # Track error for precision calculation
         entity_id = prediction['entity_id']
         self.prediction_errors[entity_id].append(error)
         
-        # Limit history size
         if len(self.prediction_errors[entity_id]) > 20:
             self.prediction_errors[entity_id] = self.prediction_errors[entity_id][-20:]
         
-        # Update precision (inverse variance)
         if len(self.prediction_errors[entity_id]) > 1:
             variance = np.var(self.prediction_errors[entity_id])
             precision = 1.0 / (variance + 1e-6)  # Avoid division by zero
             self.precision_values[entity_id] = min(10.0, precision)  # Cap very high precision
             
-        # Calculate adaptive learning rate
-        # Higher error = higher learning rate
-        # Higher precision = lower learning rate (more cautious)
         precision = self.get_precision(entity_id)
         base_rate = min(0.8, error * 2)  # Error-proportional component
         precision_factor = max(0.1, min(0.9, 1.0 / (1.0 + precision * 0.2)))

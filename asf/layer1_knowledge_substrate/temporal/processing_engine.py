@@ -21,7 +21,6 @@ class TemporalProcessingEngine:
         """Add an event to an entity's temporal sequence"""
         if entity_id in self.sequences and sequence_type in self.sequences[entity_id]:
             self.sequences[entity_id][sequence_type].add_event(event_data)
-            # Check for patterns when new events are added
             return self.check_for_patterns(entity_id, sequence_type)
         return None
     
@@ -54,7 +53,6 @@ class TemporalProcessingEngine:
     
     def _get_feature_dimension(self, sequence_type):
         """Return feature dimension based on sequence type"""
-        # Different sequence types may have different feature dimensions
         feature_dimensions = {
             "text": 768,
             "image": 512,

@@ -4,118 +4,58 @@ Query repository for the Medical Research Synthesizer.
 This module provides a repository for query-related database operations.
 """
 
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Union
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import Session
 import datetime
+import logging
 
 from asf.medical.storage.models import Query
-from asf.medical.storage.repositories.base_repository import BaseRepository
-from asf.medical.storage.database import is_async
+from asf.medical.storage.repositories.enhanced_base_repository import EnhancedBaseRepository
+from asf.medical.core.exceptions import DatabaseError
 
-class QueryRepository(BaseRepository[Query]):
+logger = logging.getLogger(__name__)
+
+class QueryRepository(EnhancedBaseRepository[Query]):
     """
     Repository for query-related database operations.
     """
-    
+
     def __init__(self):
-        """Initialize the repository with the Query model."""
+        """Initialize the repository with the Query model.
+
+    Args:
+        # TODO: Add parameter descriptions
+
+    Returns:
+        # TODO: Add return description
+    """
         super().__init__(Query)
-    
-    # Synchronous methods
-    def create_query(self, db: Session, user_id: int, query_text: str, query_type: str = "text", parameters: Dict[str, Any] = None) -> Query:
-        """
-        Create a new query.
-        
-        Args:
-            db: Database session
-            user_id: User ID
-            query_text: Query text
-            query_type: Query type (default: "text")
-            parameters: Query parameters (default: None)
-            
-        Returns:
-            The created query
-        """
-        if is_async:
-            raise ValueError("Cannot use synchronous methods with async database")
-        
-        query = Query(
-            user_id=user_id,
-            query_text=query_text,
-            query_type=query_type,
-            parameters=parameters,
-            created_at=datetime.datetime.utcnow()
-        )
-        db.add(query)
-        db.commit()
-        db.refresh(query)
-        return query
-    
-    def get_user_queries(self, db: Session, user_id: int, skip: int = 0, limit: int = 100) -> List[Query]:
-        """
-        Get all queries for a user.
-        
-        Args:
-            db: Database session
-            user_id: User ID
-            skip: Number of queries to skip
-            limit: Maximum number of queries to return
-            
-        Returns:
-            List of queries
-        """
-        if is_async:
-            raise ValueError("Cannot use synchronous methods with async database")
-        
-        return db.query(Query).filter(Query.user_id == user_id).order_by(Query.created_at.desc()).offset(skip).limit(limit).all()
-    
-    # Asynchronous methods
+
     async def create_query_async(self, db: AsyncSession, user_id: int, query_text: str, query_type: str = "text", parameters: Dict[str, Any] = None) -> Query:
-        """
-        Create a new query asynchronously.
-        
-        Args:
-            db: Async database session
-            user_id: User ID
-            query_text: Query text
-            query_type: Query type (default: "text")
-            parameters: Query parameters (default: None)
-            
-        Returns:
-            The created query
-        """
-        query = Query(
-            user_id=user_id,
-            query_text=query_text,
-            query_type=query_type,
-            parameters=parameters,
-            created_at=datetime.datetime.utcnow()
-        )
-        db.add(query)
-        await db.commit()
-        await db.refresh(query)
-        return query
-    
+        try:
+            query = Query(
+                user_id=user_id,
+                query_text=query_text,
+                query_type=query_type,
+                parameters=parameters,
+                created_at=datetime.datetime.utcnow()
+            )
+            db.add(query)
+            await db.commit()
+            await db.refresh(query)
+            return query
+        except Exception as e:
+            await await db.rollback()
+            logger.error(f"Error creating query: {str(e)}")
+            raise DatabaseError(f"Failed to create query: {str(e)}")
+
     async def get_user_queries_async(self, db: AsyncSession, user_id: int, skip: int = 0, limit: int = 100) -> List[Query]:
-        """
-        Get all queries for a user asynchronously.
-        
-        Args:
-            db: Async database session
-            user_id: User ID
-            skip: Number of queries to skip
-            limit: Maximum number of queries to return
-            
-        Returns:
-            List of queries
-        """
-        result = await db.execute(
-            select(Query)
-            .filter(Query.user_id == user_id)
-            .order_by(Query.created_at.desc())
-            .offset(skip)
-            .limit(limit)
-        )
-        return result.scalars().all()
+        try:
+            stmt = select(Query).where(Query.user_id == user_id).offset(skip).limit(limit).order_by(Query.created_at.desc())
+            result = await db.execute(stmt)
+            return list(result.scalars().all())
+        except Exception as e:
+    logger.error(f\"Error getting user queries: {str(e)}\")
+    raise DatabaseError(f\"Error getting user queries: {str(e)}\") DatabaseError(f"Failed to get user queries: {str(e)}")

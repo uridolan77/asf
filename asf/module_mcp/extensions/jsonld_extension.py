@@ -14,26 +14,22 @@ class MCPJSONLDMessage:
         }
     
     def _build_context(self, custom_contexts=None):
-        # Base context with core MCP vocabulary
         context = {
             "@vocab": "https://mcp.yourdomain.com/vocab/",
             "xsd": "http://www.w3.org/2001/XMLSchema#",
             "schema": "https://schema.org/",
             
-            # Define core terms with specific types
             "timestamp": {"@type": "xsd:dateTime"},
             "location": {"@type": "schema:Place"},
             "confidence": {"@type": "xsd:float"},
             "priority": {"@type": "xsd:string"}
         }
         
-        # Add custom contexts if provided
         if custom_contexts:
             context.update(custom_contexts)
             
         return context
 
-# Environmental sensors context
 SENSOR_CONTEXT = {
     "sensors": "https://yourdomain.com/vocab/sensors/",
     "reading": {"@id": "sensors:reading"},
@@ -42,7 +38,6 @@ SENSOR_CONTEXT = {
     "sampleRate": {"@id": "sensors:sampleRate"}
 }
 
-# Spatial context
 SPATIAL_CONTEXT = {
     "geo": "http://www.w3.org/2003/01/geo/wgs84_pos#",
     "coordinates": {"@id": "geo:Point"},
@@ -73,7 +68,6 @@ class JSONLDSerializer(MCPSerializer):
         return json.loads(data)
 
 
-# To be implemented later
 class ProtobufSerializer(MCPSerializer):
     """Protocol Buffers implementation of MCP serializer"""
     
@@ -119,13 +113,11 @@ class SensorReading:
 class MCPContextRegistry:
     """Registry of JSON-LD contexts for different domains"""
     
-    # Core MCP context with basic vocabulary
     CORE_CONTEXT = {
         "mcp": "https://modelcontextprotocol.io/vocab#",
         "xsd": "http://www.w3.org/2001/XMLSchema#",
         "schema": "https://schema.org/",
         
-        # Core MCP terms
         "id": "@id",
         "type": "@type",
         "timestamp": {"@id": "mcp:timestamp", "@type": "xsd:dateTime"},
@@ -135,7 +127,6 @@ class MCPContextRegistry:
         "priority": {"@id": "mcp:priority"}
     }
     
-    # Sensor-related context
     SENSOR_CONTEXT = {
         "sensors": "https://modelcontextprotocol.io/vocab/sensors#",
         "reading": {"@id": "sensors:reading"},
@@ -144,7 +135,6 @@ class MCPContextRegistry:
         "sampleRate": {"@id": "sensors:sampleRate", "@type": "xsd:float"}
     }
     
-    # Spatial context using standard WGS84 ontology
     SPATIAL_CONTEXT = {
         "geo": "http://www.w3.org/2003/01/geo/wgs84_pos#",
         "location": {"@id": "schema:location", "@type": "@id"},
@@ -155,7 +145,6 @@ class MCPContextRegistry:
         "zone": {"@id": "mcp:zone"}
     }
     
-    # Event-related context
     EVENT_CONTEXT = {
         "event": "https://modelcontextprotocol.io/vocab/events#",
         "eventType": {"@id": "event:type"},
@@ -164,7 +153,6 @@ class MCPContextRegistry:
         "category": {"@id": "event:category"}
     }
     
-    # Tool/command-related context
     TOOL_CONTEXT = {
         "tool": "https://modelcontextprotocol.io/vocab/tools#",
         "action": {"@id": "tool:action"},
@@ -186,10 +174,8 @@ class MCPContextRegistry:
         """
         context = {}
         
-        # Always include core context
         context.update(cls.CORE_CONTEXT)
         
-        # Add requested domain contexts
         for domain in domains:
             if domain == 'sensor' and hasattr(cls, 'SENSOR_CONTEXT'):
                 context.update(cls.SENSOR_CONTEXT)
@@ -214,26 +200,15 @@ class MCPJSONLDMessage:
         context_domains: List[str] = None,
         custom_context: Dict = None
     ):
-        """
-        Initialize a new MCP message with JSON-LD context
-        
-        Args:
-            message_type: Type of MCP message
-            context_domains: List of domain contexts to include
-            custom_context: Additional custom context definitions
-        """
-        # Build the context
         domains = context_domains or ['core']
         if 'core' not in domains:
             domains.append('core')  # Always include core
             
         self.context = MCPContextRegistry.get_context(*domains)
         
-        # Add any custom context
         if custom_context:
             self.context.update(custom_context)
             
-        # Create the base message
         self.message = {
             "@context": self.context,
             "type": message_type,
@@ -339,16 +314,6 @@ class SensorReadingMessage(MCPJSONLDMessage):
         accuracy: Optional[float] = None,
         sample_rate: Optional[float] = None
     ):
-        """
-        Create a new sensor reading message
-        
-        Args:
-            sensor_id: Identifier of the sensor
-            value: Reading value
-            unit: Unit of measurement
-            accuracy: Accuracy of reading (0.0-1.0)
-            sample_rate: Sample rate in Hz
-        """
         super().__init__(
             message_type="mcp:SensorReading",
             context_domains=['core', 'sensor']
@@ -386,17 +351,6 @@ class EnvironmentalEventMessage(MCPJSONLDMessage):
         detected_at: Optional[str] = None,
         confidence: Optional[float] = None
     ):
-        """
-        Create a new environmental event message
-        
-        Args:
-            event_type: Type of event
-            event_data: Event details
-            category: Category of event
-            occurred_at: When event occurred (ISO timestamp)
-            detected_at: When event was detected (ISO timestamp)
-            confidence: Confidence in event detection (0.0-1.0)
-        """
         super().__init__(
             message_type="mcp:EnvironmentalEvent",
             context_domains=['core', 'event']
@@ -435,14 +389,6 @@ class ToolInvocationMessage(MCPJSONLDMessage):
         action: str,
         parameters: Dict = None
     ):
-        """
-        Create a new tool invocation message
-        
-        Args:
-            tool_id: Identifier of the tool
-            action: Action to perform
-            parameters: Parameters for the action
-        """
         super().__init__(
             message_type="mcp:ToolInvocation",
             context_domains=['core', 'tool']
@@ -459,9 +405,7 @@ class ToolInvocationMessage(MCPJSONLDMessage):
         self.add_content(tool_content)
 
 
-# Example usage
 def create_examples():
-    # Example 1: Temperature sensor reading
     temp_reading = SensorReadingMessage(
         sensor_id="temp_sensor_1",
         value=22.5,
@@ -470,7 +414,6 @@ def create_examples():
     )
     temp_reading.add_location(37.7749, -122.4194, zone="building_1_floor_2")
     
-    # Example 2: Motion detection event
     motion_event = EnvironmentalEventMessage(
         event_type="motion.detected",
         event_data={"object": "person", "count": 2},
@@ -480,7 +423,6 @@ def create_examples():
     motion_event.add_location(37.7750, -122.4195, zone="entrance")
     motion_event.set_source("camera_system")
     
-    # Example 3: Tool invocation to control a camera
     camera_control = ToolInvocationMessage(
         tool_id="camera_system",
         action="pan",

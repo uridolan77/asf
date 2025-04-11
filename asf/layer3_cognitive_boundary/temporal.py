@@ -21,7 +21,6 @@ class AdaptiveTemporalMetadata:
         'ephemeral': 3600  # 1 hour
     })
     
-    # Seth's Data Paradox enhancements
     predicted_relevance: Dict[str, float] = field(default_factory=dict)
     relevance_errors: Dict[str, list] = field(default_factory=lambda: {})
     relevance_precision: Dict[str, float] = field(default_factory=dict)
@@ -61,7 +60,6 @@ class AdaptiveTemporalMetadata:
             
         elapsed = current_time - self.last_modified
         
-        # Exponential decay function for freshness
         decay_rate = 0.1  # Controls decay speed
         freshness = np.exp(-decay_rate * elapsed / 86400)  # Normalized to days
         
@@ -88,41 +86,6 @@ class AdaptiveTemporalMetadata:
             
         Returns:
             Predicted relevance score
-        """
-        prediction_key = f"{context}_{int(future_time)}"
-        
-        # If we already have a prediction, return it
-        if prediction_key in self.predicted_relevance:
-            return self.predicted_relevance[prediction_key]
-        
-        # Calculate time delta
-        current_time = time.time()
-        delta = future_time - current_time
-        
-        # Base prediction on current relevance
-        current_relevance = self.compute_relevance(current_time, context)
-        
-        # Predict future relevance based on contextual half-life decay
-        half_life = self.contextual_half_lives.get(context, 
-                                                self.contextual_half_lives['default'])
-        
-        # Calculate decay factor (exponential decay)
-        decay_factor = np.exp(-0.693 * delta / half_life)  # 0.693 is ln(2)
-        
-        # Adjust for predicted access or modifications
-        expected_accesses = (self.access_count / max(1, current_time - self.creation_time)) * delta
-        access_factor = min(1.2, 1.0 + (expected_accesses * 0.1))
-        
-        # Calculate predicted relevance
-        predicted_relevance = current_relevance * decay_factor * access_factor
-        
-        # Store prediction
-        self.predicted_relevance[prediction_key] = predicted_relevance
-        
-        return predicted_relevance
-    
-    def update_relevance_prediction(self, future_time, actual_relevance, context='default'):
-        """
         Update relevance predictions with actual observed relevance.
         Implements Seth's error minimization principle.
         
@@ -133,32 +96,3 @@ class AdaptiveTemporalMetadata:
             
         Returns:
             Prediction error
-        """
-        prediction_key = f"{context}_{int(future_time)}"
-        
-        # If we didn't predict for this time, nothing to update
-        if prediction_key not in self.predicted_relevance:
-            return None
-        
-        # Calculate prediction error
-        predicted = self.predicted_relevance[prediction_key]
-        error = abs(predicted - actual_relevance)
-        
-        # Initialize error tracking for this context if needed
-        if context not in self.relevance_errors:
-            self.relevance_errors[context] = []
-        
-        # Track error for precision calculation
-        self.relevance_errors[context].append(error)
-        
-        # Limit history size
-        if len(self.relevance_errors[context]) > 20:
-            self.relevance_errors[context] = self.relevance_errors[context][-20:]
-        
-        # Update precision (inverse variance)
-        if len(self.relevance_errors[context]) > 1:
-            variance = np.var(self.relevance_errors[context])
-            precision = 1.0 / (variance + 1e-6)  # Avoid division by zero
-            self.relevance_precision[context] = precision
-        
-        return error

@@ -6,7 +6,6 @@ class TemporalPatternDetector:
     Detects patterns in temporal sequences using recurrent neural networks.
     """
     def __init__(self, input_size, hidden_size=64):
-        # GRU-based recurrent model for temporal pattern detection
         self.rnn = nn.GRU(input_size, hidden_size, batch_first=True)
         self.pattern_classifier = nn.Linear(hidden_size, 1)
         self.hidden_size = hidden_size
@@ -23,9 +22,3 @@ class TemporalPatternDetector:
         """
         Analyze sequence data to detect significant temporal patterns
         Returns pattern score and pattern type
-        """
-        # Convert sequence to tensor
-        sequence_tensor = torch.tensor(sequence_data, dtype=torch.float32).unsqueeze(0)
-        with torch.no_grad():
-            pattern_score, _ = self.forward(sequence_tensor)
-        return pattern_score.item()

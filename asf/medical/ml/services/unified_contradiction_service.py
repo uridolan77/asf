@@ -6,7 +6,6 @@ integrating multiple methods and models for more accurate contradiction detectio
 """
 
 import logging
-from typing import Dict, List, Optional, Any, Union
 
 from asf.medical.ml.models.biomedlm import BioMedLMService
 from asf.medical.ml.models.tsmixer import TSMixerService
@@ -18,12 +17,10 @@ from asf.medical.ml.services.enhanced_contradiction_classifier import (
     ContradictionConfidence
 )
 from asf.medical.ml.services.temporal_service import TemporalService
-from asf.medical.core.enhanced_cache import enhanced_cache_manager, enhanced_cached
 
-# Set up logging
 logger = logging.getLogger(__name__)
 
-class UnifiedContradictionService:
+class UnifiedUnifiedUnifiedContradictionService:
     """
     Unified service for detecting contradictions in medical literature.
 
@@ -40,28 +37,14 @@ class UnifiedContradictionService:
         shap_explainer: Optional[SHAPExplainer] = None,
         thresholds: Optional[Dict[str, float]] = None
     ):
-        """
-        Initialize the unified contradiction service.
-
-        Args:
-            biomedlm_service: BioMedLM service for semantic contradiction detection
-            tsmixer_service: TSMixer service for temporal contradiction detection
-            lorentz_service: Lorentz embeddings service for hyperbolic contradiction detection
-            temporal_service: Temporal service for temporal contradiction detection
-            shap_explainer: SHAP explainer for contradiction explanation
-            thresholds: Contradiction detection thresholds for different methods
-        """
-        # Initialize services
         self.biomedlm_service = biomedlm_service or BioMedLMService()
         self.tsmixer_service = tsmixer_service or TSMixerService()
         self.lorentz_service = lorentz_service or LorentzEmbeddingService()
         self.temporal_service = temporal_service or TemporalService()
         self.shap_explainer = shap_explainer or SHAPExplainer()
         
-        # Initialize contradiction classifier
         self.contradiction_classifier = EnhancedContradictionClassifier()
         
-        # Set thresholds
         self.thresholds = thresholds or {
             ContradictionType.DIRECT: 0.7,
             ContradictionType.TEMPORAL: 0.7,
@@ -86,25 +69,6 @@ class UnifiedContradictionService:
         use_temporal: bool = False,
         skip_cache: bool = False
     ) -> Dict[str, Any]:
-        """
-        Detect contradiction between two claims.
-
-        Args:
-            claim1: First claim
-            claim2: Second claim
-            metadata1: Metadata for the first claim
-            metadata2: Metadata for the second claim
-            threshold: Contradiction detection threshold
-            use_biomedlm: Whether to use BioMedLM for contradiction detection
-            use_tsmixer: Whether to use TSMixer for contradiction detection
-            use_lorentz: Whether to use Lorentz embeddings for contradiction detection
-            use_temporal: Whether to use temporal analysis for contradiction detection
-            skip_cache: Whether to skip cache
-
-        Returns:
-            Contradiction detection result
-        """
-        # Initialize result
         result = {
             "claim1": claim1,
             "claim2": claim2,
@@ -117,18 +81,15 @@ class UnifiedContradictionService:
             "details": {}
         }
         
-        # Update thresholds based on input
         if threshold != 0.7:
             for key in self.thresholds:
                 self.thresholds[key] = threshold
         
-        # Detect direct contradiction using BioMedLM
         if use_biomedlm and self.biomedlm_service:
             direct_result = await self._detect_direct_contradiction(claim1, claim2)
             result["methods_used"].append("biomedlm")
             result["details"]["direct"] = direct_result
 
-            # Update result if direct contradiction is detected
             if direct_result["is_contradiction"]:
                 result["is_contradiction"] = True
                 result["contradiction_score"] = direct_result["score"]
@@ -136,13 +97,11 @@ class UnifiedContradictionService:
                 result["confidence"] = direct_result["confidence"]
                 result["explanation"] = direct_result["explanation"]
         
-        # Detect temporal contradiction using TSMixer
         if use_tsmixer and self.tsmixer_service:
             temporal_result = await self._detect_temporal_contradiction(claim1, claim2, metadata1, metadata2)
             result["methods_used"].append("tsmixer")
             result["details"]["temporal"] = temporal_result
 
-            # Update result if temporal contradiction is detected and has higher score
             if temporal_result["is_contradiction"] and (
                 not result["is_contradiction"] or 
                 temporal_result["score"] > result["contradiction_score"]
@@ -153,13 +112,11 @@ class UnifiedContradictionService:
                 result["confidence"] = temporal_result["confidence"]
                 result["explanation"] = temporal_result["explanation"]
         
-        # Detect contradiction using Lorentz embeddings
         if use_lorentz and self.lorentz_service:
             lorentz_result = await self._detect_lorentz_contradiction(claim1, claim2)
             result["methods_used"].append("lorentz")
             result["details"]["lorentz"] = lorentz_result
 
-            # Update result if Lorentz contradiction is detected and has higher score
             if lorentz_result["is_contradiction"] and (
                 not result["is_contradiction"] or 
                 lorentz_result["score"] > result["contradiction_score"]
@@ -170,13 +127,11 @@ class UnifiedContradictionService:
                 result["confidence"] = lorentz_result["confidence"]
                 result["explanation"] = lorentz_result["explanation"]
         
-        # Detect temporal contradiction using temporal analysis
         if use_temporal and self.temporal_service:
             temporal_analysis_result = await self._detect_temporal_analysis_contradiction(claim1, claim2, metadata1, metadata2)
             result["methods_used"].append("temporal_analysis")
             result["details"]["temporal_analysis"] = temporal_analysis_result
 
-            # Update result if temporal analysis contradiction is detected and has higher score
             if temporal_analysis_result["is_contradiction"] and (
                 not result["is_contradiction"] or 
                 temporal_analysis_result["score"] > result["contradiction_score"]
@@ -187,12 +142,10 @@ class UnifiedContradictionService:
                 result["confidence"] = temporal_analysis_result["confidence"]
                 result["explanation"] = temporal_analysis_result["explanation"]
         
-        # Generate explanation using SHAP if available and not already set
         if self.shap_explainer and result["is_contradiction"] and not result["explanation"]:
             explanation = await self._generate_explanation(claim1, claim2, result["contradiction_type"])
             result["explanation"] = explanation
 
-        # Apply enhanced classification if contradiction is detected
         if result["is_contradiction"]:
             result = await self._apply_enhanced_classification(result, metadata1, metadata2)
 
@@ -210,41 +163,20 @@ class UnifiedContradictionService:
         use_temporal: bool = False,
         skip_cache: bool = False
     ) -> List[Dict[str, Any]]:
-        """
-        Detect contradictions in a list of articles.
-
-        Args:
-            articles: List of articles to analyze
-            threshold: Contradiction detection threshold
-            use_biomedlm: Whether to use BioMedLM for contradiction detection
-            use_tsmixer: Whether to use TSMixer for contradiction detection
-            use_lorentz: Whether to use Lorentz embeddings for contradiction detection
-            use_temporal: Whether to use temporal analysis for contradiction detection
-            skip_cache: Whether to skip cache
-
-        Returns:
-            List of contradictions
-        """
-        # Validate input
         if not articles or len(articles) < 2:
             logger.warning("Not enough articles to detect contradictions")
             return []
         
-        # Initialize contradictions
         contradictions = []
         
-        # Compare each pair of articles
         for i in range(len(articles)):
             for j in range(i + 1, len(articles)):
-                # Extract claims
                 claim1 = articles[i].get("title", "") + ". " + articles[i].get("abstract", "")
                 claim2 = articles[j].get("title", "") + ". " + articles[j].get("abstract", "")
                 
-                # Skip if either claim is empty
                 if not claim1.strip() or not claim2.strip():
                     continue
                 
-                # Extract metadata
                 metadata1 = {
                     "publication_date": articles[i].get("publication_date", ""),
                     "journal": articles[i].get("journal", ""),
@@ -261,7 +193,6 @@ class UnifiedContradictionService:
                     "doi": articles[j].get("doi", "")
                 }
                 
-                # Detect contradiction
                 result = await self.detect_contradiction(
                     claim1=claim1,
                     claim2=claim2,
@@ -275,7 +206,6 @@ class UnifiedContradictionService:
                     skip_cache=skip_cache
                 )
                 
-                # Add to contradictions if contradiction detected
                 if result.get("is_contradiction", False):
                     contradiction = {
                         "article1": articles[i],
@@ -297,17 +227,6 @@ class UnifiedContradictionService:
         claim1: str,
         claim2: str
     ) -> Dict[str, Any]:
-        """
-        Detect direct contradiction using BioMedLM.
-
-        Args:
-            claim1: First claim
-            claim2: Second claim
-
-        Returns:
-            Direct contradiction detection result
-        """
-        # Initialize result
         result = {
             "is_contradiction": False,
             "score": 0.0,
@@ -316,14 +235,11 @@ class UnifiedContradictionService:
         }
         
         try:
-            # Use BioMedLM to detect contradiction
             is_contradiction, score = await self.biomedlm_service.detect_contradiction(claim1, claim2)
 
-            # Set result
             result["is_contradiction"] = score > self.thresholds[ContradictionType.DIRECT]
             result["score"] = float(score)
 
-            # Set confidence based on score
             if score > 0.9:
                 result["confidence"] = ContradictionConfidence.HIGH
             elif score > 0.8:
@@ -331,7 +247,6 @@ class UnifiedContradictionService:
             else:
                 result["confidence"] = ContradictionConfidence.LOW
 
-            # Generate explanation
             if result["is_contradiction"]:
                 result["explanation"] = f"The claims directly contradict each other with a score of {score:.2f}."
 
@@ -347,19 +262,6 @@ class UnifiedContradictionService:
         metadata1: Optional[Dict[str, Any]] = None,
         metadata2: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
-        """
-        Detect temporal contradiction using TSMixer.
-
-        Args:
-            claim1: First claim
-            claim2: Second claim
-            metadata1: Metadata for the first claim
-            metadata2: Metadata for the second claim
-
-        Returns:
-            Temporal contradiction detection result
-        """
-        # Initialize result
         result = {
             "is_contradiction": False,
             "score": 0.0,
@@ -368,20 +270,16 @@ class UnifiedContradictionService:
         }
         
         try:
-            # Extract publication dates from metadata
             date1 = metadata1.get("publication_date", "") if metadata1 else ""
             date2 = metadata2.get("publication_date", "") if metadata2 else ""
             
-            # Use TSMixer to detect temporal contradiction
             is_contradiction, score, explanation = await self.tsmixer_service.detect_temporal_contradiction(
                 claim1, claim2, date1, date2
             )
 
-            # Set result
             result["is_contradiction"] = score > self.thresholds[ContradictionType.TEMPORAL]
             result["score"] = float(score)
 
-            # Set confidence based on score
             if score > 0.9:
                 result["confidence"] = ContradictionConfidence.HIGH
             elif score > 0.8:
@@ -389,7 +287,6 @@ class UnifiedContradictionService:
             else:
                 result["confidence"] = ContradictionConfidence.LOW
 
-            # Set explanation
             if result["is_contradiction"]:
                 result["explanation"] = explanation or f"The claims contradict each other temporally with a score of {score:.2f}."
 
@@ -403,17 +300,6 @@ class UnifiedContradictionService:
         claim1: str,
         claim2: str
     ) -> Dict[str, Any]:
-        """
-        Detect contradiction using Lorentz embeddings.
-
-        Args:
-            claim1: First claim
-            claim2: Second claim
-
-        Returns:
-            Lorentz contradiction detection result
-        """
-        # Initialize result
         result = {
             "is_contradiction": False,
             "score": 0.0,
@@ -422,14 +308,11 @@ class UnifiedContradictionService:
         }
         
         try:
-            # Use Lorentz embeddings to detect contradiction
             is_contradiction, score = await self.lorentz_service.detect_contradiction(claim1, claim2)
 
-            # Set result
             result["is_contradiction"] = score > self.thresholds[ContradictionType.DIRECT]
             result["score"] = float(score)
 
-            # Set confidence based on score
             if score > 0.9:
                 result["confidence"] = ContradictionConfidence.HIGH
             elif score > 0.8:
@@ -437,7 +320,6 @@ class UnifiedContradictionService:
             else:
                 result["confidence"] = ContradictionConfidence.LOW
 
-            # Generate explanation
             if result["is_contradiction"]:
                 result["explanation"] = f"The claims contradict each other in hyperbolic space with a score of {score:.2f}."
 
@@ -453,19 +335,6 @@ class UnifiedContradictionService:
         metadata1: Optional[Dict[str, Any]] = None,
         metadata2: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
-        """
-        Detect temporal contradiction using temporal analysis.
-
-        Args:
-            claim1: First claim
-            claim2: Second claim
-            metadata1: Metadata for the first claim
-            metadata2: Metadata for the second claim
-
-        Returns:
-            Temporal analysis contradiction detection result
-        """
-        # Initialize result
         result = {
             "is_contradiction": False,
             "score": 0.0,
@@ -474,20 +343,16 @@ class UnifiedContradictionService:
         }
         
         try:
-            # Extract publication dates from metadata
             date1 = metadata1.get("publication_date", "") if metadata1 else ""
             date2 = metadata2.get("publication_date", "") if metadata2 else ""
             
-            # Use temporal service to detect temporal contradiction
             is_contradiction, score, explanation = await self.temporal_service.analyze_temporal_contradiction(
                 claim1, claim2, date1, date2
             )
 
-            # Set result
             result["is_contradiction"] = score > self.thresholds[ContradictionType.TEMPORAL]
             result["score"] = float(score)
 
-            # Set confidence based on score
             if score > 0.9:
                 result["confidence"] = ContradictionConfidence.HIGH
             elif score > 0.8:
@@ -495,7 +360,6 @@ class UnifiedContradictionService:
             else:
                 result["confidence"] = ContradictionConfidence.LOW
 
-            # Set explanation
             if result["is_contradiction"]:
                 result["explanation"] = explanation or f"The claims contradict each other temporally with a score of {score:.2f}."
 
@@ -510,25 +374,11 @@ class UnifiedContradictionService:
         claim2: str,
         contradiction_type: str
     ) -> str:
-        """
-        Generate explanation for contradiction.
-
-        Args:
-            claim1: First claim
-            claim2: Second claim
-            contradiction_type: Type of contradiction
-
-        Returns:
-            Explanation for contradiction
-        """
         try:
-            # Use SHAP explainer to generate explanation
             explanation = await self.shap_explainer.explain_contradiction(claim1, claim2)
             
-            # Extract explanation text
             explanation_text = explanation.get("summary", "")
             
-            # Add contradiction type to explanation
             if contradiction_type == ContradictionType.DIRECT:
                 explanation_text = f"Direct contradiction: {explanation_text}"
             elif contradiction_type == ContradictionType.TEMPORAL:
@@ -551,29 +401,15 @@ class UnifiedContradictionService:
         metadata1: Optional[Dict[str, Any]] = None,
         metadata2: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
-        """
-        Apply enhanced classification to contradiction result.
-
-        Args:
-            result: Contradiction result
-            metadata1: Metadata for the first claim
-            metadata2: Metadata for the second claim
-
-        Returns:
-            Enhanced contradiction result with classification
-        """
         try:
-            # Add metadata to the contradiction result
             contradiction_with_metadata = {
                 **result,
                 "metadata1": metadata1 or {},
                 "metadata2": metadata2 or {}
             }
 
-            # Classify the contradiction
             classified_contradiction = await self.contradiction_classifier.classify_contradiction(contradiction_with_metadata)
 
-            # Add classification to the result
             result["classification"] = classified_contradiction["classification"]
 
             logger.info(f"Contradiction classified with clinical significance: {result['classification']['clinical_significance']}")

@@ -1,4 +1,3 @@
-# asf/knowledge_substrate/extraction/image.py
 import numpy as np
 from transformers import ViTModel
 from asf.layer1_knowledge_substrate.extraction.base import FeatureExtractor

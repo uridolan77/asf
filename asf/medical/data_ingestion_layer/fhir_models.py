@@ -30,16 +30,6 @@ class FHIRPatient:
         gender: str, 
         birth_date: str
     ):
-        """
-        Factory method to create a patient resource
-        
-        :param patient_id: Unique patient identifier
-        :param first_name: Patient's first name
-        :param last_name: Patient's last name
-        :param gender: Patient's gender
-        :param birth_date: Patient's birth date (YYYY-MM-DD)
-        :return: FHIRPatient instance
-        """
         return cls(
             id=patient_id,
             name=[{
@@ -89,7 +79,6 @@ class FHIRClient:
         :param resource: FHIR resource to create
         :return: Server response
         """
-        # Simulated create method
         return {
             "status": "created",
             "id": resource.id,
@@ -105,14 +94,12 @@ class FHIRClient:
         :param resource_id: Unique resource identifier
         :return: Resource details
         """
-        # Simulated read method
         return {
             "resourceType": resource_type,
             "id": resource_id
         }
 
 def main():
-    # Create a FHIR patient
     patient = FHIRPatient.create(
         patient_id="example-123",
         first_name="John",
@@ -121,23 +108,18 @@ def main():
         birth_date="1980-01-15"
     )
     
-    # Convert to JSON
     patient_json = patient.to_json()
     print("Patient JSON:")
     print(patient_json)
     
-    # Recreate from JSON
     reconstructed_patient = FHIRPatient.from_json(patient_json)
     
-    # Simulate FHIR client interaction
     client = FHIRClient("https://example.fhirserver.org")
     
-    # Create resource
     create_response = client.create_resource(patient)
     print("\nCreate Response:")
     print(json.dumps(create_response, indent=2))
     
-    # Read resource
     read_response = client.read_resource("Patient", patient.id)
     print("\nRead Response:")
     print(json.dumps(read_response, indent=2))

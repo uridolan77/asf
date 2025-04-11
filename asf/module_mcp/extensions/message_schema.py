@@ -54,7 +54,6 @@ class MCPMessageSchema:
         **kwargs
     ) -> Dict:
         """Create a new MCP message with the specified type and content"""
-        # Base message structure
         message = {
             "type": message_type.value,
             "id": kwargs.get("id", str(uuid.uuid4())),
@@ -62,11 +61,9 @@ class MCPMessageSchema:
             "version": MCPMessageSchema.VERSION
         }
         
-        # Add metadata if provided
         if "metadata" in kwargs:
             message["metadata"] = kwargs["metadata"]
         
-        # Add content based on message type
         if message_type == MessageType.RESOURCE_REQUEST:
             message["resourceType"] = kwargs.get("resourceType")
             message["parameters"] = kwargs.get("parameters", {})
@@ -104,13 +101,11 @@ class MCPMessageSchema:
             message["version"] = kwargs.get("version", MCPMessageSchema.VERSION)
             message["capabilities"] = kwargs.get("capabilities", [])
         
-        # Add source information if provided
         if "source" in kwargs:
             if "metadata" not in message:
                 message["metadata"] = {}
             message["metadata"]["source"] = kwargs["source"]
             
-        # Add correlation ID for tracking related messages
         if "correlationId" in kwargs:
             message["correlationId"] = kwargs["correlationId"]
         
@@ -163,23 +158,6 @@ class ContextMetadata:
         timestamp: Optional[str] = None,
         confidence: Optional[float] = None
     ) -> Dict:
-        """Create basic metadata with source, timestamp and optional confidence"""
-        metadata = {
-            "source": source,
-            "timestamp": timestamp or datetime.utcnow().isoformat()
-        }
-        
-        if confidence is not None:
-            metadata["confidence"] = max(0.0, min(1.0, confidence))
-            
-        return metadata
-    
-    @staticmethod
-    def with_location(
-        metadata: Dict, 
-        location: Dict[str, Union[float, str]]
-    ) -> Dict:
-        """Add location information to metadata"""
         result = metadata.copy()
         result["location"] = location
         return result
@@ -189,32 +167,18 @@ class ContextMetadata:
         metadata: Dict, 
         tags: List[str]
     ) -> Dict:
-        """Add semantic tags to metadata"""
-        result = metadata.copy()
-        result["tags"] = tags
-        return result
-        
-    @staticmethod
-    def with_provenance(
-        metadata: Dict, 
-        provenance: List[Dict]
-    ) -> Dict:
-        """Add provenance chain to metadata"""
         result = metadata.copy()
         result["provenance"] = provenance
         return result
 
 
-# Example usage:
 def create_example_messages():
-    # Example 1: Resource request
     resource_request = MCPMessageSchema.create_message(
         MessageType.RESOURCE_REQUEST,
         resourceType="sensor_data",
         parameters={"sensor_id": "temp_sensor_1", "time_range": "1h"}
     )
     
-    # Example 2: Environmental event with location
     event_metadata = ContextMetadata.create_basic_metadata(source="motion_sensor")
     event_metadata = ContextMetadata.with_location(
         event_metadata, 
@@ -229,7 +193,6 @@ def create_example_messages():
         metadata=event_metadata
     )
     
-    # Example 3: Tool invocation (command to external system)
     tool_invoke = MCPMessageSchema.create_message(
         MessageType.TOOL_INVOKE,
         tool="camera_control",
@@ -244,7 +207,6 @@ def create_example_messages():
 
 
 if __name__ == "__main__":
-    # Simple example/test
     examples = create_example_messages()
     for name, message in examples.items():
         print(f"\n--- {name} ---")

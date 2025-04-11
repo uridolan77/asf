@@ -6,7 +6,6 @@ based on evidence-based medicine principles.
 """
 
 import logging
-from typing import Dict, List, Optional, Any
 
 from asf.medical.ml.services.enhanced_contradiction_classifier import (
     ContradictionType,
@@ -23,31 +22,18 @@ from asf.medical.ml.services.resolution.resolution_models import (
     STUDY_DESIGN_KEYWORDS
 )
 
-# Set up logging
 logger = logging.getLogger(__name__)
 
 async def resolve_by_methodological_quality(contradiction: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Resolve contradiction based on methodological quality.
-    
-    Args:
-        contradiction: Classified contradiction
-        
-    Returns:
-        Resolution result
-    """
-    # Extract basic information
     claim1 = contradiction.get("claim1", "")
     claim2 = contradiction.get("claim2", "")
     metadata1 = contradiction.get("metadata1", {})
     metadata2 = contradiction.get("metadata2", {})
     classification = contradiction.get("classification", {})
     
-    # Get methodological differences from classification
     methodological_difference = classification.get("methodological_difference", {})
     differences = methodological_difference.get("differences", [])
     
-    # Initialize result
     result = {
         "recommendation": RecommendationType.INCONCLUSIVE,
         "confidence": ResolutionConfidence.LOW,
@@ -59,27 +45,22 @@ async def resolve_by_methodological_quality(contradiction: Dict[str, Any]) -> Di
         }
     }
     
-    # Check if methodological information is available
     if not differences:
         result["recommendation"] = RecommendationType.INCONCLUSIVE
         result["recommended_claim"] = "Methodological quality information is not available for comparison."
         return result
     
-    # Assess methodological quality
     study_design_diff = None
     
-    # Extract specific differences
     for diff in differences:
         category = diff.get("category", "")
         if category == "study_design":
             study_design_diff = diff
     
-    # Assess study design difference
     if study_design_diff:
         claim1_design = study_design_diff.get("claim1_design", "")
         claim2_design = study_design_diff.get("claim2_design", "")
         
-        # Get hierarchy positions
         hierarchy_pos1 = 0
         hierarchy_pos2 = 0
         
@@ -97,7 +78,6 @@ async def resolve_by_methodological_quality(contradiction: Dict[str, Any]) -> Di
             "hierarchy_differential": hierarchy_pos1 - hierarchy_pos2
         }
         
-        # If there's a significant difference in study design hierarchy
         if hierarchy_pos1 - hierarchy_pos2 >= 2:
             result["recommendation"] = RecommendationType.FAVOR_CLAIM1
             result["recommended_claim"] = claim1
@@ -111,13 +91,11 @@ async def resolve_by_methodological_quality(contradiction: Dict[str, Any]) -> Di
             result["confidence_score"] = 0.7
             result["recommendation_note"] = f"Favoring claim 2 because it used a stronger study design ({claim2_design} vs. {claim1_design})."
     
-    # Assess blinding and randomization
     blinding1 = metadata1.get("blinding", "none").lower()
     blinding2 = metadata2.get("blinding", "none").lower()
     randomization1 = metadata1.get("randomization", "none").lower()
     randomization2 = metadata2.get("randomization", "none").lower()
     
-    # Score blinding
     blinding_score1 = 0
     if "double" in blinding1 or "triple" in blinding1:
         blinding_score1 = 2
@@ -130,7 +108,6 @@ async def resolve_by_methodological_quality(contradiction: Dict[str, Any]) -> Di
     elif "single" in blinding2:
         blinding_score2 = 1
     
-    # Score randomization
     randomization_score1 = 0
     if randomization1 != "none":
         randomization_score1 = 1
@@ -143,7 +120,6 @@ async def resolve_by_methodological_quality(contradiction: Dict[str, Any]) -> Di
         if "stratified" in randomization2 or "block" in randomization2:
             randomization_score2 = 2
     
-    # Add to comparison
     result["methodological_comparison"]["blinding"] = {
         "claim1_blinding": blinding1,
         "claim2_blinding": blinding2,
@@ -160,7 +136,6 @@ async def resolve_by_methodological_quality(contradiction: Dict[str, Any]) -> Di
         "differential": randomization_score1 - randomization_score2
     }
     
-    # Calculate overall methodological quality score
     quality_score1 = hierarchy_pos1 / 7.0 * 0.5  # 50% weight to study design
     quality_score1 += blinding_score1 / 2.0 * 0.25  # 25% weight to blinding
     quality_score1 += randomization_score1 / 2.0 * 0.25  # 25% weight to randomization
@@ -175,7 +150,6 @@ async def resolve_by_methodological_quality(contradiction: Dict[str, Any]) -> Di
         "differential": quality_score1 - quality_score2
     }
     
-    # Make recommendation based on overall quality if not already made
     if result["recommendation"] == RecommendationType.INCONCLUSIVE:
         if quality_score1 - quality_score2 >= 0.3:  # Significant difference
             result["recommendation"] = RecommendationType.FAVOR_CLAIM1
@@ -190,7 +164,6 @@ async def resolve_by_methodological_quality(contradiction: Dict[str, Any]) -> Di
             result["confidence_score"] = 0.6
             result["recommendation_note"] = "Favoring claim 2 because it has better overall methodological quality."
         else:
-            # Evidence is too similar to make a determination
             result["recommendation"] = RecommendationType.INCONCLUSIVE
             result["recommended_claim"] = "The methodological quality of both claims is similar."
             result["confidence"] = ResolutionConfidence.LOW
@@ -199,22 +172,11 @@ async def resolve_by_methodological_quality(contradiction: Dict[str, Any]) -> Di
     return result
 
 async def resolve_by_statistical_significance(contradiction: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Resolve contradiction based on statistical significance.
-    
-    Args:
-        contradiction: Classified contradiction
-        
-    Returns:
-        Resolution result
-    """
-    # Extract basic information
     claim1 = contradiction.get("claim1", "")
     claim2 = contradiction.get("claim2", "")
     metadata1 = contradiction.get("metadata1", {})
     metadata2 = contradiction.get("metadata2", {})
     
-    # Get statistical information
     p_value1 = metadata1.get("p_value")
     p_value2 = metadata2.get("p_value")
     confidence_interval1 = metadata1.get("confidence_interval")
@@ -224,7 +186,6 @@ async def resolve_by_statistical_significance(contradiction: Dict[str, Any]) -> 
     sample_size1 = metadata1.get("sample_size", 0)
     sample_size2 = metadata2.get("sample_size", 0)
     
-    # Initialize result
     result = {
         "recommendation": RecommendationType.INCONCLUSIVE,
         "confidence": ResolutionConfidence.LOW,
@@ -250,14 +211,11 @@ async def resolve_by_statistical_significance(contradiction: Dict[str, Any]) -> 
         }
     }
     
-    # Check if p-values are available
     if p_value1 is None or p_value2 is None:
         result["recommendation"] = RecommendationType.INCONCLUSIVE
         result["recommended_claim"] = "Statistical significance information (p-values) is not available for one or both claims."
         return result
     
-    # Assess statistical significance
-    # One is significant, one is not
     if (p_value1 <= 0.05 and p_value2 > 0.05):
         result["recommendation"] = RecommendationType.FAVOR_CLAIM1
         result["recommended_claim"] = claim1
@@ -270,13 +228,10 @@ async def resolve_by_statistical_significance(contradiction: Dict[str, Any]) -> 
         result["confidence"] = ResolutionConfidence.MODERATE
         result["confidence_score"] = 0.7
         result["recommendation_note"] = f"Favoring claim 2 because it shows statistical significance (p={p_value2}) while claim 1 does not (p={p_value1})."
-    # Both are significant but one is more significant
     elif p_value1 <= 0.05 and p_value2 <= 0.05:
-        # Calculate ratio of p-values (smaller is better)
         p_ratio = min(p_value1, p_value2) / max(p_value1, p_value2)
         result["statistical_comparison"]["p_value_ratio"] = p_ratio
         
-        # If one is at least 10x more significant
         if p_ratio <= 0.1 and p_value1 < p_value2:
             result["recommendation"] = RecommendationType.FAVOR_CLAIM1
             result["recommended_claim"] = claim1
@@ -290,24 +245,19 @@ async def resolve_by_statistical_significance(contradiction: Dict[str, Any]) -> 
             result["confidence_score"] = 0.6
             result["recommendation_note"] = f"Favoring claim 2 because it shows stronger statistical significance (p={p_value2} vs p={p_value1})."
         else:
-            # Both are significant and similar
             result["recommendation"] = RecommendationType.INCONCLUSIVE
             result["recommended_claim"] = "Both claims show statistical significance with similar p-values."
             result["confidence"] = ResolutionConfidence.LOW
             result["confidence_score"] = 0.4
-    # Neither is significant
     else:
         result["recommendation"] = RecommendationType.INCONCLUSIVE
         result["recommended_claim"] = "Neither claim shows statistical significance."
         result["confidence"] = ResolutionConfidence.LOW
         result["confidence_score"] = 0.3
     
-    # Consider effect sizes if available
     if effect_size1 is not None and effect_size2 is not None:
-        # Add effect size comparison
         result["statistical_comparison"]["effect_size_ratio"] = abs(effect_size1) / max(0.001, abs(effect_size2))
         
-        # If recommendation is inconclusive but effect sizes differ substantially
         if result["recommendation"] == RecommendationType.INCONCLUSIVE and abs(effect_size1) >= 2 * abs(effect_size2):
             result["recommendation"] = RecommendationType.FAVOR_CLAIM1
             result["recommended_claim"] = claim1
@@ -321,21 +271,17 @@ async def resolve_by_statistical_significance(contradiction: Dict[str, Any]) -> 
             result["confidence_score"] = 0.4
             result["recommendation_note"] = f"Favoring claim 2 because it shows a larger effect size ({effect_size2} vs {effect_size1})."
     
-    # Consider confidence intervals if available
     if isinstance(confidence_interval1, list) and len(confidence_interval1) == 2 and \
        isinstance(confidence_interval2, list) and len(confidence_interval2) == 2:
-        # Calculate interval widths
         width1 = confidence_interval1[1] - confidence_interval1[0]
         width2 = confidence_interval2[1] - confidence_interval2[0]
         
-        # Add to comparison
         result["statistical_comparison"]["ci_widths"] = {
             "claim1": width1,
             "claim2": width2,
             "ratio": width1 / max(0.001, width2)
         }
         
-        # If recommendation is inconclusive but one CI is much narrower
         if result["recommendation"] == RecommendationType.INCONCLUSIVE and width1 <= 0.5 * width2:
             result["recommendation"] = RecommendationType.FAVOR_CLAIM1
             result["recommended_claim"] = claim1
@@ -352,21 +298,9 @@ async def resolve_by_statistical_significance(contradiction: Dict[str, Any]) -> 
     return result
 
 async def resolve_by_combined_evidence(contradiction: Dict[str, Any], resolution_strategies: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Resolve contradiction based on combined evidence.
-    
-    Args:
-        contradiction: Classified contradiction
-        resolution_strategies: Dictionary of resolution strategy functions
-        
-    Returns:
-        Resolution result
-    """
-    # Extract basic information
     claim1 = contradiction.get("claim1", "")
     claim2 = contradiction.get("claim2", "")
     
-    # Initialize result
     result = {
         "recommendation": RecommendationType.INCONCLUSIVE,
         "confidence": ResolutionConfidence.LOW,
@@ -378,7 +312,6 @@ async def resolve_by_combined_evidence(contradiction: Dict[str, Any], resolution
         }
     }
     
-    # Apply all resolution strategies and collect results
     strategies = [
         ResolutionStrategy.EVIDENCE_HIERARCHY,
         ResolutionStrategy.SAMPLE_SIZE_WEIGHTING,
@@ -390,10 +323,8 @@ async def resolve_by_combined_evidence(contradiction: Dict[str, Any], resolution
     
     strategy_results = {}
     for strategy in strategies:
-        # Get resolution function
         resolution_func = resolution_strategies.get(strategy)
         if resolution_func:
-            # Apply strategy
             strategy_result = await resolution_func(contradiction)
             strategy_results[strategy] = strategy_result
             result["combined_evidence"]["strategies_applied"].append(strategy)
@@ -404,14 +335,12 @@ async def resolve_by_combined_evidence(contradiction: Dict[str, Any], resolution
                 "recommendation_note": strategy_result.get("recommendation_note")
             }
     
-    # Count recommendations for each claim
     claim1_count = 0
     claim2_count = 0
     inconclusive_count = 0
     conditional_count = 0
     further_research_count = 0
     
-    # Calculate weighted scores for each claim
     claim1_score = 0.0
     claim2_score = 0.0
     total_weight = 0.0
@@ -420,7 +349,6 @@ async def resolve_by_combined_evidence(contradiction: Dict[str, Any], resolution
         recommendation = strategy_result.get("recommendation")
         confidence_score = strategy_result.get("confidence_score", 0.3)
         
-        # Count recommendations
         if recommendation == RecommendationType.FAVOR_CLAIM1:
             claim1_count += 1
             claim1_score += confidence_score
@@ -436,12 +364,10 @@ async def resolve_by_combined_evidence(contradiction: Dict[str, Any], resolution
         
         total_weight += confidence_score
     
-    # Normalize scores
     if total_weight > 0:
         claim1_score /= total_weight
         claim2_score /= total_weight
     
-    # Add counts and scores to result
     result["combined_evidence"]["recommendation_counts"] = {
         "favor_claim1": claim1_count,
         "favor_claim2": claim2_count,
@@ -456,21 +382,17 @@ async def resolve_by_combined_evidence(contradiction: Dict[str, Any], resolution
         "differential": claim1_score - claim2_score
     }
     
-    # Make recommendation based on combined evidence
     total_strategies = len(strategy_results)
     if total_strategies == 0:
-        # No strategies applied
         result["recommendation"] = RecommendationType.INCONCLUSIVE
         result["recommended_claim"] = "No resolution strategies could be applied due to insufficient data."
         result["confidence"] = ResolutionConfidence.VERY_LOW
         result["confidence_score"] = 0.1
     elif claim1_count > claim2_count and claim1_count > inconclusive_count:
-        # More strategies favor claim1
         result["recommendation"] = RecommendationType.FAVOR_CLAIM1
         result["recommended_claim"] = claim1
         result["confidence_score"] = min(0.9, 0.5 + (claim1_score - claim2_score))
         
-        # Set confidence level based on score
         if result["confidence_score"] >= 0.7:
             result["confidence"] = ResolutionConfidence.HIGH
         elif result["confidence_score"] >= 0.5:
@@ -480,12 +402,10 @@ async def resolve_by_combined_evidence(contradiction: Dict[str, Any], resolution
             
         result["recommendation_note"] = f"Favoring claim 1 based on {claim1_count} out of {total_strategies} resolution strategies."
     elif claim2_count > claim1_count and claim2_count > inconclusive_count:
-        # More strategies favor claim2
         result["recommendation"] = RecommendationType.FAVOR_CLAIM2
         result["recommended_claim"] = claim2
         result["confidence_score"] = min(0.9, 0.5 + (claim2_score - claim1_score))
         
-        # Set confidence level based on score
         if result["confidence_score"] >= 0.7:
             result["confidence"] = ResolutionConfidence.HIGH
         elif result["confidence_score"] >= 0.5:
@@ -495,21 +415,18 @@ async def resolve_by_combined_evidence(contradiction: Dict[str, Any], resolution
             
         result["recommendation_note"] = f"Favoring claim 2 based on {claim2_count} out of {total_strategies} resolution strategies."
     elif conditional_count > 0 and conditional_count >= claim1_count and conditional_count >= claim2_count:
-        # More strategies suggest conditional recommendation
         result["recommendation"] = RecommendationType.CONDITIONAL
         result["recommended_claim"] = "The contradiction may be resolved differently depending on specific clinical context."
         result["confidence"] = ResolutionConfidence.MODERATE
         result["confidence_score"] = 0.5
         result["recommendation_note"] = "Multiple resolution strategies suggest that the contradiction resolution depends on specific clinical context."
     elif further_research_count > 0 and further_research_count >= claim1_count and further_research_count >= claim2_count:
-        # More strategies suggest further research
         result["recommendation"] = RecommendationType.FURTHER_RESEARCH
         result["recommended_claim"] = "Further research is needed to resolve this contradiction."
         result["confidence"] = ResolutionConfidence.LOW
         result["confidence_score"] = 0.3
         result["recommendation_note"] = "Multiple resolution strategies suggest that further research is needed to resolve this contradiction."
     else:
-        # Inconclusive or tied
         result["recommendation"] = RecommendationType.INCONCLUSIVE
         result["recommended_claim"] = "The evidence is insufficient to resolve this contradiction conclusively."
         result["confidence"] = ResolutionConfidence.LOW

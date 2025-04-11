@@ -23,20 +23,6 @@ class PredictiveProcessor:
         
     async def register_prediction(self, context_id: str, entity_id: str, 
                                 prediction_type: str, prediction_value: Any) -> str:
-        """Register a prediction for later evaluation"""
-        prediction_id = f"{context_id}_{entity_id}_{prediction_type}_{int(time.time()*1000)}"
-        self.predictions[prediction_id] = {
-            'context_id': context_id,
-            'entity_id': entity_id,
-            'type': prediction_type,
-            'value': prediction_value,
-            'timestamp': time.time(),
-            'evaluated': False
-        }
-        return prediction_id
-        
-    async def evaluate_prediction(self, prediction_id: str, actual_value: Any) -> Optional[Dict[str, Any]]:
-        """Evaluate prediction against actual value and update precision"""
         if prediction_id not in self.predictions:
             return None
             
@@ -44,33 +30,25 @@ class PredictiveProcessor:
         if prediction['evaluated']:
             return None
             
-        # Calculate prediction error
         predicted_value = prediction['value']
         error = self._calculate_error(predicted_value, actual_value)
         
-        # Update prediction record
         prediction['evaluated'] = True
         prediction['actual_value'] = actual_value
         prediction['error'] = error
         prediction['evaluation_time'] = time.time()
         
-        # Track error for precision calculation
         entity_id = prediction['entity_id']
         self.prediction_errors[entity_id].append(error)
         
-        # Limit history size to prevent unbounded growth
         if len(self.prediction_errors[entity_id]) > 20:
             self.prediction_errors[entity_id] = self.prediction_errors[entity_id][-20:]
         
-        # Update precision (inverse variance)
         if len(self.prediction_errors[entity_id]) > 1:
             variance = np.var(self.prediction_errors[entity_id])
             precision = 1.0 / (variance + 1e-6)  # Avoid division by zero
             self.precision_values[entity_id] = min(10.0, precision)  # Cap very high precision
             
-        # Calculate adaptive learning rate
-        # Implements Seth's insight: learning rate should be higher for surprising events
-        # but tempered by precision (how certain we are about the prediction)
         precision = self.get_precision(entity_id)
         base_rate = min(0.8, error * 2)  # Error-proportional component
         precision_factor = max(0.1, min(0.9, 1.0 / (1.0 + precision * 0.2)))
@@ -146,36 +124,3 @@ class PredictiveProcessor:
             
         Returns:
             Selected action that minimizes expected prediction error
-        """
-        # If no actions available, return None
-        if not possible_actions:
-            return None
-            
-        # Get precision for this entity
-        precision = self.get_precision(entity_id)
-        
-        # Evaluate each action's expected prediction error
-        action_scores = []
-        
-        for action in possible_actions:
-            # Predict outcome of this action
-            predicted_outcome = action.get('predicted_outcome')
-            if not predicted_outcome:
-                # Skip actions without predicted outcomes
-                continue
-                
-            # Calculate expected prediction error
-            expected_error = action.get('expected_error', 0.5)
-            
-            # Weight by precision (higher precision = more weight)
-            weighted_error = expected_error / (1.0 + precision)
-            
-            action_scores.append((action, weighted_error))
-            
-        if not action_scores:
-            # No actions with predictions, return first action
-            return possible_actions[0] if possible_actions else None
-            
-        # Select action with minimum expected error
-        best_action = min(action_scores, key=lambda x: x[1])[0]
-        return best_action

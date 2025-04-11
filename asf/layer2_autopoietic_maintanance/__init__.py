@@ -7,7 +7,6 @@ from asf.layer2_autopoietic_maintanance.operational_closure import OperationalCl
 from asf.layer2_autopoietic_maintanance.recognition import SymbolRecognizer
 from asf.layer2_autopoietic_maintanance.autopoietic_maintanance_layer import SymbolicFormationLayer
 
-# Seth's Data Paradox enhancements
 from asf.layer2_autopoietic_maintanance.predictive_potentials import PredictiveSymbolicPotential
 from asf.layer2_autopoietic_maintanance.predictive_symbol import PredictiveSymbolElement
 from asf.layer2_autopoietic_maintanance.predictive_recognition import PredictiveSymbolRecognizer

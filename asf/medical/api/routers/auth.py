@@ -22,10 +22,8 @@ from asf.medical.core.security import create_access_token, create_refresh_token
 from asf.medical.storage.database import get_db_session
 from asf.medical.storage.models import User as DBUser
 
-# Initialize router
 router = APIRouter(prefix="/v1/auth", tags=["auth"])
 
-# Set up logging
 logger = logging.getLogger(__name__)
 
 @router.post("/token", response_model=Token)
@@ -34,11 +32,6 @@ async def login_for_access_token(
     db: AsyncSession = Depends(get_db_session),
     auth_service: AuthService = Depends(get_auth_service)
 ):
-    """
-    Get an access token.
-
-    This endpoint authenticates a user and returns a JWT access token.
-    """
     user = await auth_service.authenticate_user(db, form_data.username, form_data.password)
 
     if not user:
@@ -49,17 +42,13 @@ async def login_for_access_token(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    # Update last login time
-    # await auth_service.update_user(db, user.id, {"last_login": datetime.utcnow()})
 
-    # Create access token
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         subject=user.email,
         expires_delta=access_token_expires
     )
 
-    # Create refresh token (7 days)
     refresh_token_expires = timedelta(days=7)
     refresh_token = create_refresh_token(
         subject=user.email,
@@ -82,24 +71,16 @@ async def refresh_access_token(
     db: AsyncSession = Depends(get_db_session),
     auth_service: AuthService = Depends(get_auth_service)
 ):
-    """
-    Refresh an access token using a refresh token.
-
-    This endpoint takes a refresh token and returns a new access token.
-    """
     try:
-        # Decode the refresh token
         payload = jwt.decode(
             refresh_token,
             settings.SECRET_KEY.get_secret_value(),
             algorithms=["HS256"]
         )
 
-        # Extract the email and token type from the token
         email: str = payload.get("sub")
         token_type: str = payload.get("type")
 
-        # Check if token is a refresh token
         if token_type != "refresh":
             logger.warning(f"Invalid token type for refresh: {token_type}")
             raise HTTPException(
@@ -108,7 +89,6 @@ async def refresh_access_token(
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-        # Get the user from the database
         user = await auth_service.get_user_by_email(db, email)
 
         if not user or not user.is_active:
@@ -119,14 +99,12 @@ async def refresh_access_token(
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-        # Create new access token
         access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token = create_access_token(
             subject=user.email,
             expires_delta=access_token_expires
         )
 
-        # Create new refresh token (7 days)
         refresh_token_expires = timedelta(days=7)
         new_refresh_token = create_refresh_token(
             subject=user.email,
@@ -157,11 +135,6 @@ async def register_user(
     auth_service: AuthService = Depends(get_auth_service),
     admin_user: DBUser = Depends(get_admin_user)
 ):
-    """
-    Register a new user.
-
-    This endpoint registers a new user. Only admin users can register new users.
-    """
     user = await auth_service.register_user(
         db=db,
         email=user_data.email,
@@ -184,11 +157,6 @@ async def register_user(
 async def get_current_user_info(
     current_user: DBUser = Depends(get_current_active_user)
 ):
-    """
-    Get current user information.
-
-    This endpoint returns information about the current authenticated user.
-    """
     return current_user
 
 @router.put("/me", response_model=User)
@@ -198,15 +166,8 @@ async def update_current_user_info(
     auth_service: AuthService = Depends(get_auth_service),
     current_user: DBUser = Depends(get_current_active_user)
 ):
-    """
-    Update current user information.
-
-    This endpoint updates information for the current authenticated user.
-    """
-    # Convert Pydantic model to dict
     update_data = user_data.dict(exclude_unset=True)
 
-    # Update user
     updated_user = await auth_service.update_user(
         db=db,
         user_id=current_user.id,
@@ -232,11 +193,6 @@ async def get_users(
     auth_service: AuthService = Depends(get_auth_service),
     admin_user: DBUser = Depends(get_admin_user)
 ):
-    """
-    Get all users.
-
-    This endpoint returns a list of all users. Only admin users can access this endpoint.
-    """
     users = await auth_service.get_users(db, skip, limit)
     return users
 
@@ -247,11 +203,6 @@ async def get_user(
     auth_service: AuthService = Depends(get_auth_service),
     admin_user: DBUser = Depends(get_admin_user)
 ):
-    """
-    Get a user by ID.
-
-    This endpoint returns a user by ID. Only admin users can access this endpoint.
-    """
     user = await auth_service.user_repository.get_by_id_async(db, user_id)
 
     if not user:
@@ -270,15 +221,8 @@ async def update_user(
     auth_service: AuthService = Depends(get_auth_service),
     admin_user: DBUser = Depends(get_admin_user)
 ):
-    """
-    Update a user.
-
-    This endpoint updates a user by ID. Only admin users can access this endpoint.
-    """
-    # Convert Pydantic model to dict
     update_data = user_data.dict(exclude_unset=True)
 
-    # Update user
     updated_user = await auth_service.update_user(
         db=db,
         user_id=user_id,
@@ -302,11 +246,6 @@ async def delete_user(
     auth_service: AuthService = Depends(get_auth_service),
     admin_user: DBUser = Depends(get_admin_user)
 ):
-    """
-    Delete a user.
-
-    This endpoint deletes a user by ID. Only admin users can access this endpoint.
-    """
     success = await auth_service.delete_user(db, user_id)
 
     if not success:

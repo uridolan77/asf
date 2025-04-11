@@ -6,9 +6,7 @@ This module defines the request and response models for the API endpoints.
 
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel, Field, validator
-import datetime
 
-# Search models
 class QueryRequest(BaseModel):
     """Request model for the search endpoint."""
     query: str = Field(..., description="The search query")
@@ -21,7 +19,6 @@ class SearchResponse(BaseModel):
     results: List[Dict[str, Any]] = Field(..., description="Search results")
     result_id: Optional[str] = Field(None, description="ID for retrieving these results later")
 
-# PICO search models
 class PICORequest(BaseModel):
     """Request model for the PICO search endpoint."""
     condition: str = Field(..., description="Medical condition")
@@ -92,7 +89,6 @@ class ExportRequest(BaseModel):
             raise ValueError('Either result_id or query must be provided')
         return v
 
-# User models
 class UserRegistrationRequest(BaseModel):
     """Request model for user registration."""
     email: str = Field(..., description="User email")

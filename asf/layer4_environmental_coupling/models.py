@@ -46,7 +46,6 @@ class EnvironmentalCoupling:
     history: List[Dict[str, Any]] = field(default_factory=list)
     tensor_coordinates: Optional[Tuple[int, int]] = None
     
-    # NEW: Seth's Data Paradox enhancements
     prediction_precision: float = 1.0  # Inverse variance of prediction errors
     prediction_errors: List[float] = field(default_factory=list)
     expected_interactions: Dict[str, float] = field(default_factory=dict)

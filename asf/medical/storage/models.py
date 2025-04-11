@@ -4,7 +4,8 @@ Database models for the Medical Research Synthesizer.
 This module defines the SQLAlchemy ORM models for the database.
 """
 
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Boolean, JSON, Text
+from sqlalchemy import Column
+from asf.medical.core.exceptions import DatabaseError, Integer, String, Float, DateTime, ForeignKey, Boolean, JSON, Text
 from sqlalchemy.orm import relationship
 import datetime
 
@@ -24,7 +25,6 @@ class User(Base):
     last_login = Column(DateTime, nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
     
-    # Relationships
     queries = relationship("Query", back_populates="user")
     results = relationship("Result", back_populates="user")
     knowledge_bases = relationship("KnowledgeBase", back_populates="user")
@@ -42,7 +42,6 @@ class Query(Base):
     parameters = Column(JSON, nullable=True)  # For PICO parameters
     created_at = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
     
-    # Relationships
     user = relationship("User", back_populates="queries")
     results = relationship("Result", back_populates="query")
 
@@ -60,7 +59,6 @@ class Result(Base):
     result_data = Column(JSON, nullable=False)
     created_at = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
     
-    # Relationships
     query = relationship("Query", back_populates="results")
     user = relationship("User", back_populates="results")
 
@@ -82,7 +80,6 @@ class KnowledgeBase(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
     
-    # Relationships
     user = relationship("User", back_populates="knowledge_bases")
     updates = relationship("KnowledgeBaseUpdate", back_populates="knowledge_base")
 
@@ -100,7 +97,6 @@ class KnowledgeBaseUpdate(Base):
     status = Column(String, nullable=False)  # success, failure
     error_message = Column(Text, nullable=True)
     
-    # Relationships
     knowledge_base = relationship("KnowledgeBase", back_populates="updates")
 
 class Contradiction(Base):
@@ -120,10 +116,5 @@ class Contradiction(Base):
     explanation = Column(JSON, nullable=True)  # SHAP explanation
     created_at = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
     
-    # Unique constraint to prevent duplicate contradictions
     __table_args__ = (
-        # Ensure we don't store the same contradiction twice (regardless of order)
-        # This is a simplification; in reality, we might want to allow multiple contradictions
-        # between the same publications if they're on different topics
-        # UniqueConstraint('publication1_pmid', 'publication2_pmid', 'result_id'),
     )

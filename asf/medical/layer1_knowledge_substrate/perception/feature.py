@@ -11,11 +11,25 @@ class PerceptualFeature:
         self.temporal_metadata = AdaptiveTemporalMetadata()
     
     def update_confidence(self, new_confidence):
-        """Update confidence score for this feature"""
+        """Update confidence score for this feature
+
+    Args:
+        # TODO: Add parameter descriptions
+
+    Returns:
+        # TODO: Add return description
+    """
         self.confidence = new_confidence
         self.temporal_metadata.update_access_time()
     
     def get_relevance(self):
-        """Calculate overall relevance based on confidence and temporal factors"""
+        """Calculate overall relevance based on confidence and temporal factors
+
+    Args:
+        # TODO: Add parameter descriptions
+
+    Returns:
+        # TODO: Add return description
+    """
         temporal_relevance = self.temporal_metadata.get_temporal_relevance()
         return self.confidence * temporal_relevance

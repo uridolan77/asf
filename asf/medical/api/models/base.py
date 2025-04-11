@@ -4,11 +4,9 @@ Base models for the Medical Research Synthesizer API.
 This module provides base models for consistent API responses.
 """
 
-from typing import Any, Dict, Generic, List, Optional, TypeVar, Union
 from pydantic import BaseModel, Field
 from pydantic.generics import GenericModel
 
-# Define a generic type variable
 T = TypeVar('T')
 
 class APIResponse(GenericModel, Generic[T]):

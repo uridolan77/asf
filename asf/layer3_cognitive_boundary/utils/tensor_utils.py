@@ -66,27 +66,21 @@ def batch_cosine_similarity(query, database):
         Similarities [N] or [B, N]
     """
     if isinstance(query, np.ndarray) and isinstance(database, np.ndarray):
-        # Normalize
         query_norm = normalize_embeddings(query, dim=0 if query.ndim == 1 else 1)
         db_norm = normalize_embeddings(database, dim=1)
         
         if query.ndim == 1:
-            # Single query
             return np.dot(db_norm, query_norm)
         else:
-            # Batch of queries
             return np.dot(query_norm, db_norm.T)
             
     elif isinstance(query, torch.Tensor) and isinstance(database, torch.Tensor):
-        # Normalize
         query_norm = F.normalize(query, p=2, dim=0 if query.dim() == 1 else 1)
         db_norm = F.normalize(database, p=2, dim=1)
         
         if query.dim() == 1:
-            # Single query
             return torch.matmul(db_norm, query_norm)
         else:
-            # Batch of queries
             return torch.matmul(query_norm, db_norm.t())
             
     else:
@@ -132,20 +126,16 @@ def project_to_hyperplane(vectors, normal, bias=0.0):
         Projected vectors [N, D]
     """
     if isinstance(vectors, np.ndarray) and isinstance(normal, np.ndarray):
-        # Normalize normal vector
         normal = normal / np.linalg.norm(normal)
         
-        # Calculate projection
         distances = np.dot(vectors, normal) - bias
         projections = vectors - np.outer(distances, normal)
         
         return projections
         
     elif isinstance(vectors, torch.Tensor) and isinstance(normal, torch.Tensor):
-        # Normalize normal vector
         normal = F.normalize(normal, p=2, dim=0)
         
-        # Calculate projection
         distances = torch.matmul(vectors, normal) - bias
         projections = vectors - torch.outer(distances, normal)
         
@@ -169,28 +159,22 @@ def soft_attention_weighted_sum(query, keys, values, temperature=1.0):
         Weighted sum of values [V]
     """
     if isinstance(query, np.ndarray):
-        # Calculate similarities
         similarities = batch_cosine_similarity(query, keys)
         
-        # Apply temperature and softmax
         similarities = similarities / temperature
         weights = np.exp(similarities)
         weights = weights / np.sum(weights)
         
-        # Apply weights
         weighted_sum = np.sum(values * weights.reshape(-1, 1), axis=0)
         
         return weighted_sum
         
     elif isinstance(query, torch.Tensor):
-        # Calculate similarities
         similarities = batch_cosine_similarity(query, keys)
         
-        # Apply temperature and softmax
         similarities = similarities / temperature
         weights = F.softmax(similarities, dim=0)
         
-        # Apply weights
         weighted_sum = torch.sum(values * weights.unsqueeze(1), dim=0)
         
         return weighted_sum

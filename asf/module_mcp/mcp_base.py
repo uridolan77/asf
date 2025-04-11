@@ -1,5 +1,3 @@
-# === FILE: mcp_sdk/__init__.py ===
-
 from mcp_sdk.client import MCPClient
 from mcp_sdk.config import MCPConfig
 from mcp_sdk.models import Message, Context, Prediction
@@ -31,7 +29,6 @@ __all__ = [
 ]
 
 
-# === FILE: mcp_sdk/enums.py ===
 
 from enum import Enum, auto
 
@@ -112,24 +109,7 @@ class Context:
     """
     Context information for MCP messages.
     Provides rich contextual information for interpretation and processing.
-    """
-    context_id: str = field(default_factory=lambda: str(uuid.uuid4()))
-    level: ContextLevel = ContextLevel.STANDARD
-    timestamp: float = field(default_factory=time.time)
-    entity_id: Optional[str] = None
-    environmental_id: Optional[str] = None
-    conversation_id: Optional[str] = None
-    parent_message_id: Optional[str] = None
-    interaction_stage: Optional[InteractionStage] = None
-    model_state: Optional[ModelState] = None
-    history: List[Dict[str, Any]] = field(default_factory=list)
-    related_entities: Dict[str, Any] = field(default_factory=dict)
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert context to dictionary."""
         result = asdict(self)
-        # Convert enums to serializable values
         if self.level:
             result['level'] = self.level.name
         if self.interaction_stage:
@@ -161,7 +141,6 @@ class Context:
             'data': entry_data
         })
         
-        # Limit history size
         if len(self.history) > 100:
             self.history = self.history[-100:]
 
@@ -193,11 +172,9 @@ class Prediction:
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'Prediction':
         """Create prediction from dictionary."""
-        # Convert serialized enum values back to enums
         if 'confidence_level' in data and isinstance(data['confidence_level'], str):
             data['confidence_level'] = ConfidenceLevel[data['confidence_level']]
         
-        # Create instance with valid fields
         valid_fields = {k: v for k, v in data.items() if k in cls.__annotations__}
         return cls(**valid_fields)
     
@@ -253,17 +230,14 @@ class Message:
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'Message':
         """Create message from dictionary."""
-        # Convert serialized enum values back to enums
         if 'message_type' in data and isinstance(data['message_type'], str):
             data['message_type'] = MessageType[data['message_type']]
         
-        # Convert complex types
         if 'context' in data and isinstance(data['context'], dict):
             data['context'] = Context.from_dict(data['context'])
         if 'prediction' in data and isinstance(data['prediction'], dict):
             data['prediction'] = Prediction.from_dict(data['prediction'])
         
-        # Create instance with valid fields
         valid_fields = {k: v for k, v in data.items() if k in cls.__annotations__}
         return cls(**valid_fields)
     
@@ -284,14 +258,12 @@ class Message:
     
     def create_reply(self, content: Dict[str, Any], message_type: Optional[MessageType] = None) -> 'Message':
         """Create a reply to this message."""
-        # Use the same message type for the reply if not specified
         if message_type is None:
             if self.message_type == MessageType.QUERY:
                 message_type = MessageType.RESPONSE
             else:
                 message_type = self.message_type
                 
-        # Create a new context based on the current one
         new_context = Context(
             entity_id=self.context.environmental_id,  # Swap IDs for reply
             environmental_id=self.context.entity_id,
@@ -299,7 +271,6 @@ class Message:
             parent_message_id=self.id
         )
         
-        # Add history entry
         if self.context.history:
             new_context.history = self.context.history.copy()
         new_context.add_history_entry('reply_to', {'message_id': self.id, 'message_type': self.message_type.name})
@@ -316,7 +287,6 @@ class Message:
         )
 
 
-# === FILE: mcp_sdk/errors.py ===
 
 class MCPError(Exception):
     """Base exception for all MCP-related errors."""
@@ -343,7 +313,6 @@ class MCPEncryptionError(MCPError):
     pass
 
 
-# === FILE: mcp_sdk/config.py ===
 
 from dataclasses import dataclass, field
 from typing import Dict, Any, Optional
@@ -416,38 +385,10 @@ class MCPClient:
     """
     Client for interacting with the Model Context Protocol.
     Provides methods for sending and receiving MCP messages.
-    """
-    def __init__(self, config: MCPConfig):
-        """
         Initialize the MCP client.
         
         Args:
             config: Configuration for the client
-        """
-        self.config = config
-        self.entity_id = config.entity_id
-        self.message_handlers: Dict[MessageType, List[Callable[[Message], Awaitable[Optional[Message]]]]] = {
-            msg_type: [] for msg_type in MessageType
-        }
-        self.conversations: Dict[str, List[Message]] = {}
-        self.pending_responses: Dict[str, asyncio.Future] = {}
-        self.logger = logging.getLogger("mcp_sdk.client")
-        
-        # Set log level
-        self.logger.setLevel(getattr(logging, config.log_level))
-        
-        # Background task for message processing
-        self._processing_task = None
-        self._running = False
-        self._message_queue = asyncio.Queue()
-        
-        # Thread pool for blocking operations
-        self._thread_pool = ThreadPoolExecutor(max_workers=5)
-        
-        self.logger.info(f"MCP Client initialized for entity {self.entity_id}")
-    
-    async def start(self) -> None:
-        """Start the client and background processing."""
         if self._running:
             return
             
@@ -456,43 +397,6 @@ class MCPClient:
         self.logger.info("MCP Client started")
     
     async def stop(self) -> None:
-        """Stop the client and background processing."""
-        if not self._running:
-            return
-            
-        self._running = False
-        
-        # Cancel all pending responses
-        for future in self.pending_responses.values():
-            if not future.done():
-                future.cancel()
-                
-        # Wait for processing task to complete
-        if self._processing_task:
-            try:
-                self._processing_task.cancel()
-                await self._processing_task
-            except asyncio.CancelledError:
-                pass
-            
-        # Shutdown thread pool
-        self._thread_pool.shutdown(wait=True)
-        
-        self.logger.info("MCP Client stopped")
-    
-    async def create_message(self, 
-                         message_type: MessageType,
-                         content: Dict[str, Any],
-                         recipient_id: Optional[str] = None,
-                         context_level: ContextLevel = ContextLevel.STANDARD,
-                         reply_to: Optional[str] = None,
-                         correlation_id: Optional[str] = None,
-                         prediction_data: Optional[Dict[str, Any]] = None,
-                         confidence: float = 0.5,
-                         priority: float = 0.5,
-                         ttl: Optional[int] = None,
-                         **kwargs) -> Message:
-        """
         Create a new MCP message.
         
         Args:
@@ -510,73 +414,6 @@ class MCPClient:
             
         Returns:
             The created MCP message
-        """
-        # Create context
-        context = Context(
-            entity_id=self.entity_id,
-            environmental_id=recipient_id,
-            level=context_level
-        )
-        
-        # If replying to a message, include conversation info
-        if reply_to:
-            # Find the original message
-            original_msg = None
-            for conv_msgs in self.conversations.values():
-                for msg in conv_msgs:
-                    if msg.id == reply_to:
-                        original_msg = msg
-                        break
-                if original_msg:
-                    break
-                    
-            if original_msg:
-                context.conversation_id = original_msg.context.conversation_id
-                context.parent_message_id = original_msg.id
-                
-                # Copy history
-                if original_msg.context.history:
-                    context.history = original_msg.context.history.copy()
-                    
-                # Add reply entry
-                context.add_history_entry('reply_to', {
-                    'message_id': original_msg.id,
-                    'message_type': original_msg.message_type.name
-                })
-        
-        # Create prediction if data provided
-        prediction = None
-        if prediction_data:
-            confidence_level = self._confidence_to_level(confidence)
-            prediction = Prediction(
-                predicted_data=prediction_data,
-                confidence=confidence,
-                confidence_level=confidence_level
-            )
-        
-        # Create the message
-        message = Message(
-            message_type=message_type,
-            content=content,
-            context=context,
-            prediction=prediction,
-            sender_id=self.entity_id,
-            recipient_id=recipient_id,
-            reply_to=reply_to,
-            correlation_id=correlation_id,
-            ttl=ttl,
-            priority=priority,
-            **kwargs
-        )
-        
-        # Add to conversation history
-        self._add_to_conversation(message)
-        
-        return message
-    
-    async def send_message(self, message: Message, wait_for_response: bool = False, 
-                        timeout: Optional[float] = None) -> Optional[Message]:
-        """
         Send an MCP message.
         
         Args:
@@ -586,55 +423,11 @@ class MCPClient:
             
         Returns:
             Response message if wait_for_response is True, else None
-        """
-        # Add to conversation history
-        self._add_to_conversation(message)
-        
-        # Process through registered handlers
-        await self._message_queue.put(message)
-        
-        # If not waiting for response, return immediately
-        if not wait_for_response:
-            return None
-            
-        # Wait for response with timeout
-        timeout = timeout or self.config.default_timeout
-        
-        # Create a future for the response
-        response_future = asyncio.Future()
-        self.pending_responses[message.id] = response_future
-        
-        try:
-            # Wait for response with timeout
-            return await asyncio.wait_for(response_future, timeout)
-        except asyncio.TimeoutError:
-            # Remove the pending response
-            if message.id in self.pending_responses:
-                del self.pending_responses[message.id]
-                
-            raise MCPTimeoutError(f"Timeout waiting for response to message {message.id}")
-        finally:
-            # Clean up in case of other errors
-            if message.id in self.pending_responses:
-                del self.pending_responses[message.id]
-    
-    async def register_handler(self, message_type: MessageType, 
-                           handler: Callable[[Message], Awaitable[Optional[Message]]]) -> None:
-        """
         Register a handler for a specific message type.
         
         Args:
             message_type: The message type to handle
             handler: The handler function (async)
-        """
-        if message_type not in self.message_handlers:
-            self.message_handlers[message_type] = []
-            
-        self.message_handlers[message_type].append(handler)
-        self.logger.debug(f"Registered handler for message type {message_type.name}")
-    
-    async def process_message(self, message: Union[str, Dict[str, Any], Message]) -> Optional[Message]:
-        """
         Process an incoming message through the registered handlers.
         
         Args:
@@ -642,46 +435,6 @@ class MCPClient:
             
         Returns:
             Response message if any handler returns one
-        """
-        # Convert to Message object if needed
-        if isinstance(message, str):
-            try:
-                message = Message.deserialize(message)
-            except Exception as e:
-                raise MCPProtocolError(f"Error deserializing message: {str(e)}")
-        elif isinstance(message, dict):
-            try:
-                message = Message.from_dict(message)
-            except Exception as e:
-                raise MCPProtocolError(f"Error converting dictionary to message: {str(e)}")
-        elif not isinstance(message, Message):
-            raise MCPValidationError(f"Expected Message object, got {type(message)}")
-            
-        # Check if expired
-        if message.is_expired():
-            self.logger.warning(f"Received expired message: {message.id}")
-            return None
-            
-        # Add to conversation history
-        self._add_to_conversation(message)
-        
-        # Check if this is a response to a pending message
-        if message.reply_to in self.pending_responses:
-            response_future = self.pending_responses[message.reply_to]
-            if not response_future.done():
-                response_future.set_result(message)
-                return None  # No need to process further
-        
-        # Process through registered handlers
-        await self._message_queue.put(message)
-        
-        # This doesn't wait for the result, handlers will process asynchronously
-        return None
-    
-    async def query(self, recipient_id: str, query_content: Dict[str, Any], 
-                 context_level: ContextLevel = ContextLevel.STANDARD,
-                 timeout: Optional[float] = None) -> Message:
-        """
         Send a query and wait for response.
         
         Args:
@@ -692,21 +445,6 @@ class MCPClient:
             
         Returns:
             Response message
-        """
-        message = await self.create_message(
-            message_type=MessageType.QUERY,
-            content=query_content,
-            recipient_id=recipient_id,
-            context_level=context_level
-        )
-        
-        response = await self.send_message(message, wait_for_response=True, timeout=timeout)
-        return response
-    
-    async def send_prediction(self, recipient_id: str, prediction_data: Dict[str, Any],
-                           confidence: float = 0.7,
-                           metadata: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        """
         Send a prediction.
         
         Args:
@@ -717,25 +455,6 @@ class MCPClient:
             
         Returns:
             Result of sending the prediction
-        """
-        message = await self.create_message(
-            message_type=MessageType.PREDICTION,
-            content=metadata or {},
-            recipient_id=recipient_id,
-            prediction_data=prediction_data,
-            confidence=confidence
-        )
-        
-        await self.send_message(message)
-        return {
-            'success': True,
-            'message_id': message.id,
-            'prediction_id': message.prediction.prediction_id if message.prediction else None
-        }
-    
-    async def send_observation(self, recipient_id: str, observation_data: Dict[str, Any],
-                            metadata: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        """
         Send an observation.
         
         Args:
@@ -745,25 +464,6 @@ class MCPClient:
             
         Returns:
             Result of sending the observation
-        """
-        message = await self.create_message(
-            message_type=MessageType.OBSERVATION,
-            content=observation_data,
-            recipient_id=recipient_id,
-            context_level=ContextLevel.ENHANCED,
-            metadata=metadata or {}
-        )
-        
-        await self.send_message(message)
-        return {
-            'success': True,
-            'message_id': message.id
-        }
-    
-    async def send_action(self, recipient_id: str, action_data: Dict[str, Any],
-                       wait_for_result: bool = True,
-                       timeout: Optional[float] = None) -> Optional[Message]:
-        """
         Send an action and optionally wait for result.
         
         Args:
@@ -774,27 +474,6 @@ class MCPClient:
             
         Returns:
             Result message if wait_for_result is True, else None
-        """
-        message = await self.create_message(
-            message_type=MessageType.ACTION,
-            content=action_data,
-            recipient_id=recipient_id,
-            context_level=ContextLevel.STANDARD
-        )
-        
-        if wait_for_result:
-            return await self.send_message(message, wait_for_response=True, timeout=timeout)
-        else:
-            await self.send_message(message)
-            return None
-    
-    async def send_test(self, recipient_id: str, test_parameters: Dict[str, Any],
-                     expected_results: Dict[str, Any],
-                     test_type: str = 'active_inference',
-                     confidence: float = 0.7,
-                     wait_for_result: bool = True,
-                     timeout: Optional[float] = None) -> Optional[Message]:
-        """
         Send a test (e.g., active inference).
         
         Args:
@@ -808,55 +487,6 @@ class MCPClient:
             
         Returns:
             Result message if wait_for_result is True, else None
-        """
-        # Create context with test metadata
-        context = Context(
-            entity_id=self.entity_id,
-            environmental_id=recipient_id,
-            level=ContextLevel.ENHANCED,
-            metadata={
-                'test_type': test_type,
-                'test_id': str(uuid.uuid4())
-            }
-        )
-        
-        # Set interaction stage for active inference
-        if test_type == 'active_inference':
-            context.interaction_stage = InteractionStage.ACTIVE_INFERENCE
-        
-        # Create prediction with expected results
-        prediction = Prediction(
-            predicted_data=expected_results,
-            confidence=confidence,
-            confidence_level=self._confidence_to_level(confidence)
-        )
-        
-        # Create message
-        message = Message(
-            message_type=MessageType.TEST,
-            content=test_parameters,
-            context=context,
-            prediction=prediction,
-            sender_id=self.entity_id,
-            recipient_id=recipient_id
-        )
-        
-        # Add to conversation history
-        self._add_to_conversation(message)
-        
-        if wait_for_result:
-            return await self.send_message(message, wait_for_response=True, timeout=timeout)
-        else:
-            await self.send_message(message)
-            return None
-    
-    async def send_counterfactual(self, recipient_id: str, 
-                               variation_parameters: Dict[str, Any],
-                               expected_outcomes: Dict[str, Any],
-                               confidence: float = 0.6,
-                               wait_for_result: bool = True,
-                               timeout: Optional[float] = None) -> Optional[Message]:
-        """
         Send a counterfactual simulation.
         
         Args:
@@ -869,49 +499,6 @@ class MCPClient:
             
         Returns:
             Result message if wait_for_result is True, else None
-        """
-        # Create context with counterfactual metadata
-        context = Context(
-            entity_id=self.entity_id,
-            environmental_id=recipient_id,
-            level=ContextLevel.ENHANCED,
-            interaction_stage=InteractionStage.COUNTERFACTUAL,
-            metadata={
-                'simulation_id': str(uuid.uuid4()),
-                'variation_type': variation_parameters.get('variation_type', 'unknown')
-            }
-        )
-        
-        # Create prediction with expected outcomes
-        prediction = Prediction(
-            predicted_data=expected_outcomes,
-            confidence=confidence,
-            confidence_level=self._confidence_to_level(confidence)
-        )
-        
-        # Create message
-        message = Message(
-            message_type=MessageType.COUNTERFACTUAL,
-            content=variation_parameters,
-            context=context,
-            prediction=prediction,
-            sender_id=self.entity_id,
-            recipient_id=recipient_id
-        )
-        
-        # Add to conversation history
-        self._add_to_conversation(message)
-        
-        if wait_for_result:
-            return await self.send_message(message, wait_for_response=True, timeout=timeout)
-        else:
-            await self.send_message(message)
-            return None
-    
-    async def send_feedback(self, recipient_id: str, prediction_id: str, 
-                         feedback_value: float,
-                         feedback_data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        """
         Send feedback on a prediction.
         
         Args:
@@ -922,28 +509,6 @@ class MCPClient:
             
         Returns:
             Result of sending the feedback
-        """
-        feedback_content = {
-            'prediction_id': prediction_id,
-            'feedback_value': feedback_value,
-            **(feedback_data or {})
-        }
-        
-        message = await self.create_message(
-            message_type=MessageType.FEEDBACK,
-            content=feedback_content,
-            recipient_id=recipient_id
-        )
-        
-        await self.send_message(message)
-        return {
-            'success': True,
-            'message_id': message.id,
-            'prediction_id': prediction_id
-        }
-    
-    async def get_conversation_history(self, conversation_id: str) -> List[Message]:
-        """
         Get the history of a conversation.
         
         Args:
@@ -951,19 +516,12 @@ class MCPClient:
             
         Returns:
             List of messages in the conversation
-        """
-        return self.conversations.get(conversation_id, [])
-    
-    async def _process_messages(self) -> None:
-        """Background task for processing messages."""
         self.logger.info("Message processing task started")
         
         while self._running:
             try:
-                # Get the next message from the queue
                 message = await self._message_queue.get()
                 
-                # Process through registered handlers
                 handlers = self.message_handlers.get(message.message_type, [])
                 
                 if not handlers:
@@ -971,29 +529,23 @@ class MCPClient:
                     self._message_queue.task_done()
                     continue
                 
-                # Process through each handler
                 for handler in handlers:
                     try:
                         response = await handler(message)
                         
-                        # If handler returns a response, send it
                         if response:
-                            # Add to conversation history
                             self._add_to_conversation(response)
                             
-                            # If response is to a pending message, resolve the future
                             if response.reply_to in self.pending_responses:
                                 future = self.pending_responses[response.reply_to]
                                 if not future.done():
                                     future.set_result(response)
                             
-                            # Put back in queue for processing by other components
                             await self._message_queue.put(response)
                             break  # Stop processing after first handler returns a response
                     except Exception as e:
                         self.logger.error(f"Error in message handler for {message.message_type.name}: {str(e)}")
                 
-                # Mark task as done
                 self._message_queue.task_done()
                 
             except asyncio.CancelledError:
@@ -1038,7 +590,6 @@ class MCPClient:
             return ConfidenceLevel.CERTAIN
 
 
-# === FILE: mcp_sdk/utils.py ===
 
 import json
 import time
@@ -1070,12 +621,10 @@ def validate_message(message: Message) -> bool:
     Returns:
         True if valid, False otherwise
     """
-    # Check if expired
     if message.is_expired():
         logger.warning(f"Message {message.id} has expired")
         return False
         
-    # Check required fields
     if not message.message_type:
         logger.warning(f"Message {message.id} is missing message_type")
         return False
@@ -1084,7 +633,6 @@ def validate_message(message: Message) -> bool:
         logger.warning(f"Message {message.id} is missing context")
         return False
         
-    # Check message type-specific requirements
     if message.message_type == MessageType.QUERY and not message.content:
         logger.warning(f"Query message {message.id} is missing content")
         return False
@@ -1126,25 +674,12 @@ def generate_correlation_id() -> str:
     return f"corr_{uuid.uuid4()}"
 
 async def wait_for_responses(client, message_ids: List[str], timeout: float = 10.0) -> Dict[str, Optional[Message]]:
-    """
-    Wait for responses to multiple messages.
-    
-    Args:
-        client: The MCP client
-        message_ids: List of message IDs to wait for
-        timeout: Timeout in seconds
-        
-    Returns:
-        Dictionary mapping message IDs to responses (or None if no response)
-    """
-    # Create futures for each message
     futures = {}
     for msg_id in message_ids:
         if msg_id not in client.pending_responses:
             client.pending_responses[msg_id] = asyncio.Future()
         futures[msg_id] = client.pending_responses[msg_id]
         
-    # Wait for all futures with timeout
     results = {}
     try:
         done, pending = await asyncio.wait(
@@ -1153,7 +688,6 @@ async def wait_for_responses(client, message_ids: List[str], timeout: float = 10
             return_when=asyncio.ALL_COMPLETED
         )
         
-        # Process results
         for msg_id in message_ids:
             future = futures[msg_id]
             if future in done and not future.cancelled():
@@ -1164,17 +698,14 @@ async def wait_for_responses(client, message_ids: List[str], timeout: float = 10
             else:
                 results[msg_id] = None
                 
-        # Cancel any pending futures
         for future in pending:
             future.cancel()
             
     except asyncio.TimeoutError:
-        # Timeout, mark all remaining as None
         for msg_id in message_ids:
             if msg_id not in results:
                 results[msg_id] = None
                 
-    # Clean up
     for msg_id in message_ids:
         if msg_id in client.pending_responses:
             del client.pending_responses[msg_id]

@@ -1,4 +1,3 @@
-# asf/knowledge_substrate/causal/variable.py
 class CausalVariable:
     """
     Represents a variable in a causal model with its current state and relationships.
@@ -11,15 +10,36 @@ class CausalVariable:
         self.children = {}  # Map from child variable name to causal strength
     
     def add_parent(self, parent_name, causal_strength=0.5):
-        """Add a parent variable that causally influences this variable"""
+        """Add a parent variable that causally influences this variable
+
+    Args:
+        # TODO: Add parameter descriptions
+
+    Returns:
+        # TODO: Add return description
+    """
         self.parents[parent_name] = causal_strength
     
     def add_child(self, child_name, causal_strength=0.5):
-        """Add a child variable that this variable causally influences"""
+        """Add a child variable that this variable causally influences
+
+    Args:
+        # TODO: Add parameter descriptions
+
+    Returns:
+        # TODO: Add return description
+    """
         self.children[child_name] = causal_strength
     
     def update_causal_strength(self, var_name, new_strength, is_parent=True):
-        """Update the causal strength for a parent or child relationship"""
+        """Update the causal strength for a parent or child relationship
+
+    Args:
+        # TODO: Add parameter descriptions
+
+    Returns:
+        # TODO: Add return description
+    """
         if is_parent and var_name in self.parents:
             self.parents[var_name] = new_strength
         elif not is_parent and var_name in self.children:

@@ -13,21 +13,17 @@ import time
 import asyncio
 from unittest.mock import MagicMock, patch
 
-# Add parent directory to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# Import components
 from asf.orchestration.ray_orchestrator import (
     RayConfig, RayOrchestrator, RayTaskScheduler, RayWorker, Task, TaskStatus
 )
 
-# Configure logging
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger("test-ray-orchestrator")
 
-# Mock functions for testing
 def add(a, b):
     return a + b
 
@@ -46,13 +42,10 @@ class TestRayOrchestrator(unittest.TestCase):
     
     def setUp(self):
         """Set up test fixtures."""
-        # Create config with Ray disabled
         self.config = RayConfig(use_ray=False)
         
-        # Create orchestrator
         self.orchestrator = RayOrchestrator(config=self.config)
         
-        # Register functions
         self.orchestrator.register_function(add, "add")
         self.orchestrator.register_function(multiply, "multiply")
         self.orchestrator.register_function(failing_function, "failing_function")
@@ -86,20 +79,16 @@ class TestRayOrchestrator(unittest.TestCase):
     
     def test_execute_task(self):
         """Test task execution."""
-        # Create task
         task_id = self.orchestrator.create_task(
             name="add_task",
             function_name="add",
             args=[1, 2]
         )
         
-        # Execute task
         result = self.orchestrator.execute_task(task_id)
         
-        # Check result
         self.assertEqual(result, 3)
         
-        # Check task status
         task = self.orchestrator.tasks[task_id]
         self.assertEqual(task.status, TaskStatus.COMPLETED)
         self.assertEqual(task.result, 3)
@@ -143,18 +132,15 @@ class TestRayOrchestrator(unittest.TestCase):
     
     def test_execute_task_with_failure(self):
         """Test task execution with failure."""
-        # Create task
         task_id = self.orchestrator.create_task(
             name="failing_task",
             function_name="failing_function",
             max_retries=0
         )
         
-        # Execute task (should raise exception)
         with self.assertRaises(ValueError):
             self.orchestrator.execute_task(task_id)
         
-        # Check task status
         task = self.orchestrator.tasks[task_id]
         self.assertEqual(task.status, TaskStatus.FAILED)
         self.assertIsNotNone(task.error)
@@ -180,7 +166,6 @@ class TestRayOrchestrator(unittest.TestCase):
     
     def test_execute_workflow(self):
         """Test workflow execution."""
-        # Create tasks
         task1_id = self.orchestrator.create_task(
             name="add_task",
             function_name="add",
@@ -194,14 +179,11 @@ class TestRayOrchestrator(unittest.TestCase):
             dependencies=[task1_id]
         )
         
-        # Execute workflow
         results = self.orchestrator.execute_workflow([task1_id, task2_id])
         
-        # Check results
         self.assertEqual(results[task1_id], 3)
         self.assertEqual(results[task2_id], 12)
         
-        # Check task statuses
         task1 = self.orchestrator.tasks[task1_id]
         task2 = self.orchestrator.tasks[task2_id]
         self.assertEqual(task1.status, TaskStatus.COMPLETED)
@@ -226,7 +208,6 @@ class TestRayOrchestrator(unittest.TestCase):
     
     def test_get_task_result(self):
         """Test getting task result."""
-        # Create and execute task
         task_id = self.orchestrator.create_task(
             name="add_task",
             function_name="add",
@@ -234,10 +215,8 @@ class TestRayOrchestrator(unittest.TestCase):
         )
         self.orchestrator.execute_task(task_id)
         
-        # Get task result
         result = self.orchestrator.get_task_result(task_id)
         
-        # Check result
         self.assertEqual(result, 3)
     
     def test_cancel_task(self):
@@ -279,7 +258,6 @@ class TestRayTaskScheduler(unittest.TestCase):
     
     def test_schedule_task(self):
         """Test task scheduling."""
-        # Schedule task
         task_id = self.scheduler.schedule_task(
             name="test_task",
             function_name="add",
@@ -290,13 +268,10 @@ class TestRayTaskScheduler(unittest.TestCase):
             priority=1
         )
         
-        # Check task exists in orchestrator
         self.assertIn(task_id, self.orchestrator.tasks)
         
-        # Check task exists in scheduler
         self.assertIn(task_id, self.scheduler.scheduled_tasks)
         
-        # Check task properties
         task = self.orchestrator.tasks[task_id]
         self.assertEqual(task.name, "test_task")
         self.assertEqual(task.function_name, "add")
@@ -312,86 +287,28 @@ class TestAsyncRayOrchestrator(unittest.IsolatedAsyncioTestCase):
     
     def setUp(self):
         """Set up test fixtures."""
-        # Create config with Ray disabled
         self.config = RayConfig(use_ray=False)
         
-        # Create orchestrator
         self.orchestrator = RayOrchestrator(config=self.config)
         
-        # Register functions
         self.orchestrator.register_function(add, "add")
         self.orchestrator.register_function(multiply, "multiply")
         self.orchestrator.register_function(async_add, "async_add")
         self.orchestrator.register_function(failing_function, "failing_function")
     
     async def test_execute_task_async(self):
-        """Test async task execution."""
-        # Create task
-        task_id = self.orchestrator.create_task(
-            name="add_task",
-            function_name="add",
-            args=[1, 2]
-        )
-        
-        # Execute task
-        result = await self.orchestrator.execute_task_async(task_id)
-        
-        # Check result
-        self.assertEqual(result, 3)
-        
-        # Check task status
-        task = self.orchestrator.tasks[task_id]
-        self.assertEqual(task.status, TaskStatus.COMPLETED)
-        self.assertEqual(task.result, 3)
-    
-    async def test_execute_async_task_async(self):
-        """Test async execution of async task."""
-        # Create task
         task_id = self.orchestrator.create_task(
             name="async_add_task",
             function_name="async_add",
             args=[1, 2]
         )
         
-        # Execute task
         result = await self.orchestrator.execute_task_async(task_id)
         
-        # Check result
         self.assertEqual(result, 3)
         
-        # Check task status
         task = self.orchestrator.tasks[task_id]
         self.assertEqual(task.status, TaskStatus.COMPLETED)
         self.assertEqual(task.result, 3)
     
     async def test_execute_workflow_async(self):
-        """Test async workflow execution."""
-        # Create tasks
-        task1_id = self.orchestrator.create_task(
-            name="add_task",
-            function_name="add",
-            args=[1, 2]
-        )
-        
-        task2_id = self.orchestrator.create_task(
-            name="multiply_task",
-            function_name="multiply",
-            args=[3, 4],
-            dependencies=[task1_id]
-        )
-        
-        # Execute workflow
-        results = await self.orchestrator.execute_workflow_async([task1_id, task2_id])
-        
-        # Check results
-        self.assertEqual(results[task1_id], 3)
-        self.assertEqual(results[task2_id], 12)
-        
-        # Check task statuses
-        task1 = self.orchestrator.tasks[task1_id]
-        task2 = self.orchestrator.tasks[task2_id]
-        self.assertEqual(task1.status, TaskStatus.COMPLETED)
-        self.assertEqual(task2.status, TaskStatus.COMPLETED)
-
-if __name__ == "__main__":
-    unittest.main()

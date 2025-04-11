@@ -8,10 +8,8 @@ import logging
 import re
 import asyncio
 import spacy
-from typing import Dict, List, Optional, Any, Union, Tuple, Set
 from enum import Enum
 
-# Set up logging
 logger = logging.getLogger(__name__)
 
 class BiasRisk(str, Enum):
@@ -46,7 +44,6 @@ class BiasAssessmentService:
         Args:
             nlp_model: NLP model for text analysis
         """
-        # Load NLP model for extraction
         try:
             self.nlp = nlp_model or spacy.load("en_core_sci_md")
             logger.info("Loaded spaCy model for bias assessment")
@@ -54,7 +51,6 @@ class BiasAssessmentService:
             logger.warning(f"Could not load spaCy model: {str(e)}. Falling back to basic pattern matching.")
             self.nlp = None
         
-        # Load bias assessment patterns
         self.bias_patterns = self._load_patterns()
         logger.info(f"Loaded {sum(len(patterns) for patterns in self.bias_patterns.values())} bias assessment patterns")
     
@@ -119,18 +115,8 @@ class BiasAssessmentService:
         }
     
     async def assess_study(self, study_text: str) -> Dict[str, Any]:
-        """
-        Assess risk of bias in a study.
-        
-        Args:
-            study_text: Study text (abstract or full text)
-            
-        Returns:
-            Bias assessment results
-        """
         logger.info("Assessing risk of bias in study")
         
-        # This could be CPU intensive, so run in thread pool
         if self.nlp:
             doc = await asyncio.to_thread(self.nlp, study_text)
             text_for_analysis = study_text
@@ -138,7 +124,6 @@ class BiasAssessmentService:
             doc = None
             text_for_analysis = study_text.lower()
         
-        # Analyze bias domains
         assessment = {
             BiasDomain.RANDOMIZATION: await self._assess_randomization(doc, text_for_analysis),
             BiasDomain.BLINDING: await self._assess_blinding(doc, text_for_analysis),
@@ -149,7 +134,6 @@ class BiasAssessmentService:
             BiasDomain.OVERALL: None  # Will be calculated
         }
         
-        # Calculate overall risk
         high_risk_count = sum(1 for domain, result in assessment.items() 
                              if domain != BiasDomain.OVERALL and result["risk"] == BiasRisk.HIGH)
         
@@ -176,20 +160,10 @@ class BiasAssessmentService:
         return assessment
     
     async def assess_studies(self, studies: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """
-        Assess risk of bias in multiple studies.
-        
-        Args:
-            studies: List of studies with text
-            
-        Returns:
-            List of bias assessment results
-        """
         logger.info(f"Assessing risk of bias in {len(studies)} studies")
         
         results = []
         for study in studies:
-            # Extract study text based on available fields
             study_text = ""
             if "full_text" in study and study["full_text"]:
                 study_text = study["full_text"]
@@ -198,15 +172,12 @@ class BiasAssessmentService:
             elif "title" in study:
                 study_text = study["title"]
             
-            # Skip if no text available
             if not study_text:
                 logger.warning(f"No text available for study {study.get('pmid', 'unknown')}")
                 continue
             
-            # Assess risk of bias
             assessment = await self.assess_study(study_text)
             
-            # Add study metadata
             result = {
                 "study_id": study.get("pmid", ""),
                 "title": study.get("title", ""),
@@ -218,101 +189,28 @@ class BiasAssessmentService:
         return results
     
     async def _assess_randomization(self, doc: Optional[Any], text: str) -> Dict[str, Any]:
-        """
-        Assess risk of bias in randomization.
-        
-        Args:
-            doc: spaCy document
-            text: Text for analysis
-            
-        Returns:
-            Assessment result
-        """
         return await self._assess_domain(BiasDomain.RANDOMIZATION, doc, text)
     
     async def _assess_blinding(self, doc: Optional[Any], text: str) -> Dict[str, Any]:
-        """
-        Assess risk of bias in blinding.
-        
-        Args:
-            doc: spaCy document
-            text: Text for analysis
-            
-        Returns:
-            Assessment result
-        """
         return await self._assess_domain(BiasDomain.BLINDING, doc, text)
     
     async def _assess_allocation(self, doc: Optional[Any], text: str) -> Dict[str, Any]:
-        """
-        Assess risk of bias in allocation concealment.
-        
-        Args:
-            doc: spaCy document
-            text: Text for analysis
-            
-        Returns:
-            Assessment result
-        """
         return await self._assess_domain(BiasDomain.ALLOCATION_CONCEALMENT, doc, text)
     
     async def _assess_sample_size(self, doc: Optional[Any], text: str) -> Dict[str, Any]:
-        """
-        Assess risk of bias in sample size.
-        
-        Args:
-            doc: spaCy document
-            text: Text for analysis
-            
-        Returns:
-            Assessment result
-        """
         return await self._assess_domain(BiasDomain.SAMPLE_SIZE, doc, text)
     
     async def _assess_attrition(self, doc: Optional[Any], text: str) -> Dict[str, Any]:
-        """
-        Assess risk of bias in attrition.
-        
-        Args:
-            doc: spaCy document
-            text: Text for analysis
-            
-        Returns:
-            Assessment result
-        """
         return await self._assess_domain(BiasDomain.ATTRITION, doc, text)
     
     async def _assess_selective_reporting(self, doc: Optional[Any], text: str) -> Dict[str, Any]:
-        """
-        Assess risk of bias in selective reporting.
-        
-        Args:
-            doc: spaCy document
-            text: Text for analysis
-            
-        Returns:
-            Assessment result
-        """
         return await self._assess_domain(BiasDomain.SELECTIVE_REPORTING, doc, text)
     
     async def _assess_domain(self, domain: BiasDomain, doc: Optional[Any], text: str) -> Dict[str, Any]:
-        """
-        Assess risk of bias in a specific domain.
-        
-        Args:
-            domain: Bias domain
-            doc: spaCy document
-            text: Text for analysis
-            
-        Returns:
-            Assessment result
-        """
-        # Initialize scores
         positive_score = 0.0
         negative_score = 0.0
         evidence = []
         
-        # Check patterns
         for pattern in self.bias_patterns.get(domain, []):
             matches = re.finditer(pattern["pattern"], text, re.IGNORECASE)
             for match in matches:
@@ -336,7 +234,6 @@ class BiasAssessmentService:
                         "weight": pattern["weight"]
                     })
         
-        # Determine risk level
         if positive_score > 0 and negative_score == 0:
             risk = BiasRisk.LOW
         elif negative_score > 0:
@@ -346,7 +243,6 @@ class BiasAssessmentService:
         else:
             risk = BiasRisk.UNCLEAR
         
-        # Create result
         result = {
             "risk": risk,
             "positive_score": positive_score,
@@ -372,7 +268,6 @@ class BiasAssessmentService:
         context_start = max(0, start - context_size)
         context_end = min(len(text), end + context_size)
         
-        # Find sentence boundaries
         left_boundary = text.rfind(".", context_start, start)
         if left_boundary != -1:
             context_start = left_boundary + 1

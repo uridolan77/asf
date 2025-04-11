@@ -9,10 +9,7 @@ import time
 import json
 import logging
 import asyncio
-from typing import Dict, List, Any, Optional, Union
-from datetime import datetime, timedelta
 
-# Configure logging
 logger = logging.getLogger(__name__)
 
 class EnhancedTaskStorage:
@@ -45,30 +42,19 @@ class EnhancedTaskStorage:
         ttl: int = 86400,  # 24 hours
         namespace: str = "asf:medical:tasks:"
     ):
-        """
-        Initialize the enhanced task storage.
-        
-        Args:
-            redis_url: Redis URL for persistent storage (default: from env var REDIS_URL)
-            ttl: Time to live in seconds (default: 86400 = 24 hours)
-            namespace: Cache namespace prefix (default: "asf:medical:tasks:")
-        """
         if self._initialized:
             return
         
-        # Get Redis URL from environment variable if not provided
         self.redis_url = redis_url or os.environ.get("REDIS_URL")
         
         self.ttl = ttl
         self.namespace = namespace
         self.redis = None
         
-        # Local storage (fallback if Redis is not available)
         self.local_storage = {}
         self.local_expiry = {}
         self.lock = asyncio.Lock()
         
-        # Initialize Redis if URL is provided
         if self.redis_url:
             try:
                 import redis.asyncio as aioredis
@@ -100,25 +86,10 @@ class EnhancedTaskStorage:
         ttl: Optional[int] = None,
         metadata: Optional[Dict[str, Any]] = None
     ) -> bool:
-        """
-        Set a task result.
-        
-        Args:
-            task_id: Task ID
-            result: Task result
-            ttl: Time to live in seconds (default: self.ttl)
-            metadata: Task metadata
-            
-        Returns:
-            bool: True if the result was set, False otherwise
-        """
-        # Apply namespace
         namespaced_key = f"{self.namespace}{task_id}"
         
-        # Use default TTL if not provided
         ttl = ttl or self.ttl
         
-        # Create task data
         task_data = {
             "task_id": task_id,
             "result": result,
@@ -127,13 +98,10 @@ class EnhancedTaskStorage:
             "expires_at": time.time() + ttl
         }
         
-        # Try Redis first if available
         if self.redis:
             try:
-                # Serialize task data
                 serialized = json.dumps(task_data)
                 
-                # Set in Redis with TTL
                 await self.redis.set(
                     namespaced_key,
                     serialized,
@@ -145,7 +113,6 @@ class EnhancedTaskStorage:
                 logger.error(f"Error setting task result in Redis: {str(e)}")
                 logger.warning("Falling back to local task storage")
         
-        # Fall back to local task storage
         async with self.lock:
             self.local_storage[namespaced_key] = task_data
             self.local_expiry[namespaced_key] = time.time() + ttl
@@ -153,26 +120,13 @@ class EnhancedTaskStorage:
             return True
     
     async def get_task_result(self, task_id: str) -> Optional[Dict[str, Any]]:
-        """
-        Get a task result.
-        
-        Args:
-            task_id: Task ID
-            
-        Returns:
-            Optional[Dict[str, Any]]: Task data or None if not found
-        """
-        # Apply namespace
         namespaced_key = f"{self.namespace}{task_id}"
         
-        # Try Redis first if available
         if self.redis:
             try:
-                # Get from Redis
                 serialized = await self.redis.get(namespaced_key)
                 
                 if serialized:
-                    # Deserialize task data
                     task_data = json.loads(serialized)
                     logger.debug(f"Got task result from Redis: {task_id}")
                     return task_data
@@ -180,15 +134,12 @@ class EnhancedTaskStorage:
                 logger.error(f"Error getting task result from Redis: {str(e)}")
                 logger.warning("Falling back to local task storage")
         
-        # Fall back to local task storage
         async with self.lock:
             if namespaced_key in self.local_storage:
-                # Check if expired
                 if self.local_expiry.get(namespaced_key, 0) > time.time():
                     logger.debug(f"Got task result from local storage: {task_id}")
                     return self.local_storage[namespaced_key]
                 else:
-                    # Remove expired task
                     del self.local_storage[namespaced_key]
                     del self.local_expiry[namespaced_key]
         
@@ -196,30 +147,17 @@ class EnhancedTaskStorage:
         return None
     
     async def delete_task_result(self, task_id: str) -> bool:
-        """
-        Delete a task result.
-        
-        Args:
-            task_id: Task ID
-            
-        Returns:
-            bool: True if the result was deleted, False otherwise
-        """
-        # Apply namespace
         namespaced_key = f"{self.namespace}{task_id}"
         
-        # Try Redis first if available
         redis_deleted = False
         if self.redis:
             try:
-                # Delete from Redis
                 redis_deleted = await self.redis.delete(namespaced_key) > 0
                 if redis_deleted:
                     logger.debug(f"Deleted task result from Redis: {task_id}")
             except Exception as e:
                 logger.error(f"Error deleting task result from Redis: {str(e)}")
         
-        # Also delete from local storage
         local_deleted = False
         async with self.lock:
             if namespaced_key in self.local_storage:
@@ -232,25 +170,12 @@ class EnhancedTaskStorage:
         return redis_deleted or local_deleted
     
     async def list_tasks(self, pattern: str = "*") -> List[str]:
-        """
-        List task IDs matching a pattern.
-        
-        Args:
-            pattern: Pattern to match (default: "*")
-            
-        Returns:
-            List[str]: List of task IDs
-        """
-        # Apply namespace
         namespaced_pattern = f"{self.namespace}{pattern}"
         
-        # Try Redis first if available
         if self.redis:
             try:
-                # Get keys from Redis
                 keys = await self.redis.keys(namespaced_pattern)
                 
-                # Remove namespace from keys
                 task_ids = [key[len(self.namespace):] for key in keys]
                 
                 logger.debug(f"Listed {len(task_ids)} tasks from Redis")
@@ -259,34 +184,22 @@ class EnhancedTaskStorage:
                 logger.error(f"Error listing tasks from Redis: {str(e)}")
                 logger.warning("Falling back to local task storage")
         
-        # Fall back to local task storage
         async with self.lock:
-            # Get keys from local storage
             keys = [key for key in self.local_storage.keys() if key.startswith(namespaced_pattern.replace("*", ""))]
             
-            # Remove namespace from keys
             task_ids = [key[len(self.namespace):] for key in keys]
             
             logger.debug(f"Listed {len(task_ids)} tasks from local storage")
             return task_ids
     
     async def clear_expired_tasks(self) -> int:
-        """
-        Clear expired tasks.
-        
-        Returns:
-            int: Number of tasks cleared
-        """
-        # Try Redis first if available
         redis_cleared = 0
         if self.redis:
             try:
-                # Redis automatically removes expired keys
                 logger.debug("Redis automatically removes expired keys")
             except Exception as e:
                 logger.error(f"Error clearing expired tasks from Redis: {str(e)}")
         
-        # Clear expired tasks from local storage
         local_cleared = 0
         async with self.lock:
             now = time.time()
@@ -306,16 +219,6 @@ class EnhancedTaskStorage:
         return redis_cleared + local_cleared
     
     async def get_task_status(self, task_id: str) -> Dict[str, Any]:
-        """
-        Get the status of a task.
-        
-        Args:
-            task_id: Task ID
-            
-        Returns:
-            Dict[str, Any]: Task status
-        """
-        # Get task result
         task_data = await self.get_task_result(task_id)
         
         if task_data is None:
@@ -326,7 +229,6 @@ class EnhancedTaskStorage:
                 "expires_at": None
             }
         
-        # Extract status from metadata
         status = task_data.get("metadata", {}).get("status", "completed")
         
         return {
@@ -344,23 +246,9 @@ class EnhancedTaskStorage:
         progress: Optional[float] = None,
         message: Optional[str] = None
     ) -> bool:
-        """
-        Update the status of a task.
-        
-        Args:
-            task_id: Task ID
-            status: Task status
-            progress: Task progress (0.0 to 1.0)
-            message: Status message
-            
-        Returns:
-            bool: True if the status was updated, False otherwise
-        """
-        # Get task result
         task_data = await self.get_task_result(task_id)
         
         if task_data is None:
-            # Create new task data
             metadata = {
                 "status": status
             }
@@ -371,14 +259,12 @@ class EnhancedTaskStorage:
             if message is not None:
                 metadata["message"] = message
             
-            # Set task result with metadata
             return await self.set_task_result(
                 task_id=task_id,
                 result=None,
                 metadata=metadata
             )
         
-        # Update metadata
         metadata = task_data.get("metadata", {})
         metadata["status"] = status
         
@@ -388,7 +274,6 @@ class EnhancedTaskStorage:
         if message is not None:
             metadata["message"] = message
         
-        # Update task result
         return await self.set_task_result(
             task_id=task_id,
             result=task_data.get("result"),
@@ -397,19 +282,8 @@ class EnhancedTaskStorage:
         )
     
     async def get_task_progress(self, task_id: str) -> Dict[str, Any]:
-        """
-        Get the progress of a task.
-        
-        Args:
-            task_id: Task ID
-            
-        Returns:
-            Dict[str, Any]: Task progress
-        """
-        # Get task status
         status = await self.get_task_status(task_id)
         
-        # Extract progress from metadata
         metadata = status.get("metadata", {})
         progress = metadata.get("progress", 0.0)
         message = metadata.get("message", "")
@@ -429,29 +303,12 @@ class EnhancedTaskStorage:
         timeout: float = 300.0,
         poll_interval: float = 1.0
     ) -> Dict[str, Any]:
-        """
-        Wait for a task to complete.
-        
-        Args:
-            task_id: Task ID
-            timeout: Timeout in seconds (default: 300.0)
-            poll_interval: Poll interval in seconds (default: 1.0)
-            
-        Returns:
-            Dict[str, Any]: Task result
-            
-        Raises:
-            TimeoutError: If the task does not complete within the timeout
-        """
         start_time = time.time()
         
         while time.time() - start_time < timeout:
-            # Get task status
             status = await self.get_task_status(task_id)
             
-            # Check if task is completed
             if status.get("status") in ["completed", "failed", "error"]:
-                # Get task result
                 task_data = await self.get_task_result(task_id)
                 
                 if task_data is None:
@@ -468,11 +325,8 @@ class EnhancedTaskStorage:
                     "metadata": task_data.get("metadata", {})
                 }
             
-            # Wait for poll interval
             await asyncio.sleep(poll_interval)
         
-        # Timeout
         raise TimeoutError(f"Task {task_id} did not complete within {timeout} seconds")
 
-# Create a singleton instance
 enhanced_task_storage = EnhancedTaskStorage()

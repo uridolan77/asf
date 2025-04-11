@@ -8,7 +8,6 @@ import logging
 import threading
 from typing import Dict, Any, Optional, Type, Callable
 
-# Set up logging
 logger = logging.getLogger(__name__)
 
 class ModelRegistry:
@@ -37,7 +36,14 @@ class ModelRegistry:
             return cls._instance
 
     def __init__(self):
-        """Initialize the model registry."""
+        """Initialize the model registry.
+
+    Args:
+        # TODO: Add parameter descriptions
+
+    Returns:
+        # TODO: Add return description
+    """
         with self._lock:
             if self._initialized:
                 return
@@ -49,9 +55,14 @@ class ModelRegistry:
             logger.info("Model registry initialized")
 
     def init(self):
-        """Initialize the model registry with default models."""
-        # This method can be called to pre-register commonly used models
-        # For now, we don't pre-register any models
+        """Initialize the model registry with default models.
+
+    Args:
+        # TODO: Add parameter descriptions
+
+    Returns:
+        # TODO: Add return description
+    """
         logger.info("Model registry initialized with default models")
 
     def register_model_factory(
@@ -60,14 +71,6 @@ class ModelRegistry:
         factory: Callable[[], Any],
         model_type: Optional[Type] = None
     ):
-        """
-        Register a model factory.
-
-        Args:
-            model_name: Name of the model
-            factory: Factory function to create the model
-            model_type: Type of the model (for type checking)
-        """
         with self._lock:
             self._factories[model_name] = {
                 'factory': factory,
@@ -105,25 +108,20 @@ class ModelRegistry:
             ValueError: If the model is not registered
         """
         with self._lock:
-            # Check if the model is already loaded
             if model_name in self._models:
                 logger.debug(f"Model already loaded: {model_name}")
                 return self._models[model_name]
 
-            # Check if a factory is registered for this model
             if model_name not in self._factories:
                 raise ValueError(f"Model not registered: {model_name}")
 
-            # Load the model
             logger.info(f"Loading model: {model_name}")
             factory_info = self._factories[model_name]
             model = factory_info['factory']()
 
-            # Type check
             if factory_info['type'] is not None and not isinstance(model, factory_info['type']):
                 raise TypeError(f"Model {model_name} has wrong type: {type(model)}, expected {factory_info['type']}")
 
-            # Store the model
             self._models[model_name] = model
 
             return model
@@ -143,21 +141,25 @@ class ModelRegistry:
                 logger.debug(f"Model not loaded: {model_name}")
                 return False
 
-            # Get the model
             model = self._models[model_name]
 
-            # Call unload_model if available
             if hasattr(model, 'unload_model'):
                 logger.info(f"Unloading model: {model_name}")
                 model.unload_model()
 
-            # Remove from registry
             del self._models[model_name]
 
             return True
 
     def unload_all_models(self):
-        """Unload all models from the registry."""
+        """Unload all models from the registry.
+
+    Args:
+        # TODO: Add parameter descriptions
+
+    Returns:
+        # TODO: Add return description
+    """
         with self._lock:
             for model_name in list(self._models.keys()):
                 self.unload_model(model_name)
@@ -173,29 +175,11 @@ class ModelRegistry:
 
         Returns:
             True if the model is loaded, False otherwise
-        """
-        with self._lock:
-            return model_name in self._models
-
-    def get_loaded_models(self) -> Dict[str, Any]:
-        """
         Get all loaded models.
 
         Returns:
             Dictionary of loaded models
-        """
-        with self._lock:
-            return self._models.copy()
-
-    def get_registered_models(self) -> Dict[str, Dict[str, Any]]:
-        """
         Get all registered models.
 
         Returns:
             Dictionary of registered models
-        """
-        with self._lock:
-            return self._factories.copy()
-
-# Create a singleton instance
-model_registry = ModelRegistry()

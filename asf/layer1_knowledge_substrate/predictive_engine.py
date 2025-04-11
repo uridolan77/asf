@@ -20,19 +20,13 @@ class PredictiveTemporalEngine(TemporalProcessingEngine):
     
     def __init__(self):
         super().__init__()
-        # Track prediction errors
         self.prediction_errors = defaultdict(list)
-        # Track predictions and outcomes
         self.predictions = {}
         self.prediction_outcomes = []
-        # Precision values (inverse variance of prediction errors)
         self.precision_values = {}
-        # Learning rates (adaptive based on prediction error)
         self.learning_rates = defaultdict(lambda: 0.3)  # Default learning rate
-        # Counterfactual simulations
         self.counterfactual_simulations = []
         
-        # Pytorch model for temporal prediction (optional, more sophisticated prediction)
         self.use_neural_prediction = False  # Toggle for neural prediction
         if self.use_neural_prediction:
             self.predictor = TemporalPredictor(input_size=64, hidden_size=128)
@@ -58,12 +52,10 @@ class PredictiveTemporalEngine(TemporalProcessingEngine):
         if len(recent_events) < 3:  # Need minimum data for prediction
             return []
         
-        # Extract timestamps for interval analysis
         timestamps = list(sequence.timestamps)
         if len(timestamps) < 2:
             return []
             
-        # Analyze temporal patterns
         event_intervals = []
         for i in range(1, len(timestamps)):
             interval = timestamps[i] - timestamps[i-1]
@@ -72,33 +64,25 @@ class PredictiveTemporalEngine(TemporalProcessingEngine):
         if not event_intervals:
             return []
         
-        # Calculate mean interval and variance (for precision)
         mean_interval = np.mean(event_intervals)
         interval_variance = np.var(event_intervals)
         
-        # More regular patterns = higher precision = more confident predictions
         precision = 1.0 / (interval_variance + 1e-6)
         
-        # Cap precision to reasonable range
         precision = min(10.0, precision)
         
-        # Store precision for this sequence
         self.precision_values.setdefault(entity_id, {})
         self.precision_values[entity_id][sequence_type] = precision
         
-        # Last event time
         last_time = timestamps[-1] if timestamps else time.time()
         
-        # Predict future events based on pattern
         predictions = []
         current_time = time.time()
         next_time = last_time + mean_interval
         
-        # Use neural prediction if enabled and enough data
         if self.use_neural_prediction and len(recent_events) >= 5:
             neural_predictions = self._neural_predict(entity_id, sequence_type, time_horizon)
             if neural_predictions:
-                # Store predictions for later evaluation
                 prediction_id = f"{entity_id}_{sequence_type}_{int(time.time())}"
                 self.predictions[prediction_id] = {
                     "entity_id": entity_id,
@@ -109,9 +93,7 @@ class PredictiveTemporalEngine(TemporalProcessingEngine):
                 }
                 return neural_predictions
         
-        # Fall back to statistical prediction
         while next_time <= current_time + time_horizon:
-            # Create prediction with confidence based on precision
             confidence = min(0.9, np.tanh(precision) * 0.8)
             
             predictions.append({
@@ -122,7 +104,6 @@ class PredictiveTemporalEngine(TemporalProcessingEngine):
             
             next_time += mean_interval
         
-        # Store predictions for later evaluation
         if predictions:
             prediction_id = f"{entity_id}_{sequence_type}_{int(time.time())}"
             self.predictions[prediction_id] = {
@@ -145,7 +126,6 @@ class PredictiveTemporalEngine(TemporalProcessingEngine):
         if current_time is None:
             current_time = time.time()
             
-        # Find predictions for this entity/sequence
         relevant_predictions = []
         for pred_id, prediction in self.predictions.items():
             if (prediction["entity_id"] == entity_id and 
@@ -156,83 +136,65 @@ class PredictiveTemporalEngine(TemporalProcessingEngine):
         if not relevant_predictions:
             return {"evaluated": False, "reason": "no_predictions"}
             
-        # Get actual events that occurred since predictions were made
         if entity_id not in self.sequences or sequence_type not in self.sequences[entity_id]:
             return {"evaluated": False, "reason": "sequence_not_found"}
             
         sequence = self.sequences[entity_id][sequence_type]
         
-        # Results for all evaluated predictions
         evaluation_results = []
         
         for pred_id, prediction in relevant_predictions:
-            # Skip if already evaluated
             if "evaluated" in prediction and prediction["evaluated"]:
                 continue
                 
             pred_time = prediction["timestamp"]
             pred_events = prediction["predictions"]
             
-            # Get actual events that occurred after prediction was made
             actual_timestamps = [ts for ts in sequence.timestamps if ts > pred_time]
             
-            # Skip if no actual events to compare against
             if not actual_timestamps:
                 continue
                 
-            # For each predicted event, find closest actual event
             prediction_errors = []
             
             for pred_event in pred_events:
                 pred_timestamp = pred_event["predicted_time"]
                 
-                # Skip predicted events in the future
                 if pred_timestamp > current_time:
                     continue
                     
-                # Find closest actual event
                 closest_actual = min(actual_timestamps, key=lambda x: abs(x - pred_timestamp))
                 
-                # Calculate error (time difference in seconds)
                 error = abs(closest_actual - pred_timestamp)
                 
-                # Normalize error relative to prediction horizon
                 horizon = max(pred_event["time_from_now"], 60)  # At least 1 minute
                 normalized_error = min(1.0, error / horizon)
                 
                 prediction_errors.append(normalized_error)
             
-            # Skip if no predictions were evaluated
             if not prediction_errors:
                 continue
                 
-            # Calculate average error
             avg_error = sum(prediction_errors) / len(prediction_errors)
             
-            # Update prediction error tracking
             error_key = f"{entity_id}_{sequence_type}"
             self.prediction_errors[error_key].append(avg_error)
             
-            # Limit history size
             if len(self.prediction_errors[error_key]) > 20:
                 self.prediction_errors[error_key] = self.prediction_errors[error_key][-20:]
             
-            # Update precision value
             if len(self.prediction_errors[error_key]) > 1:
                 error_variance = np.var(self.prediction_errors[error_key])
                 precision = 1.0 / (error_variance + 1e-6)
                 precision = min(10.0, precision)  # Cap precision
                 
-                # Store updated precision
                 self.precision_values.setdefault(entity_id, {})
                 self.precision_values[entity_id][sequence_type] = precision
             
-            # Mark prediction as evaluated
             prediction["evaluated"] = True
             prediction["avg_error"] = avg_error
             prediction["evaluation_time"] = current_time
             
-            # Add to results
             evaluation_results.append({
                 "prediction_id": pred_id,
                 "avg_error": avg_error,
@@ -240,7 +202,6 @@ class PredictiveTemporalEngine(TemporalProcessingEngine):
                 "num_evaluated": len(prediction_errors)
             })
             
-            # Record outcome for learning
             self.prediction_outcomes.append({
                 "entity_id": entity_id,
                 "sequence_type": sequence_type,
@@ -250,7 +211,6 @@ class PredictiveTemporalEngine(TemporalProcessingEngine):
                 "timestamp": current_time
             })
         
-        # Return evaluation summary
         if evaluation_results:
             return {
                 "evaluated": True,
@@ -267,30 +227,14 @@ class PredictiveTemporalEngine(TemporalProcessingEngine):
         Add an event and update predictions. 
         Overrides base method to include prediction evaluation.
         """
-        # First call parent implementation
         result = super().add_event(entity_id, sequence_type, event_data)
         
-        # Then evaluate existing predictions
         self.evaluate_predictions(entity_id, sequence_type)
         
-        # Return original result
         return result
     
     def generate_counterfactual_sequence(self, entity_id, sequence_type, 
                                         modification, time_horizon=3600):
-        """
-        Generate a counterfactual sequence by modifying existing temporal patterns.
-        
-        Args:
-            entity_id: Entity to generate counterfactual for
-            sequence_type: Type of sequence
-            modification: Dictionary specifying the modification 
-                (e.g., {"interval_factor": 0.5} to make events twice as frequent)
-            time_horizon: Time horizon for counterfactual (seconds)
-            
-        Returns:
-            Counterfactual sequence of events
-        """
         if entity_id not in self.sequences or sequence_type not in self.sequences[entity_id]:
             return []
             
@@ -300,36 +244,28 @@ class PredictiveTemporalEngine(TemporalProcessingEngine):
         if len(recent_events) < 3:  # Need minimum data
             return []
             
-        # Extract timestamps
         timestamps = list(sequence.timestamps)
         if len(timestamps) < 2:
             return []
             
-        # Create copy of events for counterfactual
         cf_events = recent_events.copy()
         cf_timestamps = timestamps.copy()
         
-        # Apply modifications
         if "interval_factor" in modification:
-            # Change frequency of events
             factor = modification["interval_factor"]
             
-            # Calculate new intervals
             new_timestamps = [timestamps[0]]  # Keep first timestamp
             
             for i in range(1, len(timestamps)):
                 interval = timestamps[i] - timestamps[i-1]
-                # Apply factor to interval
                 new_interval = interval * factor
                 new_timestamps.append(new_timestamps[-1] + new_interval)
                 
             cf_timestamps = new_timestamps
         
         elif "remove_pattern" in modification:
-            # Remove a specific pattern from sequence
             pattern = modification["remove_pattern"]
             
-            # Filter events not matching pattern
             filtered_events = []
             filtered_timestamps = []
             
@@ -341,7 +277,6 @@ class PredictiveTemporalEngine(TemporalProcessingEngine):
             cf_events = filtered_events
             cf_timestamps = filtered_timestamps
         
-        # Record counterfactual simulation
         cf_id = f"cf_{entity_id}_{sequence_type}_{int(time.time())}"
         self.counterfactual_simulations.append({
             "id": cf_id,
@@ -353,7 +288,6 @@ class PredictiveTemporalEngine(TemporalProcessingEngine):
             "timestamp": time.time()
         })
         
-        # Return counterfactual sequence
         return list(zip(cf_events, cf_timestamps))
     
     def _neural_predict(self, entity_id, sequence_type, time_horizon):
@@ -371,10 +305,8 @@ class PredictiveTemporalEngine(TemporalProcessingEngine):
         if len(recent_events) < 5:  # Need more data for neural prediction
             return []
             
-        # Extract features and timestamps
         timestamps = list(sequence.timestamps)[-len(recent_events):]
         
-        # Convert to intervals
         intervals = []
         for i in range(1, len(timestamps)):
             intervals.append(timestamps[i] - timestamps[i-1])
@@ -382,16 +314,11 @@ class PredictiveTemporalEngine(TemporalProcessingEngine):
         if not intervals:
             return []
             
-        # Create input tensor
-        # For simplicity, just use intervals as features
-        # In real implementation, would include event features
         sequence_tensor = torch.tensor(intervals, dtype=torch.float32).unsqueeze(0)
         
-        # Generate predictions
         with torch.no_grad():
             predicted_intervals, confidence = self.predictor(sequence_tensor)
             
-        # Convert back to timestamps
         last_time = timestamps[-1]
         current_time = time.time()
         
@@ -431,7 +358,6 @@ class TemporalPredictor(nn.Module):
     def __init__(self, input_size=64, hidden_size=128):
         super().__init__()
         
-        # RNN for sequence modeling
         self.rnn = nn.GRU(
             input_size=input_size,
             hidden_size=hidden_size,
@@ -439,7 +365,6 @@ class TemporalPredictor(nn.Module):
             bidirectional=True
         )
         
-        # Prediction layers
         self.interval_predictor = nn.Linear(hidden_size * 2, 5)  # Predict next 5 intervals
         self.confidence_predictor = nn.Linear(hidden_size * 2, 5)  # Confidence for each prediction
         
@@ -454,19 +379,14 @@ class TemporalPredictor(nn.Module):
             predicted_intervals: [batch_size, 5]
             confidence: [batch_size, 5]
         """
-        # Process sequence
         output, hidden = self.rnn(x)
         
-        # Use last hidden state
         last_hidden = output[:, -1, :]
         
-        # Predict intervals
         intervals = self.interval_predictor(last_hidden)
         
-        # Ensure intervals are positive
         intervals = torch.abs(intervals)
         
-        # Predict confidence
         confidence = torch.sigmoid(self.confidence_predictor(last_hidden))
         
         return intervals, confidence

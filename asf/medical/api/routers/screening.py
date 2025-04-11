@@ -24,13 +24,10 @@ from asf.medical.services.search_service import SearchService
 from asf.medical.storage.models import User
 from asf.medical.core.monitoring import async_timed, log_error
 
-# Set up logging
 logger = logging.getLogger(__name__)
 
-# Create router
 router = APIRouter(prefix="/screening", tags=["screening"])
 
-# Define request/response models
 class ScreeningCriteriaItem(BaseModel):
     """Screening criteria item."""
     text: str = Field(..., description="Criterion text")
@@ -62,16 +59,9 @@ async def screen_articles(
     screening_service: PRISMAScreeningService = Depends(get_prisma_screening_service),
     current_user: User = Depends(get_current_active_user)
 ):
-    """
-    Screen articles according to PRISMA guidelines.
-    
-    This endpoint searches for articles and screens them according to PRISMA guidelines,
-    returning the screening results and PRISMA flow data.
-    """
     try:
         logger.info(f"Screening articles for query: {request.query}")
         
-        # Search for articles
         search_result = await search_service.search(
             query=request.query,
             max_results=request.max_results,
@@ -102,7 +92,6 @@ async def screen_articles(
                 }
             )
         
-        # Set custom criteria if provided
         if request.criteria:
             screening_service.set_criteria(
                 stage=request.stage,
@@ -110,18 +99,15 @@ async def screen_articles(
                 exclude_criteria=request.criteria.exclude
             )
         
-        # Screen articles
         screening_results = await screening_service.screen_articles(
             articles=articles,
             stage=request.stage
         )
         
-        # Count results by decision
         included = sum(1 for r in screening_results if r["decision"] == ScreeningDecision.INCLUDE)
         excluded = sum(1 for r in screening_results if r["decision"] == ScreeningDecision.EXCLUDE)
         uncertain = sum(1 for r in screening_results if r["decision"] == ScreeningDecision.UNCERTAIN)
         
-        # Get PRISMA flow data
         flow_data = screening_service.get_flow_data()
         
         logger.info(f"Screening completed: {included} included, {excluded} excluded, {uncertain} uncertain")
@@ -170,16 +156,9 @@ async def assess_bias(
     bias_service: BiasAssessmentService = Depends(get_bias_assessment_service),
     current_user: User = Depends(get_current_active_user)
 ):
-    """
-    Assess risk of bias in articles.
-    
-    This endpoint searches for articles and assesses the risk of bias in each article,
-    returning the assessment results.
-    """
     try:
         logger.info(f"Assessing bias for query: {request.query}")
         
-        # Search for articles
         search_result = await search_service.search(
             query=request.query,
             max_results=request.max_results,
@@ -209,10 +188,8 @@ async def assess_bias(
                 }
             )
         
-        # Assess bias
         assessment_results = await bias_service.assess_studies(articles)
         
-        # Count results by risk level
         low_risk = sum(1 for r in assessment_results 
                       if r["assessment"][BiasDomain.OVERALL]["risk"] == BiasRisk.LOW)
         moderate_risk = sum(1 for r in assessment_results 
@@ -264,15 +241,9 @@ async def get_flow_diagram(
     screening_service: PRISMAScreeningService = Depends(get_prisma_screening_service),
     current_user: User = Depends(get_current_active_user)
 ):
-    """
-    Get PRISMA flow diagram data.
-    
-    This endpoint returns the data needed to generate a PRISMA flow diagram.
-    """
     try:
         logger.info("Getting PRISMA flow diagram data")
         
-        # Generate flow diagram data
         diagram_data = screening_service.generate_flow_diagram()
         
         return APIResponse(

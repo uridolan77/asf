@@ -1,19 +1,9 @@
-#!/usr/bin/env python
-"""
-Script to check the health of the Medical Research Synthesizer API.
-
-This script sends a request to the health endpoint and reports the status.
-It can be used as a simple monitoring tool or in CI/CD pipelines.
-"""
-
 import sys
 import json
 import argparse
 import logging
-from pathlib import Path
 import requests
 
-# Set up logging
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -52,7 +42,14 @@ def check_health(base_url: str, timeout: int = 5) -> bool:
         return False
 
 def main():
-    """Main function."""
+    """Main function.
+
+    Args:
+        # TODO: Add parameter descriptions
+
+    Returns:
+        # TODO: Add return description
+    """
     parser = argparse.ArgumentParser(description="Check the health of the Medical Research Synthesizer API")
     parser.add_argument("--url", default="http://localhost:8000", help="Base URL of the API")
     parser.add_argument("--timeout", type=int, default=5, help="Request timeout in seconds")
