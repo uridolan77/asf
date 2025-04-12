@@ -1,7 +1,9 @@
+"""
 Multimodal Fusion Module
 
 This module provides components for fusing text embeddings with metadata
 for more accurate contradiction detection and medical claim analysis.
+"""
 
 import logging
 import torch
@@ -9,35 +11,36 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname%s - %(message)s"
 )
 logger = logging.getLogger("multimodal-fusion")
 
 class MultimodalFusionModel(nn.Module):
+    """
     Multimodal fusion model for combining text embeddings with metadata.
     
     This model uses attention-based intermediate fusion to combine text embeddings
     (e.g., from BioMedLM) with structured metadata (e.g., study design, sample size).
+    """
     
     def __init__(
         self, 
         text_dim: int, 
-            """
-            __init__ function.
-            
-            This function provides functionality for...
-            Args:
-                text_dim: Description of text_dim
-                metadata_dim: Description of metadata_dim
-                fusion_dim: Description of fusion_dim
-                num_heads: Description of num_heads
-                dropout: Description of dropout
-            """
         metadata_dim: int, 
         fusion_dim: int = 128,
         num_heads: int = 4,
         dropout: float = 0.1
     ):
+        """
+        Initialize the multimodal fusion model.
+        
+        Args:
+            text_dim: Dimension of text embeddings
+            metadata_dim: Dimension of metadata embeddings
+            fusion_dim: Dimension of fusion space
+            num_heads: Number of attention heads
+            dropout: Dropout probability
+        """
         super().__init__()
         
         self.text_projection = nn.Linear(text_dim, fusion_dim)
@@ -67,19 +70,18 @@ class MultimodalFusionModel(nn.Module):
     def forward(
         self, 
         text_embedding: torch.Tensor, 
-            """
-            forward function.
-            
-            This function provides functionality for...
-            Args:
-                text_embedding: Description of text_embedding
-                metadata: Description of metadata
-            
-            Returns:
-                Description of return value
-            """
         metadata: torch.Tensor
     ) -> torch.Tensor:
+        """
+        Forward pass for the multimodal fusion model.
+        
+        Args:
+            text_embedding: Text embedding tensor
+            metadata: Metadata tensor
+            
+        Returns:
+            Fused output tensor
+        """
         text_proj = self.text_projection(text_embedding)
         meta_proj = self.metadata_projection(metadata)
         
@@ -102,10 +104,12 @@ class MultimodalFusionModel(nn.Module):
 
 
 class MetadataExtractor:
+    """
     Extract structured metadata from medical text.
     
     This class provides methods for extracting structured metadata from
     medical text, such as study design, sample size, and PICO elements.
+    """
     
     def __init__(self, use_spacy: bool = True):
         """
@@ -297,30 +301,31 @@ class MetadataExtractor:
 
 
 class MultimodalContradictionDetector:
+    """
     Contradiction detector that uses multimodal fusion.
     
     This class combines text embeddings with metadata for more accurate
     contradiction detection.
+    """
     
     def __init__(
         self, 
         biomedlm_scorer=None, 
         metadata_extractor=None,
         text_dim: int = 768,
-            """
-            __init__ function.
-            
-            This function provides functionality for...
-            Args:
-                biomedlm_scorer: Description of biomedlm_scorer
-                metadata_extractor: Description of metadata_extractor
-                text_dim: Description of text_dim
-                metadata_dim: Description of metadata_dim
-                fusion_dim: Description of fusion_dim
-            """
         metadata_dim: int = 2,
         fusion_dim: int = 128
     ):
+        """
+        Initialize the multimodal contradiction detector.
+        
+        Args:
+            biomedlm_scorer: BioMedLM scorer for text embeddings
+            metadata_extractor: Metadata extractor instance
+            text_dim: Dimension of text embeddings
+            metadata_dim: Dimension of metadata embeddings
+            fusion_dim: Dimension of fusion space
+        """
         self.biomedlm_scorer = biomedlm_scorer
         
         if metadata_extractor is None:

@@ -1,8 +1,6 @@
-"""
 Evidence Extraction Modules
 
 This module provides specialized DSPy modules for extracting evidence from medical text.
-"""
 
 import logging
 from typing import Dict, Any, List, Optional, Union, Tuple
@@ -17,12 +15,10 @@ logger = logging.getLogger(__name__)
 
 
 class EvidenceExtractionModule(MedicalDSPyModule):
-    """
     Module for extracting evidence from medical text to support or refute claims.
     
     This module identifies relevant evidence in medical text and determines
     whether it supports, refutes, or is neutral to a given claim.
-    """
     
     def __init__(
         self,
@@ -119,12 +115,10 @@ class EvidenceExtractionModule(MedicalDSPyModule):
 
 
 class MultiEvidenceExtractionModule(MedicalDSPyModule):
-    """
     Module for extracting multiple pieces of evidence from medical text.
     
     This module identifies multiple relevant pieces of evidence in medical text
     and determines whether each supports, refutes, or is neutral to a given claim.
-    """
     
     def __init__(
         self,

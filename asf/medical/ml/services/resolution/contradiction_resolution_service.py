@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 
 class MedicalContradictionResolutionService:
     """Service for resolving contradictions in medical literature.
-
+    
     This service provides strategies for resolving contradictions based on
     evidence-based medicine principles, including evidence hierarchy,
     sample size, publication recency, population specificity, and methodological quality.

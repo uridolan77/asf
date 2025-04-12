@@ -1,9 +1,9 @@
-"""
-Enhanced SHAP Explainer for the Medical Research Synthesizer.
+"""Enhanced SHAP Explainer for the Medical Research Synthesizer.
+
 This module provides enhancements to the SHAP Explainer, including:
 - Better error handling for explanation errors
 - Validation of input data
-- Caching of explanations
+- Caching of explanations 
 - Progress tracking for long-running explanations
 """
 import logging
@@ -21,8 +21,8 @@ from asf.medical.ml.services.ml_service_enhancements import (
 )
 logger = logging.getLogger(__name__)
 class SHAPProgressTracker(ProgressTracker):
-    """
-    Progress tracker for SHAP operations.
+    """Progress tracker for SHAP operations.
+    
     This class extends the base ProgressTracker to provide SHAP-specific
     progress tracking functionality.
     """
@@ -87,15 +87,22 @@ class SHAPProgressTracker(ProgressTracker):
     async def save_progress(self):
         progress_key = f"shap_progress:{self.operation_id}"
         await enhanced_cache_manager.set(
-            progress_key, 
+            progress_key,
             self.get_progress_details(),
             ttl=3600,  # 1 hour TTL
             data_type="progress"
         )
 def validate_shap_input(func):
-    """
-    Decorator for validating SHAP input data.
-    This decorator validates input parameters for SHAP methods.
+    """Decorator for validating SHAP input data.
+    
+    This decorator validates input parameters for SHAP methods to ensure 
+    they meet the required format and constraints before processing.
+    
+    Args:
+        func: The function to decorate
+        
+    Returns:
+        Decorated function with input validation
     """
     async def wrapper(self, *args, **kwargs):
         text = kwargs.get('text', '')
@@ -125,6 +132,14 @@ def track_shap_progress(operation_type: str, total_steps: int = 100):
         total_steps: Total number of steps in the operation
     """
     def decorator(func):
+        """Inner decorator function that wraps the original function.
+        
+        Args:
+            func: The function being decorated
+            
+        Returns:
+            Wrapped function with progress tracking capability
+        """
         async def wrapper(self, *args, **kwargs):
             func_name = func.__name__
             param_str = f"{func_name}:{args}:{kwargs}"
@@ -154,9 +169,16 @@ def track_shap_progress(operation_type: str, total_steps: int = 100):
         return wrapper
     return decorator
 def enhanced_shap_error_handling(func):
-    """
-    Decorator for enhanced error handling in SHAP methods.
-    This decorator adds detailed error handling to SHAP methods.
+    """Decorator for enhanced error handling in SHAP methods.
+    
+    This decorator adds detailed error handling to SHAP methods, including
+    specific handling for import errors and memory errors.
+    
+    Args:
+        func: The function to decorate
+        
+    Returns:
+        Decorated function with enhanced error handling
     """
     async def wrapper(self, *args, **kwargs):
         try:
@@ -196,6 +218,14 @@ def cached_shap_explanation(ttl: int = 3600, prefix: str = "shap", data_type: st
         data_type: Type of data being cached (default: "explanation")
     """
     def decorator(func):
+        """Inner decorator function that wraps the original function.
+        
+        Args:
+            func: The function being decorated
+            
+        Returns:
+            Wrapped function with caching capability
+        """
         async def wrapper(self, *args, **kwargs):
             skip_cache = kwargs.pop('skip_cache', False)
             if skip_cache:
@@ -228,6 +258,34 @@ def cached_shap_explanation(ttl: int = 3600, prefix: str = "shap", data_type: st
         return wrapper
     return decorator
 async def generate_shap_report(explanation: Dict[str, Any], output_path: str) -> str:
+    """
+    Generate a HTML report from a SHAP explanation.
+
+    Args:
+        explanation: Dictionary containing SHAP explanation data
+        output_path: Path to save the HTML report
+
+    Returns:
+        Path to the generated HTML report
+    """
+    # Build HTML tokens for top words
+    top_words_html = ""
+    for word, value in explanation.get('top_words', {}).items():
+        css_class = "positive" if value > 0 else "negative" if value < 0 else "neutral"
+        top_words_html += f"<div class=\"token {css_class}\">\n"
+        top_words_html += f"    {word} ({value:.4f})\n"
+        top_words_html += f"</div>\n"
+
+    # Build HTML for contradictory terms
+    contradictory_terms_html = ""
+    for term in explanation.get('contradictory_terms', []):
+        css_class = "positive" if term.get('importance', 0) > 0 else "negative" if term.get('importance', 0) < 0 else "neutral"
+        location_str = "Claim 1" if term.get('location') == 'claim1' else "Claim 2" if term.get('location') == 'claim2' else "Both claims"
+        contradictory_terms_html += f"<div class=\"token {css_class}\">\n"
+        contradictory_terms_html += f"    {term.get('token', '')} ({term.get('importance', 0):.4f}) - {location_str}\n"
+        contradictory_terms_html += f"</div>\n"
+
+    # Generate the HTML report
     html = f"""
     <!DOCTYPE html>
     <html>
@@ -257,42 +315,56 @@ async def generate_shap_report(explanation: Dict[str, Any], output_path: str) ->
             <h2>Claims</h2>
             <div class="claims">
                 <div class="claim">
-                    <strong>Claim 1:</strong> {explanation['claim1']}
+                    <strong>Claim 1:</strong> {explanation.get('claim1', 'N/A')}
                 </div>
                 <div class="claim">
-                    <strong>Claim 2:</strong> {explanation['claim2']}
+                    <strong>Claim 2:</strong> {explanation.get('claim2', 'N/A')}
                 </div>
             </div>
         </div>
         <div class="section">
             <h2>Visualization</h2>
             <div class="visualization">
-                <img src="{explanation['visualization']}" alt="SHAP Visualization" style="max-width: 100%;">
+                <img src="{explanation.get('visualization', '')}" alt="SHAP Visualization" style="max-width: 100%;">
             </div>
         </div>
         <div class="section">
             <h2>Top Influential Words</h2>
             <div class="tokens">
-                <div class="token {css_class}">
-                    {word} ({value:.4f})
-                </div>
+                {top_words_html}
             </div>
         </div>
         <div class="section">
             <h2>Contradictory Terms</h2>
             <div class="tokens">
-                <div class="token {css_class}">
-                    {term['token']} ({term['importance']:.4f}) - {location_str}
-                </div>
+                {contradictory_terms_html}
             </div>
         </div>
     </body>
     </html>
+    """
+
+    # Write the HTML to the output file
+    with open(output_path, 'w') as f:
+        f.write(html)
+
+    return output_path
+
+async def generate_batch_explanations(
+    contradictions: List[Dict[str, Any]],
+    explainer: Any,
+    output_dir: str,
+    max_concurrent: int = 5
+) -> List[Dict[str, Any]]:
+    """
     Generate SHAP explanations for a batch of contradictions.
+
     Args:
         contradictions: List of contradictions to explain
         explainer: SHAP explainer instance
         output_dir: Directory to save reports
         max_concurrent: Maximum number of concurrent explanations
+
     Returns:
         List of contradictions with explanations
+    """

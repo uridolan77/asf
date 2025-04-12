@@ -1,9 +1,10 @@
-Enhanced Contradiction Classification Service for Medical Research Synthesizer.
+"""Enhanced Contradiction Classification Service for Medical Research Synthesizer.
 
 This module provides multi-dimensional classification of medical contradictions,
 integrating clinical significance assessment, evidence quality assessment,
 temporal factor detection, population difference detection, and methodological
 difference detection.
+"""
 
 import logging
 import numpy as np
@@ -19,368 +20,21 @@ from asf.medical.core.exceptions import OperationError
 logger = logging.getLogger(__name__)
 
 class ContradictionType(str, Enum):
-    Types of contradictions.
-    DIRECT = "direct"
-    NEGATION = "negation"
-    TEMPORAL = "temporal"
-    HIERARCHICAL = "hierarchical"
-    METHODOLOGICAL = "methodological"
-    STATISTICAL = "statistical"
-    POPULATION = "population"
-    UNKNOWN = "unknown"
-
-class ContradictionConfidence(str, Enum):
-    Confidence levels for contradiction detection.
-    HIGH = "high"
-    MEDIUM = "medium"
-    LOW = "low"
-
-class ClinicalSignificance(str, Enum):
-    Clinical significance levels.
-    HIGH = "high"
-    MODERATE = "moderate"
-    LOW = "low"
-    UNKNOWN = "unknown"
-
-class EvidenceQuality(str, Enum):
-    Evidence quality levels.
-    HIGH = "high"
-    MODERATE = "moderate"
-    LOW = "low"
-    VERY_LOW = "very_low"
-    UNKNOWN = "unknown"
-
-class StudyDesignHierarchy(str, Enum):
-    Study design hierarchy based on evidence-based medicine.
-    SYSTEMATIC_REVIEW_META_ANALYSIS = "systematic_review_meta_analysis"
-    RANDOMIZED_CONTROLLED_TRIAL = "randomized_controlled_trial"
-    COHORT_STUDY = "cohort_study"
-    CASE_CONTROL_STUDY = "case_control_study"
-    CASE_SERIES = "case_series"
-    CASE_REPORT = "case_report"
-    EXPERT_OPINION = "expert_opinion"
-    UNKNOWN = "unknown"
-
-class ContradictionClassifierService:
-    Enhanced contradiction classifier for medical literature.
+    """Types of contradictions.
     
-    This service provides multi-dimensional classification of medical contradictions,
-    integrating clinical significance assessment, evidence quality assessment,
-    temporal factor detection, population difference detection, and methodological
-    difference detection.
+    This enum defines the different types of contradictions that can be detected.
+    """
 
-    def __init__(self):
-        Initialize the enhanced contradiction classifier.
-        
+    def _assess_evidence_quality(self, metadata: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """
+        Assess the quality of evidence based on metadata.
+
         Args:
-        
-        self.biomedlm_service = None
-        self.temporal_service = None
+            metadata: Metadata containing information about the study
 
-        try:
-            self.biomedlm_service = BioMedLMService()
-            logger.info("BioMedLM service initialized successfully")
-        except Exception as e:
-            logger.warning(f"Failed to initialize BioMedLM service: {e}")
-            raise OperationError(f"Operation failed: {str(e)}")
-            raise OperationError(f"Operation failed: {str(e)}")
-
-        try:
-            self.temporal_service = TemporalService()
-            logger.info("Temporal service initialized successfully")
-        except Exception as e:
-            logger.warning(f"Failed to initialize temporal service: {e}")
-            raise OperationError(f"Operation failed: {str(e)}")
-            raise OperationError(f"Operation failed: {str(e)}")
-
-        self.thresholds = {
-            ContradictionType.DIRECT: 0.7,
-            ContradictionType.NEGATION: 0.8,
-            ContradictionType.TEMPORAL: 0.6,
-            ContradictionType.HIERARCHICAL: 0.65,
-            ContradictionType.METHODOLOGICAL: 0.75,
-            ContradictionType.STATISTICAL: 0.8,
-            ContradictionType.POPULATION: 0.7
-        }
-
-        self.clinical_significance_terms = {
-            "high": [
-                "mortality", "death", "survival", "fatal", "life-threatening",
-                "heart attack", "stroke", "cancer", "malignant", "emergency",
-                "intensive care", "icu", "hospitalization", "severe", "critical"
-            ],
-            "moderate": [
-                "morbidity", "complication", "adverse event", "side effect",
-                "quality of life", "disability", "impairment", "chronic",
-                "pain", "symptom", "treatment", "therapy", "medication"
-            ],
-            "low": [
-                "mild", "minor", "cosmetic", "temporary", "self-limiting",
-                "benign", "non-significant", "minimal", "slight"
-            ]
-        }
-
-        self.study_design_hierarchy = {
-            StudyDesignHierarchy.SYSTEMATIC_REVIEW_META_ANALYSIS: 7,
-            StudyDesignHierarchy.RANDOMIZED_CONTROLLED_TRIAL: 6,
-            StudyDesignHierarchy.COHORT_STUDY: 5,
-            StudyDesignHierarchy.CASE_CONTROL_STUDY: 4,
-            StudyDesignHierarchy.CASE_SERIES: 3,
-            StudyDesignHierarchy.CASE_REPORT: 2,
-            StudyDesignHierarchy.EXPERT_OPINION: 1,
-            StudyDesignHierarchy.UNKNOWN: 0
-        }
-
-        self.study_design_keywords = {
-            StudyDesignHierarchy.SYSTEMATIC_REVIEW_META_ANALYSIS: [
-                "systematic review", "meta-analysis", "meta analysis", "metaanalysis"
-            ],
-            StudyDesignHierarchy.RANDOMIZED_CONTROLLED_TRIAL: [
-                "randomized controlled trial", "rct", "randomised controlled trial",
-                "randomized clinical trial", "randomised clinical trial"
-            ],
-            StudyDesignHierarchy.COHORT_STUDY: [
-                "cohort study", "cohort analysis", "longitudinal study",
-                "prospective study", "retrospective study", "follow-up study"
-            ],
-            StudyDesignHierarchy.CASE_CONTROL_STUDY: [
-                "case-control study", "case control study", "case-control analysis"
-            ],
-            StudyDesignHierarchy.CASE_SERIES: [
-                "case series", "case study series", "clinical series"
-            ],
-            StudyDesignHierarchy.CASE_REPORT: [
-                "case report", "case study", "patient report"
-            ],
-            StudyDesignHierarchy.EXPERT_OPINION: [
-                "expert opinion", "expert consensus", "clinical opinion",
-                "narrative review", "commentary", "editorial"
-            ]
-        }
-
-        self.population_keywords = {
-            "age": [
-                "infant", "child", "children", "adolescent", "teenager",
-                "young adult", "adult", "middle-aged", "elderly", "geriatric"
-            ],
-            "gender": [
-                "male", "female", "men", "women", "boy", "girl"
-            ],
-            "ethnicity": [
-                "caucasian", "white", "black", "african", "asian", "hispanic",
-                "latino", "native american", "indigenous", "ethnic"
-            ],
-            "condition": [
-                "healthy", "patient", "diabetic", "hypertensive", "obese",
-                "overweight", "smoker", "non-smoker", "pregnant"
-            ]
-        }
-
-        logger.info("Enhanced contradiction classifier initialized")
-
-    async def classify_contradiction(
-        self,
-        claim1: str,
-        claim2: str,
-        metadata1: Optional[Dict[str, Any]] = None,
-        metadata2: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
-        # Ensure we have valid inputs
-        if not claim1 or not claim2:
-            return {
-                "is_contradiction": False,
-                "contradiction_type": ContradictionType.UNKNOWN,
-                "confidence": ContradictionConfidence.UNKNOWN,
-                "score": 0.0,
-                "explanation": "Insufficient input data",
-                "evidence": [],
-                "analysis": {}
-            }
-
-        # Initialize metadata if None
-        metadata1 = metadata1 or {}
-        metadata2 = metadata2 or {}
-
-        # Perform detailed analysis of the claims
-        clinical_significance = await self._assess_clinical_significance(claim1, claim2, metadata1, metadata2)
-        evidence_quality1 = self._assess_evidence_quality(metadata1)
-        evidence_quality2 = self._assess_evidence_quality(metadata2)
-        temporal_factor = self._assess_temporal_factor(metadata1, metadata2)
-        population_difference = self._assess_population_difference(claim1, claim2, metadata1, metadata2)
-        methodological_difference = self._assess_methodological_difference(claim1, claim2, metadata1, metadata2)
-
-        # Determine if there's a contradiction
-        is_contradiction = False
-        contradiction_score = 0.0
-        contradiction_type = ContradictionType.UNKNOWN
-        contradiction_confidence = ContradictionConfidence.UNKNOWN
-        explanation = ""
-        evidence = []
-
-        # Check for direct contradiction
-        if self.biomedlm_service:
-            try:
-                direct_result = await self.biomedlm_service.detect_contradiction(claim1, claim2)
-                is_direct_contradiction, direct_score = direct_result
-
-                if direct_score > self.thresholds[ContradictionType.DIRECT]:
-                    is_contradiction = True
-                    contradiction_score = direct_score
-                    contradiction_type = ContradictionType.DIRECT
-                    evidence.append({
-                        "type": "direct",
-                        "score": direct_score,
-                        "source": "BioMedLM"
-                    })
-            except Exception as e:
-                logger.warning(f"Error detecting direct contradiction: {e}")
-                raise OperationError(f"Operation failed: {str(e)}")
-                raise OperationError(f"Operation failed: {str(e)}")
-
-        # Check for temporal contradiction
-        if temporal_factor["detected"] and temporal_factor["score"] > self.thresholds[ContradictionType.TEMPORAL]:
-            is_contradiction = True
-            if temporal_factor["score"] > contradiction_score:
-                contradiction_score = temporal_factor["score"]
-                contradiction_type = ContradictionType.TEMPORAL
-            evidence.append({
-                "type": "temporal",
-                "score": temporal_factor["score"],
-                "factors": temporal_factor["factors"]
-            })
-
-        # Check for population differences
-        if population_difference["detected"] and population_difference["score"] > self.thresholds[ContradictionType.POPULATION]:
-            # Population differences don't necessarily indicate contradiction, but contribute to explanation
-            evidence.append({
-                "type": "population",
-                "score": population_difference["score"],
-                "differences": population_difference["differences"]
-            })
-
-        # Check for methodological differences
-        if methodological_difference["detected"] and methodological_difference["score"] > self.thresholds[ContradictionType.METHODOLOGICAL]:
-            # Methodological differences don't necessarily indicate contradiction, but contribute to explanation
-            evidence.append({
-                "type": "methodological",
-                "score": methodological_difference["score"],
-                "differences": methodological_difference["differences"]
-            })
-
-        # Determine confidence level
-        if contradiction_score >= 0.8:
-            contradiction_confidence = ContradictionConfidence.HIGH
-        elif contradiction_score >= 0.6:
-            contradiction_confidence = ContradictionConfidence.MODERATE
-        elif contradiction_score > 0:
-            contradiction_confidence = ContradictionConfidence.LOW
-
-        # Generate explanation
-        if is_contradiction:
-            explanation = f"Detected a {contradiction_confidence.lower()} confidence {contradiction_type.lower()} contradiction between the claims."
-
-            if contradiction_type == ContradictionType.TEMPORAL:
-                explanation += f" The claims are separated by {temporal_factor.get('publication_date_difference', 'unknown')} years."
-
-            if clinical_significance["significance"] != ClinicalSignificance.UNKNOWN:
-                explanation += f" This contradiction has {clinical_significance['significance'].lower()} clinical significance."
-
-            if evidence_quality1["quality"] != EvidenceQuality.UNKNOWN and evidence_quality2["quality"] != EvidenceQuality.UNKNOWN:
-                explanation += f" The evidence quality is {evidence_quality1['quality'].lower()} for the first claim and {evidence_quality2['quality'].lower()} for the second claim."
-        else:
-            explanation = "No significant contradiction detected between the claims."
-
-        # Compile analysis results
-        analysis = {
-            "clinical_significance": {
-                "significance": clinical_significance["significance"],
-                "score": clinical_significance["score"],
-                "terms": clinical_significance["terms"]
-            },
-            "evidence_quality": {
-                "claim1": evidence_quality1["quality"],
-                "claim1_score": evidence_quality1["score"],
-                "claim1_factors": evidence_quality1["factors"],
-                "claim2": evidence_quality2["quality"],
-                "claim2_score": evidence_quality2["score"],
-                "claim2_factors": evidence_quality2["factors"],
-                "differential": evidence_quality1["score"] - evidence_quality2["score"]
-            },
-            "temporal_factor": temporal_factor,
-            "population_difference": population_difference,
-            "methodological_difference": methodological_difference
-        }
-
-        # Return the final result
-        return {
-            "is_contradiction": is_contradiction,
-            "contradiction_type": contradiction_type,
-            "confidence": contradiction_confidence,
-            "score": contradiction_score,
-            "explanation": explanation,
-            "evidence": evidence,
-            "analysis": analysis
-        }
-
-    async def _assess_clinical_significance(
-        self,
-        claim1: str,
-        claim2: str,
-        metadata1: Optional[Dict[str, Any]] = None,
-        metadata2: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
-        result = {
-            "significance": ClinicalSignificance.UNKNOWN,
-            "score": 0.0,
-            "terms": []
-        }
-
-        combined_text = f"{claim1} {claim2}".lower()
-
-        high_significance_terms = []
-        for term in self.clinical_significance_terms["high"]:
-            if term.lower() in combined_text:
-                high_significance_terms.append(term)
-
-        moderate_significance_terms = []
-        for term in self.clinical_significance_terms["moderate"]:
-            if term.lower() in combined_text:
-                moderate_significance_terms.append(term)
-
-        low_significance_terms = []
-        for term in self.clinical_significance_terms["low"]:
-            if term.lower() in combined_text:
-                low_significance_terms.append(term)
-
-        high_count = len(high_significance_terms)
-        moderate_count = len(moderate_significance_terms)
-        low_count = len(low_significance_terms)
-
-        significance_score = (high_count * 1.0 + moderate_count * 0.5 + low_count * 0.1) / (high_count + moderate_count + low_count) if (high_count + moderate_count + low_count) > 0 else 0.0
-
-        if high_count > 0:
-            significance = ClinicalSignificance.HIGH
-        elif moderate_count > 0:
-            significance = ClinicalSignificance.MODERATE
-        elif low_count > 0:
-            significance = ClinicalSignificance.LOW
-        else:
-            significance = ClinicalSignificance.UNKNOWN
-
-        result["significance"] = significance
-        result["score"] = significance_score
-        result["terms"] = {
-            "high": high_significance_terms,
-            "moderate": moderate_significance_terms,
-            "low": low_significance_terms
-        }
-
-        return result
-
-    def _assess_evidence_quality(
-        self,
-        metadata: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+        Returns:
+            Dictionary containing evidence quality assessment results
+        """
         result = {
             "quality": EvidenceQuality.UNKNOWN,
             "score": 0.0,
@@ -460,6 +114,16 @@ class ContradictionClassifierService:
         metadata1: Optional[Dict[str, Any]] = None,
         metadata2: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
+        """
+        Assess temporal factors that might contribute to contradictions.
+
+        Args:
+            metadata1: Metadata for the first claim
+            metadata2: Metadata for the second claim
+
+        Returns:
+            Dictionary containing temporal factor assessment results
+        """
         result = {
             "detected": False,
             "score": 0.0,
@@ -512,6 +176,18 @@ class ContradictionClassifierService:
         metadata1: Optional[Dict[str, Any]] = None,
         metadata2: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
+        """
+        Assess differences in study populations that might explain contradictions.
+
+        Args:
+            claim1: First medical claim text
+            claim2: Second medical claim text
+            metadata1: Metadata for the first claim
+            metadata2: Metadata for the second claim
+
+        Returns:
+            Dictionary containing population difference assessment results
+        """
         result = {
             "detected": False,
             "score": 0.0,
@@ -569,6 +245,18 @@ class ContradictionClassifierService:
         metadata1: Optional[Dict[str, Any]] = None,
         metadata2: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
+        """
+        Assess methodological differences that might explain contradictions.
+
+        Args:
+            claim1: First medical claim text
+            claim2: Second medical claim text
+            metadata1: Metadata for the first claim
+            metadata2: Metadata for the second claim
+
+        Returns:
+            Dictionary containing methodological difference assessment results
+        """
         result = {
             "detected": False,
             "score": 0.0,

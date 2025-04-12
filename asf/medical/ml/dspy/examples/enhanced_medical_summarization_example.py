@@ -1,8 +1,6 @@
-"""
 Enhanced Medical Summarization Example
 
 This script demonstrates how to use the enhanced DSPy integration for medical text summarization.
-"""
 
 import os
 import asyncio

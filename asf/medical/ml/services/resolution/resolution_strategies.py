@@ -1,6 +1,8 @@
-Resolution strategies for medical contradictions.
+"""Resolution strategies for medical contradictions.
+
 This module provides strategies for resolving contradictions in medical literature
 based on evidence-based medicine principles.
+"""
 import logging
 from datetime import datetime
 from typing import Dict, Any
@@ -23,6 +25,18 @@ from asf.medical.ml.services.resolution.resolution_utils import (
 )
 logger = logging.getLogger(__name__)
 async def resolve_by_evidence_hierarchy(contradiction: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Resolve contradictions based on evidence hierarchy.
+
+    This strategy resolves contradictions by comparing the study designs and evidence quality
+    of the contradicting claims, following the evidence-based medicine hierarchy.
+
+    Args:
+        contradiction: Dictionary containing contradiction details
+
+    Returns:
+        Dictionary with resolution recommendation and confidence
+    """
     claim1 = contradiction.get("claim1", "")
     claim2 = contradiction.get("claim2", "")
     metadata1 = contradiction.get("metadata1", {})
@@ -90,6 +104,18 @@ async def resolve_by_evidence_hierarchy(contradiction: Dict[str, Any]) -> Dict[s
             result["confidence_score"] = 0.3
     return result
 async def resolve_by_sample_size(contradiction: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Resolve contradictions based on sample size.
+
+    This strategy resolves contradictions by comparing the sample sizes of the studies
+    supporting each claim, with larger sample sizes generally providing more reliable evidence.
+
+    Args:
+        contradiction: Dictionary containing contradiction details
+
+    Returns:
+        Dictionary with resolution recommendation and confidence
+    """
     claim1 = contradiction.get("claim1", "")
     claim2 = contradiction.get("claim2", "")
     metadata1 = contradiction.get("metadata1", {})
@@ -172,6 +198,18 @@ async def resolve_by_sample_size(contradiction: Dict[str, Any]) -> Dict[str, Any
             result["confidence_score"] += 0.1
     return result
 async def resolve_by_recency(contradiction: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Resolve contradictions based on publication recency.
+
+    This strategy resolves contradictions by comparing the publication dates of the studies
+    supporting each claim, with more recent studies generally providing more up-to-date evidence.
+
+    Args:
+        contradiction: Dictionary containing contradiction details
+
+    Returns:
+        Dictionary with resolution recommendation and confidence
+    """
     claim1 = contradiction.get("claim1", "")
     claim2 = contradiction.get("claim2", "")
     metadata1 = contradiction.get("metadata1", {})
@@ -264,6 +302,18 @@ async def resolve_by_recency(contradiction: Dict[str, Any]) -> Dict[str, Any]:
         result["confidence"] = ResolutionConfidence.LOW
     return result
 async def resolve_by_population_specificity(contradiction: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Resolve contradictions based on population specificity.
+
+    This strategy resolves contradictions by comparing the populations studied in each claim,
+    with more specific or relevant populations providing more applicable evidence for particular cases.
+
+    Args:
+        contradiction: Dictionary containing contradiction details
+
+    Returns:
+        Dictionary with resolution recommendation and confidence
+    """
     claim1 = contradiction.get("claim1", "")
     claim2 = contradiction.get("claim2", "")
     metadata1 = contradiction.get("metadata1", {})

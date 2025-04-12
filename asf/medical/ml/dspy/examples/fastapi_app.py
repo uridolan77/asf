@@ -1,8 +1,6 @@
-"""
 FastAPI Application with DSPy Integration
 
 This example demonstrates how to create a FastAPI application that uses the DSPy integration.
-"""
 
 import logging
 from typing import Dict, Any
@@ -118,14 +116,7 @@ async def shutdown_event():
 
 # Additional routes
 class HealthResponse(BaseModel):
-    """Response model for health check."""
-    status: str = Field(..., description="Health status")
-    version: str = Field(..., description="API version")
-
-
-@app.get("/health", response_model=HealthResponse)
-async def health_check() -> HealthResponse:
-    """
+    Response model for health check.
     Check the health of the API.
     
     Returns:

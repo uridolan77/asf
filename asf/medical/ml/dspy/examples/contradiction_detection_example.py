@@ -1,9 +1,7 @@
-"""
 Contradiction Detection Example
 
 This example demonstrates how to use the Contradiction Detection modules to identify
 contradictions between medical statements.
-"""
 
 import asyncio
 import logging

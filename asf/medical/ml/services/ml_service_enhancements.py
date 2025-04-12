@@ -1,9 +1,12 @@
-Enhanced ML Services for the Medical Research Synthesizer.
+"""Enhanced ML Services for the Medical Research Synthesizer.
+
 This module provides enhancements to the ML Services, including:
 - Better error handling for ML model errors
 - Validation of input data
 - Caching of ML model predictions
 - Progress tracking for long-running ML operations
+"""
+
 import logging
 import time
 import hashlib
@@ -14,9 +17,11 @@ from asf.medical.core.enhanced_cache import enhanced_cache_manager as cache_mana
 from asf.medical.core.progress_tracker import ProgressTracker
 logger = logging.getLogger(__name__)
 class MLProgressTracker(ProgressTracker):
-    Progress tracker for ML operations.
+    """Progress tracker for ML operations.
+    
     This class extends the base ProgressTracker to provide ML-specific
     progress tracking functionality.
+    """
     def __init__(self, operation_id: str, total_steps: int = 100):
         """
         Initialize the ML progress tracker.
@@ -50,9 +55,10 @@ class MLProgressTracker(ProgressTracker):
             input_size: Size of the input data
         """
         self.input_size = input_size
-    def get_progress_details(self) -> Dict[str, Any]:
+    def get_progress_details(self) -> dict:
         """
         Get detailed progress information.
+
         Returns:
             Dictionary with progress details
         """
@@ -65,18 +71,32 @@ class MLProgressTracker(ProgressTracker):
         })
         return details
     async def save_progress(self):
+        """
+        Save progress information to cache.
+
+        This method saves the current progress information to the cache
+        for later retrieval.
+        """
         progress_key = f"ml_progress:{self.operation_id}"
         await enhanced_cache_manager.set(
-            progress_key, 
+            progress_key,
             self.get_progress_details(),
             ttl=3600,  # 1 hour TTL
             data_type="progress"
         )
 def validate_ml_input(func):
+    """
     Decorator for validating ML input data.
-    This decorator validates input parameters for ML methods.
+
+    This decorator validates input parameters for ML methods to ensure
+    they meet the required criteria before processing.
+
     Args:
-        func: Description of func
+        func: The function to decorate
+
+    Returns:
+        Decorated function with input validation
+    """
     async def wrapper(self, *args, **kwargs):
         text = kwargs.get('text', '')
         texts = kwargs.get('texts', [])
@@ -116,10 +136,13 @@ def track_ml_progress(model_name: str, operation_type: str, total_steps: int = 1
     """
     def decorator(func):
         """
-        decorator function.
-        This function provides functionality for...
+        Inner decorator function.
+
         Args:
-            func: Description of func
+            func: The function to decorate
+
+        Returns:
+            Decorated function with progress tracking
         """
         async def wrapper(self, *args, **kwargs):
             func_name = func.__name__
@@ -154,10 +177,18 @@ def track_ml_progress(model_name: str, operation_type: str, total_steps: int = 1
         return wrapper
     return decorator
 def enhanced_ml_error_handling(func):
+    """
     Decorator for enhanced error handling in ML methods.
-    This decorator adds detailed error handling to ML methods.
+
+    This decorator adds detailed error handling to ML methods, catching
+    and properly handling different types of exceptions.
+
     Args:
-        func: Description of func
+        func: The function to decorate
+
+    Returns:
+        Decorated function with enhanced error handling
+    """
     async def wrapper(self, *args, **kwargs):
         try:
             return await func(self, *args, **kwargs)
@@ -188,10 +219,13 @@ def cached_ml_prediction(ttl: int = 3600, prefix: str = "ml_prediction", data_ty
     """
     def decorator(func):
         """
-        decorator function.
-        This function provides functionality for...
+        Inner decorator function.
+
         Args:
-            func: Description of func
+            func: The function to decorate
+
+        Returns:
+            Decorated function with caching
         """
         async def wrapper(self, *args, **kwargs):
             skip_cache = kwargs.pop('skip_cache', False)

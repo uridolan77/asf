@@ -1,6 +1,8 @@
+"""
 BioMedLM Setup Script
 
 This script downloads and sets up the BioMedLM model for contradiction detection.
+"""
 
 import os
 import logging

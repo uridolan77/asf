@@ -1,9 +1,7 @@
-"""
 DSPy Metrics for Medical Research
 
 This module provides evaluation metrics for DSPy modules in medical research.
 These metrics are used to evaluate the quality of module outputs and optimize modules.
-"""
 
 import logging
 from typing import Dict, Any, List, Optional, Union, Callable

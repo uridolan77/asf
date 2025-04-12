@@ -1,4 +1,4 @@
-"""Contradiction Detection Service for the Medical Research Synthesizer.
+Contradiction Detection Service for the Medical Research Synthesizer.
 
 This module provides a comprehensive service for detecting contradictions in medical literature,
 integrating multiple methods and models for accurate contradiction detection including:
@@ -6,7 +6,6 @@ integrating multiple methods and models for accurate contradiction detection inc
 - TSMixer for temporal contradiction analysis
 - Lorentz embeddings for hierarchical contradiction detection
 - SHAP for explainability
-"""
 import logging
 from typing import Dict, Optional, Any
 from asf.medical.core.enhanced_cache import enhanced_cached
@@ -24,12 +23,11 @@ from asf.medical.core.exceptions import OperationError
 
 logger = logging.getLogger(__name__)
 class ContradictionService:
-    """Contradiction detection service for medical literature.
-
+    Contradiction detection service for medical literature.
+    
     This service integrates multiple methods and models for accurate contradiction detection,
     including BioMedLM for direct contradiction detection, TSMixer for temporal contradiction analysis,
     Lorentz embeddings for hierarchical contradiction detection, and SHAP for explainability.
-    """
     def __init__(
         self,
         biomedlm_service: Optional[BioMedLMService] = None,

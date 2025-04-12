@@ -1,8 +1,10 @@
 PRISMA-guided screening service for the Medical Research Synthesizer.
+
 This module provides a service for screening medical literature according to
 the PRISMA (Preferred Reporting Items for Systematic Reviews and Meta-Analyses) guidelines.
 import logging
 from enum import Enum
+from typing import Dict, List, Any, Optional
 from asf.medical.core.exceptions import OperationError, ValidationError
 logger = logging.getLogger(__name__)
 class ScreeningStage(str, Enum):
@@ -54,8 +56,8 @@ class ScreeningStage(str, Enum):
         }
         logger.info(f"Set {len(include_criteria)} inclusion and {len(exclude_criteria)} exclusion criteria for {stage} stage")
     async def screen_article(
-        self, 
-        article: Dict[str, Any], 
+        self,
+        article: Dict[str, Any],
         stage: ScreeningStage,
         custom_criteria: Optional[Dict[str, List[str]]] = None
     ) -> Dict[str, Any]:
@@ -101,8 +103,8 @@ class ScreeningStage(str, Enum):
         logger.info(f"Screening decision for article {article.get('pmid', 'unknown')}: {result['decision']}")
         return result
     async def screen_articles(
-        self, 
-        articles: List[Dict[str, Any]], 
+        self,
+        articles: List[Dict[str, Any]],
         stage: ScreeningStage,
         custom_criteria: Optional[Dict[str, List[str]]] = None
     ) -> List[Dict[str, Any]]:
@@ -119,8 +121,7 @@ class ScreeningStage(str, Enum):
                 return similarity > 0.7  # Threshold for semantic matching
             except Exception as e:
                 logger.error(f"Error using BioMedLM for criterion matching: {str(e)}")
-                raise ValidationError(f"Validation failed: {str(e)}")
-                raise OperationError(f"Operation failed: {str(e)}")
+                # Fall back to simple text matching if BioMedLM fails
                 return criterion.lower() in text.lower()
         else:
             return criterion.lower() in text.lower()
@@ -166,11 +167,11 @@ class ScreeningStage(str, Enum):
             Data for generating a PRISMA flow diagram
         """
         remaining_after_identification = (
-            self.flow_data["identification"]["records_identified"] - 
+            self.flow_data["identification"]["records_identified"] -
             self.flow_data["identification"]["records_removed_before_screening"]
         )
         remaining_after_screening = (
-            self.flow_data["screening"]["records_screened"] - 
+            self.flow_data["screening"]["records_screened"] -
             self.flow_data["screening"]["records_excluded"]
         )
         diagram_data = {

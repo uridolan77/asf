@@ -1,8 +1,6 @@
-"""
 Enhanced Contradiction Detection Example
 
 This script demonstrates how to use the enhanced DSPy integration for medical contradiction detection.
-"""
 
 import os
 import asyncio

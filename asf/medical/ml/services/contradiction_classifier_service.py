@@ -19,96 +19,12 @@ logger = logging.getLogger(__name__)
 
 
 class ContradictionType(str, Enum):
-    """Types of contradictions that can be detected."""
+    """Types of contradictions that can be detected.
     
-    UNKNOWN = "unknown"
-    DIRECT = "direct"
-    TEMPORAL = "temporal"
-    POPULATION = "population"
-    METHODOLOGICAL = "methodological"
-
-
-class ContradictionConfidence(str, Enum):
-    """Confidence levels for contradiction detection."""
-    
-    UNKNOWN = "unknown"
-    LOW = "low"
-    MODERATE = "moderate"
-    HIGH = "high"
-
-
-class ClinicalSignificance(str, Enum):
-    """Clinical significance levels for contradictions."""
-    
-    UNKNOWN = "unknown"
-    LOW = "low"
-    MODERATE = "moderate"
-    HIGH = "high"
-
-
-class EvidenceQuality(str, Enum):
-    """Evidence quality levels for claims."""
-    
-    UNKNOWN = "unknown"
-    LOW = "low"
-    MODERATE = "moderate"
-    HIGH = "high"
-
-
-class ContradictionClassifierService:
+    This enum defines the different types of contradictions that can be identified
+    between medical claims, including direct, temporal, population-based, and
+    methodological contradictions.
     """
-    Service for classifying contradictions between medical claims.
-    
-    This service provides multi-dimensional classification of contradictions,
-    analyzing temporal factors, population differences, methodological differences,
-    clinical significance, and evidence quality.
-    """
-    
-    def __init__(self, biomedlm_service: Optional[BioMedLMService] = None):
-        """
-        Initialize the contradiction classifier service.
-        
-        Args:
-            biomedlm_service: BioMedLM service for semantic analysis
-        """
-        self.biomedlm_service = biomedlm_service
-        
-        # Thresholds for different contradiction types
-        self.thresholds = {
-            ContradictionType.DIRECT: 0.7,
-            ContradictionType.TEMPORAL: 0.6,
-            ContradictionType.POPULATION: 0.5,
-            ContradictionType.METHODOLOGICAL: 0.5
-        }
-        
-        # Clinical significance terms
-        self.high_significance_terms = [
-            "mortality", "death", "fatal", "life-threatening", "survival",
-            "severe", "critical", "emergency", "urgent", "intensive care"
-        ]
-        
-        self.moderate_significance_terms = [
-            "hospitalization", "disability", "impairment", "chronic",
-            "persistent", "long-term", "significant", "substantial"
-        ]
-        
-        logger.info("Contradiction classifier service initialized")
-    
-    def _assess_temporal_factor(
-        self,
-        metadata1: Dict[str, Any],
-        metadata2: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        """
-        Assess temporal factors for potential contradiction.
-        
-        Args:
-            metadata1: Metadata for the first claim
-            metadata2: Metadata for the second claim
-            
-        Returns:
-            Dictionary with temporal factor assessment
-        """
         # Default values
         result = {
             "detected": False,

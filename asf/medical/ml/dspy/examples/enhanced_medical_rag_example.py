@@ -1,8 +1,6 @@
-"""
 Enhanced Medical RAG Example
 
 This script demonstrates how to use the enhanced DSPy integration for medical RAG.
-"""
 
 import os
 import asyncio
@@ -27,10 +25,7 @@ from asf.medical.ml.dspy import (
 
 
 class SimpleRetriever:
-    """Simple retriever that returns predefined passages."""
-    
-    def __init__(self, passages: List[str]):
-        """
+    Simple retriever that returns predefined passages.
         Initialize the simple retriever.
         
         Args:
@@ -127,6 +122,11 @@ async def main():
     
     # Create a failing retriever to trigger circuit breaker
     class FailingRetriever:
+        """
+        FailingRetriever class.
+        
+        This class provides functionality for...
+        """
         def __call__(self, question: str, k: int = 3, **kwargs):
             raise ConnectionError("Simulated connection error")
     

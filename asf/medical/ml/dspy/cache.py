@@ -1,9 +1,7 @@
-"""
 Enhanced Cache Implementations
 
 This module provides enhanced cache implementations with better error handling,
 connection pooling, and retry logic for production use.
-"""
 
 import logging
 import json
@@ -25,11 +23,9 @@ except ImportError:
 
 
 class CacheInterface(ABC):
-    """
     Abstract interface for cache implementations.
     
     This interface defines the methods that all cache implementations must provide.
-    """
     
     @abstractmethod
     async def get(self, key: str) -> Any:
@@ -88,19 +84,21 @@ class CacheInterface(ABC):
     
     @abstractmethod
     def close(self) -> None:
-        """
         Close the cache connection.
-        """
+        
+        Args:
+        
+        
+        Returns:
+            Description of return value
         pass
 
 
 class EnhancedDiskCache(CacheInterface):
-    """
     Enhanced disk-based cache implementation.
     
     This implementation provides a disk-based cache with improved error handling
     and support for pattern-based clearing.
-    """
     
     def __init__(self, directory: str = ".cache"):
         """
@@ -222,11 +220,15 @@ class EnhancedDiskCache(CacheInterface):
         return count
     
     def close(self) -> None:
-        """
         Close the disk cache.
         
         No action needed for disk cache.
-        """
+        
+        Args:
+        
+        
+        Returns:
+            Description of return value
         pass
     
     def _get_file_path(self, key: str) -> str:
@@ -266,12 +268,10 @@ class EnhancedDiskCache(CacheInterface):
 
 
 class EnhancedRedisCache(CacheInterface):
-    """
     Enhanced Redis-based cache implementation.
     
     This implementation provides a Redis-based cache with connection pooling,
     retry logic, and improved error handling.
-    """
     
     def __init__(
         self,
@@ -419,18 +419,20 @@ class EnhancedRedisCache(CacheInterface):
                 return 0
     
     def close(self) -> None:
-        """
         Close the Redis connection pool.
-        """
+        
+        Args:
+        
+        
+        Returns:
+            Description of return value
         if hasattr(self, 'pool'):
             self.pool.disconnect()
             logger.debug("Redis connection pool closed")
 
 
 class NullCache(CacheInterface):
-    """
     No-op cache implementation when caching is disabled.
-    """
     
     async def get(self, key: str) -> Any:
         """
@@ -483,9 +485,13 @@ class NullCache(CacheInterface):
         return 0
     
     def close(self) -> None:
-        """
         Close the null cache (no-op).
-        """
+        
+        Args:
+        
+        
+        Returns:
+            Description of return value
         pass
 
 

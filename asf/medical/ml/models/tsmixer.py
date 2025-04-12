@@ -1,5 +1,5 @@
-"""
-TSMixer model wrapper for the Medical Research Synthesizer.
+"""TSMixer model wrapper for the Medical Research Synthesizer.
+
 This module provides a wrapper for the TSMixer model for temporal analysis.
 """
 import logging
@@ -11,8 +11,8 @@ import torch.nn.functional as F
 from asf.medical.core.config import settings
 logger = logging.getLogger(__name__)
 class TSMixerLayer(nn.Module):
-    """
-    TSMixer layer for temporal analysis.
+    """TSMixer layer for temporal analysis.
+    
     This layer implements the TSMixer architecture for time series analysis.
     """
     def __init__(self, input_dim: int, hidden_dim: int, dropout: float = 0.1):
@@ -57,8 +57,8 @@ class TSMixerLayer(nn.Module):
         x = x + residual
         return x
 class TSMixer(nn.Module):
-    """
-    TSMixer model for temporal analysis.
+    """TSMixer model for temporal analysis.
+    
     This model implements the TSMixer architecture for time series analysis.
     """
     def __init__(
@@ -69,6 +69,16 @@ class TSMixer(nn.Module):
         num_layers: int = 4,
         dropout: float = 0.1
     ):
+        """
+        Initialize the TSMixer model.
+
+        Args:
+            input_dim: Dimension of input features
+            hidden_dim: Dimension of hidden layers
+            output_dim: Dimension of output features
+            num_layers: Number of TSMixer layers
+            dropout: Dropout rate for regularization
+        """
         super().__init__()
         self.input_projection = nn.Linear(input_dim, hidden_dim)
         self.layers = nn.ModuleList([
@@ -92,8 +102,8 @@ class TSMixer(nn.Module):
         x = self.output_projection(x)  # (batch_size, seq_len, output_dim)
         return x
 class TSMixerService:
-    """
-    Service for the TSMixer model.
+    """Service for the TSMixer model.
+    
     This service provides methods for using the TSMixer model for temporal analysis.
     """
     _instance = None
@@ -109,11 +119,9 @@ class TSMixerService:
         return cls._instance
     def __init__(self):
         """Initialize the TSMixer service.
-    Args:
-        # TODO: Add parameter descriptions
-    Returns:
-        # TODO: Add return description
-    """
+        
+        This method sets up the service with default parameters and device configuration.
+        """
         self.input_dim = 768  # Embedding dimension
         self.hidden_dim = 512
         self.output_dim = 1  # Contradiction score
@@ -125,9 +133,27 @@ class TSMixerService:
     @property
     def model(self):
         """
-        Get the TSMixer model.
+        Get the TSMixer model, creating it if it doesn't exist.
+
         Returns:
-            The TSMixer model
+            The TSMixer model instance
+        """
+        if self._model is None:
+            self._model = TSMixer(
+                input_dim=self.input_dim,
+                hidden_dim=self.hidden_dim,
+                output_dim=self.output_dim,
+                num_layers=self.num_layers,
+                dropout=self.dropout
+            ).to(self.device)
+            logger.info("TSMixer model created")
+        return self._model
+
+    def unload_model(self):
+        """Unload the model from memory to free resources.
+        
+        This method removes the TSMixer model from memory and clears CUDA cache.
+        """
         if self._model is not None:
             del self._model
             self._model = None
@@ -138,6 +164,18 @@ class TSMixerService:
         sequence: List[Dict[str, Any]],
         embedding_fn: callable
     ) -> Dict[str, Any]:
+        """
+        Analyze a temporal sequence of claims for contradictions.
+
+        Args:
+            sequence: List of dictionaries containing claims and timestamps
+                     Each dictionary should have at least 'claim' and 'timestamp' keys
+            embedding_fn: Function to convert a claim text to an embedding vector
+
+        Returns:
+            Dictionary containing contradiction scores and temporal analysis results
+            including trend, volatility, and maximum contradiction information
+        """
         sequence = sorted(sequence, key=lambda x: x["timestamp"])
         embeddings = []
         for item in sequence:

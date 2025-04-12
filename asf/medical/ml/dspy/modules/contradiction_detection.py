@@ -1,8 +1,6 @@
-"""
 Contradiction Detection Modules
 
 This module provides specialized DSPy modules for detecting contradictions in medical statements.
-"""
 
 import logging
 from typing import Dict, Any, List, Optional, Union, Tuple
@@ -17,12 +15,10 @@ logger = logging.getLogger(__name__)
 
 
 class ContradictionDetectionModule(MedicalDSPyModule):
-    """
     Module for detecting contradictions between medical statements.
     
     This module uses a chain of thought approach to identify contradictions
     between two medical statements and provide an explanation.
-    """
     
     def __init__(
         self,
@@ -123,13 +119,11 @@ class ContradictionDetectionModule(MedicalDSPyModule):
 
 
 class TemporalContradictionModule(MedicalDSPyModule):
-    """
     Module for detecting contradictions between medical statements with temporal context.
     
     This module considers the timestamps of statements to determine if apparent
     contradictions are actually due to temporal evolution of medical knowledge or
     patient condition.
-    """
     
     def __init__(
         self,
@@ -250,12 +244,10 @@ class TemporalContradictionModule(MedicalDSPyModule):
 
 
 class BioMedLMContradictionModule(MedicalDSPyModule):
-    """
     Specialized contradiction detection module using BioMedLM.
     
     This module leverages the BioMedLM model for more accurate contradiction
     detection in medical statements by using domain-specific knowledge.
-    """
     
     def __init__(
         self,

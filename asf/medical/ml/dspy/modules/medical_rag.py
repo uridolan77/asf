@@ -1,8 +1,6 @@
-"""
 Medical RAG Modules
 
 This module provides specialized RAG (Retrieval-Augmented Generation) modules for medical research.
-"""
 
 import logging
 from typing import Dict, Any, List, Optional, Union
@@ -18,12 +16,10 @@ logger = logging.getLogger(__name__)
 
 
 class MedicalRAGModule(RAGModule):
-    """
     Medical RAG module for retrieving and generating medical information.
     
     This module implements a standard RAG pipeline for medical questions,
     with specialized handling for medical context and citations.
-    """
     
     def __init__(
         self,
@@ -118,7 +114,6 @@ class MedicalRAGModule(RAGModule):
 
 
 class EnhancedMedicalRAGModule(MedicalDSPyModule):
-    """
     Enhanced Medical RAG module with multi-stage processing.
     
     This module implements a more sophisticated RAG pipeline with:
@@ -127,7 +122,6 @@ class EnhancedMedicalRAGModule(MedicalDSPyModule):
     3. Secondary retrieval
     4. Answer generation with citations
     5. Fact checking
-    """
     
     def __init__(
         self,

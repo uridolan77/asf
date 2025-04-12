@@ -18,6 +18,7 @@ class KnowledgeBaseUpdater:
     def __new__(cls):
         """
         Create a singleton instance of the knowledge base updater.
+        
         Returns:
             KnowledgeBaseUpdater: The singleton instance
         """
@@ -25,12 +26,11 @@ class KnowledgeBaseUpdater:
             cls._instance = super(KnowledgeBaseUpdater, cls).__new__(cls)
         return cls._instance
     def __init__(self):
-        """Initialize the knowledge base updater.
-    Args:
-        # TODO: Add parameter descriptions
-    Returns:
-        # TODO: Add return description
-    """
+        """
+        Initialize the knowledge base updater.
+        
+        Sets up task scheduler, repository and default update interval.
+        """
         self.task_scheduler = TaskScheduler()
         self.kb_repository = KnowledgeBaseRepository()
         self.running = False
@@ -38,12 +38,11 @@ class KnowledgeBaseUpdater:
         self.update_interval = 60 * 60  # 1 hour
         logger.info("Knowledge base updater initialized")
     def start(self) -> None:
-        """Start the knowledge base updater.
-    Args:
-        # TODO: Add parameter descriptions
-    Returns:
-        # TODO: Add return description
-    """
+        """
+        Start the knowledge base updater.
+        
+        Starts the task scheduler and scheduler loop thread.
+        """
         if self.running:
             logger.info("Knowledge base updater already running")
             return
@@ -55,12 +54,11 @@ class KnowledgeBaseUpdater:
         self.scheduler_thread.start()
         logger.info("Knowledge base updater started")
     def stop(self) -> None:
-        """Stop the knowledge base updater.
-    Args:
-        # TODO: Add parameter descriptions
-    Returns:
-        # TODO: Add return description
-    """
+        """
+        Stop the knowledge base updater.
+        
+        Stops the task scheduler and scheduler loop thread.
+        """
         if not self.running:
             logger.info("Knowledge base updater not running")
             return
@@ -71,12 +69,11 @@ class KnowledgeBaseUpdater:
         self.task_scheduler.stop()
         logger.info("Knowledge base updater stopped")
     def _scheduler_loop(self) -> None:
-        """Scheduler loop for checking and scheduling knowledge base updates.
-    Args:
-        # TODO: Add parameter descriptions
-    Returns:
-        # TODO: Add return description
-    """
+        """
+        Scheduler loop for checking and scheduling knowledge base updates.
+        
+        Periodically checks for updates and schedules them.
+        """
         logger.info("Scheduler loop started")
         while self.running:
             try:
@@ -87,12 +84,11 @@ class KnowledgeBaseUpdater:
                 time.sleep(60)  # Sleep for 1 minute before retrying
         logger.info("Scheduler loop stopped")
     def _check_for_updates(self) -> None:
-        """Check for knowledge bases that need updating.
-    Args:
-        # TODO: Add parameter descriptions
-    Returns:
-        # TODO: Add return description
-    """
+        """
+        Check for knowledge bases that need updating.
+        
+        Queries the repository for knowledge bases due for update and schedules them.
+        """
         logger.info("Checking for knowledge base updates")
         try:
             with get_db() as db:
@@ -105,15 +101,8 @@ class KnowledgeBaseUpdater:
     def _schedule_update(self, kb) -> None:
         """
         Schedule an update for a knowledge base.
+        
         Args:
             kb: Knowledge base to update
-        Update a knowledge base.
-        Args:
-            kb_id: Knowledge base ID
-            kb_uuid: Knowledge base UUID
-            name: Knowledge base name
-            query: Search query
-            file_path: Path to the knowledge base file
-        Returns:
-            Update result
         """
+        pass

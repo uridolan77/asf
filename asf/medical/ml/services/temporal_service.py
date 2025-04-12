@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 class TemporalService:
     """Temporal analysis service for medical literature.
-
+    
     This service provides functionality for analyzing temporal aspects of medical claims,
     including temporal confidence calculation, temporal contradiction detection,
     and temporal sequence analysis.

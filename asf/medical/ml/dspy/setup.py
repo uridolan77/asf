@@ -1,6 +1,4 @@
-"""
 Setup script for the DSPy integration package.
-"""
 
 from setuptools import setup, find_packages
 

@@ -1,9 +1,7 @@
-"""
 Enhanced DSPy Optimization
 
 This module provides enhanced optimization functionality for DSPy modules
 with better metrics tracking, timeout handling, and validation set evaluation.
-"""
 
 import os
 import time
@@ -27,33 +25,16 @@ logger = logging.getLogger(__name__)
 
 
 class EnhancedOptimizer:
-    """
     Enhanced optimizer for DSPy modules.
     
     This class provides enhanced optimization functionality with better metrics tracking,
     timeout handling, and validation set evaluation.
-    """
     
     def __init__(self):
-        """Initialize the enhanced optimizer."""
-        self.settings = get_enhanced_settings()
-        self._audit_logger = get_audit_logger()
-    
-    async def optimize_module(
-        self,
-        module: dspy.Module,
-        metric_fn: Callable,
-        examples: List[Dict[str, Any]],
-        optimizer_type: str = "mipro",
-        max_rounds: int = 3,
-        num_threads: int = 1,
-        save_history: bool = True,
-        validation_examples: Optional[List[Dict[str, Any]]] = None,
-        optimization_timeout: Optional[int] = None,
-        artifact_dir: Optional[str] = None,
-        **optimizer_kwargs
-    ) -> Tuple[dspy.Module, Dict[str, Any]]:
-        """
+        Initialize the enhanced optimizer.
+        
+        Args:
+        
         Optimize a DSPy module using the specified optimizer with enhanced monitoring.
         
         Args:
@@ -120,6 +101,10 @@ class EnhancedOptimizer:
             if original_round_fn:
                 @wraps(original_round_fn)
                 def instrumented_round_fn(*args, **kwargs):
+                    """
+                    instrumented_round_fn function.
+                    
+                    This function provides functionality for..."""
                     round_start = time.time()
                     result = original_round_fn(*args, **kwargs)
                     round_end = time.time()

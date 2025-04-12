@@ -1,9 +1,7 @@
-"""
 Enhanced DSPy Client
 
 This module provides an enhanced DSPy client with circuit breaker pattern,
 improved error handling, and comprehensive audit logging for medical research applications.
-"""
 
 import os
 import time
@@ -33,12 +31,10 @@ logger = logging.getLogger(__name__)
 
 
 class EnhancedDSPyClient:
-    """
     Enhanced DSPy client with circuit breaker pattern and improved error handling.
     
     This class provides a central access point for interacting with DSPy's core functionalities,
     with enhanced features for medical research applications.
-    """
     
     # Singleton instance
     _instance = None
@@ -51,22 +47,10 @@ class EnhancedDSPyClient:
         return cls._instance
     
     def __init__(self):
-        """Initialize the client if not already initialized."""
-        if self._initialized:
-            return
+        Initialize the client if not already initialized.
         
-        # Will be initialized in initialize()
-        self.settings = get_enhanced_settings()
-        self.lm = None
-        self.cache = None
-        self._executor = None
-        self.modules = {}
-        self._lock = asyncio.Lock()
-        self._circuit_breaker_registry = get_circuit_breaker_registry()
-        self._audit_logger = get_audit_logger()
-    
-    async def initialize(self):
-        """
+        Args:
+        
         Initialize the client.
         
         This method initializes the language model, cache, and thread pool.

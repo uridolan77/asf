@@ -1,9 +1,7 @@
-"""
 Enhanced DSPy Settings
 
 This module provides enhanced settings for DSPy with more configuration options
 and better validation for production use.
-"""
 
 import os
 import logging
@@ -16,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 class LLMProvider(str, Enum):
-    """Supported LLM providers."""
+    Supported LLM providers.
     OPENAI = "openai"
     ANTHROPIC = "anthropic"
     AZURE = "azure"
@@ -27,19 +25,17 @@ class LLMProvider(str, Enum):
 
 
 class CacheBackend(str, Enum):
-    """Supported cache backends."""
+    Supported cache backends.
     DISK = "disk"
     REDIS = "redis"
     NULL = "null"
 
 
 class EnhancedDSPySettings(BaseSettings):
-    """
     Enhanced settings for DSPy with more configuration options.
     
     This class provides a comprehensive set of settings for configuring DSPy
     in a production environment, with a focus on medical research requirements.
-    """
     
     # LLM Provider Settings
     LLM_PROVIDER: LLMProvider = Field(
@@ -202,61 +198,60 @@ class EnhancedDSPySettings(BaseSettings):
     # Validation
     @validator("THREAD_LIMIT")
     def validate_thread_limit(cls, v):
-        """Validate thread limit."""
+        Validate thread limit.
+        
+        Args:
+            cls: Description of cls
+            v: Description of v
+        
         if v < 1:
             raise ValueError("THREAD_LIMIT must be at least 1")
         return v
     
     @validator("MAX_RETRIES")
     def validate_max_retries(cls, v):
-        """Validate max retries."""
+        Validate max retries.
+        
+        Args:
+            cls: Description of cls
+            v: Description of v
+        
         if v < 0:
             raise ValueError("MAX_RETRIES must be non-negative")
         return v
     
     @validator("TEMPERATURE")
     def validate_temperature(cls, v):
-        """Validate temperature."""
+        Validate temperature.
+        
+        Args:
+            cls: Description of cls
+            v: Description of v
+        
         if v < 0 or v > 2:
             raise ValueError("TEMPERATURE must be between 0 and 2")
         return v
     
     @validator("TOP_P")
     def validate_top_p(cls, v):
-        """Validate top_p."""
+        Validate top_p.
+        
+        Args:
+            cls: Description of cls
+            v: Description of v
+        
         if v <= 0 or v > 1:
             raise ValueError("TOP_P must be between 0 and 1")
         return v
     
     @root_validator
     def validate_azure_settings(cls, values):
-        """Validate Azure-specific settings."""
-        if values.get("LLM_PROVIDER") == LLMProvider.AZURE:
-            if not values.get("AZURE_ENDPOINT"):
-                raise ValueError("AZURE_ENDPOINT is required when LLM_PROVIDER is 'azure'")
-            if not values.get("AZURE_DEPLOYMENT_NAME"):
-                raise ValueError("AZURE_DEPLOYMENT_NAME is required when LLM_PROVIDER is 'azure'")
-        return values
-    
-    class Config:
-        """Pydantic config."""
-        env_prefix = "DSPY_"
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        case_sensitive = True
-
-
-# Global settings instance
-_enhanced_settings = None
-
-
-def get_enhanced_settings() -> EnhancedDSPySettings:
-    """
-    Get the global enhanced settings instance.
-    
-    Returns:
-        EnhancedDSPySettings: The global enhanced settings instance
-    """
+        Validate Azure-specific settings.
+        
+        Args:
+            cls: Description of cls
+            values: Description of values
+        
     global _enhanced_settings
     if _enhanced_settings is None:
         _enhanced_settings = EnhancedDSPySettings()

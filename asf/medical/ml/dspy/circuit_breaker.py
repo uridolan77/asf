@@ -1,9 +1,7 @@
-"""
 Circuit Breaker Pattern for API Reliability
 
 This module implements the circuit breaker pattern for external API calls,
 preventing cascading failures by temporarily disabling endpoints that are experiencing high failure rates.
-"""
 
 import logging
 import time
@@ -16,53 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 class CircuitState(str, Enum):
-    """Circuit breaker states."""
-    CLOSED = 'closed'      # Normal operation - requests go through
-    OPEN = 'open'          # Circuit is open - requests fail fast
-    HALF_OPEN = 'half-open'  # Testing if service is healthy again
-
-
-class CircuitOpenError(Exception):
-    """Exception raised when a circuit is open."""
-    pass
-
-
-class CircuitBreaker:
-    """
-    Circuit breaker for external API calls.
-    
-    Prevents cascading failures by temporarily disabling endpoints
-    that are experiencing high failure rates.
-    
-    Attributes:
-        name (str): Name of the protected resource
-        state (CircuitState): Current state ('closed', 'open', 'half-open')
-        failure_threshold (int): Number of failures before opening circuit
-        reset_timeout (float): Seconds before attempting recovery
-        failure_counter (int): Current failure count
-        last_failure_time (float): Timestamp of last failure
-        success_threshold (int): Successes needed in half-open state to close
-        success_counter (int): Current success count in half-open state
-    """
-    
-    def __init__(
-        self, 
-        name: str,
-        failure_threshold: int = 5, 
-        reset_timeout: float = 30.0,
-        success_threshold: int = 2,
-        half_open_max_calls: int = 1
-    ):
-        """
-        Initialize the circuit breaker.
-        
-        Args:
-            name: Name of the protected resource
-            failure_threshold: Number of failures before opening circuit
-            reset_timeout: Seconds before attempting recovery
-            success_threshold: Successes needed in half-open state to close
-            half_open_max_calls: Maximum concurrent calls in half-open state
-        """
+    Circuit breaker states.
         self.name = name
         self.state = CircuitState.CLOSED
         self.failure_threshold = failure_threshold
@@ -176,27 +128,16 @@ class CircuitBreaker:
 
 
 class CircuitBreakerRegistry:
-    """
     Registry for managing multiple circuit breakers.
     
     This class provides a centralized way to create, retrieve, and manage
     circuit breakers for different resources.
-    """
     
     def __init__(self):
-        """Initialize the circuit breaker registry."""
-        self._circuit_breakers = {}
-        self._lock = asyncio.Lock()
-    
-    async def get_circuit_breaker(
-        self,
-        name: str,
-        failure_threshold: int = 5,
-        reset_timeout: float = 30.0,
-        success_threshold: int = 2,
-        half_open_max_calls: int = 1
-    ) -> CircuitBreaker:
-        """
+        Initialize the circuit breaker registry.
+        
+        Args:
+        
         Get or create a circuit breaker.
         
         Args:

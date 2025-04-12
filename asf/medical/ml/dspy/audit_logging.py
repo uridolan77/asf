@@ -1,9 +1,7 @@
-"""
 Audit Logging for Medical Research
 
 This module provides comprehensive audit logging capabilities for medical research applications.
 It includes PII/PHI detection, redaction, and immutable logging for compliance requirements.
-"""
 
 import logging
 import json
@@ -61,12 +59,10 @@ DEFAULT_PHI_PATTERNS = [
 
 
 class AuditLogger:
-    """
     Comprehensive audit logger for medical research applications.
     
     This class provides detailed, immutable logging with PII/PHI detection and redaction.
     It ensures all operations are fully traceable for compliance requirements.
-    """
     
     def __init__(
         self,
@@ -522,9 +518,13 @@ class AuditLogger:
         )
     
     def close(self) -> None:
-        """
         Close the audit logger.
-        """
+        
+        Args:
+        
+        
+        Returns:
+            Description of return value
         with self._lock:
             self.file_handler.close()
             self.logger.removeHandler(self.file_handler)

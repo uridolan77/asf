@@ -1,8 +1,6 @@
-"""
 Medical Summarization Modules
 
 This module provides specialized DSPy modules for summarizing medical content.
-"""
 
 import logging
 from typing import Dict, Any, List, Optional, Union, Tuple
@@ -17,12 +15,10 @@ logger = logging.getLogger(__name__)
 
 
 class MedicalSummarizationModule(MedicalDSPyModule):
-    """
     Module for summarizing medical content with key findings and implications.
     
     This module generates concise summaries of medical content, highlighting
     key findings and implications for different audiences.
-    """
     
     def __init__(
         self,
@@ -120,12 +116,10 @@ class MedicalSummarizationModule(MedicalDSPyModule):
 
 
 class StructuredMedicalSummarizationModule(MedicalDSPyModule):
-    """
     Module for generating structured summaries of medical content.
     
     This module produces summaries with specific sections like background,
     methods, results, and conclusions, tailored to the content type.
-    """
     
     def __init__(
         self,
@@ -251,12 +245,10 @@ class StructuredMedicalSummarizationModule(MedicalDSPyModule):
 
 
 class MultiDocumentMedicalSummarizationModule(MedicalDSPyModule):
-    """
     Module for summarizing multiple medical documents.
     
     This module generates a comprehensive summary across multiple medical
     documents, identifying common themes, agreements, and disagreements.
-    """
     
     def __init__(
         self,

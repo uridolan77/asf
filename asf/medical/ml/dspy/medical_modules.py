@@ -1,8 +1,6 @@
-"""
 Medical DSPy Modules
 
 This module provides medical-specific DSPy modules for medical research applications.
-"""
 
 import logging
 import time
@@ -29,8 +27,7 @@ logger = logging.getLogger(__name__)
 
 
 class MedicalRAG(EnhancedRAGModule):
-    """
-    Medical RAG module for answering medical questions with citations.
+    """Medical RAG module for answering medical questions with citations.
     
     This module combines retrieval and generation to answer medical questions
     with proper citations and confidence scores.
@@ -110,8 +107,7 @@ class MedicalRAG(EnhancedRAGModule):
 
 
 class MedicalContradictionDetector(EnhancedDSPyModuleBase):
-    """
-    Medical contradiction detector for identifying contradictions in medical statements.
+    """Medical contradiction detector for identifying contradictions in medical statements.
     
     This module identifies contradictions between medical statements and provides
     detailed explanations with confidence scores.
@@ -186,8 +182,7 @@ class MedicalContradictionDetector(EnhancedDSPyModuleBase):
 
 
 class TemporalContradictionDetector(EnhancedDSPyModuleBase):
-    """
-    Temporal contradiction detector for identifying contradictions in medical statements over time.
+    """Temporal contradiction detector for identifying contradictions in medical statements over time.
     
     This module identifies contradictions between medical statements with timestamps
     and provides detailed explanations of the temporal relationships.
@@ -285,8 +280,7 @@ class TemporalContradictionDetector(EnhancedDSPyModuleBase):
 
 
 class MedicalEvidenceExtractor(EnhancedDSPyModuleBase):
-    """
-    Medical evidence extractor for extracting evidence from medical texts.
+    """Medical evidence extractor for extracting evidence from medical texts.
     
     This module extracts evidence from medical texts and determines the relationship
     between the evidence and a given claim.
@@ -386,8 +380,7 @@ class MedicalEvidenceExtractor(EnhancedDSPyModuleBase):
 
 
 class MedicalSummarizer(EnhancedDSPyModuleBase):
-    """
-    Medical summarizer for summarizing medical texts.
+    """Medical summarizer for summarizing medical texts.
     
     This module summarizes medical texts with key findings and implications,
     tailored to different audiences.
@@ -495,8 +488,7 @@ class MedicalSummarizer(EnhancedDSPyModuleBase):
 
 
 class ClinicalQA(EnhancedDSPyModuleBase):
-    """
-    Clinical QA module for answering clinical questions.
+    """Clinical QA module for answering clinical questions.
     
     This module answers clinical questions with evidence grading and clinical implications.
     """
@@ -564,8 +556,7 @@ class ClinicalQA(EnhancedDSPyModuleBase):
 
 
 class DiagnosticReasoningModule(EnhancedChainOfThoughtModule):
-    """
-    Diagnostic reasoning module for clinical case analysis.
+    """Diagnostic reasoning module for clinical case analysis.
     
     This module performs step-by-step diagnostic reasoning on clinical cases.
     """

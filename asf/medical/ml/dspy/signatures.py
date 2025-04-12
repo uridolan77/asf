@@ -1,9 +1,7 @@
-"""
 Enhanced DSPy Signatures
 
 This module provides enhanced DSPy signatures with more medical-specific fields
 and constraints for medical research applications.
-"""
 
 import dspy
 from typing import Dict, Any, List, Optional, Union
@@ -11,9 +9,7 @@ from typing import Dict, Any, List, Optional, Union
 
 # Medical RAG Signatures
 class EnhancedMedicalRAG(dspy.Signature):
-    """
     Enhanced signature for medical RAG (Retrieval-Augmented Generation).
-    """
     
     question = dspy.InputField(desc="Medical question to answer")
     passages = dspy.InputField(desc="Retrieved medical passages")
@@ -25,9 +21,7 @@ class EnhancedMedicalRAG(dspy.Signature):
 
 
 class MedicalEvidenceRAG(dspy.Signature):
-    """
     Signature for medical RAG with evidence grading.
-    """
     
     question = dspy.InputField(desc="Medical question to answer")
     passages = dspy.InputField(desc="Retrieved medical passages")
@@ -39,9 +33,7 @@ class MedicalEvidenceRAG(dspy.Signature):
 
 # Contradiction Detection Signatures
 class EnhancedContradictionDetection(dspy.Signature):
-    """
     Enhanced signature for contradiction detection.
-    """
     
     statement1 = dspy.InputField(desc="First medical statement")
     statement2 = dspy.InputField(desc="Second medical statement")
@@ -52,9 +44,7 @@ class EnhancedContradictionDetection(dspy.Signature):
 
 
 class EnhancedTemporalContradictionDetection(dspy.Signature):
-    """
     Enhanced signature for temporal contradiction detection.
-    """
     
     statement1 = dspy.InputField(desc="First medical statement")
     timestamp1 = dspy.InputField(desc="Timestamp of the first statement")
@@ -68,9 +58,7 @@ class EnhancedTemporalContradictionDetection(dspy.Signature):
 
 # Evidence Extraction Signatures
 class EnhancedEvidenceExtraction(dspy.Signature):
-    """
     Enhanced signature for evidence extraction.
-    """
     
     text = dspy.InputField(desc="Medical text to analyze")
     claim = dspy.InputField(desc="The claim to find evidence for")
@@ -81,9 +69,7 @@ class EnhancedEvidenceExtraction(dspy.Signature):
 
 
 class MultiEvidenceExtraction(dspy.Signature):
-    """
     Signature for extracting multiple pieces of evidence.
-    """
     
     text = dspy.InputField(desc="Medical text to analyze")
     claim = dspy.InputField(desc="The claim to find evidence for")
@@ -94,9 +80,7 @@ class MultiEvidenceExtraction(dspy.Signature):
 
 # Medical Summarization Signatures
 class EnhancedMedicalSummarization(dspy.Signature):
-    """
     Enhanced signature for medical summarization.
-    """
     
     text = dspy.InputField(desc="Medical text to summarize")
     audience = dspy.InputField(desc="Target audience (e.g., 'clinician', 'researcher', 'patient')")
@@ -107,9 +91,7 @@ class EnhancedMedicalSummarization(dspy.Signature):
 
 
 class StructuredMedicalSummarization(dspy.Signature):
-    """
     Signature for structured medical summarization.
-    """
     
     text = dspy.InputField(desc="Medical text to summarize")
     content_type = dspy.InputField(desc="Type of content (e.g., 'research_paper', 'clinical_note', 'guideline')")
@@ -123,9 +105,7 @@ class StructuredMedicalSummarization(dspy.Signature):
 
 # Clinical QA Signatures
 class EnhancedClinicalQA(dspy.Signature):
-    """
     Enhanced signature for clinical question answering.
-    """
     
     question = dspy.InputField(desc="Clinical question")
     context = dspy.InputField(desc="Medical context or literature")
@@ -137,9 +117,7 @@ class EnhancedClinicalQA(dspy.Signature):
 
 
 class DiagnosticReasoning(dspy.Signature):
-    """
     Signature for diagnostic reasoning.
-    """
     
     case_description = dspy.InputField(desc="Clinical case description")
     differential_diagnosis = dspy.OutputField(desc="Differential diagnosis with likelihood estimates")
@@ -150,9 +128,7 @@ class DiagnosticReasoning(dspy.Signature):
 
 # Medical Metrics Signatures
 class MedicalQAAccuracy(dspy.Signature):
-    """
     Signature for evaluating medical QA accuracy.
-    """
     
     prediction = dspy.InputField(desc="The model's predicted answer")
     reference = dspy.InputField(desc="The reference answer")
@@ -161,9 +137,7 @@ class MedicalQAAccuracy(dspy.Signature):
 
 
 class MedicalRAGRelevance(dspy.Signature):
-    """
     Signature for evaluating medical RAG relevance.
-    """
     
     question = dspy.InputField(desc="The medical question")
     passages = dspy.InputField(desc="The retrieved passages")
@@ -172,9 +146,7 @@ class MedicalRAGRelevance(dspy.Signature):
 
 
 class MedicalSummarizationQuality(dspy.Signature):
-    """
     Signature for evaluating medical summarization quality.
-    """
     
     text = dspy.InputField(desc="The original medical text")
     summary = dspy.InputField(desc="The generated summary")

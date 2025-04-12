@@ -1,8 +1,6 @@
-"""
 Clinical QA Modules
 
 This module provides specialized DSPy modules for clinical question answering.
-"""
 
 import logging
 from typing import Dict, Any, List, Optional, Union, Tuple
@@ -17,12 +15,10 @@ logger = logging.getLogger(__name__)
 
 
 class ClinicalQAModule(RAGModule):
-    """
     Module for answering clinical questions based on medical literature.
     
     This module extends the RAG module with specialized handling for clinical questions,
     including confidence assessment and evidence grading.
-    """
     
     def __init__(
         self,
@@ -149,12 +145,10 @@ class ClinicalQAModule(RAGModule):
 
 
 class DiagnosticReasoningModule(MedicalDSPyModule):
-    """
     Module for diagnostic reasoning based on clinical cases.
     
     This module implements a step-by-step diagnostic reasoning process,
     generating differential diagnoses and recommended tests.
-    """
     
     def __init__(
         self,
@@ -302,12 +296,10 @@ class DiagnosticReasoningModule(MedicalDSPyModule):
 
 
 class ClinicalGuidelineQAModule(MedicalDSPyModule):
-    """
     Module for answering questions based on clinical guidelines.
     
     This module specializes in retrieving and interpreting information from
     clinical practice guidelines to answer specific clinical questions.
-    """
     
     def __init__(
         self,

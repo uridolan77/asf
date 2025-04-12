@@ -1,12 +1,17 @@
-Models for medical contradiction resolution.
+"""Models for medical contradiction resolution.
 
 This module defines the data models and enums used for resolving
 contradictions in medical literature.
+"""
 
 from enum import Enum
 
 class ResolutionStrategy(str, Enum):
-    Resolution strategies for medical contradictions.
+    """Resolution strategies for medical contradictions.
+    
+    This enum defines the various strategies that can be used to resolve
+    contradictions in medical literature.
+    """
     EVIDENCE_HIERARCHY = "evidence_hierarchy"
     SAMPLE_SIZE_WEIGHTING = "sample_size_weighting"
     RECENCY_PREFERENCE = "recency_preference"
@@ -17,7 +22,11 @@ class ResolutionStrategy(str, Enum):
     UNKNOWN = "unknown"
 
 class ResolutionConfidence(str, Enum):
-    Confidence levels for contradiction resolution.
+    """Confidence levels for contradiction resolution.
+    
+    This enum defines the confidence levels for the resolution
+    of medical contradictions.
+    """
     HIGH = "high"
     MODERATE = "moderate"
     LOW = "low"
@@ -25,7 +34,11 @@ class ResolutionConfidence(str, Enum):
     UNKNOWN = "unknown"
 
 class RecommendationType(str, Enum):
-    Recommendation types for contradiction resolution.
+    """Recommendation types for contradiction resolution.
+    
+    This enum defines the different types of recommendations that can be made
+    when resolving medical contradictions.
+    """
     FAVOR_CLAIM1 = "favor_claim1"
     FAVOR_CLAIM2 = "favor_claim2"
     INCONCLUSIVE = "inconclusive"

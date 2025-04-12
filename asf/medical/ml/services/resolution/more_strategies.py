@@ -1,7 +1,9 @@
 Additional resolution strategies for medical contradictions.
+
 This module provides additional strategies for resolving contradictions in medical literature
 based on evidence-based medicine principles.
 import logging
+from typing import Dict, List, Any
 from asf.medical.ml.services.contradiction_classifier_service import (
     ContradictionType,
     ClinicalSignificance,
@@ -16,6 +18,18 @@ from asf.medical.ml.services.resolution.resolution_models import (
 )
 logger = logging.getLogger(__name__)
 async def resolve_by_methodological_quality(contradiction: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Resolve contradictions based on methodological quality.
+
+    This strategy resolves contradictions by comparing the methodological quality of the studies
+    supporting each claim, including study design, blinding, and randomization.
+
+    Args:
+        contradiction: Dictionary containing contradiction details
+
+    Returns:
+        Dictionary with resolution recommendation and confidence
+    """
     claim1 = contradiction.get("claim1", "")
     claim2 = contradiction.get("claim2", "")
     metadata1 = contradiction.get("metadata1", {})
@@ -140,6 +154,18 @@ async def resolve_by_methodological_quality(contradiction: Dict[str, Any]) -> Di
             result["confidence_score"] = 0.4
     return result
 async def resolve_by_statistical_significance(contradiction: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Resolve contradictions based on statistical significance.
+
+    This strategy resolves contradictions by comparing the statistical significance of the studies
+    supporting each claim, including p-values, confidence intervals, and effect sizes.
+
+    Args:
+        contradiction: Dictionary containing contradiction details
+
+    Returns:
+        Dictionary with resolution recommendation and confidence
+    """
     claim1 = contradiction.get("claim1", "")
     claim2 = contradiction.get("claim2", "")
     metadata1 = contradiction.get("metadata1", {})
@@ -254,6 +280,19 @@ async def resolve_by_statistical_significance(contradiction: Dict[str, Any]) -> 
             result["recommendation_note"] = f"Favoring claim 2 because it has a narrower confidence interval ({width2} vs {width1})."
     return result
 async def resolve_by_combined_evidence(contradiction: Dict[str, Any], resolution_strategies: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Resolve contradictions based on combined evidence from multiple strategies.
+
+    This strategy resolves contradictions by combining the results of multiple resolution strategies
+    to provide a more comprehensive assessment of the evidence.
+
+    Args:
+        contradiction: Dictionary containing contradiction details
+        resolution_strategies: Dictionary mapping strategy names to resolution functions
+
+    Returns:
+        Dictionary with resolution recommendation and confidence
+    """
     claim1 = contradiction.get("claim1", "")
     claim2 = contradiction.get("claim2", "")
     result = {

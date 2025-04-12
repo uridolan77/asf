@@ -1,8 +1,6 @@
-"""
 Medical RAG Example
 
 This example demonstrates how to use the Medical RAG module to answer medical questions.
-"""
 
 import asyncio
 import logging

@@ -1,5 +1,5 @@
-"""
-Model registry for the Medical Research Synthesizer.
+"""Model registry for the Medical Research Synthesizer.
+
 This module provides a registry for ML models with lazy loading.
 """
 import logging
@@ -7,8 +7,8 @@ import threading
 from typing import Any, Optional, Type, Callable
 logger = logging.getLogger(__name__)
 class ModelRegistry:
-    """
-    Registry for ML models with lazy loading.
+    """Registry for ML models with lazy loading.
+    
     This class provides a thread-safe registry for ML models,
     allowing models to be loaded only when needed and unloaded
     when not in use to save memory.
@@ -28,11 +28,9 @@ class ModelRegistry:
             return cls._instance
     def __init__(self):
         """Initialize the model registry.
-    Args:
-        # TODO: Add parameter descriptions
-    Returns:
-        # TODO: Add return description
-    """
+        
+        This method initializes the model registry as a singleton instance.
+        """
         with self._lock:
             if self._initialized:
                 return
@@ -42,11 +40,9 @@ class ModelRegistry:
             logger.info("Model registry initialized")
     def init(self):
         """Initialize the model registry with default models.
-    Args:
-        # TODO: Add parameter descriptions
-    Returns:
-        # TODO: Add return description
-    """
+        
+        This method can be used to pre-register commonly used models.
+        """
         logger.info("Model registry initialized with default models")
     def register_model_factory(
         self,
@@ -54,6 +50,14 @@ class ModelRegistry:
         factory: Callable[[], Any],
         model_type: Optional[Type] = None
     ):
+        """
+        Register a factory function for creating a model.
+
+        Args:
+            model_name: Name of the model
+            factory: Factory function that creates the model
+            model_type: Expected type of the model (for type checking)
+        """
         with self._lock:
             self._factories[model_name] = {
                 'factory': factory,
@@ -114,11 +118,9 @@ class ModelRegistry:
             return True
     def unload_all_models(self):
         """Unload all models from the registry.
-    Args:
-        # TODO: Add parameter descriptions
-    Returns:
-        # TODO: Add return description
-    """
+        
+        This method unloads all loaded models to free memory.
+        """
         with self._lock:
             for model_name in list(self._models.keys()):
                 self.unload_model(model_name)
@@ -126,13 +128,30 @@ class ModelRegistry:
     def is_model_loaded(self, model_name: str) -> bool:
         """
         Check if a model is loaded.
+
         Args:
             model_name: Name of the model
+
         Returns:
             True if the model is loaded, False otherwise
+        """
+        with self._lock:
+            return model_name in self._models
+
+    def get_loaded_models(self) -> dict:
+        """
         Get all loaded models.
+
         Returns:
             Dictionary of loaded models
+        """
+        with self._lock:
+            return dict(self._models)
+
+    def get_registered_models(self) -> dict:
+        """
         Get all registered models.
+
         Returns:
             Dictionary of registered models
+        """

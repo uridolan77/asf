@@ -1,14 +1,20 @@
-SHAP explainer for the Medical Research Synthesizer.
+"""SHAP explainer for the Medical Research Synthesizer.
+
 This module provides a SHAP-based explainer for model predictions.
+"""
 import logging
 import shap
 import io
 import base64
+import matplotlib.pyplot as plt
+from typing import Dict, List, Any, Optional, Callable
 logger = logging.getLogger(__name__)
 class SHAPExplainer:
-    SHAP-based explainer for model predictions.
+    """SHAP-based explainer for model predictions.
+    
     This class provides methods for explaining model predictions using SHAP.
-    def __init__(self, model_fn: Optional[callable] = None, tokenizer: Optional[Any] = None):
+    """
+    def __init__(self, model_fn: Optional[Callable] = None, tokenizer: Optional[Any] = None):
         """
         Initialize the SHAP explainer.
         Args:
@@ -51,21 +57,21 @@ class SHAPExplainer:
     def explain_text(
         self,
         text: str,
-            """
-            explain_text function.
-            
-            This function provides functionality for...
-            Args:
-                text: Description of text
-                background_data: Description of background_data
-                num_samples: Description of num_samples
-            
-            Returns:
-                Description of return value
-            """
         background_data: Optional[List[str]] = None,
         num_samples: int = 100
     ) -> Dict[str, Any]:
+        """
+        Explain a text prediction using SHAP values.
+
+        Args:
+            text: The text to explain
+            background_data: Background data for SHAP (optional)
+            num_samples: Number of samples for SHAP (default: 100)
+
+        Returns:
+            Dictionary containing explanation details including token importance,
+            top influential words, summary, and visualization
+        """
         if not self.tokenizer:
             raise ValueError("Tokenizer is required for text explanation")
         if self.explainer is None and background_data is not None:
@@ -112,23 +118,23 @@ class SHAPExplainer:
     def explain_contradiction(
         self,
         claim1: str,
-            """
-            explain_contradiction function.
-            
-            This function provides functionality for...
-            Args:
-                claim1: Description of claim1
-                claim2: Description of claim2
-                background_data: Description of background_data
-                num_samples: Description of num_samples
-            
-            Returns:
-                Description of return value
-            """
         claim2: str,
         background_data: Optional[List[str]] = None,
         num_samples: int = 100
     ) -> Dict[str, Any]:
+        """
+        Explain a contradiction prediction between two claims using SHAP values.
+
+        Args:
+            claim1: The first claim
+            claim2: The second claim
+            background_data: Background data for SHAP (optional)
+            num_samples: Number of samples for SHAP (default: 100)
+
+        Returns:
+            Dictionary containing explanation details including token importance,
+            top influential words, summary, and visualization
+        """
         combined_text = f"{claim1} [SEP] {claim2}"
         explanation = self.explain_text(
             combined_text,
