@@ -1,9 +1,13 @@
-API endpoints for task repository.
+"""API endpoints for task repository.
+
 This module provides API endpoints for managing tasks in the database.
+"""
+
 from typing import Dict, Any, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Path
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from asf.medical.core.logging_config import get_logger
 from asf.medical.storage.database import get_db_session
 from asf.medical.storage.repositories.task_repository import TaskRepository
@@ -11,59 +15,40 @@ from asf.medical.storage.models.task import TaskStatus
 from asf.medical.api.dependencies import get_current_user, get_admin_user
 from asf.medical.storage.models import User
 from asf.medical.api.websockets.task_updates import task_update_manager
+
 logger = get_logger(__name__)
+
 router = APIRouter(prefix="/v1/db-tasks", tags=["db-tasks"])
+
 class TaskListResponse(BaseModel):
-    Task list response.
-    # Get the task repository
-    task_repository = TaskRepository()
-    try:
-        # Get the task
-        task = await task_repository.get_task_by_id(db, task_id)
-        if not task:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Task not found: {task_id}"
-            )
-        # Only the task owner or an admin can cancel the task
-        if task.user_id != current_user.id and current_user.role != "admin":
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Not authorized to cancel this task"
-            )
-        # Check if the task is already completed or failed
-        if task.status in (TaskStatus.COMPLETED, TaskStatus.FAILED, TaskStatus.CANCELLED):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Cannot cancel task with status: {task.status.value}"
-            )
-        # Check if the task is cancellable
-        if not task.cancellable:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Task is not cancellable"
-            )
-        # Cancel the task
-        task = await task_repository.cancel_task(db, task_id)
-        if not task:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to cancel task"
-            )
-        # Notify clients about the cancellation
-        await task_update_manager.broadcast_task_cancelled(task)
-        return TaskActionResponse(
-            task=task.to_dict(),
-            message="Task cancelled successfully"
-        )
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error cancelling task: {str(e)}", exc_info=e)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error cancelling task: {str(e)}"
-        )
+    """Task list response model."""
+    tasks: List[Dict[str, Any]]
+    total: int
+    limit: int
+    offset: int
+
+class TaskActionResponse(BaseModel):
+    """Task action response model."""
+    task: Dict[str, Any]
+    message: str
+
+class DeadLetterListResponse(BaseModel):
+    """Dead letter list response model."""
+    messages: List[Dict[str, Any]]
+    total: int
+    limit: int
+    offset: int
+
+class DeadLetterActionResponse(BaseModel):
+    """Dead letter action response model."""
+    message: str
+
+class CleanupResponse(BaseModel):
+    """Cleanup response model."""
+    tasks_deleted: int
+    messages_deleted: int
+    message: str
+
 @router.delete("/{task_id}", response_model=DeadLetterActionResponse)
 async def delete_task(
     task_id: str = Path(..., description="Task ID"),
@@ -103,6 +88,7 @@ async def delete_task(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error deleting task: {str(e)}"
         )
+
 @router.get("/dead-letters", response_model=DeadLetterListResponse)
 async def get_dead_letters(
     reprocessed: Optional[bool] = Query(None, description="Filter by reprocessed status"),
@@ -139,6 +125,7 @@ async def get_dead_letters(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error getting dead letter messages: {str(e)}"
         )
+
 @router.post("/dead-letters/{message_id}/reprocess", response_model=DeadLetterActionResponse)
 async def reprocess_dead_letter(
     message_id: int = Path(..., description="Message ID"),
@@ -177,6 +164,7 @@ async def reprocess_dead_letter(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error reprocessing dead letter message: {str(e)}"
         )
+
 @router.delete("/dead-letters/{message_id}", response_model=DeadLetterActionResponse)
 async def delete_dead_letter(
     message_id: int = Path(..., description="Message ID"),
@@ -213,6 +201,7 @@ async def delete_dead_letter(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error deleting dead letter message: {str(e)}"
         )
+
 @router.post("/cleanup", response_model=CleanupResponse)
 async def cleanup_old_tasks(
     days: int = Query(30, description="Age in days for tasks to be considered old"),

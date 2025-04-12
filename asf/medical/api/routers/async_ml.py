@@ -14,7 +14,7 @@ from asf.medical.tasks.ml_inference_tasks import (
     generate_embeddings, get_task_result
 )
 from asf.medical.core.persistent_task_storage import task_storage
-from asf.medical.core.monitoring import async_timed, log_error
+from asf.medical.core.observability import async_timed, log_error
 
 router = APIRouter(prefix="/async-ml", tags=["async-ml"])
 

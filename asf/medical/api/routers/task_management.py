@@ -1,6 +1,7 @@
-Task Management API Router
+"""Task Management API Router
 
 This module provides API endpoints for monitoring and managing tasks.
+"""
 
 from typing import Dict, Any, List, Optional
 
@@ -18,30 +19,22 @@ router = APIRouter(
 )
 
 class TaskInfo(BaseModel):
-    Task information.
-    Get task information.
+    """Task information model."""
+    id: str
+    status: str
+    name: str
+    created_at: str
+    updated_at: str
+    result: Optional[Dict[str, Any]] = None
+    error: Optional[str] = None
+    progress: Optional[float] = None
+    metadata: Optional[Dict[str, Any]] = None
 
-    Args:
-        task_id: Task ID
-
-    Returns:
-        Task information
-    """
-    # Get task from the persistent task storage
-    task_info = task_storage.get_task(task_id)
-
-    if not task_info:
-        return TaskResponse(
-            status="error",
-            message=f"Task not found: {task_id}"
-        )
-
-    return TaskResponse(
-        status="success",
-        message="Task found",
-        data=task_info
-    )
-
+class TaskResponse(BaseModel):
+    """Task response model."""
+    status: str
+    message: str
+    data: Optional[Dict[str, Any]] = None
 
 @router.delete("/{task_id}", response_model=TaskResponse)
 async def delete_task(task_id: str):

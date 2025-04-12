@@ -23,7 +23,10 @@ from typing import List, Dict, Any, Optional
 from fastapi.responses import JSONResponse, StreamingResponse, FileResponse
 from fpdf import FPDF
 
+from asf.medical.core.exceptions import ExportError
+
 logger = logging.getLogger(__name__)
+
 
 def export_to_json(data: List[Dict[str, Any]], query_text: Optional[str] = None) -> JSONResponse:
     """
@@ -38,6 +41,7 @@ def export_to_json(data: List[Dict[str, Any]], query_text: Optional[str] = None)
 
     Raises:
         ValueError: If data is not a list or contains invalid items
+        ExportError: If there's an issue exporting the data
     """
     if not isinstance(data, list):
         raise ValueError("Data must be a list of dictionaries")
@@ -68,8 +72,9 @@ def export_to_json(data: List[Dict[str, Any]], query_text: Optional[str] = None)
 
         return JSONResponse(content=response_data)
     except Exception as e:
-    logger.error(f\"Error exporting to JSON: {str(e)}\")
-    raise DatabaseError(f\"Error exporting to JSON: {str(e)}\") ValueError(f"Failed to export data to JSON: {str(e)}") from e
+        logger.error(f"Error exporting to JSON: {str(e)}")
+        raise ExportError(f"Failed to export data to JSON: {str(e)}") from e
+
 
 def export_to_csv(data: List[Dict[str, Any]], query_text: Optional[str] = None) -> StreamingResponse:
     """
@@ -84,6 +89,7 @@ def export_to_csv(data: List[Dict[str, Any]], query_text: Optional[str] = None) 
 
     Raises:
         ValueError: If data is not a list or contains invalid items
+        ExportError: If there's an issue exporting the data
     """
     if not isinstance(data, list):
         raise ValueError("Data must be a list of dictionaries")
@@ -149,8 +155,9 @@ def export_to_csv(data: List[Dict[str, Any]], query_text: Optional[str] = None) 
 
         return response
     except Exception as e:
-    logger.error(f\"Error exporting to CSV: {str(e)}\")
-    raise DatabaseError(f\"Error exporting to CSV: {str(e)}\") ValueError(f"Failed to export data to CSV: {str(e)}") from e
+        logger.error(f"Error exporting to CSV: {str(e)}")
+        raise ExportError(f"Failed to export data to CSV: {str(e)}") from e
+
 
 def export_to_excel(data: List[Dict[str, Any]], query_text: Optional[str] = None) -> StreamingResponse:
     """
@@ -165,6 +172,7 @@ def export_to_excel(data: List[Dict[str, Any]], query_text: Optional[str] = None
 
     Raises:
         ValueError: If data is not a list or contains invalid items
+        ExportError: If there's an issue exporting the data
     """
     if not isinstance(data, list):
         raise ValueError("Data must be a list of dictionaries")
@@ -302,8 +310,9 @@ def export_to_excel(data: List[Dict[str, Any]], query_text: Optional[str] = None
 
         return response
     except Exception as e:
-    logger.error(f\"Error exporting to Excel: {str(e)}\")
-    raise DatabaseError(f\"Error exporting to Excel: {str(e)}\") ValueError(f"Failed to export data to Excel: {str(e)}") from e
+        logger.error(f"Error exporting to Excel: {str(e)}")
+        raise ExportError(f"Failed to export data to Excel: {str(e)}") from e
+
 
 def export_to_pdf(data: List[Dict[str, Any]], query_text: Optional[str] = None) -> FileResponse:
     """
@@ -318,6 +327,7 @@ def export_to_pdf(data: List[Dict[str, Any]], query_text: Optional[str] = None) 
 
     Raises:
         ValueError: If data is not a list or contains invalid items
+        ExportError: If there's an issue exporting the data
     """
     if not isinstance(data, list):
         raise ValueError("Data must be a list of dictionaries")
@@ -390,8 +400,9 @@ def export_to_pdf(data: List[Dict[str, Any]], query_text: Optional[str] = None) 
             background=lambda: os.unlink(temp_file.name)
         )
     except Exception as e:
-    logger.error(f\"Error exporting to PDF: {str(e)}\")
-    raise DatabaseError(f\"Error exporting to PDF: {str(e)}\") ValueError(f"Failed to export data to PDF: {str(e)}") from e
+        logger.error(f"Error exporting to PDF: {str(e)}")
+        raise ExportError(f"Failed to export data to PDF: {str(e)}") from e
+
 
 def export_contradiction_analysis_to_pdf(analysis: Dict[str, Any], query_text: str, output_path: Optional[str] = None) -> FileResponse:
     """
@@ -407,6 +418,7 @@ def export_contradiction_analysis_to_pdf(analysis: Dict[str, Any], query_text: s
 
     Raises:
         ValueError: If analysis is not a dictionary or contains invalid data
+        ExportError: If there's an issue exporting the data
     """
     if not isinstance(analysis, dict):
         raise ValueError("Analysis must be a dictionary")
@@ -499,5 +511,5 @@ def export_contradiction_analysis_to_pdf(analysis: Dict[str, Any], query_text: s
             background=lambda: os.unlink(output_path)
         )
     except Exception as e:
-    logger.error(f\"Error exporting contradiction analysis to PDF: {str(e)}\")
-    raise DatabaseError(f\"Error exporting contradiction analysis to PDF: {str(e)}\") ValueError(f"Failed to export contradiction analysis to PDF: {str(e)}") from e
+        logger.error(f"Error exporting contradiction analysis to PDF: {str(e)}")
+        raise ExportError(f"Failed to export contradiction analysis to PDF: {str(e)}") from e

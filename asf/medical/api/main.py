@@ -17,7 +17,7 @@ from asf.medical.api.dependencies import get_admin_user
 
 from asf.medical.core.logging_config import get_logger
 from asf.medical.api.middleware import MonitoringMiddleware
-from asf.medical.core.monitoring import setup_monitoring, get_metrics, run_health_checks
+from asf.medical.core.observability import setup_monitoring, get_metrics, run_health_checks
 from asf.medical.core.service_initialization import initialize_services
 from asf.medical.core.redis_event_broker import initialize_event_system, shutdown_event_system
 from asf.medical.core.messaging.initialization import initialize_messaging_system, shutdown_messaging_system
@@ -111,8 +111,8 @@ async def lifespan(_: FastAPI):
         logger.info("Application startup complete")
         logger.info("API documentation available at: /docs and /redoc")
     except Exception as e:
-    logger.error(f\"Error during application startup: {str(e)}\")
-    raise DatabaseError(f\"Error during application startup: {str(e)}\") DatabaseError(f"Error during application startup: {str(e)}")
+        logger.error(f"Error during application startup: {str(e)}")
+        raise DatabaseError(f"Error during application startup: {str(e)}")
 
     yield
 

@@ -27,7 +27,7 @@ from asf.medical.storage.models import User
 from asf.medical.api.export_utils_consolidated import (
     export_to_json, export_to_csv, export_to_excel
 )
-from asf.medical.core.monitoring import async_timed, log_error
+from asf.medical.core.observability import async_timed, log_error
 
 router = APIRouter(prefix="/export", tags=["export"])
 
@@ -46,6 +46,23 @@ async def export_results(
     analysis_service: AnalysisService = Depends(get_analysis_service),
     current_user: User = Depends(get_current_active_user)
 ):
+    """Export search results or analysis to the specified format.
+    
+    Args:
+        format: The export format (json, csv, excel, pdf)
+        request: The export request containing result_id or query
+        background_tasks: FastAPI background tasks manager
+        synthesizer: The search synthesizer service
+        search_service: The search service
+        analysis_service: The analysis service
+        current_user: The current authenticated user
+        
+    Returns:
+        APIResponse containing export status and file URL
+        
+    Raises:
+        HTTPException: If the format is not supported, result not found, or an error occurs
+    """
     try:
         if format.lower() not in ["json", "csv", "excel", "pdf"]:
             logger.error(f"Unsupported export format: {format}")
@@ -184,7 +201,21 @@ async def export_results(
             detail=f"Error exporting results: {str(e)}"
         )
 
-async def export_search_results(format: str, results: list, query_text: str, background_tasks: Optional[BackgroundTasks] = None):  # background_tasks param kept for compatibility
+async def export_search_results(format: str, results: list, query_text: str, background_tasks: Optional[BackgroundTasks] = None):
+    """Export search results to the specified format.
+    
+    Args:
+        format: The export format (json, csv, excel, pdf)
+        results: The search results to export
+        query_text: The query text that generated these results
+        background_tasks: Optional background tasks handler
+        
+    Returns:
+        FileResponse or JSONResponse depending on the format
+        
+    Raises:
+        ValueError: If the format is not supported
+    """
     try:
         if format.lower() == "pdf":
             temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
@@ -211,11 +242,28 @@ async def export_search_results(format: str, results: list, query_text: str, bac
         else:
             raise ValueError(f"Unsupported export format: {format}")
     except Exception as e:
-    logger.error(f\"Error in export_search_results: {str(e)}\")
-    raise DatabaseError(f\"Error in export_search_results: {str(e)}\")
+        logger.error(f"Error in export_search_results: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            detail=f"Error in export_search_results: {str(e)}"
+        )
 
 
-async def export_contradiction_analysis(format: str, analysis: dict, query_text: str, background_tasks: Optional[BackgroundTasks] = None):  # background_tasks param kept for compatibility
+async def export_contradiction_analysis(format: str, analysis: dict, query_text: str, background_tasks: Optional[BackgroundTasks] = None):
+    """Export contradiction analysis to the specified format.
+    
+    Args:
+        format: The export format (json, pdf)
+        analysis: The contradiction analysis data to export
+        query_text: The query text that generated this analysis
+        background_tasks: Optional background tasks handler
+        
+    Returns:
+        FileResponse or JSONResponse depending on the format
+        
+    Raises:
+        ValueError: If the format is not supported for contradiction analysis
+    """
     try:
         if format.lower() == "pdf":
             temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
@@ -238,12 +286,23 @@ async def export_contradiction_analysis(format: str, analysis: dict, query_text:
         else:
             raise ValueError(f"Unsupported export format for contradiction analysis: {format}")
     except Exception as e:
-    logger.error(f\"Error in export_contradiction_analysis: {str(e)}\")
-    raise DatabaseError(f\"Error in export_contradiction_analysis: {str(e)}\")
+        logger.error(f"Error in export_contradiction_analysis: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error in export_contradiction_analysis: {str(e)}"
+        )
 
 
 @router.get("/status/{task_id}", response_model=APIResponse[Dict[str, Any]])
 async def get_export_status(task_id: str):
+    """Get the status of an export task.
+    
+    Args:
+        task_id: The ID of the export task or file path
+        
+    Returns:
+        APIResponse with status information and file URL if completed
+    """
     try:
         task_result = get_task_result(task_id)
 
@@ -289,14 +348,25 @@ async def get_export_status(task_id: str):
         )
 
     except Exception as e:
-    logger.error(f\"Error getting export status: {str(e)}\")
-    raise DatabaseError(f\"Error getting export status: {str(e)}\") HTTPException(
+        logger.error(f"Error getting export status: {str(e)}")
+        raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error getting export status: {str(e)}"
         )
 
 @router.get("/download/{file_name}", response_class=FileResponse)
 async def download_export(file_name: str):
+    """Download an exported file.
+    
+    Args:
+        file_name: The name of the file to download
+        
+    Returns:
+        FileResponse containing the requested file
+        
+    Raises:
+        HTTPException: If the file is not found or an error occurs
+    """
     try:
         temp_dir = tempfile.gettempdir()
         file_path = os.path.join(temp_dir, file_name)
@@ -315,10 +385,9 @@ async def download_export(file_name: str):
 
     except HTTPException:
         raise
-
     except Exception as e:
-    logger.error(f\"Error downloading export: {str(e)}\")
-    raise DatabaseError(f\"Error downloading export: {str(e)}\") HTTPException(
+        logger.error(f"Error downloading export: {str(e)}")
+        raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error downloading export: {str(e)}"
         )

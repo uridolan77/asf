@@ -1,4 +1,7 @@
-Contradiction resolution API endpoints.
+"""Contradiction resolution API endpoints.
+
+This module provides endpoints for resolving contradictions in medical literature.
+"""
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from typing import Dict, List, Optional, Any
@@ -10,7 +13,7 @@ from asf.medical.ml.services.resolution.resolution_models import ResolutionStrat
 from asf.medical.api.dependencies import get_current_user
 
 class ContradictionResolutionRequest(BaseModel):
-    Request model for contradiction resolution.
+    """Request model for contradiction resolution."""
     claim1: str
     claim2: str
     metadata1: Optional[Dict[str, Any]] = None
@@ -19,7 +22,7 @@ class ContradictionResolutionRequest(BaseModel):
     use_combined_evidence: bool = False
 
 class ContradictionResolutionResponse(BaseModel):
-    Response model for contradiction resolution.
+    """Response model for contradiction resolution."""
     recommendation: str
     confidence: str
     confidence_score: float
@@ -44,6 +47,18 @@ async def resolve_contradiction(
     request: ContradictionResolutionRequest,
     current_user = Depends(get_current_user)
 ):
+    """Resolve a contradiction between two medical claims.
+    
+    Args:
+        request: The contradiction resolution request containing the claims and resolution options
+        current_user: The authenticated user making the request
+        
+    Returns:
+        ContradictionResolutionResponse: The resolution result with recommendation and explanation
+        
+    Raises:
+        HTTPException: If no contradiction is detected or if an error occurs during resolution
+    """
     try:
         contradiction = await contradiction_service.detect_contradiction(
             claim1=request.claim1,
@@ -89,6 +104,20 @@ async def batch_resolve_contradictions(
     use_combined_evidence: bool = Query(False, description="Whether to use combined evidence approach"),
     current_user = Depends(get_current_user)
 ):
+    """Resolve multiple contradictions in batch mode.
+    
+    Args:
+        contradictions: List of contradiction data to resolve
+        strategy: Optional resolution strategy to apply to all contradictions
+        use_combined_evidence: Whether to use the combined evidence approach for resolution
+        current_user: The authenticated user making the request
+        
+    Returns:
+        Dict containing total contradictions, resolved contradictions count, and resolution results
+        
+    Raises:
+        HTTPException: If no contradictions are provided or if an error occurs during resolution
+    """
     try:
         if not contradictions:
             raise HTTPException(status_code=400, detail="No contradictions provided")
@@ -132,6 +161,17 @@ async def batch_resolve_contradictions(
 async def get_resolution_history(
     current_user = Depends(get_current_user)
 ):
+    """Get the history of contradiction resolutions.
+    
+    Args:
+        current_user: The authenticated user making the request
+        
+    Returns:
+        Dict containing total history entries and the history data
+        
+    Raises:
+        HTTPException: If an error occurs retrieving the history
+    """
     try:
         history = resolution_service.get_resolution_history()
         return {
@@ -147,6 +187,19 @@ async def add_resolution_feedback(
     feedback: Dict[str, Any],
     current_user = Depends(get_current_user)
 ):
+    """Add user feedback to a previously resolved contradiction.
+    
+    Args:
+        contradiction_id: The ID of the resolved contradiction to provide feedback for
+        feedback: The feedback data to associate with the resolution
+        current_user: The authenticated user providing the feedback
+        
+    Returns:
+        Dict containing a success message
+        
+    Raises:
+        HTTPException: If the contradiction ID is not found or an error occurs adding feedback
+    """
     try:
         success = resolution_service.add_resolution_feedback(
             contradiction_id=contradiction_id,

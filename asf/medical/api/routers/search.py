@@ -1,6 +1,7 @@
-Search router for the Medical Research Synthesizer API.
+"""Search router for the Medical Research Synthesizer API.
 
 This module provides endpoints for searching medical literature.
+"""
 
 import logging
 import traceback
@@ -13,7 +14,7 @@ from asf.medical.api.dependencies import get_search_service
 from asf.medical.api.auth import get_current_active_user
 from asf.medical.services.search_service import SearchService
 from asf.medical.storage.models import User
-from asf.medical.core.monitoring import async_timed, log_error
+from asf.medical.core.observability import async_timed, log_error
 from asf.medical.core.exceptions import SearchError, ValidationError
 
 router = APIRouter(prefix="/search", tags=["search"])
@@ -29,6 +30,23 @@ async def search(
     req: Request = None,
     res: Response = None
 ):
+    """Perform a search of medical literature.
+    
+    Args:
+        request: Search query request containing the query string and search parameters
+        search_service: Service for executing the search
+        current_user: The authenticated user making the request
+        req: The FastAPI request object
+        res: The FastAPI response object
+    
+    Returns:
+        APIResponse containing the search results
+        
+    Raises:
+        HTTPException: For unexpected server errors
+        ValidationError: For invalid search parameters
+        SearchError: For errors during the search process
+    """
     try:
         request_id = req.headers.get("X-Request-ID") if req else None
         if request_id and res:
@@ -124,6 +142,28 @@ async def search_pico(
     req: Request = None,
     res: Response = None
 ):
+    """Perform a structured PICO-based search of medical literature.
+    
+    The PICO framework structures clinical questions with:
+    - Population/Problem
+    - Intervention
+    - Comparison (implied)
+    - Outcome
+    
+    Args:
+        request: PICO search request parameters
+        search_service: Service for executing the search
+        current_user: The authenticated user making the request
+        req: The FastAPI request object
+        res: The FastAPI response object
+    
+    Returns:
+        APIResponse containing the PICO search results
+        
+    Raises:
+        HTTPException: For unexpected server errors
+        ValueError: For invalid PICO search parameters
+    """
     try:
         request_id = req.headers.get("X-Request-ID") if req else None
         if request_id and res:
@@ -193,6 +233,20 @@ async def get_search_result(
     search_service: SearchService = Depends(get_search_service),
     current_user: User = Depends(get_current_active_user)
 ):
+    """Retrieve a previously executed search result by its ID.
+    
+    Args:
+        result_id: ID of the search result to retrieve
+        search_service: Search service for retrieving results
+        current_user: The authenticated user making the request
+    
+    Returns:
+        APIResponse containing the requested search result
+        
+    Raises:
+        HTTPException: For unexpected server errors
+        ErrorResponse: If the result is not found
+    """
     try:
         logger.info(f"Get search result request: result_id={result_id}, user_id={current_user.id}")
 

@@ -19,8 +19,9 @@ from asf.medical.ml.services.bias_assessment_service import (
     BiasAssessmentService, BiasRisk, BiasDomain
 )
 from asf.medical.services.search_service import SearchService
+from asf.medical.services.screening_service import ScreeningService
 from asf.medical.storage.models import User
-from asf.medical.core.monitoring import async_timed, log_error
+from asf.medical.core.observability import async_timed, log_error
 
 logger = logging.getLogger(__name__)
 

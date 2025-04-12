@@ -1,6 +1,7 @@
-Authentication router for the Medical Research Synthesizer API.
+"""Authentication router for the Medical Research Synthesizer API.
 
 This module provides endpoints for user authentication and management.
+"""
 
 import logging
 from datetime import timedelta
@@ -30,6 +31,19 @@ async def login_for_access_token(
     db: AsyncSession = Depends(get_db_session),
     auth_service: AuthService = Depends(get_auth_service)
 ):
+    """Authenticate user and generate access and refresh tokens.
+    
+    Args:
+        form_data: OAuth2 password request form containing username and password
+        db: Database session
+        auth_service: Authentication service instance
+        
+    Returns:
+        Token object containing access token, refresh token, token type, user role and expiration
+        
+    Raises:
+        HTTPException: If authentication fails
+    """
     user = await auth_service.authenticate_user(db, form_data.username, form_data.password)
 
     if not user:
@@ -69,6 +83,19 @@ async def refresh_access_token(
     db: AsyncSession = Depends(get_db_session),
     auth_service: AuthService = Depends(get_auth_service)
 ):
+    """Generate new access and refresh tokens using a valid refresh token.
+    
+    Args:
+        refresh_token: The refresh token to validate
+        db: Database session
+        auth_service: Authentication service instance
+        
+    Returns:
+        Token object containing new access token, refresh token, token type, user role and expiration
+        
+    Raises:
+        HTTPException: If refresh token is invalid or expired
+    """
     try:
         payload = jwt.decode(
             refresh_token,
@@ -133,6 +160,20 @@ async def register_user(
     auth_service: AuthService = Depends(get_auth_service),
     admin_user: DBUser = Depends(get_admin_user)
 ):
+    """Register a new user (admin only).
+    
+    Args:
+        user_data: User creation data containing email, password and role
+        db: Database session
+        auth_service: Authentication service instance
+        admin_user: Current authenticated admin user
+        
+    Returns:
+        Newly created user object
+        
+    Raises:
+        HTTPException: If user with the same email already exists
+    """
     user = await auth_service.register_user(
         db=db,
         email=user_data.email,
@@ -155,6 +196,14 @@ async def register_user(
 async def get_current_user_info(
     current_user: DBUser = Depends(get_current_active_user)
 ):
+    """Get information about the current authenticated user.
+    
+    Args:
+        current_user: Current authenticated user
+        
+    Returns:
+        User object with current user information
+    """
     return current_user
 
 @router.put("/me", response_model=User)
@@ -164,6 +213,20 @@ async def update_current_user_info(
     auth_service: AuthService = Depends(get_auth_service),
     current_user: DBUser = Depends(get_current_active_user)
 ):
+    """Update the current authenticated user's information.
+    
+    Args:
+        user_data: User update data
+        db: Database session
+        auth_service: Authentication service instance
+        current_user: Current authenticated user
+        
+    Returns:
+        Updated user object
+        
+    Raises:
+        HTTPException: If update fails
+    """
     update_data = user_data.dict(exclude_unset=True)
 
     updated_user = await auth_service.update_user(
@@ -191,6 +254,18 @@ async def get_users(
     auth_service: AuthService = Depends(get_auth_service),
     admin_user: DBUser = Depends(get_admin_user)
 ):
+    """Get a list of users (admin only).
+    
+    Args:
+        skip: Number of users to skip (pagination)
+        limit: Maximum number of users to return (pagination)
+        db: Database session
+        auth_service: Authentication service instance
+        admin_user: Current authenticated admin user
+        
+    Returns:
+        List of user objects
+    """
     users = await auth_service.get_users(db, skip, limit)
     return users
 
@@ -201,6 +276,20 @@ async def get_user(
     auth_service: AuthService = Depends(get_auth_service),
     admin_user: DBUser = Depends(get_admin_user)
 ):
+    """Get a specific user by ID (admin only).
+    
+    Args:
+        user_id: ID of the user to retrieve
+        db: Database session
+        auth_service: Authentication service instance
+        admin_user: Current authenticated admin user
+        
+    Returns:
+        User object
+        
+    Raises:
+        HTTPException: If user not found
+    """
     user = await auth_service.user_repository.get_by_id_async(db, user_id)
 
     if not user:
@@ -219,6 +308,21 @@ async def update_user(
     auth_service: AuthService = Depends(get_auth_service),
     admin_user: DBUser = Depends(get_admin_user)
 ):
+    """Update a specific user's information (admin only).
+    
+    Args:
+        user_id: ID of the user to update
+        user_data: User update data
+        db: Database session
+        auth_service: Authentication service instance
+        admin_user: Current authenticated admin user
+        
+    Returns:
+        Updated user object
+        
+    Raises:
+        HTTPException: If user not found
+    """
     update_data = user_data.dict(exclude_unset=True)
 
     updated_user = await auth_service.update_user(
@@ -244,6 +348,20 @@ async def delete_user(
     auth_service: AuthService = Depends(get_auth_service),
     admin_user: DBUser = Depends(get_admin_user)
 ):
+    """Delete a specific user (admin only).
+    
+    Args:
+        user_id: ID of the user to delete
+        db: Database session
+        auth_service: Authentication service instance
+        admin_user: Current authenticated admin user
+        
+    Returns:
+        None
+        
+    Raises:
+        HTTPException: If user not found
+    """
     success = await auth_service.delete_user(db, user_id)
 
     if not success:

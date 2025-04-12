@@ -37,18 +37,37 @@ class ModelCacheResponse(BaseModel):
 
 @router.get("/stats", response_model=ModelCacheStats)
 async def get_model_cache_stats():
+    """Retrieve current model cache statistics.
+    
+    Returns:
+        ModelCacheStats: Statistics about the current model cache state
+        
+    Raises:
+        HTTPException: If an error occurs retrieving cache stats
+    """
     try:
         stats = model_cache.get_stats()
         return ModelCacheStats(**stats)
     except Exception as e:
-    logger.error(f\"Error getting model cache stats: {str(e)}\")
-    raise DatabaseError(f\"Error getting model cache stats: {str(e)}\") HTTPException(
+        logger.error(f"Error getting model cache stats: {str(e)}")
+        raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error getting model cache stats: {str(e)}",
         )
 
 @router.delete("/models/{model_id}", response_model=ModelCacheResponse)
 async def remove_model(model_id: str):
+    """Remove a specific model from the cache.
+    
+    Args:
+        model_id: The ID of the model to remove
+        
+    Returns:
+        ModelCacheResponse: Success message confirming removal
+        
+    Raises:
+        HTTPException: If an error occurs removing the model
+    """
     try:
         model_cache.remove(model_id)
         return ModelCacheResponse(
@@ -56,14 +75,22 @@ async def remove_model(model_id: str):
             message=f"Model removed from cache: {model_id}",
         )
     except Exception as e:
-    logger.error(f\"Error removing model from cache: {str(e)}\")
-    raise DatabaseError(f\"Error removing model from cache: {str(e)}\") HTTPException(
+        logger.error(f"Error removing model from cache: {str(e)}")
+        raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error removing model from cache: {str(e)}",
         )
 
 @router.delete("/clear", response_model=ModelCacheResponse)
 async def clear_model_cache():
+    """Clear the entire model cache.
+    
+    Returns:
+        ModelCacheResponse: Success message confirming cache clearance
+        
+    Raises:
+        HTTPException: If an error occurs clearing the cache
+    """
     try:
         model_cache.clear()
         return ModelCacheResponse(
@@ -71,8 +98,8 @@ async def clear_model_cache():
             message="Model cache cleared",
         )
     except Exception as e:
-    logger.error(f\"Error clearing model cache: {str(e)}\")
-    raise DatabaseError(f\"Error clearing model cache: {str(e)}\") HTTPException(
+        logger.error(f"Error clearing model cache: {str(e)}")
+        raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error clearing model cache: {str(e)}",
         )
