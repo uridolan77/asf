@@ -1,8 +1,9 @@
+"""
 Error handling middleware for the ASF Medical Research Synthesizer API.
 
 This module provides middleware for handling exceptions in the API and converting
 them to appropriate HTTP responses.
-
+"""
 from fastapi import Request, status
 from fastapi.responses import JSONResponse
 from fastapi.exception_handlers import http_exception_handler

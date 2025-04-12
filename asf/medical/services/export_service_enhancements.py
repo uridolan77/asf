@@ -19,8 +19,9 @@ from asf.medical.core.exceptions import (
 from asf.medical.core.progress_tracker import ProgressTracker
 logger = logging.getLogger(__name__)
 class ExportFormat(str, Enum):
-    """
-    Supported export formats.
+    """Supported export formats.
+
+    This enum defines the available export formats for search results and analyses.
     """
     JSON = "json"
     CSV = "csv"
@@ -239,27 +240,4 @@ def export_to_html(data: Dict[str, Any], output_path: str, template: Optional[st
         </div>
     </body>
     </html>
-    Export data to Markdown.
-    Args:
-        data: Data to export
-        output_path: Path to save the Markdown file
-    Returns:
-        Path to the exported file
-    Export data to BibTeX.
-    Args:
-        data: Data to export
-        output_path: Path to save the BibTeX file
-    Returns:
-        Path to the exported file
-    Export data to RIS (Research Information Systems) format.
-    Args:
-        data: Data to export
-        output_path: Path to save the RIS file
-    Returns:
-        Path to the exported file
-    Export data to DOCX.
-    Args:
-        data: Data to export
-        output_path: Path to save the DOCX file
-    Returns:
-        Path to the exported file
+    """

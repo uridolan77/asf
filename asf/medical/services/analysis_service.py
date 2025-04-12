@@ -1,5 +1,5 @@
-"""
-Analysis service for the Medical Research Synthesizer.
+"""Analysis service for the Medical Research Synthesizer.
+
 This module provides a service for analyzing medical literature.
 """
 import logging
@@ -7,9 +7,9 @@ import uuid
 import hashlib
 from datetime import datetime
 from typing import Dict, Any, Optional
-from asf.medical.core.enhanced_cache import enhanced_cache_manager as cache_manager, enhanced_cached as cached
+from asf.medical.core.enhanced_cache import enhanced_cache_manager, enhanced_cached
 from asf.medical.core.exceptions import (
-    AnalysisError, ResourceNotFoundError, ValidationError,
+    AnalysisError, ValidationError,
     ExternalServiceError, DatabaseError, ModelError
 )
 from asf.medical.ml.services.contradiction_service import ContradictionService
@@ -18,8 +18,11 @@ from asf.medical.services.search_service import SearchService
 from asf.medical.storage.repositories.result_repository import ResultRepository
 logger = logging.getLogger(__name__)
 class AnalysisService:
-    """
-    Service for analyzing medical literature.
+    """Service for analyzing medical literature.
+
+    This service provides methods for analyzing medical literature, including
+    contradiction detection, CAP (Community-Acquired Pneumonia) analysis,
+    and retrieving previously performed analyses.
     """
     def __init__(
         self,
@@ -65,8 +68,8 @@ class AnalysisService:
                     "detection_method": "none"
                 }
         except Exception as e:
-    logger.error(f\"Error searching for articles: {str(e)}\")
-    raise DatabaseError(f\"Error searching for articles: {str(e)}\") ExternalServiceError("Search Service", f"Failed to search for articles: {str(e)}")
+            logger.error(f"Error searching for articles: {str(e)}")
+            raise ExternalServiceError("Search Service", f"Failed to search for articles: {str(e)}")
         articles = search_result['results']
         try:
             contradictions = await self.contradiction_service.detect_contradictions_in_articles(
@@ -93,8 +96,8 @@ class AnalysisService:
             }
             logger.info(f"Contradiction analysis completed: {len(contradictions)} contradictions found using {detection_method}")
         except Exception as e:
-    logger.error(f\"Error detecting contradictions: {str(e)}\")
-    raise DatabaseError(f\"Error detecting contradictions: {str(e)}\") ModelError("Contradiction Service", f"Failed to detect contradictions: {str(e)}")
+            logger.error(f"Error detecting contradictions: {str(e)}")
+            raise ModelError("Contradiction Service", f"Failed to detect contradictions: {str(e)}")
         cache_key = f"analysis:{analysis_id}"
         cache_value = {
             'analysis': analysis_result,
@@ -105,7 +108,7 @@ class AnalysisService:
         if user_id:
             try:
                 await self.result_repository.create_async(
-                    db,  # This will be handled by the repository
+                    None,  # This will be handled by the repository
                     obj_in={
                         'result_id': analysis_id,
                         'user_id': user_id,
@@ -136,8 +139,8 @@ class AnalysisService:
                     "analysis_id": str(uuid.uuid4())
                 }
         except Exception as e:
-    logger.error(f\"Error searching for CAP articles: {str(e)}\")
-    raise DatabaseError(f\"Error searching for CAP articles: {str(e)}\") ExternalServiceError("Search Service", f"Failed to search for CAP articles: {str(e)}")
+            logger.error(f"Error searching for CAP articles: {str(e)}")
+            raise ExternalServiceError("Search Service", f"Failed to search for CAP articles: {str(e)}")
         articles = search_result['results']
         try:
             analysis = {
@@ -186,8 +189,8 @@ class AnalysisService:
             }
             logger.info(f"CAP analysis completed: {len(articles)} articles analyzed")
         except Exception as e:
-    logger.error(f\"Error analyzing CAP literature: {str(e)}\")
-    raise DatabaseError(f\"Error analyzing CAP literature: {str(e)}\") AnalysisError("CAP Analysis", f"Failed to analyze CAP literature: {str(e)}")
+            logger.error(f"Error analyzing CAP literature: {str(e)}")
+            raise AnalysisError("CAP Analysis", f"Failed to analyze CAP literature: {str(e)}")
         cache_key = f"analysis:{analysis_id}"
         cache_value = {
             'analysis': analysis_result,
@@ -198,7 +201,7 @@ class AnalysisService:
         if user_id:
             try:
                 await self.result_repository.create_async(
-                    db,  # This will be handled by the repository
+                    None,  # This will be handled by the repository
                     obj_in={
                         'result_id': analysis_id,
                         'user_id': user_id,
@@ -222,7 +225,7 @@ class AnalysisService:
             logger.debug(f"Analysis found in cache: {analysis_id}")
             return cached_result
         try:
-            result = await self.result_repository.get_by_result_id_async(db, result_id=analysis_id)
+            result = await self.result_repository.get_by_result_id_async(None, result_id=analysis_id)
             if result:
                 logger.debug(f"Analysis found in database: {analysis_id}")
                 result_dict = {
@@ -236,5 +239,5 @@ class AnalysisService:
                 logger.warning(f"Analysis not found: {analysis_id}")
                 return None
         except Exception as e:
-    logger.error(f\"Error getting analysis from database: {str(e)}\")
-    raise DatabaseError(f\"Error getting analysis from database: {str(e)}\") DatabaseError(f"Failed to retrieve analysis: {str(e)}")
+            logger.error(f"Error getting analysis from database: {str(e)}")
+            raise DatabaseError(f"Failed to retrieve analysis: {str(e)}")

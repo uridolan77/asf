@@ -20,19 +20,20 @@ from asf.medical.core.exceptions import (
 logger = logging.getLogger(__name__)
 
 class ExportService:
-    """
-    Service for exporting search results and analyses.
+    """Service for exporting search results and analyses.
+
+    This service provides methods for exporting search results and analyses
+    in various formats (JSON, CSV, Excel, PDF).
     """
 
     def __init__(self, export_dir: str = "exports"):
-        """
-        Initialize the export service.
+        """Initialize the export service.
 
         Args:
-            export_dir: Directory for storing exports
+            export_dir: Directory to store exported files
 
         Raises:
-            FileError: If there's an error creating the export directory
+            FileError: If the export directory cannot be created
         """
         self.export_dir = export_dir
 
@@ -40,8 +41,8 @@ class ExportService:
             os.makedirs(self.export_dir, exist_ok=True)
             logger.info(f"Export directory initialized: {self.export_dir}")
         except Exception as e:
-    logger.error(f\"Failed to create export directory: {str(e)}\")
-    raise DatabaseError(f\"Failed to create export directory: {str(e)}\") FileError(self.export_dir, f"Failed to create export directory: {str(e)}")
+            logger.error(f"Failed to create export directory: {str(e)}")
+            raise FileError(self.export_dir, f"Failed to create export directory: {str(e)}")
 
     async def export_to_json(
         self,

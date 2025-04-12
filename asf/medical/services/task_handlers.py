@@ -1,5 +1,7 @@
-Task handlers for the Medical Research Synthesizer.
+"""Task handlers for the Medical Research Synthesizer.
+
 This module provides handlers for processing tasks from the message broker.
+"""
 import asyncio
 import time
 import uuid
@@ -14,19 +16,25 @@ from asf.medical.core.messaging.schemas import TaskType
 from asf.medical.api.websockets.task_updates import task_update_manager
 logger = get_logger(__name__)
 class SearchTaskHandler(TaskHandler):
-    Handler for search tasks.
+    """Handler for search tasks.
+
     This handler processes search tasks from the message broker.
+    """
+
     def __init__(self):
-        Initialize the search task handler.
-        
-        Args:
-        
-        Handle a search task.
+        """Initialize the search task handler."""
+        super().__init__()
+        self.task_repository = TaskRepository()
+
+    async def handle(self, task_id: str, task_type: str, task_data: Dict[str, Any], properties: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle a search task.
+
         Args:
             task_id: Task ID
             task_type: Task type
             task_data: Task data
             properties: Task properties
+
         Returns:
             Task result
         """
@@ -312,19 +320,25 @@ class SearchTaskHandler(TaskHandler):
             "total_pages": 1
         }
 class AnalysisTaskHandler(TaskHandler):
-    Handler for analysis tasks.
+    """Handler for analysis tasks.
+
     This handler processes analysis tasks from the message broker.
+    """
+
     def __init__(self):
-        Initialize the analysis task handler.
-        
-        Args:
-        
-        Handle an analysis task.
+        """Initialize the analysis task handler."""
+        super().__init__()
+        self.task_repository = TaskRepository()
+
+    async def handle(self, task_id: str, task_type: str, task_data: Dict[str, Any], properties: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle an analysis task.
+
         Args:
             task_id: Task ID
             task_type: Task type
             task_data: Task data
             properties: Task properties
+
         Returns:
             Task result
         """
@@ -639,19 +653,25 @@ class AnalysisTaskHandler(TaskHandler):
             "analysis": f"Research on {topic} has shown consistent growth over the past two decades, with a significant acceleration after 2010."
         }
 class ExportTaskHandler(TaskHandler):
-    Handler for export tasks.
+    """Handler for export tasks.
+
     This handler processes export tasks from the message broker.
+    """
+
     def __init__(self):
-        Initialize the export task handler.
-        
-        Args:
-        
-        Handle an export task.
+        """Initialize the export task handler."""
+        super().__init__()
+        self.task_repository = TaskRepository()
+
+    async def handle(self, task_id: str, task_type: str, task_data: Dict[str, Any], properties: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle an export task.
+
         Args:
             task_id: Task ID
             task_type: Task type
             task_data: Task data
             properties: Task properties
+
         Returns:
             Task result
         """

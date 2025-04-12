@@ -24,12 +24,7 @@ class Neo4jClient:
             cls._instance = super(Neo4jClient, cls).__new__(cls)
         return cls._instance
     def __init__(self):
-        """Initialize the Neo4j client.
-    Args:
-        # TODO: Add parameter descriptions
-    Returns:
-        # TODO: Add return description
-    """
+        """Initialize the Neo4j client."""
         self.uri = settings.NEO4J_URI
         self.user = settings.NEO4J_USER
         self.password = settings.NEO4J_PASSWORD.get_secret_value()
@@ -40,6 +35,7 @@ class Neo4jClient:
         Connect to the Neo4j database.
         Returns:
             bool: True if connection is successful, False otherwise
+        """
         if self.driver:
             self.driver.close()
             self.driver = None

@@ -1,5 +1,5 @@
-"""
-Search service for the Medical Research Synthesizer.
+"""Search service for the Medical Research Synthesizer.
+
 This module provides a service for searching medical literature.
 """
 import uuid
@@ -24,18 +24,22 @@ from asf.medical.data_ingestion_layer.query_builder import (
 )
 class SearchMethod(str, Enum):
     """Search method enum.
+
     This enum defines the available search methods:
     - PUBMED: Search PubMed using the NCBI API
     - CLINICAL_TRIALS: Search ClinicalTrials.gov
     - GRAPH_RAG: Search using GraphRAG (graph-based retrieval-augmented generation)
+    """
     """
     PUBMED = "pubmed"
     CLINICAL_TRIALS = "clinical_trials"
     GRAPH_RAG = "graph_rag"
 logger = get_logger(__name__)
 class SearchService:
-    """
-    Service for searching medical literature.
+    """Service for searching medical literature.
+
+    This service provides methods for searching medical literature from various sources,
+    including PubMed, ClinicalTrials.gov, and using GraphRAG for enhanced search capabilities.
     """
     def __init__(
         self,
@@ -58,8 +62,8 @@ class SearchService:
             logger.info("GraphRAG search method is not available")
         logger.info(f"Search service initialized with methods: {', '.join([m.value for m in available_methods])}")
     def is_graph_rag_available(self) -> bool:
-        """
-        Check if GraphRAG is available.
+        """Check if GraphRAG is available.
+
         Returns:
             bool: True if GraphRAG is available, False otherwise
         """

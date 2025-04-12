@@ -11,22 +11,53 @@ class PaginationParams(BaseModel):
 class QueryRequest(BaseModel):
     """
     Request model for the search endpoint.
+
     This model defines the parameters for searching medical literature using
     various search methods, including PubMed, ClinicalTrials.gov, and GraphRAG.
     GraphRAG (Graph-based Retrieval-Augmented Generation) combines vector search
     and graph traversal to find relevant articles, potentially providing more
     comprehensive and contextually relevant results than traditional search methods.
+    """
+    query: str = Field(..., description="The search query")
+    max_results: int = Field(20, description="Maximum number of results to return", ge=1, le=100)
+    use_pubmed: bool = Field(True, description="Whether to search PubMed")
+    use_clinical_trials: bool = Field(False, description="Whether to search ClinicalTrials.gov")
+    use_graph_rag: bool = Field(False, description="Whether to use GraphRAG for enhanced search")
+    use_vector_search: bool = Field(True, description="Whether to use vector search with GraphRAG")
+    use_graph_search: bool = Field(True, description="Whether to use graph search with GraphRAG")
+    pagination: PaginationParams = Field(default_factory=PaginationParams, description="Pagination parameters")
+
+    @field_validator('query')
+    def validate_query(cls, v):
+        """Validate that the query is not empty.
+
+        Args:
+            v: The query string
+
+        Returns:
+            The stripped query string
+
+        Raises:
+            ValueError: If the query is empty
+        """
         if not v or not v.strip():
             raise ValueError('Search query cannot be empty')
         return v.strip()
+
     @field_validator('use_vector_search', 'use_graph_search')
     def validate_graph_search_params(cls, v, info):
         """Validate that at least one search method is enabled when using GraphRAG.
-    Args:
-        # TODO: Add parameter descriptions
-    Returns:
-        # TODO: Add return description
-    """
+
+        Args:
+            v: The value of the field being validated
+            info: Validation context information
+
+        Returns:
+            The validated value
+
+        Raises:
+            ValueError: If neither vector search nor graph search is enabled when using GraphRAG
+        """
         values = info.data
         if 'use_graph_rag' in values and values['use_graph_rag']:
             if 'use_vector_search' in values and not values['use_vector_search'] and not v:

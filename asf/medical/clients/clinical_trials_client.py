@@ -7,7 +7,7 @@ import hashlib
 from typing import List, Optional
 import httpx
 from functools import wraps
-from asf.medical.core.enhanced_cache import enhanced_cache_manager as cache_manager, enhanced_cached as cached
+from asf.medical.core.cache import enhanced_cache_manager as cache_manager, enhanced_cached as cached
 from asf.medical.core.rate_limiter import AsyncRateLimiter
 from asf.medical.core.exceptions import ExternalServiceError
 logger = logging.getLogger(__name__)

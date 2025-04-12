@@ -1,5 +1,7 @@
+"""
 WebSocket endpoints for task updates.
 This module provides WebSocket endpoints for real-time task updates.
+"""
 import json
 import asyncio
 from typing import Dict, List, Any, Optional, Set
@@ -13,10 +15,13 @@ from asf.medical.api.dependencies import get_current_user_ws
 from asf.medical.storage.models import User
 logger = get_logger(__name__)
 class TaskUpdateManager:
+    """
     Manager for task update WebSocket connections.
     This class manages WebSocket connections for task updates,
     allowing clients to subscribe to updates for specific tasks.
+    """
     def __init__(self):
+        """
         Initialize the task update manager.
         
         Args:

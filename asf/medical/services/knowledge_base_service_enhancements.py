@@ -11,18 +11,19 @@ import json
 import logging
 import time
 import hashlib
+import uuid
 from typing import Dict, List, Optional, Any
 from datetime import datetime, timedelta
 from asf.medical.core.exceptions import (
-    ValidationError, ExternalServiceError, DatabaseError, 
+    ValidationError, ExternalServiceError, DatabaseError,
     ResourceNotFoundError, KnowledgeBaseError
 )
-from asf.medical.core.enhanced_cache import enhanced_cache_manager as cache_manager, enhanced_cached as cached
+from asf.medical.core.enhanced_cache import enhanced_cache_manager, enhanced_cached
 from asf.medical.core.progress_tracker import ProgressTracker
 logger = logging.getLogger(__name__)
 class KnowledgeBaseProgressTracker(ProgressTracker):
-    """
-    Progress tracker for knowledge base operations.
+    """Progress tracker for knowledge base operations.
+
     This class extends the base ProgressTracker to provide knowledge base-specific
     progress tracking functionality.
     """
@@ -69,7 +70,7 @@ class KnowledgeBaseProgressTracker(ProgressTracker):
     async def save_progress(self):
         progress_key = f"kb_progress:{self.kb_id}"
         await enhanced_cache_manager.set(
-            progress_key, 
+            progress_key,
             self.get_progress_details(),
             ttl=3600,  # 1 hour TTL
             data_type="progress"
@@ -216,8 +217,8 @@ async def calculate_kb_statistics(kb_file_path: str) -> Dict[str, Any]:
         stats["keywords"] = dict(sorted(stats["keywords"].items(), key=lambda x: x[1], reverse=True)[:20])
         return stats
     except Exception as e:
-    logger.error(f\"Error calculating knowledge base statistics: {str(e)}\")
-    raise DatabaseError(f\"Error calculating knowledge base statistics: {str(e)}\") KnowledgeBaseError(
+        logger.error(f"Error calculating knowledge base statistics: {str(e)}")
+        raise KnowledgeBaseError(
             component="Knowledge Base Statistics",
             message=f"Failed to calculate statistics: {str(e)}"
         )

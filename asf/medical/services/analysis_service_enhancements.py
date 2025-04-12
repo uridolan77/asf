@@ -1,23 +1,28 @@
-Enhanced Analysis Service for the Medical Research Synthesizer.
+"""Enhanced Analysis Service for the Medical Research Synthesizer.
+
 This module provides enhancements to the Analysis Service, including:
 - Better error handling for analysis errors
 - Validation of input data
 - Caching of analysis results
 - Progress tracking for long-running analyses
+"""
 import logging
 import time
 import hashlib
 from asf.medical.core.exceptions import (
-    ValidationError, ExternalServiceError, ModelError, 
+    ValidationError, ExternalServiceError, ModelError,
     DatabaseError, ResourceNotFoundError, AnalysisError
 )
-from asf.medical.core.enhanced_cache import enhanced_cache_manager as cache_manager, enhanced_cached as cached
+from typing import Dict, Any, Callable
+from asf.medical.core.enhanced_cache import enhanced_cache_manager, enhanced_cached
 from asf.medical.core.progress_tracker import ProgressTracker
 logger = logging.getLogger(__name__)
 class AnalysisProgressTracker(ProgressTracker):
-    Progress tracker for analysis operations.
+    """Progress tracker for analysis operations.
+
     This class extends the base ProgressTracker to provide analysis-specific
     progress tracking functionality.
+    """
     def __init__(self, analysis_id: str, total_steps: int = 100):
         """
         Initialize the analysis progress tracker.
@@ -52,18 +57,23 @@ class AnalysisProgressTracker(ProgressTracker):
     async def save_progress(self):
         progress_key = f"analysis_progress:{self.analysis_id}"
         await enhanced_cache_manager.set(
-            progress_key, 
+            progress_key,
             self.get_progress_details(),
             ttl=3600,  # 1 hour TTL
             data_type="progress"
         )
 def validate_analysis_input(func):
-    Decorator for validating analysis input data.
+    """Decorator for validating analysis input data.
+
     This decorator validates input parameters for analysis methods.
-    
+
     Args:
-        func: Description of func
-    
+        func: The function to decorate
+
+    Returns:
+        The decorated function
+    """
+
     async def wrapper(self, *args, **kwargs):
         query = kwargs.get('query', '')
         max_results = kwargs.get('max_results', 20)
@@ -95,7 +105,7 @@ def track_analysis_progress(analysis_type: str, total_steps: int = 100):
     def decorator(func):
         """
         decorator function.
-        
+
         This function provides functionality for...
         Args:
             func: Description of func
@@ -121,12 +131,17 @@ def track_analysis_progress(analysis_type: str, total_steps: int = 100):
         return wrapper
     return decorator
 def enhanced_error_handling(func):
-    Decorator for enhanced error handling in analysis methods.
+    """Decorator for enhanced error handling in analysis methods.
+
     This decorator adds detailed error handling to analysis methods.
-    
+
     Args:
-        func: Description of func
-    
+        func: The function to decorate
+
+    Returns:
+        The decorated function
+    """
+
     async def wrapper(self, *args, **kwargs):
         try:
             return await func(self, *args, **kwargs)
@@ -161,7 +176,7 @@ def cached_analysis(ttl: int = 3600, prefix: str = "analysis", data_type: str = 
     def decorator(func):
         """
         decorator function.
-        
+
         This function provides functionality for...
         Args:
             func: Description of func

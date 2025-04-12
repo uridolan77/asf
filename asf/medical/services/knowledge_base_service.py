@@ -1,5 +1,5 @@
-"""
-Knowledge base service for the Medical Research Synthesizer.
+"""Knowledge base service for the Medical Research Synthesizer.
+
 This module provides a service for creating and managing knowledge bases.
 """
 import os
@@ -8,7 +8,7 @@ import logging
 import uuid
 from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional
-from asf.medical.core.enhanced_cache import enhanced_cache_manager as cache_manager, enhanced_cached as cached
+from asf.medical.core.enhanced_cache import enhanced_cache_manager, enhanced_cached
 from asf.medical.core.exceptions import (
     ResourceNotFoundError, ValidationError,
     ExternalServiceError, DatabaseError, FileError
@@ -17,8 +17,10 @@ from asf.medical.services.search_service import SearchService
 from asf.medical.storage.repositories.kb_repository import KnowledgeBaseRepository
 logger = logging.getLogger(__name__)
 class KnowledgeBaseService:
-    """
-    Service for creating and managing knowledge bases.
+    """Service for creating and managing knowledge bases.
+
+    This service provides methods for creating, updating, and retrieving knowledge bases,
+    which are collections of medical literature organized around specific topics.
     """
     def __init__(
         self,
@@ -58,8 +60,8 @@ class KnowledgeBaseService:
         except ResourceNotFoundError:
             raise
         except Exception as e:
-    logger.error(f\"Error searching for articles: {str(e)}\")
-    raise DatabaseError(f\"Error searching for articles: {str(e)}\") ExternalServiceError("Search Service", f"Failed to search for articles: {str(e)}")
+            logger.error(f"Error searching for articles: {str(e)}")
+            raise ExternalServiceError("Search Service", f"Failed to search for articles: {str(e)}")
         articles = search_result['results']
         kb_id = str(uuid.uuid4())
         file_path = os.path.join(self.kb_dir, f"{kb_id}.json")
@@ -68,8 +70,8 @@ class KnowledgeBaseService:
                 json.dump(articles, f)
             logger.info(f"Knowledge base file created: {file_path}")
         except Exception as e:
-    logger.error(f\"Error creating knowledge base file: {str(e)}\")
-    raise DatabaseError(f\"Error creating knowledge base file: {str(e)}\") FileError(file_path, f"Failed to create knowledge base file: {str(e)}")
+            logger.error(f"Error creating knowledge base file: {str(e)}")
+            raise FileError(file_path, f"Failed to create knowledge base file: {str(e)}")
         now = datetime.now()
         try:
             if update_schedule == "daily":
@@ -153,8 +155,8 @@ class KnowledgeBaseService:
                 logger.debug(f"Knowledge base not found: {name}")
                 return None
         except Exception as e:
-    logger.error(f\"Error getting knowledge base by name: {str(e)}\")
-    raise DatabaseError(f\"Error getting knowledge base by name: {str(e)}\") DatabaseError(f"Failed to retrieve knowledge base: {str(e)}")
+            logger.error(f"Error getting knowledge base by name: {str(e)}")
+            raise DatabaseError(f"Failed to retrieve knowledge base: {str(e)}")
     async def get_knowledge_base_by_id(self, kb_id: str) -> Optional[Dict[str, Any]]:
         if not kb_id or not kb_id.strip():
             raise ValidationError("Knowledge base ID cannot be empty")
@@ -188,8 +190,8 @@ class KnowledgeBaseService:
                 logger.warning(f"Knowledge base not found: {kb_id}")
                 return None
         except Exception as e:
-    logger.error(f\"Error getting knowledge base by ID: {str(e)}\")
-    raise DatabaseError(f\"Error getting knowledge base by ID: {str(e)}\") DatabaseError(f"Failed to retrieve knowledge base: {str(e)}")
+            logger.error(f"Error getting knowledge base by ID: {str(e)}")
+            raise DatabaseError(f"Failed to retrieve knowledge base: {str(e)}")
     async def list_knowledge_bases(self, user_id: Optional[int] = None) -> List[Dict[str, Any]]:
         logger.info(f"Listing knowledge bases: user_id={user_id if user_id else 'all'}")
         cache_key = f"{self.kb_namespace}list:{user_id if user_id else 'all'}"
@@ -222,8 +224,8 @@ class KnowledgeBaseService:
             logger.info(f"Found {len(kb_dicts)} knowledge bases")
             return kb_dicts
         except Exception as e:
-    logger.error(f\"Error listing knowledge bases: {str(e)}\")
-    raise DatabaseError(f\"Error listing knowledge bases: {str(e)}\") DatabaseError(f"Failed to list knowledge bases: {str(e)}")
+            logger.error(f"Error listing knowledge bases: {str(e)}")
+            raise DatabaseError(f"Failed to list knowledge bases: {str(e)}")
     async def update_knowledge_base(self, kb_id: str) -> Dict[str, Any]:
         if not kb_id or not kb_id.strip():
             raise ValidationError("Knowledge base ID cannot be empty")
@@ -238,8 +240,8 @@ class KnowledgeBaseService:
         except ResourceNotFoundError:
             raise
         except Exception as e:
-    logger.error(f\"Error getting knowledge base: {str(e)}\")
-    raise DatabaseError(f\"Error getting knowledge base: {str(e)}\") DatabaseError(f"Failed to retrieve knowledge base: {str(e)}")
+            logger.error(f"Error getting knowledge base: {str(e)}")
+            raise DatabaseError(f"Failed to retrieve knowledge base: {str(e)}")
         logger.info(f"Updating knowledge base: {kb['name']} (kb_id={kb_id})")
         try:
             search_result = await self.search_service.search(
@@ -253,8 +255,8 @@ class KnowledgeBaseService:
         except ResourceNotFoundError:
             raise
         except Exception as e:
-    logger.error(f\"Error searching for articles: {str(e)}\")
-    raise DatabaseError(f\"Error searching for articles: {str(e)}\") ExternalServiceError("Search Service", f"Failed to search for articles: {str(e)}")
+            logger.error(f"Error searching for articles: {str(e)}")
+            raise ExternalServiceError("Search Service", f"Failed to search for articles: {str(e)}")
         articles = search_result['results']
         existing_articles = []
         try:
@@ -267,8 +269,8 @@ class KnowledgeBaseService:
             logger.error(f"Invalid JSON in knowledge base file: {str(e)}")
             raise FileError(kb['file_path'], f"Invalid JSON in knowledge base file: {str(e)}")
         except Exception as e:
-    logger.error(f\"Failed to load existing articles: {str(e)}\")
-    raise DatabaseError(f\"Failed to load existing articles: {str(e)}\") FileError(kb['file_path'], f"Failed to load existing articles: {str(e)}")
+            logger.error(f"Failed to load existing articles: {str(e)}")
+            raise FileError(kb['file_path'], f"Failed to load existing articles: {str(e)}")
         merged_articles = existing_articles + articles
         logger.info(f"Merged {len(existing_articles)} existing articles with {len(articles)} new articles")
         try:
@@ -276,8 +278,8 @@ class KnowledgeBaseService:
                 json.dump(merged_articles, f)
             logger.info(f"Updated knowledge base file: {kb['file_path']} with {len(merged_articles)} articles")
         except Exception as e:
-    logger.error(f\"Failed to save updated knowledge base: {str(e)}\")
-    raise DatabaseError(f\"Failed to save updated knowledge base: {str(e)}\") FileError(kb['file_path'], f"Failed to save updated knowledge base: {str(e)}")
+            logger.error(f"Failed to save updated knowledge base: {str(e)}")
+            raise FileError(kb['file_path'], f"Failed to save updated knowledge base: {str(e)}")
         now = datetime.now()
         try:
             if kb['update_schedule'] == "daily":
@@ -313,8 +315,8 @@ class KnowledgeBaseService:
             )
             logger.info(f"Knowledge base updated in database: {kb_id}")
         except Exception as e:
-    logger.error(f\"Error updating knowledge base in database: {str(e)}\")
-    raise DatabaseError(f\"Error updating knowledge base in database: {str(e)}\") DatabaseError(f"Failed to update knowledge base in database: {str(e)}")
+            logger.error(f"Error updating knowledge base in database: {str(e)}")
+            raise DatabaseError(f"Failed to update knowledge base in database: {str(e)}")
         logger.info(f"Knowledge base updated: {kb_id}")
         return kb
     async def delete_knowledge_base(self, kb_id: str) -> bool:
@@ -331,8 +333,8 @@ class KnowledgeBaseService:
         except ResourceNotFoundError:
             raise
         except Exception as e:
-    logger.error(f\"Error getting knowledge base: {str(e)}\")
-    raise DatabaseError(f\"Error getting knowledge base: {str(e)}\") DatabaseError(f"Failed to retrieve knowledge base: {str(e)}")
+            logger.error(f"Error getting knowledge base: {str(e)}")
+            raise DatabaseError(f"Failed to retrieve knowledge base: {str(e)}")
         logger.info(f"Deleting knowledge base: {kb['name']} (kb_id={kb_id})")
         try:
             os.remove(kb['file_path'])
@@ -340,8 +342,8 @@ class KnowledgeBaseService:
         except FileNotFoundError:
             logger.warning(f"Knowledge base file not found: {kb['file_path']}")
         except Exception as e:
-    logger.error(f\"Failed to delete knowledge base file: {str(e)}\")
-    raise DatabaseError(f\"Failed to delete knowledge base file: {str(e)}\") FileError(kb['file_path'], f"Failed to delete knowledge base file: {str(e)}")
+            logger.error(f"Failed to delete knowledge base file: {str(e)}")
+            raise FileError(kb['file_path'], f"Failed to delete knowledge base file: {str(e)}")
         cache_key = f"{self.kb_namespace}{kb_id}"
         await enhanced_cache_manager.delete(cache_key)
         name_cache_key = f"{self.kb_namespace}name:{kb['name']}"
@@ -356,7 +358,7 @@ class KnowledgeBaseService:
             await self.kb_repository.delete_async(db, kb_id=kb_id)
             logger.info(f"Deleted knowledge base from database: {kb_id}")
         except Exception as e:
-    logger.error(f\"Error deleting knowledge base from database: {str(e)}\")
-    raise DatabaseError(f\"Error deleting knowledge base from database: {str(e)}\") DatabaseError(f"Failed to delete knowledge base from database: {str(e)}")
+            logger.error(f"Error deleting knowledge base from database: {str(e)}")
+            raise DatabaseError(f"Failed to delete knowledge base from database: {str(e)}")
         logger.info(f"Knowledge base deleted: {kb_id}")
         return True

@@ -70,7 +70,7 @@ class TaskRepository(EnhancedBaseRepository[Task]):
             )
             return task
         except Exception as e:
-            await await await db.rollback()
+            await db.rollback()
             logger.error(f"Error creating task: {str(e)}", exc_info=e)
             raise DatabaseError(f"Failed to create task: {str(e)}")
     async def get_task_by_id(self, db: AsyncSession, task_id: str) -> Optional[Task]:
@@ -159,7 +159,7 @@ class TaskRepository(EnhancedBaseRepository[Task]):
             )
             return task
         except Exception as e:
-            await await await db.rollback()
+            await db.rollback()
             logger.error(f"Error updating task status: {str(e)}", exc_info=e)
             raise DatabaseError(f"Failed to update task status: {str(e)}")
     async def update_task_progress(
@@ -210,7 +210,7 @@ class TaskRepository(EnhancedBaseRepository[Task]):
             )
             return task
         except Exception as e:
-            await await await db.rollback()
+            await db.rollback()
             logger.error(f"Error updating task progress: {str(e)}", exc_info=e)
             raise DatabaseError(f"Failed to update task progress: {str(e)}")
     async def mark_task_for_retry(
@@ -267,7 +267,7 @@ class TaskRepository(EnhancedBaseRepository[Task]):
             )
             return task
         except Exception as e:
-            await await await db.rollback()
+            await db.rollback()
             logger.error(f"Error marking task for retry: {str(e)}", exc_info=e)
             raise DatabaseError(f"Failed to mark task for retry: {str(e)}")
     async def cancel_task(self, db: AsyncSession, task_id: str) -> Optional[Task]:
@@ -307,7 +307,7 @@ class TaskRepository(EnhancedBaseRepository[Task]):
             )
             return task
         except Exception as e:
-            await await await db.rollback()
+            await db.rollback()
             logger.error(f"Error cancelling task: {str(e)}", exc_info=e)
             raise DatabaseError(f"Failed to cancel task: {str(e)}")
     async def get_tasks_by_status(
@@ -470,7 +470,7 @@ class TaskRepository(EnhancedBaseRepository[Task]):
             await db.refresh(task_event)
             return task_event
         except Exception as e:
-            await await await db.rollback()
+            await db.rollback()
             logger.error(f"Error creating task event: {str(e)}", exc_info=e)
             raise DatabaseError(f"Failed to create task event: {str(e)}")
     async def get_task_events(
@@ -546,7 +546,7 @@ class TaskRepository(EnhancedBaseRepository[Task]):
             await db.refresh(dead_letter)
             return dead_letter
         except Exception as e:
-            await await await db.rollback()
+            await db.rollback()
             logger.error(f"Error creating dead letter message: {str(e)}", exc_info=e)
             raise DatabaseError(f"Failed to create dead letter message: {str(e)}")
     async def get_dead_letter_messages(
@@ -611,7 +611,7 @@ class TaskRepository(EnhancedBaseRepository[Task]):
             await db.refresh(dead_letter)
             return dead_letter
         except Exception as e:
-            await await await db.rollback()
+            await db.rollback()
             logger.error(f"Error marking dead letter as reprocessed: {str(e)}", exc_info=e)
             raise DatabaseError(f"Failed to mark dead letter as reprocessed: {str(e)}")
     async def delete_dead_letter_message(
@@ -639,7 +639,7 @@ class TaskRepository(EnhancedBaseRepository[Task]):
             await db.commit()
             return True
         except Exception as e:
-            await await await db.rollback()
+            await db.rollback()
             logger.error(f"Error deleting dead letter message: {str(e)}", exc_info=e)
             raise DatabaseError(f"Failed to delete dead letter message: {str(e)}")
     async def get_task_with_events(
@@ -703,7 +703,7 @@ class TaskRepository(EnhancedBaseRepository[Task]):
             await db.commit()
             return len(tasks_to_delete)
         except Exception as e:
-            await await await db.rollback()
+            await db.rollback()
             logger.error(f"Error cleaning up old tasks: {str(e)}", exc_info=e)
             raise DatabaseError(f"Failed to clean up old tasks: {str(e)}")
     async def cleanup_old_dead_letters(
@@ -741,6 +741,6 @@ class TaskRepository(EnhancedBaseRepository[Task]):
             await db.commit()
             return len(messages_to_delete)
         except Exception as e:
-            await await await db.rollback()
+            await db.rollback()
             logger.error(f"Error cleaning up old dead letters: {str(e)}", exc_info=e)
             raise DatabaseError(f"Failed to clean up old dead letters: {str(e)}")

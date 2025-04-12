@@ -1,5 +1,5 @@
-"""
-NCBI client for the Medical Research Synthesizer.
+"""NCBI client for the Medical Research Synthesizer.
+
 This module provides a client for interacting with the NCBI E-utilities API.
 """
 import asyncio
@@ -11,7 +11,7 @@ import xml.etree.ElementTree as ET
 from typing import Dict, List, Optional, Any, Union
 import httpx
 from asf.medical.core.config import settings
-from asf.medical.core.enhanced_cache import enhanced_cache_manager as cache_manager, enhanced_cached as cached, cached
+from asf.medical.core.enhanced_cache import enhanced_cache_manager, enhanced_cached
 from asf.medical.core.exceptions import ExternalServiceError, ValidationError
 logger = logging.getLogger(__name__)
 class NCBIClientError(ExternalServiceError):
@@ -20,11 +20,20 @@ class NCBIClientError(ExternalServiceError):
         self.status_code = status_code
         super().__init__("NCBI API", message)
 class NCBIClient:
-    """
-    Client for interacting with the NCBI E-utilities API.
+    """Client for interacting with the NCBI E-utilities API.
+
     This client provides methods for searching PubMed and retrieving article details.
     It includes retry logic, rate limiting, and caching to improve reliability and performance.
-        Initialize the NCBI client.
+    """
+
+    def __init__(self, email: Optional[str] = None, api_key: Optional[str] = None,
+                 tool: str = "MedicalResearchSynthesizer",
+                 base_url: str = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/",
+                 max_batch_size: int = 200, timeout: float = 30.0,
+                 max_retries: int = 3, cache_ttl: int = 3600,
+                 use_cache: bool = True):
+        """Initialize the NCBI client.
+
         Args:
             email: Email address for NCBI API (required)
             api_key: API key for NCBI API (optional)
@@ -35,11 +44,22 @@ class NCBIClient:
             max_retries: Maximum number of retries for failed requests (default: 3)
             cache_ttl: Cache TTL in seconds (default: 3600)
             use_cache: Whether to use caching (default: True)
+
         Raises:
             ValidationError: If email is not provided and not in settings
             ConfigurationError: If API configuration is invalid
+        """
+        # Implementation goes here
+
+    async def aclose(self):
+        """Close the client session."""
         await self.client.aclose()
     async def check_api_status(self) -> Dict[str, Any]:
+        """Check the status of the NCBI API.
+
+        Returns:
+            Dictionary with API status information
+        """
         try:
             params = {
                 "db": "pubmed",
@@ -150,7 +170,7 @@ class NCBIClient:
                 counts = {}
                 total = 0
                 for p in patterns:
-                    count = await cache_manager.count_pattern(p)
+                    count = await enhanced_cache_manager.count_pattern(p)
                     counts[p] = count
                     total += count
                 return {
@@ -160,7 +180,7 @@ class NCBIClient:
                     "ttl": self.cache_ttl
                 }
             else:
-                count = await cache_manager.count_pattern(pattern)
+                count = await enhanced_cache_manager.count_pattern(pattern)
                 return {
                     "enabled": True,
                     "total": count,
@@ -199,8 +219,8 @@ class NCBIClient:
             result = await self._make_request("einfo.fcgi", params)
             return result
         except Exception as e:
-    logger.error(f\"Error getting database info: {str(e)}\")
-    raise DatabaseError(f\"Error getting database info: {str(e)}\") NCBIClientError(f"Failed to get database info: {str(e)}")
+            logger.error(f"Error getting database info: {str(e)}")
+            raise NCBIClientError(f"Failed to get database info: {str(e)}")
     @enhanced_cached(prefix="ncbi_espell", data_type="search")
     async def get_spelling_suggestions(self, term: str, db: str = "pubmed") -> Dict[str, Any]:
         if not term or not term.strip():
@@ -214,8 +234,8 @@ class NCBIClient:
             result = await self._make_request("espell.fcgi", params)
             return result
         except Exception as e:
-    logger.error(f\"Error getting spelling suggestions: {str(e)}\")
-    raise DatabaseError(f\"Error getting spelling suggestions: {str(e)}\") NCBIClientError(f"Failed to get spelling suggestions: {str(e)}")
+            logger.error(f"Error getting spelling suggestions: {str(e)}")
+            raise NCBIClientError(f"Failed to get spelling suggestions: {str(e)}")
     @enhanced_cached(prefix="ncbi_egquery", data_type="search")
     async def search_all_databases(self, term: str) -> Dict[str, Any]:
         if not term or not term.strip():
@@ -228,8 +248,8 @@ class NCBIClient:
             result = await self._make_request("egquery.fcgi", params)
             return result
         except Exception as e:
-    logger.error(f\"Error searching all databases: {str(e)}\")
-    raise DatabaseError(f\"Error searching all databases: {str(e)}\") NCBIClientError(f"Failed to search all databases: {str(e)}")
+            logger.error(f"Error searching all databases: {str(e)}")
+            raise NCBIClientError(f"Failed to search all databases: {str(e)}")
     async def match_citations(self, citations: List[Dict[str, str]]) -> Dict[str, str]:
         if not citations:
             raise ValidationError("Citations list cannot be empty")
@@ -261,8 +281,8 @@ class NCBIClient:
                     matches[key] = pmid if pmid != "NOT_FOUND" else None
             return matches
         except Exception as e:
-    logger.error(f\"Error matching citations: {str(e)}\")
-    raise DatabaseError(f\"Error matching citations: {str(e)}\") NCBIClientError(f"Failed to match citations: {str(e)}")
+            logger.error(f"Error matching citations: {str(e)}")
+            raise NCBIClientError(f"Failed to match citations: {str(e)}")
     @enhanced_cached(prefix="ncbi_elink", data_type="search")
     async def get_links(self,
                        ids: Union[str, List[str]],
@@ -291,8 +311,8 @@ class NCBIClient:
             result = await self._make_request("elink.fcgi", params)
             return result
         except Exception as e:
-    logger.error(f\"Error getting links: {str(e)}\")
-    raise DatabaseError(f\"Error getting links: {str(e)}\") NCBIClientError(f"Failed to get links: {str(e)}")
+            logger.error(f"Error getting links: {str(e)}")
+            raise NCBIClientError(f"Failed to get links: {str(e)}")
     @enhanced_cached(prefix="ncbi_elink_history", data_type="search")
     async def get_links_and_post_to_history(self,
                                            ids: Union[str, List[str]],
@@ -332,8 +352,8 @@ class NCBIClient:
             result = await self._make_request("elink.fcgi", params)
             return result
         except Exception as e:
-    logger.error(f\"Error checking links: {str(e)}\")
-    raise DatabaseError(f\"Error checking links: {str(e)}\") NCBIClientError(f"Failed to check links: {str(e)}")
+            logger.error(f"Error checking links: {str(e)}")
+            raise NCBIClientError(f"Failed to check links: {str(e)}")
     @enhanced_cached(prefix="ncbi_linkout", data_type="search")
     async def get_linkout_urls(self,
                               ids: Union[str, List[str]],
@@ -357,8 +377,8 @@ class NCBIClient:
             result = await self._make_request("elink.fcgi", params)
             return result
         except Exception as e:
-    logger.error(f\"Error getting LinkOut URLs: {str(e)}\")
-    raise DatabaseError(f\"Error getting LinkOut URLs: {str(e)}\") NCBIClientError(f"Failed to get LinkOut URLs: {str(e)}")
+            logger.error(f"Error getting LinkOut URLs: {str(e)}")
+            raise NCBIClientError(f"Failed to get LinkOut URLs: {str(e)}")
     async def get_fulltext_url(self, pmid: str) -> str:
         if not pmid or not pmid.strip():
             raise ValidationError("PMID cannot be empty")
@@ -395,8 +415,8 @@ class NCBIClient:
             logger.error(f"{error_msg} for PMID {pmid}")
             raise NCBIClientError(f"Failed to get full-text URL: {str(e)}")
         except Exception as e:
-    logger.error(f\"Error getting full-text URL for PMID {pmid}: {str(e)}\")
-    raise DatabaseError(f\"Error getting full-text URL for PMID {pmid}: {str(e)}\") NCBIClientError(f"Failed to get full-text URL: {str(e)}")
+            logger.error(f"Error getting full-text URL for PMID {pmid}: {str(e)}")
+            raise NCBIClientError(f"Failed to get full-text URL: {str(e)}")
     @enhanced_cached(prefix="pubmed_related", data_type="search")
     async def get_related_articles(self, pmid: str, max_results: int = 20) -> List[Dict[str, Any]]:
         if not pmid or not pmid.strip():
@@ -428,8 +448,8 @@ class NCBIClient:
             logger.error(f"Error getting related articles for PMID {pmid}: {str(e)}")
             raise NCBIClientError(f"Failed to get related articles: {str(e)}", getattr(e, 'status_code', None))
         except Exception as e:
-    logger.error(f\"Unexpected error getting related articles for PMID {pmid}: {str(e)}\")
-    raise DatabaseError(f\"Unexpected error getting related articles for PMID {pmid}: {str(e)}\") NCBIClientError(f"Unexpected error getting related articles: {str(e)}")
+            logger.error(f"Unexpected error getting related articles for PMID {pmid}: {str(e)}")
+            raise NCBIClientError(f"Unexpected error getting related articles: {str(e)}")
     @enhanced_cached(prefix="pubmed_cited_by", data_type="search")
     async def get_citing_articles(self, pmid: str, max_results: int = 20) -> List[Dict[str, Any]]:
         if not pmid or not pmid.strip():
@@ -459,8 +479,8 @@ class NCBIClient:
             logger.error(f"Error getting citing articles for PMID {pmid}: {str(e)}")
             raise NCBIClientError(f"Failed to get citing articles: {str(e)}", getattr(e, 'status_code', None))
         except Exception as e:
-    logger.error(f\"Unexpected error getting citing articles for PMID {pmid}: {str(e)}\")
-    raise DatabaseError(f\"Unexpected error getting citing articles for PMID {pmid}: {str(e)}\") NCBIClientError(f"Unexpected error getting citing articles: {str(e)}")
+            logger.error(f"Unexpected error getting citing articles for PMID {pmid}: {str(e)}")
+            raise NCBIClientError(f"Unexpected error getting citing articles: {str(e)}")
     @enhanced_cached(prefix="pubmed_mesh", data_type="search")
     async def get_mesh_terms(self, pmid: str) -> List[Dict[str, str]]:
         if not pmid or not pmid.strip():
@@ -507,8 +527,8 @@ class NCBIClient:
             logger.error(f"Error getting MeSH terms for PMID {pmid}: {str(e)}")
             raise NCBIClientError(f"Failed to get MeSH terms: {str(e)}", getattr(e, 'status_code', None))
         except Exception as e:
-    logger.error(f\"Unexpected error getting MeSH terms for PMID {pmid}: {str(e)}\")
-    raise DatabaseError(f\"Unexpected error getting MeSH terms for PMID {pmid}: {str(e)}\") NCBIClientError(f"Unexpected error getting MeSH terms: {str(e)}")
+            logger.error(f"Unexpected error getting MeSH terms for PMID {pmid}: {str(e)}")
+            raise NCBIClientError(f"Unexpected error getting MeSH terms: {str(e)}")
     @enhanced_cached(prefix="pubmed_journal_info", data_type="search")
     async def get_journal_info(self, journal: str) -> Dict[str, Any]:
         if not journal or not journal.strip():
@@ -537,8 +557,8 @@ class NCBIClient:
             logger.error(f"Error getting journal info for '{journal}': {str(e)}")
             raise NCBIClientError(f"Failed to get journal info: {str(e)}", getattr(e, 'status_code', None))
         except Exception as e:
-    logger.error(f\"Unexpected error getting journal info for '{journal}': {str(e)}\")
-    raise DatabaseError(f\"Unexpected error getting journal info for '{journal}': {str(e)}\") NCBIClientError(f"Unexpected error getting journal info: {str(e)}")
+            logger.error(f"Unexpected error getting journal info for '{journal}': {str(e)}")
+            raise NCBIClientError(f"Unexpected error getting journal info: {str(e)}")
     @enhanced_cached(prefix="sequence_search", data_type="search")
     async def search_sequence_database(self,
                                      query: str,
@@ -587,8 +607,8 @@ class NCBIClient:
             logger.error(f"Error searching {db} database for '{query}': {str(e)}")
             raise NCBIClientError(f"Failed to search {db} database: {str(e)}", getattr(e, 'status_code', None))
         except Exception as e:
-    logger.error(f\"Unexpected error searching {db} database for '{query}': {str(e)}\")
-    raise DatabaseError(f\"Unexpected error searching {db} database for '{query}': {str(e)}\") NCBIClientError(f"Unexpected error searching {db} database: {str(e)}")
+            logger.error(f"Unexpected error searching {db} database for '{query}': {str(e)}")
+            raise NCBIClientError(f"Unexpected error searching {db} database: {str(e)}")
     @enhanced_cached(prefix="sequence_fetch", data_type="search")
     async def fetch_sequence(self,
                            id: str,
@@ -629,8 +649,8 @@ class NCBIClient:
             logger.error(f"Error fetching sequence {id} from {db} database: {str(e)}")
             raise NCBIClientError(f"Failed to fetch sequence: {str(e)}", getattr(e, 'status_code', None))
         except Exception as e:
-    logger.error(f\"Unexpected error fetching sequence {id} from {db} database: {str(e)}\")
-    raise DatabaseError(f\"Unexpected error fetching sequence {id} from {db} database: {str(e)}\") NCBIClientError(f"Unexpected error fetching sequence: {str(e)}")
+            logger.error(f"Unexpected error fetching sequence {id} from {db} database: {str(e)}")
+            raise NCBIClientError(f"Unexpected error fetching sequence: {str(e)}")
     @enhanced_cached(prefix="taxonomy_fetch", data_type="search")
     async def get_taxonomy(self, id: Union[str, int]) -> Dict[str, Any]:
         if not id:
@@ -669,8 +689,8 @@ class NCBIClient:
             logger.error(f"Error getting taxonomy for '{id}': {str(e)}")
             raise NCBIClientError(f"Failed to get taxonomy: {str(e)}", getattr(e, 'status_code', None))
         except Exception as e:
-    logger.error(f\"Unexpected error getting taxonomy for '{id}': {str(e)}\")
-    raise DatabaseError(f\"Unexpected error getting taxonomy for '{id}': {str(e)}\") NCBIClientError(f"Unexpected error getting taxonomy: {str(e)}")
+            logger.error(f"Unexpected error getting taxonomy for '{id}': {str(e)}")
+            raise NCBIClientError(f"Unexpected error getting taxonomy: {str(e)}")
     async def create_history_session(self) -> Dict[str, str]:
         try:
             logger.info("Creating new History server session")
@@ -694,8 +714,8 @@ class NCBIClient:
             logger.error(f"Error creating History server session: {str(e)}")
             raise NCBIClientError(f"Failed to create History server session: {str(e)}", getattr(e, 'status_code', None))
         except Exception as e:
-    logger.error(f\"Unexpected error creating History server session: {str(e)}\")
-    raise DatabaseError(f\"Unexpected error creating History server session: {str(e)}\") NCBIClientError(f"Unexpected error creating History server session: {str(e)}")
+            logger.error(f"Unexpected error creating History server session: {str(e)}")
+            raise NCBIClientError(f"Unexpected error creating History server session: {str(e)}")
     async def post_ids_to_history(self, ids: Union[str, List[str]], db: str, web_env: Optional[str] = None) -> Dict[str, str]:
         if not ids:
             raise ValidationError("IDs list cannot be empty")
@@ -728,8 +748,8 @@ class NCBIClient:
             logger.error(f"Error posting IDs to History server: {str(e)}")
             raise NCBIClientError(f"Failed to post IDs to History server: {str(e)}", getattr(e, 'status_code', None))
         except Exception as e:
-    logger.error(f\"Unexpected error posting IDs to History server: {str(e)}\")
-    raise DatabaseError(f\"Unexpected error posting IDs to History server: {str(e)}\") NCBIClientError(f"Unexpected error posting IDs to History server: {str(e)}")
+            logger.error(f"Unexpected error posting IDs to History server: {str(e)}")
+            raise NCBIClientError(f"Unexpected error posting IDs to History server: {str(e)}")
     async def search_and_post_to_history(self,
                                         query: str,
                                         db: str = "pubmed",
@@ -770,8 +790,8 @@ class NCBIClient:
             logger.error(f"Error searching and posting to History server: {str(e)}")
             raise NCBIClientError(f"Failed to search and post to History server: {str(e)}", getattr(e, 'status_code', None))
         except Exception as e:
-    logger.error(f\"Unexpected error searching and posting to History server: {str(e)}\")
-    raise DatabaseError(f\"Unexpected error searching and posting to History server: {str(e)}\") NCBIClientError(f"Unexpected error searching and posting to History server: {str(e)}")
+            logger.error(f"Unexpected error searching and posting to History server: {str(e)}")
+            raise NCBIClientError(f"Unexpected error searching and posting to History server: {str(e)}")
     async def fetch_from_history(self,
                                web_env: str,
                                query_key: str,
@@ -808,8 +828,8 @@ class NCBIClient:
             logger.error(f"Error fetching from History server: {str(e)}")
             raise NCBIClientError(f"Failed to fetch from History server: {str(e)}", getattr(e, 'status_code', None))
         except Exception as e:
-    logger.error(f\"Unexpected error fetching from History server: {str(e)}\")
-    raise DatabaseError(f\"Unexpected error fetching from History server: {str(e)}\") NCBIClientError(f"Unexpected error fetching from History server: {str(e)}")
+            logger.error(f"Unexpected error fetching from History server: {str(e)}")
+            raise NCBIClientError(f"Unexpected error fetching from History server: {str(e)}")
     async def get_summary_from_history(self,
                                      web_env: str,
                                      query_key: str,
@@ -842,8 +862,8 @@ class NCBIClient:
             logger.error(f"Error getting summaries from History server: {str(e)}")
             raise NCBIClientError(f"Failed to get summaries from History server: {str(e)}", getattr(e, 'status_code', None))
         except Exception as e:
-    logger.error(f\"Unexpected error getting summaries from History server: {str(e)}\")
-    raise DatabaseError(f\"Unexpected error getting summaries from History server: {str(e)}\") NCBIClientError(f"Unexpected error getting summaries from History server: {str(e)}")
+            logger.error(f"Unexpected error getting summaries from History server: {str(e)}")
+            raise NCBIClientError(f"Unexpected error getting summaries from History server: {str(e)}")
     async def batch_fetch_articles(self,
                                  pmids: List[str],
                                  batch_size: int = 200,
@@ -982,8 +1002,8 @@ class NCBIClient:
             logger.error(f"Error in batch search and fetch for '{query}' in {db}: {str(e)}")
             raise NCBIClientError(f"Failed to batch search and fetch: {str(e)}", getattr(e, 'status_code', None))
         except Exception as e:
-    logger.error(f\"Unexpected error in batch search and fetch for '{query}' in {db}: {str(e)}\")
-    raise DatabaseError(f\"Unexpected error in batch search and fetch for '{query}' in {db}: {str(e)}\") NCBIClientError(f"Unexpected error in batch search and fetch: {str(e)}")
+            logger.error(f"Unexpected error in batch search and fetch for '{query}' in {db}: {str(e)}")
+            raise NCBIClientError(f"Unexpected error in batch search and fetch: {str(e)}")
     async def batch_fetch_sequences(self,
                                   ids: List[str],
                                   db: str = "nucleotide",
@@ -1107,8 +1127,8 @@ class NCBIClient:
             logger.error(f"Error performing advanced search in {db}: {str(e)}")
             raise NCBIClientError(f"Failed to perform advanced search: {str(e)}", getattr(e, 'status_code', None))
         except Exception as e:
-    logger.error(f\"Unexpected error performing advanced search in {db}: {str(e)}\")
-    raise DatabaseError(f\"Unexpected error performing advanced search in {db}: {str(e)}\") NCBIClientError(f"Unexpected error performing advanced search: {str(e)}")
+            logger.error(f"Unexpected error performing advanced search in {db}: {str(e)}")
+            raise NCBIClientError(f"Unexpected error performing advanced search: {str(e)}")
     async def date_range_search(self,
                               query: str,
                               db: str = "pubmed",
@@ -1148,8 +1168,8 @@ class NCBIClient:
             logger.error(f"Error performing date range search in {db}: {str(e)}")
             raise NCBIClientError(f"Failed to perform date range search: {str(e)}", getattr(e, 'status_code', None))
         except Exception as e:
-    logger.error(f\"Unexpected error performing date range search in {db}: {str(e)}\")
-    raise DatabaseError(f\"Unexpected error performing date range search in {db}: {str(e)}\") NCBIClientError(f"Unexpected error performing date range search: {str(e)}")
+            logger.error(f"Unexpected error performing date range search in {db}: {str(e)}")
+            raise NCBIClientError(f"Unexpected error performing date range search: {str(e)}")
     async def field_search(self,
                          terms: Dict[str, str],
                          db: str = "pubmed",
@@ -1180,8 +1200,8 @@ class NCBIClient:
             logger.error(f"Error performing field search in {db}: {str(e)}")
             raise NCBIClientError(f"Failed to perform field search: {str(e)}", getattr(e, 'status_code', None))
         except Exception as e:
-    logger.error(f\"Unexpected error performing field search in {db}: {str(e)}\")
-    raise DatabaseError(f\"Unexpected error performing field search in {db}: {str(e)}\") NCBIClientError(f"Unexpected error performing field search: {str(e)}")
+            logger.error(f"Unexpected error performing field search in {db}: {str(e)}")
+            raise NCBIClientError(f"Unexpected error performing field search: {str(e)}")
     async def proximity_search(self,
                              terms: List[str],
                              field: str = "Title/Abstract",
@@ -1203,8 +1223,8 @@ class NCBIClient:
             logger.error(f"Error performing proximity search: {str(e)}")
             raise NCBIClientError(f"Failed to perform proximity search: {str(e)}", getattr(e, 'status_code', None))
         except Exception as e:
-    logger.error(f\"Unexpected error performing proximity search: {str(e)}\")
-    raise DatabaseError(f\"Unexpected error performing proximity search: {str(e)}\") NCBIClientError(f"Unexpected error performing proximity search: {str(e)}")
+            logger.error(f"Unexpected error performing proximity search: {str(e)}")
+            raise NCBIClientError(f"Unexpected error performing proximity search: {str(e)}")
     @enhanced_cached(prefix="pmc_search", data_type="search")
     async def search_pmc(self,
                        query: str,
@@ -1238,8 +1258,8 @@ class NCBIClient:
             logger.error(f"Error searching PMC for '{query}': {str(e)}")
             raise NCBIClientError(f"Failed to search PMC: {str(e)}", getattr(e, 'status_code', None))
         except Exception as e:
-    logger.error(f\"Unexpected error searching PMC for '{query}': {str(e)}\")
-    raise DatabaseError(f\"Unexpected error searching PMC for '{query}': {str(e)}\") NCBIClientError(f"Unexpected error searching PMC: {str(e)}")
+            logger.error(f"Unexpected error searching PMC for '{query}': {str(e)}")
+            raise NCBIClientError(f"Unexpected error searching PMC: {str(e)}")
     @enhanced_cached(prefix="pmc_fetch", data_type="search")
     async def fetch_pmc_article(self, pmcid: str, format: str = "xml") -> str:
         if not pmcid or not pmcid.strip():
@@ -1270,8 +1290,8 @@ class NCBIClient:
             logger.error(f"Error fetching PMC article {normalized_pmcid}: {str(e)}")
             raise NCBIClientError(f"Failed to fetch PMC article: {str(e)}", getattr(e, 'status_code', None))
         except Exception as e:
-    logger.error(f\"Unexpected error fetching PMC article {normalized_pmcid}: {str(e)}\")
-    raise DatabaseError(f\"Unexpected error fetching PMC article {normalized_pmcid}: {str(e)}\") NCBIClientError(f"Unexpected error fetching PMC article: {str(e)}")
+            logger.error(f"Unexpected error fetching PMC article {normalized_pmcid}: {str(e)}")
+            raise NCBIClientError(f"Unexpected error fetching PMC article: {str(e)}")
     async def _fetch_pmc_pdf(self, pmcid: str) -> str:
         try:
             xml_content = await self.fetch_pmc_article(pmcid, format="xml")
@@ -1294,8 +1314,8 @@ class NCBIClient:
                 logger.error(f"Error parsing XML for PMC article {pmcid}: {str(e)}")
                 return f"https://www.ncbi.nlm.nih.gov/pmc/articles/{pmcid}/pdf/{pmcid}.pdf"
         except Exception as e:
-    logger.error(f\"Error fetching PDF for PMC article {pmcid}: {str(e)}\")
-    raise DatabaseError(f\"Error fetching PDF for PMC article {pmcid}: {str(e)}\") NCBIClientError(f"Failed to fetch PDF for PMC article: {str(e)}")
+            logger.error(f"Error fetching PDF for PMC article {pmcid}: {str(e)}")
+            raise NCBIClientError(f"Failed to fetch PDF for PMC article: {str(e)}")
     @enhanced_cached(prefix="pmc_ids", data_type="search")
     async def convert_pmid_to_pmcid(self, pmids: Union[str, List[str]]) -> Dict[str, str]:
         if isinstance(pmids, str):
@@ -1339,8 +1359,8 @@ class NCBIClient:
             logger.error(f"Error converting PMIDs to PMCIDs: {str(e)}")
             raise NCBIClientError(f"Failed to convert PMIDs to PMCIDs: {str(e)}", getattr(e, 'status_code', None))
         except Exception as e:
-    logger.error(f\"Unexpected error converting PMIDs to PMCIDs: {str(e)}\")
-    raise DatabaseError(f\"Unexpected error converting PMIDs to PMCIDs: {str(e)}\") NCBIClientError(f"Unexpected error converting PMIDs to PMCIDs: {str(e)}")
+            logger.error(f"Unexpected error converting PMIDs to PMCIDs: {str(e)}")
+            raise NCBIClientError(f"Unexpected error converting PMIDs to PMCIDs: {str(e)}")
     @enhanced_cached(prefix="pmc_ids", data_type="search")
     async def convert_pmcid_to_pmid(self, pmcids: Union[str, List[str]]) -> Dict[str, str]:
         if isinstance(pmcids, str):
@@ -1390,8 +1410,8 @@ class NCBIClient:
             logger.error(f"Error converting PMCIDs to PMIDs: {str(e)}")
             raise NCBIClientError(f"Failed to convert PMCIDs to PMIDs: {str(e)}", getattr(e, 'status_code', None))
         except Exception as e:
-    logger.error(f\"Unexpected error converting PMCIDs to PMIDs: {str(e)}\")
-    raise DatabaseError(f\"Unexpected error converting PMCIDs to PMIDs: {str(e)}\") NCBIClientError(f"Unexpected error converting PMCIDs to PMIDs: {str(e)}")
+            logger.error(f"Unexpected error converting PMCIDs to PMIDs: {str(e)}")
+            raise NCBIClientError(f"Unexpected error converting PMCIDs to PMIDs: {str(e)}")
     @enhanced_cached(prefix="pmc_extract", data_type="search")
     async def extract_pmc_article_sections(self, pmcid: str) -> Dict[str, Any]:
         if not pmcid or not pmcid.strip():
@@ -1433,8 +1453,8 @@ class NCBIClient:
             logger.error(f"Error extracting sections from PMC article {pmcid}: {str(e)}")
             raise NCBIClientError(f"Failed to extract sections from PMC article: {str(e)}", getattr(e, 'status_code', None))
         except Exception as e:
-    logger.error(f\"Unexpected error extracting sections from PMC article {pmcid}: {str(e)}\")
-    raise DatabaseError(f\"Unexpected error extracting sections from PMC article {pmcid}: {str(e)}\") NCBIClientError(f"Unexpected error extracting sections from PMC article: {str(e)}")
+            logger.error(f"Unexpected error extracting sections from PMC article {pmcid}: {str(e)}")
+            raise NCBIClientError(f"Unexpected error extracting sections from PMC article: {str(e)}")
     def _get_element_text(self, element: ET.Element) -> str:
         """
         Get the text content of an XML element, including its children.
@@ -1596,8 +1616,8 @@ class NCBIClient:
             logger.error(f"Error in search_and_fetch_pmc for '{query}': {str(e)}")
             raise NCBIClientError(f"Failed to search and fetch PMC articles: {str(e)}", getattr(e, 'status_code', None))
         except Exception as e:
-    logger.error(f\"Unexpected error in search_and_fetch_pmc for '{query}': {str(e)}\")
-    raise DatabaseError(f\"Unexpected error in search_and_fetch_pmc for '{query}': {str(e)}\") NCBIClientError(f"Unexpected error searching and fetching PMC articles: {str(e)}")
+            logger.error(f"Unexpected error in search_and_fetch_pmc for '{query}': {str(e)}")
+            raise NCBIClientError(f"Unexpected error searching and fetching PMC articles: {str(e)}")
     @enhanced_cached(prefix="pmc_batch_fetch", data_type="search")
     async def batch_fetch_pmc_articles(self,
                                      pmcids: List[str],
@@ -1788,8 +1808,8 @@ class NCBIClient:
             logger.error(f"Error searching PubMed for '{query}': {str(e)}")
             raise NCBIClientError(f"Failed to search PubMed: {str(e)}", getattr(e, 'status_code', None))
         except Exception as e:
-    logger.error(f\"Unexpected error searching PubMed for '{query}': {str(e)}\")
-    raise DatabaseError(f\"Unexpected error searching PubMed for '{query}': {str(e)}\") NCBIClientError(f"Unexpected error searching PubMed: {str(e)}")
+            logger.error(f"Unexpected error searching PubMed for '{query}': {str(e)}")
+            raise NCBIClientError(f"Unexpected error searching PubMed: {str(e)}")
     async def fetch_article_details(
         self,
         pmids: Union[str, List[str]],
@@ -1978,8 +1998,8 @@ class NCBIClient:
                 id_list = search_result.get("esearchresult", {}).get("idlist", [])
                 logger.info(f"Found {len(id_list)} PMIDs for query '{query}'")
             except Exception as e:
-    logger.error(f\"Error searching PubMed for '{query}': {str(e)}\")
-    raise DatabaseError(f\"Error searching PubMed for '{query}': {str(e)}\") NCBIClientError(f"Failed to search PubMed: {str(e)}")
+                logger.error(f"Error searching PubMed for '{query}': {str(e)}")
+                raise NCBIClientError(f"Failed to search PubMed: {str(e)}")
         if not id_list:
             logger.warning(f"No PMIDs found for query '{query}'")
             return []
@@ -2000,8 +2020,8 @@ class NCBIClient:
             logger.error(f"Error fetching PubMed abstracts: {str(e)}")
             raise NCBIClientError(f"Failed to fetch PubMed abstracts: {str(e)}", getattr(e, 'status_code', None))
         except Exception as e:
-    logger.error(f\"Unexpected error fetching PubMed abstracts: {str(e)}\")
-    raise DatabaseError(f\"Unexpected error fetching PubMed abstracts: {str(e)}\") NCBIClientError(f"Unexpected error fetching PubMed abstracts: {str(e)}")
+            logger.error(f"Unexpected error fetching PubMed abstracts: {str(e)}")
+            raise NCBIClientError(f"Unexpected error fetching PubMed abstracts: {str(e)}")
     @enhanced_cached(prefix="pubmed_search_fetch", data_type="search")
     async def search_and_fetch_pubmed(
         self,
@@ -2041,8 +2061,8 @@ class NCBIClient:
             logger.error(f"Error in search_and_fetch_pubmed for '{query}': {str(e)}")
             raise NCBIClientError(f"Failed to search and fetch PubMed articles: {str(e)}", getattr(e, 'status_code', None))
         except Exception as e:
-    logger.error(f\"Unexpected error in search_and_fetch_pubmed for '{query}': {str(e)}\")
-    raise DatabaseError(f\"Unexpected error in search_and_fetch_pubmed for '{query}': {str(e)}\") NCBIClientError(f"Unexpected error searching and fetching PubMed articles: {str(e)}")
+            logger.error(f"Unexpected error in search_and_fetch_pubmed for '{query}': {str(e)}")
+            raise NCBIClientError(f"Unexpected error searching and fetching PubMed articles: {str(e)}")
     async def clear_cache(self, pattern: Optional[str] = None) -> int:
         if not self.use_cache:
             logger.warning("Cache is disabled for this client")
@@ -2059,13 +2079,13 @@ class NCBIClient:
                 ]
                 total_cleared = 0
                 for p in patterns:
-                    cleared = await cache_manager.delete_pattern(p)
+                    cleared = await enhanced_cache_manager.delete_pattern(p)
                     logger.info(f"Cleared {cleared} cache entries matching pattern '{p}'")
                     total_cleared += cleared
                 logger.info(f"Cleared {total_cleared} NCBI-related cache entries in total")
                 return total_cleared
             else:
-                cleared = await cache_manager.delete_pattern(pattern)
+                cleared = await enhanced_cache_manager.delete_pattern(pattern)
                 logger.info(f"Cleared {cleared} cache entries matching pattern '{pattern}'")
                 return cleared
         except Exception as e:
@@ -2076,7 +2096,7 @@ class NCBIClient:
             logger.warning("Cache is disabled for this client")
             return {"enabled": False}
         try:
-            stats = await cache_manager.get_stats()
+            stats = await enhanced_cache_manager.get_stats()
             patterns = [
                 "ncbi:*",              # Direct API requests
                 "pubmed_search:*",      # Search results
@@ -2087,7 +2107,7 @@ class NCBIClient:
             ]
             pattern_counts = {}
             for pattern in patterns:
-                count = await cache_manager.count_pattern(pattern)
+                count = await enhanced_cache_manager.count_pattern(pattern)
                 pattern_counts[pattern] = count
             stats["ncbi_patterns"] = pattern_counts
             stats["ncbi_total"] = sum(pattern_counts.values())
