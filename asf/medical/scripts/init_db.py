@@ -1,6 +1,18 @@
-Script to initialize the database.
+"""
+Database Initialization Script.
 
-This script creates the database tables and adds initial data.
+This script initializes the database by creating all required tables and adding
+initial data such as admin and regular user accounts. It uses SQLAlchemy's
+declarative base metadata to create the tables based on the defined models.
+
+Usage:
+    python -m asf.medical.scripts.init_db
+
+Note:
+    This script should be run once before starting the application for the first time.
+    Running it multiple times will not create duplicate data as it checks for existing
+    records before creating new ones.
+"""
 
 import sys
 import logging
@@ -16,17 +28,22 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 def init():
-    """Initialize the database.
+    """Initialize the database with tables and initial data.
 
-    Args:
-        # TODO: Add parameter descriptions
+    This function performs the following operations:
+    1. Creates all database tables based on SQLAlchemy models
+    2. Creates an admin user if one doesn't already exist
+    3. Creates a regular user if one doesn't already exist
+
+    The function checks for existing users to avoid creating duplicates
+    when run multiple times.
 
     Returns:
-        # TODO: Add return description
+        None
     """
     init_db()
     logger.info("Database tables created")
-    
+
     with get_db() as db:
         admin = db.query(User).filter(User.email == "admin@example.com").first()
         if not admin:
@@ -38,7 +55,7 @@ def init():
             )
             db.add(admin)
             logger.info("Admin user created")
-        
+
         user = db.query(User).filter(User.email == "user@example.com").first()
         if not user:
             user = User(
@@ -49,9 +66,9 @@ def init():
             )
             db.add(user)
             logger.info("Regular user created")
-        
+
         db.commit()
-    
+
     logger.info("Database initialization complete")
 
 if __name__ == "__main__":

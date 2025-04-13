@@ -42,7 +42,17 @@ DB_USAGE_FIXES = {
     r"await \w+\.get_by_\w+_async\(db,": "await \\g<0>".replace("db", "db=db_session"),
 }
 def find_python_files(directory: str) -> List[str]:
-    """Find all Python files in the given directory and its subdirectories."""
+    """Find all Python files in the given directory and its subdirectories.
+
+    This function recursively walks through the specified directory and collects
+    paths to all files with a .py extension.
+
+    Args:
+        directory: Path to the directory to search
+
+    Returns:
+        List of paths to Python files
+    """
     python_files = []
     for root, _, files in os.walk(directory):
         for file in files:
@@ -50,11 +60,36 @@ def find_python_files(directory: str) -> List[str]:
                 python_files.append(os.path.join(root, file))
     return python_files
 def should_remove_file(file_path: str) -> bool:
-    """Check if a file should be removed.
+    """Check if a file should be removed based on predefined patterns.
+
+    This function checks if the given file path matches any of the patterns
+    in the FILES_TO_REMOVE list, which identifies files that should be removed
+    during the cleanup process.
+
     Args:
-        # TODO: Add parameter descriptions
+        file_path: Path to the file to check
+
     Returns:
-        # TODO: Add return description
+        True if the file should be removed, False otherwise
+    """
+    for pattern in FILES_TO_REMOVE:
+        if re.search(pattern, file_path):
+            return True
+    return False
+
+def fix_imports(content: str) -> Tuple[str, bool]:
+    """Fix import statements in a file.
+
+    This function applies the import replacements defined in IMPORT_REPLACEMENTS
+    to the content of a file. It replaces import statements that match the
+    patterns with their updated versions.
+
+    Args:
+        content: Content of the file to process
+
+    Returns:
+        Tuple containing the updated content and a boolean indicating if changes were made
+    """
     updated_content = content
     changed = False
     for old_import, new_import in IMPORT_REPLACEMENTS.items():
@@ -63,7 +98,18 @@ def should_remove_file(file_path: str) -> bool:
             changed = True
     return updated_content, changed
 def fix_classes(content: str) -> Tuple[str, bool]:
-    """Fix class definitions in a file."""
+    """Fix class definitions in a file.
+
+    This function applies the class replacements defined in CLASS_REPLACEMENTS
+    to the content of a file. It replaces class definitions that match the
+    patterns with their updated versions.
+
+    Args:
+        content: Content of the file to process
+
+    Returns:
+        Tuple containing the updated content and a boolean indicating if changes were made
+    """
     updated_content = content
     changed = False
     for old_class, new_class in CLASS_REPLACEMENTS.items():
@@ -72,7 +118,18 @@ def fix_classes(content: str) -> Tuple[str, bool]:
             changed = True
     return updated_content, changed
 def fix_db_usage(content: str) -> Tuple[str, bool]:
-    """Fix database usage in a file."""
+    """Fix database usage in a file.
+
+    This function applies the database usage fixes defined in DB_USAGE_FIXES
+    to the content of a file. It standardizes database session parameter names
+    and usage patterns across the codebase.
+
+    Args:
+        content: Content of the file to process
+
+    Returns:
+        Tuple containing the updated content and a boolean indicating if changes were made
+    """
     updated_content = content
     changed = False
     for old_pattern, new_pattern in DB_USAGE_FIXES.items():
@@ -81,10 +138,22 @@ def fix_db_usage(content: str) -> Tuple[str, bool]:
             changed = True
     return updated_content, changed
 def remove_commented_code(content: str) -> Tuple[str, bool]:
-    """Remove commented-out code blocks."""
+    """Remove commented-out code blocks from a file.
+
+    This function identifies and removes commented-out code blocks while preserving
+    docstrings and important comments (TODOs, FIXMEs, etc.). It handles both
+    triple-quoted blocks and line comments.
+
+    Args:
+        content: Content of the file to process
+
+    Returns:
+        Tuple containing the updated content and a boolean indicating if changes were made
+    """
     lines = content.split('\n')
     new_lines = []
-    in_comment_block = False
+    # Track if we're inside a comment block
+    # This variable is used for clarity but not currently accessed
     changed = False
     i = 0
     while i < len(lines):
@@ -135,11 +204,18 @@ def remove_commented_code(content: str) -> Tuple[str, bool]:
             i += 1
     return '\n'.join(new_lines), changed
 def process_file(file_path: str, dry_run: bool = False) -> bool:
-    """Process a Python file.
+    """Process a Python file by applying all cleanup operations.
+
+    This function reads a Python file, applies all cleanup operations (fixing imports,
+    classes, database usage, and removing commented code), and writes the updated
+    content back to the file if changes were made and dry_run is False.
+
     Args:
-        # TODO: Add parameter descriptions
+        file_path: Path to the Python file to process
+        dry_run: If True, don't actually modify the file
+
     Returns:
-        # TODO: Add return description
+        True if changes were detected, False otherwise
     """
     try:
         with open(file_path, "r", encoding="utf-8") as f:
@@ -162,11 +238,19 @@ def process_file(file_path: str, dry_run: bool = False) -> bool:
         logger.error(f"Error processing {file_path}: {str(e)}")
         return False
 def main():
-    """Main function.
-    Args:
-        # TODO: Add parameter descriptions
+    """Main entry point for the codebase cleanup script.
+
+    This function parses command-line arguments, finds all Python files in the
+    specified directory, processes each file to apply cleanup operations, and
+    removes files that should be removed. It reports statistics on the number
+    of files processed, changed, and removed.
+
+    Command-line arguments:
+        --dry-run, -n: Perform a dry run (no changes)
+        --directory, -d: Directory to process (default: asf)
+
     Returns:
-        # TODO: Add return description
+        None
     """
     parser = argparse.ArgumentParser(description="Clean up the Medical Research Synthesizer codebase")
     parser.add_argument("--dry-run", "-n", action="store_true", help="Perform a dry run (no changes)")

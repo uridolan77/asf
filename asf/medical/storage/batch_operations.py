@@ -17,8 +17,15 @@ T = TypeVar('T')
 class BatchOperations:
     """
     Batch database operations for the Medical Research Synthesizer.
+
     This class provides methods for performing batch database operations
-    to improve performance when dealing with large datasets.
+    to improve performance when dealing with large datasets. It includes
+    methods for batch insert, update, delete, upsert, and fetch operations,
+    as well as a utility for executing operations in batches with concurrency
+    control.
+
+    All methods in this class are static and require an async database session.
+    They are designed to work with SQLAlchemy models and async sessions.
     """
     @staticmethod
     async def batch_insert(
@@ -28,6 +35,27 @@ class BatchOperations:
         batch_size: int = 100,
         return_defaults: bool = False
     ) -> List[T]:
+        """
+        Insert multiple items into the database in batches.
+
+        This method divides the items into batches of the specified size and
+        inserts them into the database using SQLAlchemy's insert statement.
+        It can optionally return the inserted items with their default values.
+
+        Args:
+            db: The async database session
+            model: The SQLAlchemy model class
+            items: List of dictionaries with item attributes
+            batch_size: Number of items to insert in each batch
+            return_defaults: Whether to return the inserted items with defaults
+
+        Returns:
+            List of inserted items if return_defaults is True, otherwise empty list
+
+        Raises:
+            ValueError: If batch operations are not supported with the database
+            DatabaseError: If there's an error inserting the items
+        """
         if not is_async:
             raise ValueError("Batch operations are only supported with async database")
         if not items:
@@ -45,7 +73,7 @@ class BatchOperations:
                     await db.execute(stmt)
             except SQLAlchemyError as e:
                 logger.error(f"Error in batch insert: {str(e)}")
-                await await await await db.rollback()
+                await db.rollback()
                 raise DatabaseError(f"Failed to insert batch: {str(e)}")
         await db.commit()
         return results
@@ -57,6 +85,27 @@ class BatchOperations:
         primary_key: str = "id",
         batch_size: int = 100
     ) -> int:
+        """
+        Update multiple items in the database in batches.
+
+        This method divides the items into batches of the specified size and
+        updates them in the database using SQLAlchemy's update statement.
+        Each item must contain the primary key to identify the record to update.
+
+        Args:
+            db: The async database session
+            model: The SQLAlchemy model class
+            items: List of dictionaries with item attributes including primary key
+            primary_key: Name of the primary key field (default: "id")
+            batch_size: Number of items to update in each batch
+
+        Returns:
+            Number of updated items
+
+        Raises:
+            ValueError: If batch operations are not supported with the database
+            DatabaseError: If there's an error updating the items
+        """
         if not is_async:
             raise ValueError("Batch operations are only supported with async database")
         if not items:
@@ -74,7 +123,7 @@ class BatchOperations:
                     total_updated += result.rowcount
             except SQLAlchemyError as e:
                 logger.error(f"Error in batch update: {str(e)}")
-                await await await await db.rollback()
+                await db.rollback()
                 raise DatabaseError(f"Failed to update batch: {str(e)}")
         await db.commit()
         return total_updated
@@ -86,6 +135,27 @@ class BatchOperations:
         primary_key: str = "id",
         batch_size: int = 100
     ) -> int:
+        """
+        Delete multiple items from the database in batches.
+
+        This method divides the IDs into batches of the specified size and
+        deletes the corresponding items from the database using SQLAlchemy's
+        delete statement.
+
+        Args:
+            db: The async database session
+            model: The SQLAlchemy model class
+            ids: List of primary key values for items to delete
+            primary_key: Name of the primary key field (default: "id")
+            batch_size: Number of items to delete in each batch
+
+        Returns:
+            Number of deleted items
+
+        Raises:
+            ValueError: If batch operations are not supported with the database
+            DatabaseError: If there's an error deleting the items
+        """
         if not is_async:
             raise ValueError("Batch operations are only supported with async database")
         if not ids:
@@ -99,7 +169,7 @@ class BatchOperations:
                 total_deleted += result.rowcount
             except SQLAlchemyError as e:
                 logger.error(f"Error in batch delete: {str(e)}")
-                await await await await db.rollback()
+                await db.rollback()
                 raise DatabaseError(f"Failed to delete batch: {str(e)}")
         await db.commit()
         return total_deleted
@@ -112,6 +182,29 @@ class BatchOperations:
         batch_size: int = 100,
         return_defaults: bool = False
     ) -> List[T]:
+        """
+        Insert or update multiple items in the database in batches.
+
+        This method divides the items into batches of the specified size and
+        performs an upsert operation (insert or update) using PostgreSQL's
+        ON CONFLICT DO UPDATE clause. It can optionally return the inserted
+        or updated items with their default values.
+
+        Args:
+            db: The async database session
+            model: The SQLAlchemy model class
+            items: List of dictionaries with item attributes
+            constraint_columns: List of column names that form the constraint
+            batch_size: Number of items to upsert in each batch
+            return_defaults: Whether to return the upserted items with defaults
+
+        Returns:
+            List of upserted items if return_defaults is True, otherwise empty list
+
+        Raises:
+            ValueError: If batch operations are not supported with the database
+            DatabaseError: If there's an error upserting the items
+        """
         if not is_async:
             raise ValueError("Batch operations are only supported with async database")
         if not items:
@@ -121,8 +214,8 @@ class BatchOperations:
         for batch in batches:
             try:
                 stmt = pg_insert(model).values(batch)
-                update_dict = {c.name: getattr(stmt.excluded, c.name) 
-                              for c in model.__table__.columns 
+                update_dict = {c.name: getattr(stmt.excluded, c.name)
+                              for c in model.__table__.columns
                               if c.name not in constraint_columns}
                 stmt = stmt.on_conflict_do_update(
                     constraint=model.__table__.primary_key,
@@ -136,7 +229,7 @@ class BatchOperations:
                     await db.execute(stmt)
             except SQLAlchemyError as e:
                 logger.error(f"Error in batch upsert: {str(e)}")
-                await await await await db.rollback()
+                await db.rollback()
                 raise DatabaseError(f"Failed to upsert batch: {str(e)}")
         await db.commit()
         return results
@@ -148,6 +241,27 @@ class BatchOperations:
         primary_key: str = "id",
         batch_size: int = 100
     ) -> List[T]:
+        """
+        Fetch multiple items from the database in batches.
+
+        This method divides the IDs into batches of the specified size and
+        fetches the corresponding items from the database using SQLAlchemy's
+        select statement.
+
+        Args:
+            db: The async database session
+            model: The SQLAlchemy model class
+            ids: List of primary key values for items to fetch
+            primary_key: Name of the primary key field (default: "id")
+            batch_size: Number of items to fetch in each batch
+
+        Returns:
+            List of fetched items
+
+        Raises:
+            ValueError: If batch operations are not supported with the database
+            DatabaseError: If there's an error fetching the items
+        """
         if not is_async:
             raise ValueError("Batch operations are only supported with async database")
         if not ids:
@@ -161,9 +275,9 @@ class BatchOperations:
                 batch_results = result.scalars().all()
                 results.extend(batch_results)
             except SQLAlchemyError as e:
-            await await await db.rollback()
-            logger.error(f\"Error in batch fetch: {str(e)}\")
-            raise DatabaseError(f\"Error in batch fetch: {str(e)}\") DatabaseError(f"Failed to fetch batch: {str(e)}")
+                await db.rollback()
+                logger.error(f"Error in batch fetch: {str(e)}")
+                raise DatabaseError(f"Failed to fetch batch: {str(e)}")
         return results
     @staticmethod
     async def execute_in_batches(
@@ -174,6 +288,27 @@ class BatchOperations:
         *args,
         **kwargs
     ) -> List[Any]:
+        """
+        Execute a function on batches of items with concurrency control.
+
+        This method divides the items into batches of the specified size and
+        executes the provided function on each batch concurrently, up to the
+        specified maximum concurrency. It collects and returns the results.
+
+        Args:
+            func: The async function to execute on each batch
+            items: List of items to process
+            batch_size: Number of items to process in each batch
+            max_concurrency: Maximum number of concurrent batch operations
+            *args: Additional positional arguments to pass to the function
+            **kwargs: Additional keyword arguments to pass to the function
+
+        Returns:
+            List of results from all batches
+
+        Raises:
+            Exception: Any exception raised by the function
+        """
         if not items:
             return []
         batches = [items[i:i+batch_size] for i in range(0, len(items), batch_size)]
@@ -183,8 +318,8 @@ class BatchOperations:
                 try:
                     return await func(batch, *args, **kwargs)
                 except Exception as e:
-    logger.error(f\"Error processing batch: {str(e)}\")
-    raise DatabaseError(f\"Error processing batch: {str(e)}\")
+                    logger.error(f"Error processing batch: {str(e)}")
+                    raise DatabaseError(f"Error processing batch: {str(e)}")
         tasks = [process_batch(batch) for batch in batches]
         batch_results = await asyncio.gather(*tasks, return_exceptions=True)
         for i, result in enumerate(batch_results):

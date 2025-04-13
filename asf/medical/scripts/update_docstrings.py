@@ -1,6 +1,21 @@
+"""
 Update Docstrings Script for ASF Medical Research Synthesizer.
+
 This script scans the codebase for incomplete docstrings (containing TODO placeholders)
-and updates them with proper documentation based on the defined standards.
+and updates them with proper documentation based on the defined standards. It identifies
+docstrings that need improvement in modules, classes, and functions, and replaces them
+with more complete versions that include proper sections for Args, Returns, and Raises.
+
+Usage:
+    python -m asf.medical.scripts.update_docstrings [--dry-run] [--directory DIR]
+
+Options:
+    --dry-run       Don't actually update files, just show what would be done
+    --directory DIR  Directory to process (default: asf/medical)
+
+The script excludes certain directories and files from processing to avoid modifying
+generated code, third-party libraries, and configuration files.
+"""
 import os
 import re
 import ast
@@ -45,10 +60,16 @@ EXCLUDE_FILES = [
 def find_python_files(directory: str) -> List[str]:
     """
     Find all Python files in the given directory and its subdirectories.
+
+    This function recursively walks through the specified directory and collects
+    paths to all Python files (.py extension) that are not in excluded directories
+    and are not excluded files.
+
     Args:
         directory: The directory to search in.
+
     Returns:
-        List of paths to Python files.
+        List of paths to Python files that should be processed.
     """
     python_files = []
     for root, dirs, files in os.walk(directory):
@@ -61,10 +82,23 @@ def find_python_files(directory: str) -> List[str]:
 def extract_docstring_info(file_path: str) -> List[Dict[str, Any]]:
     """
     Extract information about docstrings in a Python file.
+
+    This function parses a Python file into an AST and extracts information about
+    docstrings that need to be updated. It identifies module, class, and function
+    docstrings that contain TODO patterns indicating they are incomplete.
+
     Args:
-        file_path: Path to the Python file.
+        file_path: Path to the Python file to analyze.
+
     Returns:
-        List of dictionaries containing docstring information.
+        List of dictionaries containing docstring information, including:
+        - type: 'module', 'class', or 'function'
+        - name: Name of the module, class, or function
+        - docstring: Current docstring content
+        - lineno: Starting line number of the docstring
+        - end_lineno: Ending line number of the docstring
+        - needs_update: Boolean indicating if the docstring needs updating
+        - args: List of argument names (for functions only)
     """
     with open(file_path, "r", encoding="utf-8") as f:
         content = f.read()
@@ -75,10 +109,15 @@ def extract_docstring_info(file_path: str) -> List[Dict[str, Any]]:
         return []
     docstring_info = []
     # Extract module docstring
-    if (len(tree.body) > 0 and 
-            isinstance(tree.body[0], ast.Expr) and 
-            isinstance(tree.body[0].value, ast.Str)):
-        docstring = tree.body[0].value.s
+    if (len(tree.body) > 0 and
+            isinstance(tree.body[0], ast.Expr) and
+            (isinstance(tree.body[0].value, ast.Constant) or
+             isinstance(tree.body[0].value, ast.Str))):
+        # Handle both ast.Str (Python < 3.8) and ast.Constant (Python >= 3.8)
+        if hasattr(tree.body[0].value, 's'):
+            docstring = tree.body[0].value.s  # ast.Str
+        else:
+            docstring = tree.body[0].value.value  # ast.Constant
         if any(re.search(pattern, docstring) for pattern in TODO_PATTERNS):
             docstring_info.append({
                 "type": "module",
@@ -106,11 +145,19 @@ def extract_docstring_info(file_path: str) -> List[Dict[str, Any]]:
 def update_docstring(file_path: str, docstring_info: Dict[str, Any]) -> bool:
     """
     Update a docstring in a file.
+
+    This function reads a Python file, locates the docstring specified in the
+    docstring_info dictionary, generates a new docstring, and replaces the old
+    one with the new one. It then writes the updated content back to the file.
+
     Args:
-        file_path: Path to the Python file.
-        docstring_info: Dictionary containing docstring information.
+        file_path: Path to the Python file to update.
+        docstring_info: Dictionary containing docstring information, including
+            type, name, lineno, and other details needed to locate and update
+            the docstring.
+
     Returns:
-        True if the docstring was updated, False otherwise.
+        True if the docstring was successfully updated, False otherwise.
     """
     with open(file_path, "r", encoding="utf-8") as f:
         lines = f.readlines()
@@ -144,10 +191,20 @@ def update_docstring(file_path: str, docstring_info: Dict[str, Any]) -> bool:
 def generate_docstring(docstring_info: Dict[str, Any]) -> str:
     """
     Generate a new docstring based on the docstring information.
+
+    This function creates a new docstring for a module, class, or function based
+    on the information provided in the docstring_info dictionary. It generates
+    appropriate sections (Args, Returns, Raises) based on the type of entity and
+    available information.
+
     Args:
-        docstring_info: Dictionary containing docstring information.
+        docstring_info: Dictionary containing docstring information, including
+            type ('module', 'class', or 'function'), name, and for functions,
+            a list of argument names.
+
     Returns:
-        The generated docstring.
+        A string containing the generated docstring, properly formatted with
+        appropriate indentation and triple quotes.
     """
     if docstring_info["type"] == "module":
         # Generate module docstring
@@ -168,11 +225,19 @@ def generate_docstring(docstring_info: Dict[str, Any]) -> str:
 def process_file(file_path: str, dry_run: bool = False) -> int:
     """
     Process a file and update incomplete docstrings.
+
+    This function analyzes a Python file to identify docstrings that need to be
+    updated, and either updates them or reports what would be updated (in dry run
+    mode). It handles exceptions gracefully to ensure the script continues running
+    even if one file has issues.
+
     Args:
-        file_path: Path to the Python file.
-        dry_run: If True, don't actually update the file.
+        file_path: Path to the Python file to process.
+        dry_run: If True, don't actually update the file, just report what would
+            be updated.
+
     Returns:
-        Number of docstrings updated.
+        Number of docstrings that were updated or would be updated (in dry run mode).
     """
     try:
         docstring_info_list = extract_docstring_info(file_path)
@@ -193,7 +258,20 @@ def process_file(file_path: str, dry_run: bool = False) -> int:
         logger.error(f"Error processing {file_path}: {str(e)}")
         return 0
 def main():
-    Main function to run the script.
+    """
+    Main function to run the docstring update script.
+
+    This function parses command-line arguments, finds Python files in the specified
+    directory, processes each file to update incomplete docstrings, and reports a
+    summary of the results.
+
+    Command-line arguments:
+        --dry-run: Don't actually update files, just show what would be done
+        --directory: Directory to process (default: asf/medical)
+
+    Returns:
+        None
+    """
     parser = argparse.ArgumentParser(description="Update incomplete docstrings in the ASF Medical Research Synthesizer codebase")
     parser.add_argument("--dry-run", action="store_true", help="Don't actually update files, just show what would be done")
     parser.add_argument("--directory", default=None, help="Directory to process (default: asf/medical)")

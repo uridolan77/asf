@@ -1,6 +1,20 @@
 """
-ML Inference Tasks
-This module defines background tasks for ML model inference operations.
+ML Inference Tasks for the Medical Research Synthesizer.
+
+This module defines background tasks for ML model inference operations,
+including contradiction detection, embedding generation, and explanation
+generation. These tasks are designed to run asynchronously in the background
+using Dramatiq, allowing the API to respond quickly to requests while the
+compute-intensive ML operations continue in separate worker processes.
+
+The module includes tasks for:
+- Detecting contradictions between medical claims
+- Analyzing contradictions in a collection of articles
+- Generating embeddings for text using various models
+- Generating explanations for detected contradictions
+
+Each task follows a consistent pattern with proper error handling, logging,
+and observability through metrics and tracing.
 """
 import logging
 import json
@@ -15,7 +29,13 @@ from asf.medical.ml.services.contradiction_classifier_service import Contradicti
 logger = logging.getLogger(__name__)
 task_results = {}
 class NumpyEncoder(json.JSONEncoder):
-    """Custom JSON encoder for NumPy types."""
+    """
+    Custom JSON encoder for NumPy types and enum values.
+
+    This encoder handles NumPy arrays, integers, and floating-point numbers,
+    as well as ContradictionType and ContradictionConfidence enum values,
+    converting them to JSON-serializable Python types.
+    """
     def default(self, obj):
         if isinstance(obj, np.ndarray):
             return obj.tolist()
@@ -31,62 +51,23 @@ def detect_contradiction(claim1: str, claim2: str, metadata1: Optional[Dict[str,
                         metadata2: Optional[Dict[str, Any]] = None, use_all_methods: bool = True):
     """
     Detect contradiction between two claims in the background.
+
+    This task analyzes two medical claims to detect if they contradict each other.
+    It uses multiple methods including direct semantic contradiction detection,
+    temporal contradiction detection, and statistical contradiction detection.
+    The task is traced for observability and metrics are pushed to the monitoring system.
+
     Args:
-        claim1: First claim
-        claim2: Second claim
-        metadata1: Metadata for first claim
-        metadata2: Metadata for second claim
-        use_all_methods: Whether to use all available methods
+        claim1: The text of the first medical claim
+        claim2: The text of the second medical claim
+        metadata1: Optional metadata for the first claim (publication date, study design, etc.)
+        metadata2: Optional metadata for the second claim (publication date, study design, etc.)
+        use_all_methods: Whether to use all available contradiction detection methods
+
     Returns:
-        Contradiction detection result
-    Analyze contradictions in a list of articles in the background.
-    Args:
-        articles: List of articles
-        threshold: Threshold for contradiction detection
-        use_all_methods: Whether to use all available methods
-    Returns:
-        List of detected contradictions
-    Generate embeddings for a list of texts in the background.
-    Args:
-        texts: List of texts to embed
-        model_name: Name of the model to use (biomedlm, lorentz)
-    Returns:
-        List of embeddings
-    Detect direct contradiction between two claims using BioMedLM.
-    Args:
-        claim1: First claim
-        claim2: Second claim
-        biomedlm_service: BioMedLM service
-    Returns:
-        Direct contradiction detection result
-    Detect temporal contradiction between two claims.
-    Args:
-        claim1: First claim
-        claim2: Second claim
-        metadata1: Metadata for first claim
-        metadata2: Metadata for second claim
-        biomedlm_service: BioMedLM service
-        tsmixer_service: TSMixer service
-    Returns:
-        Temporal contradiction detection result
-    Detect statistical contradiction between two claims.
-    Args:
-        claim1: First claim
-        claim2: Second claim
-        metadata1: Metadata for first claim
-        metadata2: Metadata for second claim
-    Returns:
-        Statistical contradiction detection result
-    Generate explanation for contradiction using SHAP.
-    Args:
-        claim1: First claim
-        claim2: Second claim
-        contradiction_type: Type of contradiction
-        shap_explainer: SHAP explainer
-    Returns:
-        Explanation
-    Get the result of a task by ID.
-    Args:
-        task_id: The ID of the task
-    Returns:
-        Task result information or None if not found
+        Dictionary containing contradiction detection results, including:
+        - is_contradiction: Boolean indicating if a contradiction was detected
+        - contradiction_type: Type of contradiction (DIRECT, TEMPORAL, STATISTICAL, etc.)
+        - confidence: Confidence level of the contradiction detection
+        - explanation: Explanation of why the claims are contradictory
+    """

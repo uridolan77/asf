@@ -1,6 +1,25 @@
+"""
 Standardize Error Handling in ASF Medical Codebase.
+
 This script identifies and fixes inconsistent error handling patterns in the codebase,
-implementing a standardized approach with proper logging and custom exceptions.
+implementing a standardized approach with proper logging and custom exceptions. It
+detects issues such as bare except blocks, generic exception handling without custom
+exceptions, missing logging, and missing custom exceptions.
+
+The script applies fixes based on the context of the code, determining the appropriate
+type of exception to raise (DatabaseError, APIError, ValidationError, MLError, or
+OperationError) and ensuring proper logging is in place.
+
+Usage:
+    python -m asf.medical.scripts.standardize_error_handling <directory> [--fix]
+
+Options:
+    <directory>  Directory to process
+    --fix        Fix the issues (otherwise just report them)
+
+The script excludes certain directories and files from processing to avoid modifying
+generated code, third-party libraries, and configuration files.
+"""
 import os
 import re
 import sys
@@ -66,14 +85,19 @@ except Exception as e:
     raise OperationError(f"Operation failed: {str(e)}")"""
 }
 def find_python_files(directory: str) -> List[str]:
+    """
     Find all Python files in the given directory and its subdirectories.
-    
+
+    This function recursively walks through the specified directory and collects
+    paths to all Python files (.py extension) that are not in excluded directories
+    and are not excluded files.
+
     Args:
-        directory: Description of directory
-    
-    
+        directory: The directory to search in.
+
     Returns:
-        Description of return value
+        List of paths to Python files that should be processed.
+    """
     python_files = []
     for root, dirs, files in os.walk(directory):
         # Skip excluded directories
@@ -83,14 +107,20 @@ def find_python_files(directory: str) -> List[str]:
                 python_files.append(os.path.join(root, file))
     return python_files
 def find_inconsistent_error_handling(content: str) -> List[Dict[str, Any]]:
+    """
     Find inconsistent error handling in the content.
-    
+
+    This function analyzes the content of a Python file to identify inconsistent
+    error handling patterns, including bare except blocks, generic exception handling
+    without custom exceptions, missing logging, and missing custom exceptions.
+
     Args:
-        content: Description of content
-    
-    
+        content: The content of the Python file to analyze.
+
     Returns:
-        Description of return value
+        List of dictionaries containing information about the identified issues,
+        including the type of issue, line number, matching text, and context.
+    """
     issues = []
     # Find bare except statements
     bare_excepts = []
@@ -146,31 +176,43 @@ def find_inconsistent_error_handling(content: str) -> List[Dict[str, Any]]:
     issues.extend(missing_custom_exceptions)
     return issues
 def get_context(content: str, pos: int, lines: int) -> str:
+    """
     Get context around a position in the content.
-    
+
+    This function extracts a specified number of lines before and after a given
+    position in the content, providing context for the identified issues.
+
     Args:
-        content: Description of content
-        pos: Description of pos
-        lines: Description of lines
-    
-    
+        content: The content of the Python file.
+        pos: The position (character index) in the content.
+        lines: The number of lines of context to include before and after.
+
     Returns:
-        Description of return value
+        A string containing the specified number of lines before and after the position.
+    """
     lines_list = content.split("\n")
     line_num = content[:pos].count("\n")
     start_line = max(0, line_num - lines)
     end_line = min(len(lines_list), line_num + lines + 1)
     return "\n".join(lines_list[start_line:end_line])
 def fix_error_handling(content: str, issues: List[Dict[str, Any]]) -> str:
+    """
     Fix inconsistent error handling in the content.
-    
+
+    This function applies fixes to the identified error handling issues in the content.
+    It processes issues in reverse order of line number to avoid changing line numbers
+    as it makes modifications. The fixes include:
+    - Replacing bare except with except Exception as e
+    - Adding appropriate logging statements
+    - Adding custom exception raising based on the context
+
     Args:
-        content: Description of content
-        issues: Description of issues
-    
-    
+        content: The content of the Python file to fix.
+        issues: List of dictionaries containing information about the identified issues.
+
     Returns:
-        Description of return value
+        The updated content with fixed error handling.
+    """
     if not issues:
         return content
     lines = content.split("\n")
@@ -291,14 +333,19 @@ def fix_error_handling(content: str, issues: List[Dict[str, Any]]) -> str:
                     lines.insert(line_num + 2, f"{indent_str}    raise OperationError(f\"Operation failed: {{str(e)}}\")")
     return "\n".join(lines)
 def ensure_custom_exceptions(content: str) -> str:
+    """
     Ensure custom exceptions are defined in the file.
-    
+
+    This function checks if the custom exceptions used in the file are properly
+    imported from the asf.medical.core.exceptions module. If not, it adds the
+    necessary import statement at an appropriate location in the file.
+
     Args:
-        content: Description of content
-    
-    
+        content: The content of the Python file to check and update.
+
     Returns:
-        Description of return value
+        The updated content with the necessary import statements added.
+    """
     # Check if custom exceptions are already imported
     if "from asf.medical.core.exceptions import" in content:
         return content
@@ -333,15 +380,23 @@ def ensure_custom_exceptions(content: str) -> str:
     lines.insert(import_index, import_statement)
     return "\n".join(lines)
 def process_file(file_path: str, fix: bool = False) -> Dict[str, Any]:
+    """
     Process a single file to find and optionally fix inconsistent error handling.
-    
+
+    This function reads a Python file, analyzes it for inconsistent error handling,
+    and optionally applies fixes. It handles exceptions gracefully to ensure the
+    script continues running even if one file has issues.
+
     Args:
-        file_path: Description of file_path
-        fix: Description of fix
-    
-    
+        file_path: Path to the Python file to process.
+        fix: If True, modify the file to fix error handling issues; if False,
+            just report the issues.
+
     Returns:
-        Description of return value
+        A dictionary with the following keys:
+        - 'issues': List of identified error handling issues
+        - 'fixed': Boolean indicating whether the file was modified
+    """
     results = {
         "issues": [],
         "fixed": False
@@ -367,7 +422,20 @@ def process_file(file_path: str, fix: bool = False) -> Dict[str, Any]:
         logger.error(f"Error processing file {file_path}: {str(e)}")
         return results
 def main():
-    Main function.
+    """
+    Main function to run the error handling standardization script.
+
+    This function parses command-line arguments, finds Python files in the specified
+    directory, processes each file to identify and optionally fix error handling
+    issues, and reports a summary of the results.
+
+    Command-line arguments:
+        <directory>: Directory to process
+        --fix: Optional flag to actually fix the issues
+
+    Returns:
+        None, but exits with a non-zero code if there's an error
+    """
     if len(sys.argv) < 2:
         print("Usage: python standardize_error_handling.py <directory> [--fix]")
         sys.exit(1)

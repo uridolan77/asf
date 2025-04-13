@@ -1,7 +1,20 @@
+"""
 Database connection module for the Medical Research Synthesizer.
 
 This module provides functions for connecting to the database and managing sessions.
 It includes connection pooling, retry logic, and proper transaction management.
+
+Features:
+- Async and sync database support
+- Connection pooling for efficient resource usage
+- Retry logic for transient database errors
+- Proper transaction management with commit/rollback
+- Comprehensive error handling and logging
+- Support for PostgreSQL and SQLite databases
+
+The module configures the database connection based on settings from the application
+configuration, including connection pooling parameters and SQL echo mode.
+"""
 
 import time
 from functools import wraps
@@ -43,14 +56,17 @@ def with_retry(
     """
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
         """
-        decorator function.
-        
-        This function provides functionality for...
+        Decorator function that wraps the target function with retry logic.
+
+        This function wraps the target async function with retry logic that will
+        retry the operation on specified exceptions up to the maximum number of
+        retries, with exponential backoff between attempts.
+
         Args:
-            func: Description of func
-        
+            func: The async function to wrap with retry logic
+
         Returns:
-            Description of return value
+            A wrapped function that includes retry logic
         """
         @wraps(func)
         async def wrapper(*args: Any, **kwargs: Any) -> T:

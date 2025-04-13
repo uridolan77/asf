@@ -1,6 +1,28 @@
-Script to run tests for the Medical Research Synthesizer.
+"""
+Test Runner Script for the Medical Research Synthesizer.
 
-This script runs pytest on the tests directory.
+This script provides a convenient command-line interface for running tests using pytest.
+It supports various options for running specific test types (unit, integration, performance,
+security), generating reports (coverage, JUnit XML, HTML), and filtering tests.
+
+Usage:
+    python -m asf.medical.scripts.run_tests [options]
+
+Options:
+    --unit           Run only unit tests
+    --integration    Run only integration tests
+    --performance    Run only performance tests
+    --security       Run only security tests
+    --coverage       Generate coverage report
+    --verbose, -v    Verbose output
+    --xvs            Show extra verbose output
+    --junit-xml      Generate JUnit XML report
+    --html-report    Generate HTML report
+    --markers        Show available markers
+    --collect-only   Only collect tests, don't run them
+    --filter TEXT    Filter tests by name
+    --mark TEXT      Run tests with specific marker
+"""
 
 import os
 import sys
@@ -10,13 +32,22 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
 def main():
-    """Run tests.
+    """Run tests using pytest with the specified options.
 
-    Args:
-        # TODO: Add parameter descriptions
+    This function parses command-line arguments and constructs a pytest command
+    with the appropriate options. It supports:
+    - Running specific test types (unit, integration, performance, security)
+    - Generating reports (coverage, JUnit XML, HTML)
+    - Controlling verbosity
+    - Filtering tests by name or marker
+    - Listing available markers
+    - Collecting tests without running them
+
+    The function executes the pytest command using os.system and propagates
+    the exit code to the caller.
 
     Returns:
-        # TODO: Add return description
+        None, but exits the process with pytest's exit code
     """
     parser = argparse.ArgumentParser(description="Run tests for the Medical Research Synthesizer")
     parser.add_argument("--unit", action="store_true", help="Run only unit tests")

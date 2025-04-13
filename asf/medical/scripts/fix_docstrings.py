@@ -1,6 +1,20 @@
 """
 Fix Incomplete Docstrings in ASF Medical Codebase.
-This script adds or improves docstrings in Python files in the ASF Medical codebase.
+
+This script analyzes Python files in the ASF Medical codebase to identify missing
+or incomplete docstrings and optionally fixes them by adding or improving docstrings.
+It supports module, class, and function docstrings, and can generate appropriate
+docstring content based on the context (function arguments, return values, etc.).
+
+Usage:
+    python -m asf.medical.scripts.fix_docstrings <directory> [--fix]
+
+Arguments:
+    directory: Path to the directory to process
+    --fix: Optional flag to actually fix the docstrings (otherwise just reports issues)
+
+The script excludes certain directories and files from processing, and focuses on
+public functions and methods (skipping those that start with an underscore).
 """
 import os
 import sys
@@ -33,7 +47,18 @@ EXCLUDE_FILES = [
     "fix_unused_imports.py"
 ]
 def find_python_files(directory: str) -> List[str]:
-    """Find all Python files in the given directory and its subdirectories."""
+    """Find all Python files in the given directory and its subdirectories.
+
+    This function recursively walks through the specified directory and collects
+    paths to all Python files (.py extension) that are not in excluded directories
+    and are not excluded files.
+
+    Args:
+        directory: Path to the directory to search
+
+    Returns:
+        List of paths to Python files that should be processed
+    """
     python_files = []
     for root, dirs, files in os.walk(directory):
         # Skip excluded directories
@@ -43,7 +68,13 @@ def find_python_files(directory: str) -> List[str]:
                 python_files.append(os.path.join(root, file))
     return python_files
 class DocstringVisitor(ast.NodeVisitor):
-    """AST visitor to find nodes with missing or incomplete docstrings."""
+    """AST visitor to find nodes with missing or incomplete docstrings.
+
+    This class extends ast.NodeVisitor to traverse the abstract syntax tree of a
+    Python file and identify modules, classes, and functions that have missing or
+    incomplete docstrings. It maintains separate lists for missing and incomplete
+    docstrings, which can be used to generate reports or fix the issues.
+    """
     def __init__(self):
         self.missing_docstrings = []
         self.incomplete_docstrings = []
@@ -76,7 +107,19 @@ class DocstringVisitor(ast.NodeVisitor):
             self.incomplete_docstrings.append((node, "function"))
         self.generic_visit(node)
     def _is_complete_docstring(self, docstring: str) -> bool:
-        """Check if a docstring is complete."""
+        """Check if a docstring is complete.
+
+        A docstring is considered complete if it has at least one of the following sections:
+        - Args or Parameters: Describing the function/method parameters
+        - Returns: Describing the return value
+        - Raises: Describing exceptions that might be raised
+
+        Args:
+            docstring: The docstring to check
+
+        Returns:
+            True if the docstring is considered complete, False otherwise
+        """
         if not docstring:
             return False
         # Check if docstring has sections
@@ -86,7 +129,20 @@ class DocstringVisitor(ast.NodeVisitor):
         # A docstring is considered complete if it has at least one section
         return has_args or has_returns or has_raises
 def generate_docstring(node: ast.AST, node_type: str) -> str:
-    """Generate a docstring for a node."""
+    """Generate a docstring for a node.
+
+    This function generates an appropriate docstring for a module, class, or function
+    based on the node type and available information (such as function arguments and
+    return values). The generated docstring includes placeholders that should be
+    filled in by the developer.
+
+    Args:
+        node: The AST node for which to generate a docstring
+        node_type: The type of the node ('module', 'class', or 'function')
+
+    Returns:
+        A string containing the generated docstring
+    """
     if node_type == "module":
         return '"""\nModule description.\n\nThis module provides functionality for...\n"""'
     elif node_type == "class":
@@ -112,7 +168,21 @@ def generate_docstring(node: ast.AST, node_type: str) -> str:
         return f'"""\n{func_name} function.\n\nThis function provides functionality for...{args_section}{returns_section}"""'
     return '"""Docstring."""'
 def improve_docstring(node: ast.AST, node_type: str, existing_docstring: str) -> str:
-    """Improve an existing docstring."""
+    """Improve an existing docstring.
+
+    This function enhances an existing docstring by adding missing sections such as
+    Args and Returns. It preserves the existing content while adding the new sections
+    in appropriate locations. For functions, it analyzes the arguments and function
+    name to determine what sections should be added.
+
+    Args:
+        node: The AST node containing the docstring
+        node_type: The type of the node ('module', 'class', or 'function')
+        existing_docstring: The current docstring content
+
+    Returns:
+        An improved version of the docstring with added sections as needed
+    """
     if not existing_docstring:
         return generate_docstring(node, node_type)
     # Split docstring into lines
@@ -123,7 +193,8 @@ def improve_docstring(node: ast.AST, node_type: str, existing_docstring: str) ->
     # Check if docstring has Returns section
     has_returns = any("Returns:" in line for line in lines)
     # Check if docstring has Raises section
-    has_raises = any("Raises:" in line for line in lines)
+    # This variable is currently not used but kept for future enhancements
+    _ = any("Raises:" in line for line in lines)
     # Improve docstring based on node type
     if node_type == "function":
         # Add Args section if missing and function has arguments
@@ -150,7 +221,22 @@ def improve_docstring(node: ast.AST, node_type: str, existing_docstring: str) ->
                 lines.append("\nReturns:\n    Description of return value")
     return "\n".join(lines)
 def fix_docstrings(file_path: str, fix: bool = False) -> Dict[str, int]:
-    """Fix docstrings in a Python file."""
+    """Fix docstrings in a Python file.
+
+    This function analyzes a Python file to identify missing or incomplete docstrings
+    and optionally fixes them. It parses the file into an AST, uses DocstringVisitor
+    to identify issues, and then modifies the file content to add or improve docstrings.
+
+    Args:
+        file_path: Path to the Python file to process
+        fix: If True, modify the file to fix docstring issues; if False, just report issues
+
+    Returns:
+        A dictionary with the following keys:
+        - 'missing_docstrings': Number of missing docstrings found
+        - 'incomplete_docstrings': Number of incomplete docstrings found
+        - 'fixed': Boolean indicating whether the file was modified
+    """
     results = {
         "missing_docstrings": 0,
         "incomplete_docstrings": 0,
@@ -238,7 +324,19 @@ def fix_docstrings(file_path: str, fix: bool = False) -> Dict[str, int]:
         logger.error(f"Error processing file {file_path}: {str(e)}")
         return results
 def main():
-    """Main function."""
+    """Main entry point for the docstring fixing script.
+
+    This function parses command-line arguments, finds Python files in the specified
+    directory, processes each file to identify and optionally fix docstring issues,
+    and reports a summary of the results.
+
+    Command-line arguments:
+        <directory>: Directory to process
+        --fix: Optional flag to actually fix the docstrings
+
+    Returns:
+        None, but exits with a non-zero code if there's an error
+    """
     if len(sys.argv) < 2:
         print("Usage: python fix_docstrings.py <directory> [--fix]")
         sys.exit(1)
