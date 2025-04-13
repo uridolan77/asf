@@ -53,8 +53,21 @@ from .circuit_breaker import (
     CircuitState,
     CircuitOpenError,
     CircuitBreaker,
+    AsyncCircuitBreaker
+)
+
+from .circuit_breaker_registry import (
     CircuitBreakerRegistry,
-    get_circuit_breaker_registry
+    AsyncCircuitBreakerRegistry,
+    get_circuit_breaker_registry,
+    get_async_circuit_breaker_registry
+)
+
+from .circuit_breaker_decorators import (
+    circuit_breaker,
+    async_circuit_breaker,
+    with_fallback,
+    async_with_fallback
 )
 
 from .audit_logging import (
@@ -141,8 +154,15 @@ __all__ = [
     'CircuitState',
     'CircuitOpenError',
     'CircuitBreaker',
+    'AsyncCircuitBreaker',
     'CircuitBreakerRegistry',
+    'AsyncCircuitBreakerRegistry',
     'get_circuit_breaker_registry',
+    'get_async_circuit_breaker_registry',
+    'circuit_breaker',
+    'async_circuit_breaker',
+    'with_fallback',
+    'async_with_fallback',
 
     # Audit Logging
     'AuditLogger',

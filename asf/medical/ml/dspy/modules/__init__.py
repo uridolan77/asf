@@ -9,6 +9,7 @@ from .contradiction_detection import ContradictionDetectionModule, TemporalContr
 from .evidence_extraction import EvidenceExtractionModule
 from .medical_summarization import MedicalSummarizationModule
 from .clinical_qa import ClinicalQAModule
+from .diagnostic_reasoning import DiagnosticReasoningModule, SpecialistConsultModule
 
 __all__ = [
     'MedicalRAGModule',
@@ -17,5 +18,7 @@ __all__ = [
     'TemporalContradictionModule',
     'EvidenceExtractionModule',
     'MedicalSummarizationModule',
-    'ClinicalQAModule'
+    'ClinicalQAModule',
+    'DiagnosticReasoningModule',
+    'SpecialistConsultModule'
 ]
