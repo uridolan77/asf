@@ -30,7 +30,7 @@ from asf.medical.services.export_service import ExportService
 from asf.medical.services.auth_service import AuthService
 
 # ML service imports
-from asf.medical.ml.services.contradiction_service import ContradictionService
+from asf.medical.ml.services.unified_contradiction_service import ContradictionService
 from asf.medical.ml.services.prisma_screening_service import PrismaScreeningService
 from asf.medical.ml.services.bias_assessment_service import BiasAssessmentService
 
@@ -41,6 +41,8 @@ from asf.medical.clients.clinical_trials_client import ClinicalTrialsClient
 # Graph imports
 from asf.medical.graph.graph_service import GraphService
 from asf.medical.graph.graph_rag import GraphRAG
+from asf.medical.core.exceptions import DatabaseError, OperationError
+
 
 # Set up logging
 logger = get_logger(__name__)
@@ -57,39 +59,41 @@ async def get_current_user_ws(
 ) -> Optional[User]:
     """
     Get the current user from a WebSocket connection.
-    
+
     Args:
         websocket: WebSocket connection
         token: JWT token
         db: User repository
-        
+
     Returns:
         User or None if not authenticated
     """
     if not token:
         return None
-        
+
     try:
         # Decode the token
         payload = jwt.decode(
             token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
         )
         email: str = payload.get("sub")
-        
+
         if email is None:
             return None
-            
+
         # Get the user
         user = await db.get_by_email_async(None, email)
-        
+
         if user is None or not user.is_active:
             return None
-            
+
         return user
     except JWTError:
+        logger.error(f"Error: {str(e)}")
         return None
     except Exception as e:
         logger.error(f"Error authenticating WebSocket user: {str(e)}", exc_info=e)
+        raise DatabaseError(f"Database operation failed: {str(e)}")
         return None
 
 
@@ -99,13 +103,13 @@ async def get_admin_user(
 ) -> User:
     """
     Get the current admin user.
-    
+
     Args:
         current_user: Current active user
-        
+
     Returns:
         Current admin user
-        
+
     Raises:
         HTTPException: If the user is not an admin
     """
@@ -121,7 +125,7 @@ async def get_admin_user(
 def get_user_repository() -> UserRepository:
     """
     Get the user repository.
-    
+
     Returns:
         UserRepository: The user repository
     """
@@ -131,7 +135,7 @@ def get_user_repository() -> UserRepository:
 def get_query_repository() -> QueryRepository:
     """
     Get the query repository.
-    
+
     Returns:
         QueryRepository: The query repository
     """
@@ -141,7 +145,7 @@ def get_query_repository() -> QueryRepository:
 def get_result_repository() -> ResultRepository:
     """
     Get the result repository.
-    
+
     Returns:
         ResultRepository: The result repository
     """
@@ -151,7 +155,7 @@ def get_result_repository() -> ResultRepository:
 def get_kb_repository() -> KnowledgeBaseRepository:
     """
     Get the knowledge base repository.
-    
+
     Returns:
         KnowledgeBaseRepository: The knowledge base repository
     """
@@ -162,7 +166,7 @@ def get_kb_repository() -> KnowledgeBaseRepository:
 def get_ncbi_client() -> NCBIClient:
     """
     Get the NCBI client.
-    
+
     Returns:
         NCBIClient: The NCBI client
     """
@@ -172,7 +176,7 @@ def get_ncbi_client() -> NCBIClient:
 def get_clinical_trials_client() -> ClinicalTrialsClient:
     """
     Get the ClinicalTrials.gov client.
-    
+
     Returns:
         ClinicalTrialsClient: The ClinicalTrials.gov client
     """
@@ -183,7 +187,7 @@ def get_clinical_trials_client() -> ClinicalTrialsClient:
 def get_auth_service() -> AuthService:
     """
     Get the authentication service.
-    
+
     Returns:
         AuthService: The authentication service
     """
@@ -193,7 +197,7 @@ def get_auth_service() -> AuthService:
 def get_search_service() -> SearchService:
     """
     Get the search service.
-    
+
     Returns:
         SearchService: The search service
     """
@@ -203,7 +207,7 @@ def get_search_service() -> SearchService:
 def get_analysis_service() -> AnalysisService:
     """
     Get the analysis service.
-    
+
     Returns:
         AnalysisService: The analysis service
     """
@@ -213,7 +217,7 @@ def get_analysis_service() -> AnalysisService:
 def get_knowledge_base_service() -> KnowledgeBaseService:
     """
     Get the knowledge base service.
-    
+
     Returns:
         KnowledgeBaseService: The knowledge base service
     """
@@ -223,7 +227,7 @@ def get_knowledge_base_service() -> KnowledgeBaseService:
 def get_export_service() -> ExportService:
     """
     Get the export service.
-    
+
     Returns:
         ExportService: The export service
     """
@@ -234,7 +238,7 @@ def get_export_service() -> ExportService:
 def get_contradiction_service() -> ContradictionService:
     """
     Get the contradiction service.
-    
+
     Returns:
         ContradictionService: The contradiction service
     """
@@ -244,7 +248,7 @@ def get_contradiction_service() -> ContradictionService:
 def get_prisma_screening_service() -> PrismaScreeningService:
     """
     Get the PRISMA screening service.
-    
+
     Returns:
         PrismaScreeningService: The PRISMA screening service
     """
@@ -254,7 +258,7 @@ def get_prisma_screening_service() -> PrismaScreeningService:
 def get_bias_assessment_service() -> BiasAssessmentService:
     """
     Get the bias assessment service.
-    
+
     Returns:
         BiasAssessmentService: The bias assessment service
     """
@@ -265,7 +269,7 @@ def get_bias_assessment_service() -> BiasAssessmentService:
 def get_graph_service() -> GraphService:
     """
     Get the graph service.
-    
+
     Returns:
         GraphService: The graph service
     """
@@ -275,22 +279,19 @@ def get_graph_service() -> GraphService:
 def get_graph_rag() -> Optional[GraphRAG]:
     """
     Get the GraphRAG service.
-    
+
     This function attempts to create a GraphRAG service instance.
     If initialization fails, it returns None instead of raising an exception,
     allowing the application to continue without GraphRAG.
-    
+
     Returns:
         GraphRAG: The GraphRAG service, or None if initialization fails
     """
     try:
         return get_service(GraphRAG)()
     except Exception as e:
-        logger.warning(
-            f"Failed to initialize GraphRAG: {str(e)}",
-            extra={"error": str(e)},
-            exc_info=e
-        )
+        logger.error(f"Failed to initialize GraphRAG: {str(e)}", exc_info=e)
+        raise OperationError(f"Operation failed: {str(e)}")
         return None
 
 
@@ -298,7 +299,7 @@ def get_graph_rag() -> Optional[GraphRAG]:
 def get_synthesizer():
     """
     Get the synthesizer service that combines search and analysis capabilities.
-    
+
     Returns:
         A service combining search and analysis functionality
     """

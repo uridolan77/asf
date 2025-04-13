@@ -1,6 +1,20 @@
-Run Dramatiq Workers
+"""Run Dramatiq Workers for the Medical Research Synthesizer.
 
-This script starts Dramatiq workers for processing background tasks.
+This script starts Dramatiq workers for processing background tasks such as
+export operations and ML inference tasks. It configures the number of worker
+processes and threads based on command-line arguments or defaults.
+
+The workers process tasks from the following modules:
+- asf.medical.tasks.export_tasks: Tasks for exporting data in various formats
+- asf.medical.tasks.ml_inference_tasks: Tasks for ML model inference
+
+Usage:
+    python -m asf.medical.run_workers [--processes N] [--threads M]
+
+Options:
+    --processes N    Number of worker processes (default: 2)
+    --threads M      Number of worker threads per process (default: 8)
+"""
 
 import os
 import sys
@@ -19,13 +33,18 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 def main():
-    """Run Dramatiq workers.
+    """Run Dramatiq workers for processing background tasks.
+
+    This function parses command-line arguments to configure the number of worker
+    processes and threads, then starts the Dramatiq workers to process tasks from
+    the registered task modules.
 
     Args:
-        # TODO: Add parameter descriptions
+        None: Arguments are parsed from command line
 
     Returns:
-        # TODO: Add return description
+        None: The function does not return as it runs the Dramatiq workers
+        which block until terminated
     """
     parser = argparse.ArgumentParser(description="Run Dramatiq workers")
     parser.add_argument(

@@ -1,19 +1,21 @@
+"""
 Asynchronous ML Inference Router for the Medical Research Synthesizer API.
 
 This module provides endpoints for asynchronous ML model inference operations.
-
+"""
 import logging
 import json
 from typing import Dict, List, Any, Optional
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 
 from asf.medical.api.auth import get_current_active_user
+from asf.medical.api.models.base import APIResponse
 from asf.medical.storage.models import User
 from asf.medical.tasks.ml_inference_tasks import (
     detect_contradiction, analyze_contradictions_in_articles,
     generate_embeddings, get_task_result
 )
-from asf.medical.core.persistent_task_storage import task_storage
+from asf.medical.core.task_storage import task_storage
 from asf.medical.core.observability import async_timed, log_error
 
 router = APIRouter(prefix="/async-ml", tags=["async-ml"])
@@ -49,6 +51,7 @@ async def async_detect_contradiction(
         )
 
     except Exception as e:
+        logger.error(f"Error: {str(e)}")
         log_error(e, {"user_id": current_user.id})
         logger.error(f"Error starting contradiction detection: {str(e)}")
         raise HTTPException(
@@ -84,6 +87,7 @@ async def async_analyze_contradictions(
         )
 
     except Exception as e:
+        logger.error(f"Error: {str(e)}")
         log_error(e, {"user_id": current_user.id})
         logger.error(f"Error starting contradiction analysis: {str(e)}")
         raise HTTPException(
@@ -118,6 +122,7 @@ async def async_generate_embeddings(
         )
 
     except Exception as e:
+        logger.error(f"Error: {str(e)}")
         log_error(e, {"user_id": current_user.id})
         logger.error(f"Error starting embedding generation: {str(e)}")
         raise HTTPException(
@@ -145,6 +150,7 @@ async def get_ml_task_status(
                     result = json.loads(task_result["result"])
                     task_result["result"] = result
                 except json.JSONDecodeError:
+                    logger.error(f"Error: {str(e)}")
                     pass
 
             return APIResponse(
@@ -166,6 +172,7 @@ async def get_ml_task_status(
         )
 
     except Exception as e:
+        logger.error(f"Error: {str(e)}")
         log_error(e, {"user_id": current_user.id})
         logger.error(f"Error getting task status: {str(e)}")
         raise HTTPException(

@@ -18,7 +18,7 @@ from asf.medical.core.exceptions import (
     ValidationError, ExternalServiceError, DatabaseError,
     ResourceNotFoundError, KnowledgeBaseError
 )
-from asf.medical.core.enhanced_cache import enhanced_cache_manager, enhanced_cached
+from asf.medical.core.cache import enhanced_cache_manager, enhanced_cached
 from asf.medical.core.progress_tracker import ProgressTracker
 logger = logging.getLogger(__name__)
 class KnowledgeBaseProgressTracker(ProgressTracker):

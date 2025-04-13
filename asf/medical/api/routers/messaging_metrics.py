@@ -1,25 +1,72 @@
+"""
 API endpoints for messaging metrics.
 This module provides API endpoints for monitoring the messaging system.
+"""
 from typing import Dict, List
 from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, status, Query
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from asf.medical.core.logging_config import get_logger
-from asf.medical.core.messaging.broker import get_message_broker
-from asf.medical.storage.database import get_db_session
-from asf.medical.storage.repositories.task_repository import TaskRepository
 from asf.medical.api.dependencies import get_admin_user
 from asf.medical.storage.models import User
 logger = get_logger(__name__)
 router = APIRouter(prefix="/v1/messaging-metrics", tags=["messaging-metrics"])
-class SystemStatusResponse(BaseModel):
-    System status response.
-    Get recent messages.
+class MetricsDataPoint(BaseModel):
+    """Metrics data point.
+
+    This model represents a single data point in a metrics time series.
+    """
+    timestamp: str = Field(..., description="Timestamp in ISO format")
+    value: float = Field(..., description="Metric value")
+
+
+class RecentMessage(BaseModel):
+    """Recent message.
+
+    This model represents a recent message in the messaging system.
+    """
+    id: str = Field(..., description="Message ID")
+    type: str = Field(..., description="Message type")
+    subtype: str = Field(..., description="Message subtype")
+    timestamp: str = Field(..., description="Timestamp in ISO format")
+
+
+class RecentMessagesResponse(BaseModel):
+    """Recent messages response.
+
+    This model represents a response containing recent messages.
+    """
+    messages: List[RecentMessage] = Field(..., description="List of recent messages")
+
+
+class MetricsResponse(BaseModel):
+    """Metrics response.
+
+    This model represents a response containing messaging system metrics.
+    """
+    throughput: List[MetricsDataPoint] = Field(..., description="Message throughput over time")
+    queue_sizes: Dict[str, List[MetricsDataPoint]] = Field(..., description="Queue sizes over time")
+    processing_times: Dict[str, List[MetricsDataPoint]] = Field(..., description="Processing times over time")
+    error_rates: List[MetricsDataPoint] = Field(..., description="Error rates over time")
+@router.get("/recent-messages", response_model=RecentMessagesResponse)
+async def get_recent_messages(
+    limit: int = Query(5, description="Maximum number of messages to return"),
+    current_user: User = Depends(get_admin_user)  # Used for authorization
+):
+    """Get recent messages from the messaging system.
+
+    This endpoint retrieves the most recent messages from the messaging system.
+    It requires admin privileges to access.
+
     Args:
         limit: Maximum number of messages to return
-        current_user: Current admin user
+        current_user: The authenticated admin user
+
     Returns:
-        Recent messages
+        RecentMessagesResponse containing the list of recent messages
+
+    Raises:
+        HTTPException: If an error occurs while retrieving messages
     """
     try:
         # In a real implementation, this would query the message broker
@@ -65,104 +112,94 @@ class SystemStatusResponse(BaseModel):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error getting recent messages: {str(e)}"
         )
+
+
 @router.get("/metrics", response_model=MetricsResponse)
 async def get_metrics(
     time_range: str = Query("24h", description="Time range (1h, 6h, 24h, 7d, 30d)"),
-    current_user: User = Depends(get_admin_user)
+    current_user: User = Depends(get_admin_user)  # Used for authorization
 ):
-    """
-    Get messaging system metrics.
+    """Get messaging system metrics.
+
+    This endpoint retrieves metrics about the messaging system, such as throughput,
+    queue sizes, processing times, and error rates. It requires admin privileges to access.
+
     Args:
-        time_range: Time range
-        current_user: Current admin user
+        time_range: Time range for metrics (1h, 6h, 24h, 7d, 30d)
+        current_user: The authenticated admin user
+
     Returns:
-        Metrics data
+        MetricsResponse containing the metrics data
+
+    Raises:
+        HTTPException: If an error occurs while retrieving metrics
     """
     try:
-        # In a real implementation, this would query the metrics database
+        # In a real implementation, this would query the message broker
         # For now, we'll return dummy data
-        # Parse time range
-        hours = 24
-        if time_range == "1h":
-            hours = 1
-        elif time_range == "6h":
-            hours = 6
-        elif time_range == "24h":
-            hours = 24
-        elif time_range == "7d":
-            hours = 24 * 7
-        elif time_range == "30d":
-            hours = 24 * 30
-        # Generate timestamps
         now = datetime.now()
-        timestamps = [
-            (now - timedelta(hours=i)).isoformat()
-            for i in range(hours, 0, -1)
-        ]
+
+        # Generate dummy data points based on time range
+        if time_range == "1h":
+            interval = timedelta(minutes=5)
+            num_points = 12
+        elif time_range == "6h":
+            interval = timedelta(minutes=30)
+            num_points = 12
+        elif time_range == "24h":
+            interval = timedelta(hours=2)
+            num_points = 12
+        elif time_range == "7d":
+            interval = timedelta(hours=12)
+            num_points = 14
+        elif time_range == "30d":
+            interval = timedelta(days=2)
+            num_points = 15
+        else:
+            interval = timedelta(hours=2)
+            num_points = 12
+
         # Generate throughput data
-        throughput = [
-            MetricsDataPoint(
-                timestamp=timestamp,
-                value=50 + (i % 20)  # Random-ish value between 50 and 70
-            )
-            for i, timestamp in enumerate(timestamps)
-        ]
+        throughput = []
+        for i in range(num_points):
+            timestamp = (now - interval * i).isoformat()
+            value = 100 - i * 5 + (i % 3) * 10  # Some variation
+            throughput.append(MetricsDataPoint(timestamp=timestamp, value=value))
+
         # Generate queue sizes data
         queue_sizes = {
             "tasks": [
-                MetricsDataPoint(
-                    timestamp=timestamp,
-                    value=10 + (i % 5)  # Random-ish value between 10 and 15
-                )
-                for i, timestamp in enumerate(timestamps)
+                MetricsDataPoint(timestamp=(now - interval * i).isoformat(), value=20 - i + (i % 4) * 5)
+                for i in range(num_points)
             ],
             "events": [
-                MetricsDataPoint(
-                    timestamp=timestamp,
-                    value=5 + (i % 3)  # Random-ish value between 5 and 8
-                )
-                for i, timestamp in enumerate(timestamps)
-            ],
-            "commands": [
-                MetricsDataPoint(
-                    timestamp=timestamp,
-                    value=2 + (i % 2)  # Random-ish value between 2 and 4
-                )
-                for i, timestamp in enumerate(timestamps)
+                MetricsDataPoint(timestamp=(now - interval * i).isoformat(), value=15 - i + (i % 3) * 3)
+                for i in range(num_points)
             ]
         }
+
         # Generate processing times data
         processing_times = {
             "search": [
-                MetricsDataPoint(
-                    timestamp=timestamp,
-                    value=0.5 + (i % 10) / 20  # Random-ish value between 0.5 and 1.0
-                )
-                for i, timestamp in enumerate(timestamps)
+                MetricsDataPoint(timestamp=(now - interval * i).isoformat(), value=0.5 + (i % 5) * 0.1)
+                for i in range(num_points)
             ],
             "analysis": [
-                MetricsDataPoint(
-                    timestamp=timestamp,
-                    value=1.0 + (i % 10) / 10  # Random-ish value between 1.0 and 2.0
-                )
-                for i, timestamp in enumerate(timestamps)
+                MetricsDataPoint(timestamp=(now - interval * i).isoformat(), value=2.0 + (i % 3) * 0.5)
+                for i in range(num_points)
             ],
             "export": [
-                MetricsDataPoint(
-                    timestamp=timestamp,
-                    value=0.8 + (i % 10) / 15  # Random-ish value between 0.8 and 1.5
-                )
-                for i, timestamp in enumerate(timestamps)
+                MetricsDataPoint(timestamp=(now - interval * i).isoformat(), value=1.0 + (i % 4) * 0.2)
+                for i in range(num_points)
             ]
         }
+
         # Generate error rates data
         error_rates = [
-            MetricsDataPoint(
-                timestamp=timestamp,
-                value=(i % 5) / 100  # Random-ish value between 0 and 0.05
-            )
-            for i, timestamp in enumerate(timestamps)
+            MetricsDataPoint(timestamp=(now - interval * i).isoformat(), value=(i % 5) * 0.5)
+            for i in range(num_points)
         ]
+
         return MetricsResponse(
             throughput=throughput,
             queue_sizes=queue_sizes,
@@ -170,8 +207,9 @@ async def get_metrics(
             error_rates=error_rates
         )
     except Exception as e:
-        logger.error(f"Error getting metrics: {str(e)}", exc_info=e)
+        logger.error(f"Error getting messaging metrics: {str(e)}", exc_info=e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error getting metrics: {str(e)}"
+            detail=f"Error getting messaging metrics: {str(e)}"
         )
+

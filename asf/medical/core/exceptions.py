@@ -17,6 +17,8 @@ Classes:
     ResourceError: Exception for resource-related errors.
     ConfigurationError: Exception for configuration-related errors.
     MLError: Exception for machine learning-related errors.
+    OperationError: Exception for operation-related errors.
+    ExportError: Exception for export-related errors.
 """
 
 from typing import Dict, Any, Optional
@@ -338,4 +340,56 @@ class MLError(MedicalResearchSynthesizerError):
         self.model = model
         self.operation = operation
         self.inputs = inputs
+        super().__init__(message, details)
+
+
+class OperationError(MedicalResearchSynthesizerError):
+    """
+    Exception raised for operation-related errors.
+
+    This is used when general operations fail.
+
+    Attributes:
+        operation (str): The operation that failed.
+        inputs (Any): The inputs that caused the error.
+    """
+
+    def __init__(self, message: str, operation: str = None, inputs: Any = None, details: Dict[str, Any] = None):
+        """
+        Initialize the OperationError.
+
+        Args:
+            message (str): The error message.
+            operation (str, optional): The operation that failed. Defaults to None.
+            inputs (Any, optional): The inputs that caused the error. Defaults to None.
+            details (Dict[str, Any], optional): Additional details about the error. Defaults to None.
+        """
+        self.operation = operation
+        self.inputs = inputs
+        super().__init__(message, details)
+
+
+class ExportError(MedicalResearchSynthesizerError):
+    """
+    Exception raised for export-related errors.
+
+    This is used when exporting data to various formats fails.
+
+    Attributes:
+        format (str): The export format that failed.
+        data_type (str): The type of data being exported.
+    """
+
+    def __init__(self, message: str, format: str = None, data_type: str = None, details: Dict[str, Any] = None):
+        """
+        Initialize the ExportError.
+
+        Args:
+            message (str): The error message.
+            format (str, optional): The export format that failed. Defaults to None.
+            data_type (str, optional): The type of data being exported. Defaults to None.
+            details (Dict[str, Any], optional): Additional details about the error. Defaults to None.
+        """
+        self.format = format
+        self.data_type = data_type
         super().__init__(message, details)

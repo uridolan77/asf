@@ -9,7 +9,7 @@ from fastapi import APIRouter, Query
 from pydantic import BaseModel
 
 from asf.medical.core.logging_config import get_logger
-from asf.medical.core.persistent_task_storage import task_storage
+from asf.medical.core.task_storage import task_storage
 
 logger = get_logger(__name__)
 

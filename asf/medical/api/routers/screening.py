@@ -1,6 +1,7 @@
-Screening router for the Medical Research Synthesizer API.
+"""Screening router for the Medical Research Synthesizer API.
 
 This module provides endpoints for PRISMA-guided screening and bias assessment.
+"""
 
 import logging
 from typing import List, Dict, Any, Optional
@@ -19,7 +20,6 @@ from asf.medical.ml.services.bias_assessment_service import (
     BiasAssessmentService, BiasRisk, BiasDomain
 )
 from asf.medical.services.search_service import SearchService
-from asf.medical.services.screening_service import ScreeningService
 from asf.medical.storage.models import User
 from asf.medical.core.observability import async_timed, log_error
 
@@ -28,24 +28,36 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/screening", tags=["screening"])
 
 class ScreeningCriteriaItem(BaseModel):
-    Screening criteria item.
+    """Screening criteria item.
+
+    This model represents a single screening criterion item with text and optional description.
+    """
     text: str = Field(..., description="Criterion text")
     description: Optional[str] = Field(None, description="Criterion description")
 
 class ScreeningCriteria(BaseModel):
-    Screening criteria.
+    """Screening criteria.
+
+    This model represents a set of inclusion and exclusion criteria for screening.
+    """
     include: List[str] = Field(default_factory=list, description="Inclusion criteria")
     exclude: List[str] = Field(default_factory=list, description="Exclusion criteria")
 
 class ScreeningRequest(BaseModel):
-    PRISMA screening request.
+    """PRISMA screening request.
+
+    This model represents a request for PRISMA-guided screening of articles.
+    """
     query: str = Field(..., description="Search query")
     max_results: int = Field(20, description="Maximum number of results to screen")
     stage: ScreeningStage = Field(ScreeningStage.SCREENING, description="Screening stage")
     criteria: Optional[ScreeningCriteria] = Field(None, description="Custom screening criteria")
 
 class BiasAssessmentRequest(BaseModel):
-    Bias assessment request.
+    """Bias assessment request.
+
+    This model represents a request for bias assessment of articles.
+    """
     query: str = Field(..., description="Search query")
     max_results: int = Field(20, description="Maximum number of results to assess")
     domains: Optional[List[BiasDomain]] = Field(None, description="Bias domains to assess")
@@ -58,17 +70,35 @@ async def screen_articles(
     screening_service: PRISMAScreeningService = Depends(get_prisma_screening_service),
     current_user: User = Depends(get_current_active_user)
 ):
+    """Screen articles using PRISMA guidelines.
+
+    This endpoint screens articles based on PRISMA guidelines. It first searches for articles
+    using the provided query, then applies screening criteria to determine which articles
+    should be included or excluded.
+
+    Args:
+        request: The screening request containing query and criteria
+        search_service: Service for searching articles
+        screening_service: Service for screening articles
+        current_user: The authenticated user making the request
+
+    Returns:
+        APIResponse containing screening results
+
+    Raises:
+        HTTPException: If an error occurs during screening
+    """
     try:
         logger.info(f"Screening articles for query: {request.query}")
-        
+
         search_result = await search_service.search(
             query=request.query,
             max_results=request.max_results,
             user_id=current_user.id
         )
-        
+
         articles = search_result.get("results", [])
-        
+
         if not articles:
             logger.warning(f"No articles found for query: {request.query}")
             return APIResponse(
@@ -90,27 +120,27 @@ async def screen_articles(
                     "stage": request.stage
                 }
             )
-        
+
         if request.criteria:
             screening_service.set_criteria(
                 stage=request.stage,
                 include_criteria=request.criteria.include,
                 exclude_criteria=request.criteria.exclude
             )
-        
+
         screening_results = await screening_service.screen_articles(
             articles=articles,
             stage=request.stage
         )
-        
+
         included = sum(1 for r in screening_results if r["decision"] == ScreeningDecision.INCLUDE)
         excluded = sum(1 for r in screening_results if r["decision"] == ScreeningDecision.EXCLUDE)
         uncertain = sum(1 for r in screening_results if r["decision"] == ScreeningDecision.UNCERTAIN)
-        
+
         flow_data = screening_service.get_flow_data()
-        
+
         logger.info(f"Screening completed: {included} included, {excluded} excluded, {uncertain} uncertain")
-        
+
         return APIResponse(
             success=True,
             message="Screening completed successfully",
@@ -128,10 +158,11 @@ async def screen_articles(
                 "query": request.query,
                 "max_results": request.max_results,
                 "stage": request.stage,
-                "criteria": request.criteria.dict() if request.criteria else None
+                "criteria": request.criteria.model_dump() if request.criteria else None
             }
         )
     except ValueError as e:
+        logger.error(f"Error: {str(e)}")
         log_error(e, {"query": request.query, "user_id": current_user.id})
         logger.warning(f"Validation error in screening: {str(e)}")
         return ErrorResponse(
@@ -140,6 +171,7 @@ async def screen_articles(
             code="VALIDATION_ERROR"
         )
     except Exception as e:
+        logger.error(f"Error: {str(e)}")
         log_error(e, {"query": request.query, "user_id": current_user.id})
         logger.error(f"Error screening articles: {str(e)}")
         raise HTTPException(
@@ -155,17 +187,34 @@ async def assess_bias(
     bias_service: BiasAssessmentService = Depends(get_bias_assessment_service),
     current_user: User = Depends(get_current_active_user)
 ):
+    """Assess bias in articles.
+
+    This endpoint assesses bias in articles based on various domains. It first searches for articles
+    using the provided query, then applies bias assessment to determine the risk level for each article.
+
+    Args:
+        request: The bias assessment request containing query and domains
+        search_service: Service for searching articles
+        bias_service: Service for assessing bias
+        current_user: The authenticated user making the request
+
+    Returns:
+        APIResponse containing bias assessment results
+
+    Raises:
+        HTTPException: If an error occurs during bias assessment
+    """
     try:
         logger.info(f"Assessing bias for query: {request.query}")
-        
+
         search_result = await search_service.search(
             query=request.query,
             max_results=request.max_results,
             user_id=current_user.id
         )
-        
+
         articles = search_result.get("results", [])
-        
+
         if not articles:
             logger.warning(f"No articles found for query: {request.query}")
             return APIResponse(
@@ -186,20 +235,20 @@ async def assess_bias(
                     "domains": [domain.value for domain in request.domains] if request.domains else None
                 }
             )
-        
+
         assessment_results = await bias_service.assess_studies(articles)
-        
-        low_risk = sum(1 for r in assessment_results 
+
+        low_risk = sum(1 for r in assessment_results
                       if r["assessment"][BiasDomain.OVERALL]["risk"] == BiasRisk.LOW)
-        moderate_risk = sum(1 for r in assessment_results 
+        moderate_risk = sum(1 for r in assessment_results
                            if r["assessment"][BiasDomain.OVERALL]["risk"] == BiasRisk.MODERATE)
-        high_risk = sum(1 for r in assessment_results 
+        high_risk = sum(1 for r in assessment_results
                        if r["assessment"][BiasDomain.OVERALL]["risk"] == BiasRisk.HIGH)
-        unclear_risk = sum(1 for r in assessment_results 
+        unclear_risk = sum(1 for r in assessment_results
                           if r["assessment"][BiasDomain.OVERALL]["risk"] == BiasRisk.UNCLEAR)
-        
+
         logger.info(f"Bias assessment completed: {low_risk} low risk, {moderate_risk} moderate risk, {high_risk} high risk, {unclear_risk} unclear risk")
-        
+
         return APIResponse(
             success=True,
             message="Bias assessment completed successfully",
@@ -219,6 +268,7 @@ async def assess_bias(
             }
         )
     except ValueError as e:
+        logger.error(f"Error: {str(e)}")
         log_error(e, {"query": request.query, "user_id": current_user.id})
         logger.warning(f"Validation error in bias assessment: {str(e)}")
         return ErrorResponse(
@@ -227,6 +277,7 @@ async def assess_bias(
             code="VALIDATION_ERROR"
         )
     except Exception as e:
+        logger.error(f"Error: {str(e)}")
         log_error(e, {"query": request.query, "user_id": current_user.id})
         logger.error(f"Error assessing bias: {str(e)}")
         raise HTTPException(
@@ -240,11 +291,26 @@ async def get_flow_diagram(
     screening_service: PRISMAScreeningService = Depends(get_prisma_screening_service),
     current_user: User = Depends(get_current_active_user)
 ):
+    """Get PRISMA flow diagram data.
+
+    This endpoint retrieves data for generating a PRISMA flow diagram, which shows the flow of
+    articles through the screening process.
+
+    Args:
+        screening_service: Service for screening articles
+        current_user: The authenticated user making the request
+
+    Returns:
+        APIResponse containing flow diagram data
+
+    Raises:
+        HTTPException: If an error occurs while retrieving flow diagram data
+    """
     try:
         logger.info("Getting PRISMA flow diagram data")
-        
+
         diagram_data = screening_service.generate_flow_diagram()
-        
+
         return APIResponse(
             success=True,
             message="Flow diagram data retrieved successfully",
@@ -254,6 +320,7 @@ async def get_flow_diagram(
             }
         )
     except Exception as e:
+        logger.error(f"Error: {str(e)}")
         log_error(e, {"user_id": current_user.id})
         logger.error(f"Error getting flow diagram data: {str(e)}")
         raise HTTPException(

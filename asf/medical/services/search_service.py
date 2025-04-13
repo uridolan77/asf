@@ -8,10 +8,10 @@ import traceback
 from datetime import datetime
 from typing import Dict, List, Any, Optional, Union
 from enum import Enum
-from asf.medical.core.distributed_cache import redis_cached
+from asf.medical.core.cache import redis_cached
 from asf.medical.core.exceptions import (
     SearchError, ValidationError,
-    ExternalServiceError, DatabaseError, ServiceError
+    ExternalServiceError, DatabaseError
 )
 from asf.medical.core.logging_config import get_logger
 from asf.medical.clients.ncbi_client import NCBIClient
@@ -30,13 +30,13 @@ class SearchMethod(str, Enum):
     - CLINICAL_TRIALS: Search ClinicalTrials.gov
     - GRAPH_RAG: Search using GraphRAG (graph-based retrieval-augmented generation)
     """
-    """
     PUBMED = "pubmed"
     CLINICAL_TRIALS = "clinical_trials"
     GRAPH_RAG = "graph_rag"
 logger = get_logger(__name__)
 class SearchService:
-    """Service for searching medical literature.
+    """
+    Service for searching medical literature.
 
     This service provides methods for searching medical literature from various sources,
     including PubMed, ClinicalTrials.gov, and using GraphRAG for enhanced search capabilities.
@@ -178,8 +178,8 @@ class SearchService:
                     "result_id": str(uuid.uuid4())
                 }
         except Exception as e:
-    logger.error(f\"Error searching PubMed: {str(e)}\")
-    raise DatabaseError(f\"Error searching PubMed: {str(e)}\") ExternalServiceError("NCBI PubMed", f"Failed to search: {str(e)}")
+            logger.error(f"Error searching PubMed: {str(e)}")
+            raise ExternalServiceError("NCBI PubMed", f"Failed to search: {str(e)}")
         try:
             id_list = search_results['esearchresult'].get('idlist', [])
             if not id_list:
@@ -200,8 +200,9 @@ class SearchService:
                     "result_id": str(uuid.uuid4())
                 }
         except Exception as e:
-    logger.error(f\"Error fetching abstracts: {str(e)}\")
-    raise DatabaseError(f\"Error fetching abstracts: {str(e)}\") ExternalServiceError("NCBI PubMed", f"Failed to fetch abstracts: {str(e)}")
+            logger.error(f"Error fetching abstracts: {str(e)}")
+            raise ExternalServiceError("NCBI PubMed", f"Failed to fetch abstracts: {str(e)}")
+
         enriched_articles = []
         for article in abstracts:
             enriched = self._enrich_article(article)
@@ -217,7 +218,7 @@ class SearchService:
         if user_id:
             try:
                 query_obj = await self.query_repository.create_async(
-                    db,  # This will be handled by the repository
+                    None,  # This will be handled by the repository
                     obj_in={
                         'user_id': user_id,
                         'query_text': query,
@@ -226,7 +227,7 @@ class SearchService:
                     }
                 )
                 await self.result_repository.create_async(
-                    db,  # This will be handled by the repository
+                    None,  # This will be handled by the repository
                     obj_in={
                         'result_id': result_id,
                         'user_id': user_id,
@@ -306,19 +307,20 @@ class SearchService:
         except ValidationError:
             raise
         except Exception as e:
-    logger.error(f\"Error in PICO search: {str(e)}\")
-    raise DatabaseError(f\"Error in PICO search: {str(e)}\") SearchError(condition, f"Failed to execute PICO search: {str(e)}")
+            logger.error(f"Error in PICO search: {str(e)}")
+            raise SearchError(condition, f"Failed to execute PICO search: {str(e)}")
     async def get_result(self, result_id: str) -> Optional[Dict[str, Any]]:
         if not result_id or not result_id.strip():
             raise ValidationError("Result ID cannot be empty")
         logger.info(f"Getting search result: {result_id}")
-        cache_key = f"result:{result_id}"
-        cached_result = await enhanced_cache_manager.get(cache_key, data_type="search")
+        # Use redis_cached decorator instead of direct cache access
+        # This is a placeholder for actual cache implementation
+        cached_result = None
         if cached_result is not None:
             logger.debug(f"Result found in cache: {result_id}")
             return cached_result
         try:
-            result = await self.result_repository.get_by_result_id_async(db, result_id=result_id)
+            result = await self.result_repository.get_by_result_id_async(None, result_id=result_id)
             if result:
                 logger.debug(f"Result found in database: {result_id}")
                 result_dict = {
@@ -327,21 +329,29 @@ class SearchService:
                     'timestamp': result.created_at.isoformat(),
                     'user_id': result.user_id
                 }
-                await enhanced_cache_manager.set(cache_key, result_dict, data_type="search")
+                # Use redis_cached decorator instead of direct cache access
+                # This is a placeholder for actual cache implementation
+                pass
                 return result_dict
             else:
                 logger.warning(f"Result not found: {result_id}")
                 return None
         except Exception as e:
-    logger.error(f\"Error getting result from database: {str(e)}\")
-    raise DatabaseError(f\"Error getting result from database: {str(e)}\") DatabaseError(f"Failed to retrieve search result: {str(e)}")
+            logger.error(f"Error getting result from database: {str(e)}")
+            raise DatabaseError(f"Failed to retrieve search result: {str(e)}")
+
     def _enrich_article(self, article: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Enrich an article with additional metadata.
+        """Enrich an article with additional metadata.
+
+        This method adds additional metadata to an article, such as impact factor,
+        citation count, and authority score. It also ensures that all required
+        fields are present in the article.
+
         Args:
-            article: Article data
+            article: The article data to enrich
+
         Returns:
-            Enriched article
+            Enriched article with additional metadata
         """
         try:
             enriched = article.copy()

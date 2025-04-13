@@ -7,7 +7,7 @@ import pytest
 import logging
 from typing import Dict, Any, List
 
-from asf.medical.ml.services.contradiction_service import ContradictionService
+from asf.medical.ml.services.unified_contradiction_service import ContradictionService
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 @pytest.mark.async_test
 class TestContradictionService:
     """Test cases for ContradictionService."""
-    
+
     @pytest.fixture
     def sample_claims(self):
         """Create sample claims for testing."""
@@ -39,7 +39,7 @@ class TestContradictionService:
                 }
             }
         ]
-    
+
     @pytest.mark.asyncio
     async def test_detect_contradiction(
         self,
@@ -49,14 +49,14 @@ class TestContradictionService:
         """Test detecting contradiction between two claims."""
         claim1 = sample_claims[0]["text"]
         claim2 = sample_claims[1]["text"]
-        
+
         result = await contradiction_service.detect_contradiction(claim1, claim2)
-        
+
         assert isinstance(result, dict)
         assert "is_contradiction" in result
         assert "score" in result
         assert "explanation" in result
-    
+
     @pytest.mark.asyncio
     async def test_detect_temporal_contradiction(
         self,
@@ -68,16 +68,16 @@ class TestContradictionService:
         claim2 = sample_claims[1]["text"]
         date1 = sample_claims[0]["metadata"]["publication_date"]
         date2 = sample_claims[1]["metadata"]["publication_date"]
-        
+
         result = await contradiction_service.detect_temporal_contradiction(
             claim1, claim2, date1, date2
         )
-        
+
         assert isinstance(result, dict)
         assert "is_contradiction" in result
         assert "score" in result
         assert "explanation" in result
-    
+
     @pytest.mark.asyncio
     async def test_generate_explanation(
         self,
@@ -87,9 +87,9 @@ class TestContradictionService:
         """Test generating explanation for a contradiction."""
         claim1 = sample_claims[0]["text"]
         claim2 = sample_claims[1]["text"]
-        
+
         contradiction = await contradiction_service.detect_contradiction(claim1, claim2)
         explanation = await contradiction_service.generate_explanation(contradiction)
-        
+
         assert isinstance(explanation, str)
         assert len(explanation) > 0

@@ -17,13 +17,18 @@ import json
 import os
 import tempfile
 import logging
-from datetime import datetime
 import pandas as pd
 from typing import List, Dict, Any, Optional
 from fastapi.responses import JSONResponse, StreamingResponse, FileResponse
 from fpdf import FPDF
 
-from asf.medical.core.exceptions import ExportError
+from asf.medical.core.exceptions import ValidationError
+from asf.medical.api.export_utils_common import (
+    validate_export_data,
+    clean_export_data,
+    get_export_metadata,
+    get_common_fields
+)
 
 logger = logging.getLogger(__name__)
 
@@ -40,40 +45,28 @@ def export_to_json(data: List[Dict[str, Any]], query_text: Optional[str] = None)
         JSONResponse object
 
     Raises:
-        ValueError: If data is not a list or contains invalid items
+        ValidationError: If data is not a list or contains invalid items
         ExportError: If there's an issue exporting the data
     """
-    if not isinstance(data, list):
-        raise ValueError("Data must be a list of dictionaries")
-
     try:
-        cleaned_data = []
-        for i, item in enumerate(data):
-            if not isinstance(item, dict):
-                raise ValueError(f"Item at index {i} is not a dictionary")
+        # Validate and clean the data
+        validated_data = validate_export_data(data)
+        cleaned_data = clean_export_data(validated_data)
 
-            cleaned_item = {}
-            for key, value in item.items():
-                if value is not None:
-                    if isinstance(value, (dict, list, str, int, float, bool, type(None))):
-                        cleaned_item[key] = value
-                    else:
-                        cleaned_item[key] = str(value)
-            cleaned_data.append(cleaned_item)
+        # Prepare the response data
+        metadata = get_export_metadata(query_text)
 
         response_data = {
             "count": len(cleaned_data),
             "results": cleaned_data,
-            "exported_at": datetime.now().isoformat()
+            **metadata
         }
-
-        if query_text:
-            response_data["query"] = query_text
 
         return JSONResponse(content=response_data)
     except Exception as e:
         logger.error(f"Error exporting to JSON: {str(e)}")
-        raise ExportError(f"Failed to export data to JSON: {str(e)}") from e
+        raise ValidationError(f"Failed to export data to JSON: {str(e)}") from e
+
 
 
 def export_to_csv(data: List[Dict[str, Any]], query_text: Optional[str] = None) -> StreamingResponse:
@@ -88,16 +81,17 @@ def export_to_csv(data: List[Dict[str, Any]], query_text: Optional[str] = None) 
         StreamingResponse object containing CSV data
 
     Raises:
-        ValueError: If data is not a list or contains invalid items
+        ValidationError: If data is not a list or contains invalid items
         ExportError: If there's an issue exporting the data
     """
-    if not isinstance(data, list):
-        raise ValueError("Data must be a list of dictionaries")
-
     try:
+        # Validate and clean the data
+        validated_data = validate_export_data(data)
+        cleaned_data = clean_export_data(validated_data)
+
         output = io.StringIO()
 
-        if not data:
+        if not cleaned_data:
             writer = csv.writer(output)
             writer.writerow([])
 
@@ -108,21 +102,17 @@ def export_to_csv(data: List[Dict[str, Any]], query_text: Optional[str] = None) 
             response.headers["Content-Disposition"] = f"attachment; filename=search_results.csv"
             return response
 
+        # Add metadata as comments
+        metadata = get_export_metadata(query_text)
         if query_text:
             output.write(f"# Query: {query_text}\n")
-            output.write(f"# Exported at: {datetime.now().isoformat()}\n")
+        output.write(f"# Exported at: {metadata['exported_at']}\n")
 
-        fields_to_include = [
-            'pmid', 'title', 'journal', 'publication_date', 'iso_date',
-            'authors', 'abstract', 'impact_factor', 'journal_quartile',
-            'citation_count', 'authority_score', 'publication_types',
-            'doi', 'mesh_terms'
-        ]
+        # Get fields to include
+        fields_to_include = get_common_fields()['detailed']
 
         all_keys = set()
-        for i, item in enumerate(data):
-            if not isinstance(item, dict):
-                raise ValueError(f"Item at index {i} is not a dictionary")
+        for item in cleaned_data:
             all_keys.update(item.keys())
 
         available_fields = [field for field in fields_to_include if field in all_keys]
@@ -132,7 +122,7 @@ def export_to_csv(data: List[Dict[str, Any]], query_text: Optional[str] = None) 
         writer = csv.DictWriter(output, fieldnames=available_fields)
         writer.writeheader()
 
-        for item in data:
+        for item in cleaned_data:
             row = {}
             for field in available_fields:
                 if field in item:
@@ -156,7 +146,7 @@ def export_to_csv(data: List[Dict[str, Any]], query_text: Optional[str] = None) 
         return response
     except Exception as e:
         logger.error(f"Error exporting to CSV: {str(e)}")
-        raise ExportError(f"Failed to export data to CSV: {str(e)}") from e
+        raise ValidationError(f"Failed to export data to CSV: {str(e)}") from e
 
 
 def export_to_excel(data: List[Dict[str, Any]], query_text: Optional[str] = None) -> StreamingResponse:
@@ -171,16 +161,17 @@ def export_to_excel(data: List[Dict[str, Any]], query_text: Optional[str] = None
         StreamingResponse object containing Excel data
 
     Raises:
-        ValueError: If data is not a list or contains invalid items
+        ValidationError: If data is not a list or contains invalid items
         ExportError: If there's an issue exporting the data
     """
-    if not isinstance(data, list):
-        raise ValueError("Data must be a list of dictionaries")
-
     try:
+        # Validate and clean the data
+        validated_data = validate_export_data(data)
+        cleaned_data = clean_export_data(validated_data)
+
         output = io.BytesIO()
 
-        if not data:
+        if not cleaned_data:
             with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
                 pd.DataFrame().to_excel(writer, sheet_name='Results', index=False)
             output.seek(0)
@@ -192,11 +183,8 @@ def export_to_excel(data: List[Dict[str, Any]], query_text: Optional[str] = None
             response.headers["Content-Disposition"] = f"attachment; filename=search_results.xlsx"
             return response
 
-        fields_to_include = [
-            'pmid', 'title', 'journal', 'publication_date', 'iso_date',
-            'authors', 'abstract', 'impact_factor', 'journal_quartile',
-            'citation_count', 'authority_score'
-        ]
+        # Get fields to include
+        fields_to_include = get_common_fields()['standard']
 
         field_names = {
             'pmid': 'PMID',
@@ -311,7 +299,7 @@ def export_to_excel(data: List[Dict[str, Any]], query_text: Optional[str] = None
         return response
     except Exception as e:
         logger.error(f"Error exporting to Excel: {str(e)}")
-        raise ExportError(f"Failed to export data to Excel: {str(e)}") from e
+        raise ValidationError(f"Failed to export data to Excel: {str(e)}") from e
 
 
 def export_to_pdf(data: List[Dict[str, Any]], query_text: Optional[str] = None) -> FileResponse:
@@ -326,13 +314,13 @@ def export_to_pdf(data: List[Dict[str, Any]], query_text: Optional[str] = None) 
         FileResponse object containing PDF data
 
     Raises:
-        ValueError: If data is not a list or contains invalid items
+        ValidationError: If data is not a list or contains invalid items
         ExportError: If there's an issue exporting the data
     """
-    if not isinstance(data, list):
-        raise ValueError("Data must be a list of dictionaries")
-
     try:
+        # Validate and clean the data
+        validated_data = validate_export_data(data)
+        cleaned_data = clean_export_data(validated_data)
         pdf = FPDF()
         pdf.add_page()
 
@@ -344,13 +332,11 @@ def export_to_pdf(data: List[Dict[str, Any]], query_text: Optional[str] = None) 
             pdf.set_font("Arial", "B", 12)
             pdf.cell(0, 10, f"Query: {query_text}", 0, 1)
 
-        pdf.cell(0, 10, f"Results Count: {len(data)}", 0, 1)
+        pdf.cell(0, 10, f"Results Count: {len(cleaned_data)}", 0, 1)
 
         pdf.set_font("Arial", "", 10)
 
-        for i, item in enumerate(data):
-            if not isinstance(item, dict):
-                raise ValueError(f"Item at index {i} is not a dictionary")
+        for i, item in enumerate(cleaned_data):
 
             pdf.set_font("Arial", "B", 12)
             title = item.get("title", "No Title")
@@ -401,7 +387,7 @@ def export_to_pdf(data: List[Dict[str, Any]], query_text: Optional[str] = None) 
         )
     except Exception as e:
         logger.error(f"Error exporting to PDF: {str(e)}")
-        raise ExportError(f"Failed to export data to PDF: {str(e)}") from e
+        raise ValidationError(f"Failed to export data to PDF: {str(e)}") from e
 
 
 def export_contradiction_analysis_to_pdf(analysis: Dict[str, Any], query_text: str, output_path: Optional[str] = None) -> FileResponse:
@@ -417,13 +403,13 @@ def export_contradiction_analysis_to_pdf(analysis: Dict[str, Any], query_text: s
         FileResponse object containing PDF data
 
     Raises:
-        ValueError: If analysis is not a dictionary or contains invalid data
+        ValidationError: If analysis is not a dictionary or contains invalid data
         ExportError: If there's an issue exporting the data
     """
-    if not isinstance(analysis, dict):
-        raise ValueError("Analysis must be a dictionary")
-
     try:
+        # Validate the analysis
+        if not isinstance(analysis, dict):
+            raise ValidationError("Analysis must be a dictionary")
         pdf = FPDF()
         pdf.add_page()
 
@@ -512,4 +498,4 @@ def export_contradiction_analysis_to_pdf(analysis: Dict[str, Any], query_text: s
         )
     except Exception as e:
         logger.error(f"Error exporting contradiction analysis to PDF: {str(e)}")
-        raise ExportError(f"Failed to export contradiction analysis to PDF: {str(e)}") from e
+        raise ValidationError(f"Failed to export contradiction analysis to PDF: {str(e)}") from e

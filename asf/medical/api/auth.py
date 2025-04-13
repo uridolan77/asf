@@ -4,7 +4,7 @@ Unified authentication module for the Medical Research Synthesizer API.
 This module provides a comprehensive JWT-based authentication system for the FastAPI implementation,
 including user management, token generation, validation, and role-based access control.
 """
-
+import logging
 from datetime import datetime, timedelta
 from typing import Optional, List, Callable, Any
 
@@ -20,6 +20,9 @@ from asf.medical.storage.database import get_db_session
 from asf.medical.storage.repositories.user_repository import UserRepository
 from asf.medical.storage.models import User as DBUser
 from asf.medical.core.observability import log_error
+from asf.medical.core.exceptions import DatabaseError
+
+logger = logging.getLogger(__name__)
 
 # OAuth2 password bearer scheme for token authentication
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/v1/auth/token")
@@ -134,6 +137,9 @@ async def authenticate_user(username: str, password: str, db: AsyncSession) -> O
             
         return user
     except Exception as e:
+        logger.error(f"Error: {str(e)}")
+        logger.error(f"Database error: {str(e)}")
+        raise DatabaseError(f"Database operation failed: {str(e)}")
         log_error(e, {"username": username})
         return None
 
@@ -192,6 +198,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession
             
         token_data = TokenData(username=username, user_id=user_id)
     except JWTError as e:
+        logger.error(f"Error: {str(e)}")
         log_error(e, {"token": token[:10] + "..."})
         raise credentials_exception
         

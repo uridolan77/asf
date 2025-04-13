@@ -1,6 +1,9 @@
+"""
 Authentication service for the Medical Research Synthesizer.
+
 This module provides a service for user authentication and management.
 It handles user registration, authentication, and token validation.
+"""
 from typing import Optional, Dict, List, Any
 from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,12 +16,16 @@ from asf.medical.core.config import settings
 from asf.medical.core.logging_config import get_logger
 logger = get_logger(__name__)
 class AuthService:
+    """
     Service for user authentication and management.
+    
     This service provides methods for user registration, authentication,
     and token validation. It uses JWT tokens for authentication.
+    """
     def __init__(self, user_repository: UserRepository):
         """
         Initialize the authentication service.
+        
         Args:
             user_repository: Repository for user operations
         """

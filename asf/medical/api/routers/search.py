@@ -108,6 +108,7 @@ async def search(
             }
         )
     except ValidationError as e:
+        logger.error(f"Error: {str(e)}")
         log_error(e, {"query": request.query, "user_id": current_user.id})
         logger.warning(f"Validation error in search: {str(e)}")
         return ErrorResponse(
@@ -116,6 +117,7 @@ async def search(
             code="VALIDATION_ERROR"
         )
     except SearchError as e:
+        logger.error(f"Error: {str(e)}")
         log_error(e, {"query": request.query, "user_id": current_user.id})
         logger.error(f"Search error: {str(e)}")
         logger.error(traceback.format_exc())
@@ -125,6 +127,7 @@ async def search(
             code="SEARCH_ERROR"
         )
     except Exception as e:
+        logger.error(f"Error: {str(e)}")
         log_error(e, {"query": request.query, "user_id": current_user.id})
         logger.error(f"Unexpected error in search: {str(e)}")
         logger.error(traceback.format_exc())
@@ -211,6 +214,7 @@ async def search_pico(
             }
         )
     except ValueError as e:
+        logger.error(f"Error: {str(e)}")
         log_error(e, {"condition": request.condition, "user_id": current_user.id})
         logger.warning(f"Validation error in PICO search: {str(e)}")
         return ErrorResponse(
@@ -219,6 +223,7 @@ async def search_pico(
             code="VALIDATION_ERROR"
         )
     except Exception as e:
+        logger.error(f"Error: {str(e)}")
         log_error(e, {"condition": request.condition, "user_id": current_user.id})
         logger.error(f"Error executing PICO search: {str(e)}")
         raise HTTPException(
@@ -272,6 +277,7 @@ async def get_search_result(
             }
         )
     except Exception as e:
+        logger.error(f"Error: {str(e)}")
         log_error(e, {"result_id": result_id, "user_id": current_user.id})
         logger.error(f"Error retrieving search result: {str(e)}")
         raise HTTPException(

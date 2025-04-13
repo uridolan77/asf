@@ -26,7 +26,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(
 
 from asf.medical.ml.services.bias_assessment_service import BiasAssessmentService, BiasRisk, BiasDomain
 from asf.medical.ml.services.prisma_screening_service import PRISMAScreeningService, ScreeningStage, ScreeningDecision
-from asf.medical.ml.services.contradiction_service import ContradictionService
+from asf.medical.ml.services.unified_contradiction_service import ContradictionService
 from asf.medical.ml.services.contradiction_classifier_service import ContradictionType, ContradictionConfidence
 from asf.medical.ml.models.biomedlm import BioMedLMService
 from asf.medical.ml.models.tsmixer import TSMixerService

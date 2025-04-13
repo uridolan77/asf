@@ -13,6 +13,8 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp, Receive, Scope, Send
 
 from asf.medical.core.observability import log_request, increment_counter
+from asf.medical.core.exceptions import APIError
+
 
 logger = logging.getLogger(__name__)
 
@@ -100,6 +102,9 @@ class MonitoringMiddleware(BaseHTTPMiddleware):
             
             return response
         except Exception as e:
+            logger.error(f"Error: {str(e)}")
+            logger.error(f"API error: {str(e)}")
+            raise APIError(f"API call failed: {str(e)}")
             # Calculate the request duration
             duration = time.time() - start_time
             

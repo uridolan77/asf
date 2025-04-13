@@ -285,8 +285,26 @@ class BioMedLMContradictionModule(MedicalDSPyModule):
         # Create the model
         self.model = dspy.ChainOfThought(BioMedLMContradictionSignature)
 
-        # TODO: In a real implementation, we would initialize the BioMedLM model here
-        # and potentially create a custom predictor that uses it directly
+        # Initialize BioMedLM model
+        # Note: In production, we would load the actual BioMedLM model here
+        # and create a custom predictor. For now, we use the standard DSPy predictor.
+        try:
+            from transformers import AutoModelForCausalLM, AutoTokenizer
+            logger.info(f"Attempting to load BioMedLM model: {biomedlm_model}")
+            # This is just placeholder code - in production we would properly initialize
+            # the model with appropriate configuration
+            self.tokenizer = AutoTokenizer.from_pretrained(biomedlm_model)
+            self.biomedlm = AutoModelForCausalLM.from_pretrained(
+                biomedlm_model,
+                device_map="auto" if use_gpu else "cpu",
+                trust_remote_code=True
+            )
+            logger.info(f"Successfully loaded BioMedLM model: {biomedlm_model}")
+        except Exception as e:
+            logger.warning(f"Could not load BioMedLM model: {str(e)}")
+            logger.warning("Falling back to standard DSPy predictor")
+            self.tokenizer = None
+            self.biomedlm = None
 
     def forward(
         self,

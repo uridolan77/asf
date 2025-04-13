@@ -1,4 +1,5 @@
-"""API endpoints for task repository.
+"""
+API endpoints for task repository.
 
 This module provides API endpoints for managing tasks in the database.
 """
@@ -11,7 +12,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from asf.medical.core.logging_config import get_logger
 from asf.medical.storage.database import get_db_session
 from asf.medical.storage.repositories.task_repository import TaskRepository
-from asf.medical.storage.models.task import TaskStatus
 from asf.medical.api.dependencies import get_current_user, get_admin_user
 from asf.medical.storage.models import User
 from asf.medical.api.websockets.task_updates import task_update_manager
@@ -81,6 +81,7 @@ async def delete_task(
             message=f"Task {task_id} deleted successfully"
         )
     except HTTPException:
+        logger.error(f"Error: {str(e)}")
         raise
     except Exception as e:
         logger.error(f"Error deleting task: {str(e)}", exc_info=e)
@@ -157,6 +158,7 @@ async def reprocess_dead_letter(
             message=f"Dead letter message {message_id} marked as reprocessed"
         )
     except HTTPException:
+        logger.error(f"Error: {str(e)}")
         raise
     except Exception as e:
         logger.error(f"Error reprocessing dead letter message: {str(e)}", exc_info=e)
@@ -194,6 +196,7 @@ async def delete_dead_letter(
             message=f"Dead letter message {message_id} deleted successfully"
         )
     except HTTPException:
+        logger.error(f"Error: {str(e)}")
         raise
     except Exception as e:
         logger.error(f"Error deleting dead letter message: {str(e)}", exc_info=e)

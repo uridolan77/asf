@@ -22,6 +22,7 @@ logger = get_logger(__name__)
 
 
 async def asf_exception_handler(request: Request, exc: ASFError):
+    logger.error(f"Error: {str(e)}")
     """
     Handle ASF-specific exceptions and convert to appropriate HTTP responses.
 
@@ -108,6 +109,7 @@ async def asf_exception_handler(request: Request, exc: ASFError):
 
 
 async def http_exception_handler_with_logging(request: Request, exc: StarletteHTTPException):
+    logger.error(f"Error: {str(e)}")
     """
     Handle HTTP exceptions with logging.
 
@@ -136,6 +138,7 @@ async def http_exception_handler_with_logging(request: Request, exc: StarletteHT
 
 
 def setup_exception_handlers(app):
+    logger.error(f"Error: {str(e)}")
     """
     Set up exception handlers for the FastAPI application.
 

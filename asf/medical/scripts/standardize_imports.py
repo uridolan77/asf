@@ -1,6 +1,8 @@
-Standardize Imports in ASF Medical Codebase.
+"""Standardize Imports in ASF Medical Codebase.
+
 This script identifies and fixes inconsistent import patterns in the codebase,
 implementing a standardized approach with proper import organization.
+"""
 import os
 import re
 import sys
@@ -37,26 +39,24 @@ EXCLUDE_FILES = [
 # Import patterns to standardize
 IMPORT_PATTERNS = {
     # Old import pattern: new import pattern
-    r"from asf\.medical\.ml\.services\.enhanced_contradiction_classifier import ContradictionClassifierService": 
+    r"from asf\.medical\.ml\.services\.enhanced_contradiction_classifier import ContradictionClassifierService":
         "from asf.medical.ml.services.contradiction_classifier_service import ContradictionClassifierService",
-    r"from asf\.medical\.ml\.services\.contradiction_service import ContradictionService": 
-        "from asf.medical.ml.services.contradiction_service import ContradictionService",
-    r"from asf\.medical\.ml\.services\.contradiction_service import ContradictionService": 
-        "from asf.medical.ml.services.contradiction_service import ContradictionService",
-    r"from asf\.medical\.ml\.services\.contradiction_service import ContradictionService": 
-        "from asf.medical.ml.services.contradiction_service import ContradictionService",
-    r"from asf\.medical\.ml\.services\.contradiction_service import ContradictionService": 
-        "from asf.medical.ml.services.contradiction_service import ContradictionService"
+    r"from asf\.medical\.ml\.services\.contradiction_service import ContradictionService":
+        "from asf.medical.ml.services.unified_contradiction_service import ContradictionService",
+    r"from asf\.medical\.ml\.services\.enhanced_contradiction_service import ContradictionService":
+        "from asf.medical.ml.services.unified_contradiction_service import ContradictionService",
+    r"from asf\.medical\.ml\.services\.contradiction_service_new import ContradictionService":
+        "from asf.medical.ml.services.unified_contradiction_service import ContradictionService"
 }
 def find_python_files(directory: str) -> List[str]:
-    Find all Python files in the given directory and its subdirectories.
-    
+    """Find all Python files in the given directory and its subdirectories.
+
     Args:
-        directory: Description of directory
-    
-    
+        directory: Directory to search for Python files
+
     Returns:
-        Description of return value
+        List of Python file paths
+    """
     python_files = []
     for root, dirs, files in os.walk(directory):
         # Skip excluded directories
@@ -66,14 +66,14 @@ def find_python_files(directory: str) -> List[str]:
                 python_files.append(os.path.join(root, file))
     return python_files
 def find_import_issues(content: str) -> Dict[str, List[Dict[str, Any]]]:
-    Find import issues in the content.
-    
+    """Find import issues in the content.
+
     Args:
-        content: Description of content
-    
-    
+        content: Content to search for import issues
+
     Returns:
-        Description of return value
+        Dictionary of import issues found
+    """
     issues = {}
     for old_pattern, new_import in IMPORT_PATTERNS.items():
         matches = []
@@ -89,15 +89,15 @@ def find_import_issues(content: str) -> Dict[str, List[Dict[str, Any]]]:
             issues[old_pattern] = matches
     return issues
 def fix_imports(content: str, issues: Dict[str, List[Dict[str, Any]]]) -> str:
-    Fix import issues in the content.
-    
+    """Fix import issues in the content.
+
     Args:
-        content: Description of content
-        issues: Description of issues
-    
-    
+        content: Content to fix import issues in
+        issues: Dictionary of import issues to fix
+
     Returns:
-        Description of return value
+        Updated content with fixed imports
+    """
     if not issues:
         return content
     # Sort all matches by position in reverse order to avoid changing positions
@@ -118,15 +118,15 @@ def fix_imports(content: str, issues: Dict[str, List[Dict[str, Any]]]) -> str:
         content_chars[match["start"]:match["end"]] = match["new_import"]
     return "".join(content_chars)
 def process_file(file_path: str, fix: bool = False) -> Dict[str, Any]:
-    Process a single file to find and optionally fix import issues.
-    
+    """Process a single file to find and optionally fix import issues.
+
     Args:
-        file_path: Description of file_path
-        fix: Description of fix
-    
-    
+        file_path: Path to the file to process
+        fix: Whether to fix the issues found
+
     Returns:
-        Description of return value
+        Dictionary with issues found and whether they were fixed
+    """
     results = {
         "issues": {},
         "fixed": False
@@ -150,7 +150,8 @@ def process_file(file_path: str, fix: bool = False) -> Dict[str, Any]:
         logger.error(f"Error processing file {file_path}: {str(e)}")
         return results
 def main():
-    Main function.
+    """Main function to standardize imports in the codebase."""
+
     if len(sys.argv) < 2:
         print("Usage: python standardize_imports.py <directory> [--fix]")
         sys.exit(1)

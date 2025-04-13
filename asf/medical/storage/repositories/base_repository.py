@@ -132,7 +132,7 @@ class AsyncRepository(Generic[T]):
             await db.refresh(db_obj)
             return db_obj
         except IntegrityError as e:
-            await await await db.rollback()
+            await db.rollback()
             self.logger.error(
                 f"Integrity error creating {self.model_class.__name__}",
                 extra={"error": str(e), "data": obj_in},
@@ -149,7 +149,7 @@ class AsyncRepository(Generic[T]):
                 details={"data": obj_in, "error": str(e)}
             ) from e
         except SQLAlchemyError as e:
-            await await await db.rollback()
+            await db.rollback()
             self.logger.error(
                 f"Error creating {self.model_class.__name__}",
                 extra={"error": str(e), "data": obj_in},
@@ -183,7 +183,7 @@ class AsyncRepository(Generic[T]):
         except NotFoundError:
             raise
         except SQLAlchemyError as e:
-            await await await db.rollback()
+            await db.rollback()
             self.logger.error(
                 f"Error updating {self.model_class.__name__} with id {id}",
                 extra={"error": str(e), "id": id, "data": obj_in},
@@ -213,7 +213,7 @@ class AsyncRepository(Generic[T]):
             await db.commit()
             return True
         except SQLAlchemyError as e:
-            await await await db.rollback()
+            await db.rollback()
             self.logger.error(
                 f"Error deleting {self.model_class.__name__} with id {id}",
                 extra={"error": str(e), "id": id},
@@ -296,7 +296,7 @@ class AsyncRepository(Generic[T]):
                 await db.refresh(obj)
             return db_objects
         except SQLAlchemyError as e:
-            await await await db.rollback()
+            await db.rollback()
             self.logger.error(
                 f"Error bulk creating {self.model_class.__name__} entities",
                 extra={"error": str(e), "count": len(objects)},
@@ -333,7 +333,7 @@ class AsyncRepository(Generic[T]):
             await db.commit()
             return updated_count
         except SQLAlchemyError as e:
-            await await await db.rollback()
+            await db.rollback()
             self.logger.error(
                 f"Error bulk updating {self.model_class.__name__} entities",
                 extra={"error": str(e), "count": len(updates)},
@@ -360,7 +360,7 @@ class AsyncRepository(Generic[T]):
             await db.commit()
             return result.rowcount
         except SQLAlchemyError as e:
-            await await await db.rollback()
+            await db.rollback()
             self.logger.error(
                 f"Error bulk deleting {self.model_class.__name__} entities",
                 extra={"error": str(e), "count": len(ids)},

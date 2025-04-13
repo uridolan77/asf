@@ -13,6 +13,9 @@ from asf.medical.storage.database import get_db_session
 from asf.medical.storage.models.task import Task, TaskEvent
 from asf.medical.api.dependencies import get_current_user_ws
 from asf.medical.storage.models import User
+
+from asf.medical.core.exceptions import OperationError, ValidationError
+
 logger = get_logger(__name__)
 class TaskUpdateManager:
     """
@@ -170,6 +173,7 @@ class TaskUpdateManager:
                 await websocket.send_json(message)
             except Exception as e:
                 logger.error(f"Error sending task update to WebSocket client: {str(e)}", exc_info=e)
+                raise OperationError(f"Operation failed: {str(e)}")
                 # Don't disconnect here, as it could be a temporary issue
     async def broadcast_task_created(self, task: Task) -> None:
         """
@@ -318,6 +322,7 @@ async def handle_task_updates(
                         "timestamp": datetime.now(datetime.timezone.utc).isoformat()
                     })
             except json.JSONDecodeError:
+                logger.error(f"Error: {str(e)}")
                 # Invalid JSON
                 await websocket.send_json({
                     "type": "error",
@@ -325,7 +330,9 @@ async def handle_task_updates(
                     "timestamp": datetime.now(datetime.timezone.utc).isoformat()
                 })
             except Exception as e:
+                logger.error(f"Error: {str(e)}")
                 # Other errors
+                raise ValidationError(f"Validation failed: {str(e)}")
                 logger.error(f"Error handling WebSocket message: {str(e)}", exc_info=e)
                 await websocket.send_json({
                     "type": "error",
@@ -333,9 +340,12 @@ async def handle_task_updates(
                     "timestamp": datetime.now(datetime.timezone.utc).isoformat()
                 })
     except WebSocketDisconnect:
+        logger.error(f"Error: {str(e)}")
         # Client disconnected
         await task_update_manager.disconnect(websocket, user)
     except Exception as e:
+        logger.error(f"Error: {str(e)}")
         # Other errors
+        raise ValidationError(f"Validation failed: {str(e)}")
         logger.error(f"Error in WebSocket connection: {str(e)}", exc_info=e)
         await task_update_manager.disconnect(websocket, user)

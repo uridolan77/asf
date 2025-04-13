@@ -1,8 +1,8 @@
-Unit tests for the enhanced contradiction classifier.
+"""Unit tests for the enhanced contradiction classifier."""
 
 import pytest
 
-from asf.medical.ml.services.enhanced_contradiction_classifier import (
+from asf.medical.ml.services.contradiction_classifier_service import (
     ContradictionClassifierService,
     ContradictionType,
     ContradictionConfidence,
@@ -63,17 +63,24 @@ def sample_contradiction():
     }
 
 def test_enhanced_classifier_initialization(enhanced_classifier):
-    Test that the enhanced contradiction classifier initializes correctly.
-    
+    """Test that the enhanced contradiction classifier initializes correctly.
+
     Args:
-        enhanced_classifier: Description of enhanced_classifier
-    
+        enhanced_classifier: The classifier instance to test
+    """
+
     assert enhanced_classifier is not None
     assert enhanced_classifier.thresholds is not None
     assert enhanced_classifier.thresholds[ContradictionType.DIRECT] > 0
 
 @pytest.mark.asyncio
 async def test_classify_contradiction(enhanced_classifier, sample_contradiction):
+    """Test the contradiction classification functionality.
+
+    Args:
+        enhanced_classifier: The classifier instance to test
+        sample_contradiction: Sample contradiction data for testing
+    """
     high_significance = await enhanced_classifier._assess_clinical_significance(
         "Statin therapy reduces mortality in patients with cardiovascular disease.",
         "Statin therapy increases mortality in patients with cardiovascular disease."

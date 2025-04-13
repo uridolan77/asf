@@ -1,5 +1,7 @@
+"""
 Task models for the Medical Research Synthesizer.
 This module defines SQLAlchemy models for tasks and task status.
+"""
 import enum
 from datetime import datetime
 from typing import Dict, Any
@@ -8,7 +10,7 @@ from asf.medical.core.exceptions import Integer, String, DateTime, Float, JSON, 
 from sqlalchemy.orm import relationship
 from asf.medical.storage.database import Base
 class TaskStatus(str, enum.Enum):
-    Task status enum.
+    """Task status enum."""
     PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"
@@ -16,13 +18,13 @@ class TaskStatus(str, enum.Enum):
     RETRYING = "retrying"
     CANCELLED = "cancelled"
 class TaskPriority(int, enum.Enum):
-    Task priority enum.
+    """Task priority enum."""
     LOW = 1
     NORMAL = 5
     HIGH = 8
     CRITICAL = 10
 class Task(Base):
-    Task model for tracking asynchronous tasks.
+    """Task model for tracking asynchronous tasks."""
     __tablename__ = "tasks"
     id = Column(String(36), primary_key=True, index=True)
     type = Column(String(100), nullable=False, index=True)
@@ -48,6 +50,7 @@ class Task(Base):
     cancellable = Column(Boolean, nullable=False, default=True)
     cancelled = Column(Boolean, nullable=False, default=False)
     def to_dict(self) -> Dict[str, Any]:
+        """
         Convert the task to a dictionary.
         
         Args:
@@ -55,6 +58,7 @@ class Task(Base):
         
         Returns:
             Description of return value
+        """
         return {
             "id": self.id,
             "type": self.type,
@@ -78,7 +82,7 @@ class Task(Base):
             "cancelled": self.cancelled
         }
 class TaskEvent(Base):
-    Task event model for tracking task lifecycle events.
+    """Task event model for tracking task lifecycle events."""
     __tablename__ = "task_events"
     id = Column(Integer, primary_key=True, index=True)
     task_id = Column(String(36), ForeignKey("tasks.id"), nullable=False, index=True)
@@ -87,6 +91,7 @@ class TaskEvent(Base):
     event_data = Column(JSON, nullable=True)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     def to_dict(self) -> Dict[str, Any]:
+        """
         Convert the task event to a dictionary.
         
         Args:
@@ -94,6 +99,7 @@ class TaskEvent(Base):
         
         Returns:
             Description of return value
+        """
         return {
             "id": self.id,
             "task_id": self.task_id,
@@ -102,7 +108,7 @@ class TaskEvent(Base):
             "created_at": self.created_at.isoformat() if self.created_at else None
         }
 class DeadLetterMessage(Base):
-    Dead letter message model for tracking failed messages.
+    """Dead letter message model for tracking failed messages."""
     __tablename__ = "dead_letter_messages"
     id = Column(Integer, primary_key=True, index=True)
     original_id = Column(String(100), nullable=True, index=True)
@@ -118,6 +124,7 @@ class DeadLetterMessage(Base):
     reprocessed = Column(Boolean, nullable=False, default=False)
     reprocessed_at = Column(DateTime, nullable=True)
     def to_dict(self) -> Dict[str, Any]:
+        """
         Convert the dead letter message to a dictionary.
         
         Args:
@@ -125,6 +132,7 @@ class DeadLetterMessage(Base):
         
         Returns:
             Description of return value
+        """
         return {
             "id": self.id,
             "original_id": self.original_id,

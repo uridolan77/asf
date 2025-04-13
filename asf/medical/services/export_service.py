@@ -50,6 +50,22 @@ class ExportService:
         include_abstracts: bool = True,
         include_metadata: bool = True
     ) -> str:
+        """Export data to a JSON file.
+
+        This method exports the provided data to a JSON file in the export directory.
+
+        Args:
+            data: The data to export (typically search results or analysis)
+            include_abstracts: Whether to include article abstracts
+            include_metadata: Whether to include metadata (timestamps, etc.)
+
+        Returns:
+            Path to the exported file
+
+        Raises:
+            ValidationError: If the data is invalid
+            ExportError: If an error occurs during export
+        """
         if not data:
             raise ValidationError("Data cannot be empty")
 
@@ -95,6 +111,22 @@ class ExportService:
         include_abstracts: bool = True,
         include_metadata: bool = True
     ) -> str:
+        """Export data to a CSV file.
+
+        This method exports the provided data to a CSV file in the export directory.
+
+        Args:
+            data: The data to export (typically search results or analysis)
+            include_abstracts: Whether to include article abstracts
+            include_metadata: Whether to include metadata (timestamps, etc.)
+
+        Returns:
+            Path to the exported file
+
+        Raises:
+            ValidationError: If the data is invalid
+            ExportError: If an error occurs during export
+        """
         logger.info("Exporting data to CSV")
 
         filtered_data = self._filter_data(data, include_abstracts, include_metadata)
@@ -144,6 +176,23 @@ class ExportService:
         include_abstracts: bool = True,
         include_metadata: bool = True
     ) -> str:
+        """Export data to an Excel file.
+
+        This method exports the provided data to an Excel file in the export directory.
+
+        Args:
+            data: The data to export (typically search results or analysis)
+            include_abstracts: Whether to include article abstracts
+            include_metadata: Whether to include metadata (timestamps, etc.)
+
+        Returns:
+            Path to the exported file
+
+        Raises:
+            ValidationError: If the data is invalid
+            ImportError: If pandas or openpyxl is not installed
+            ExportError: If an error occurs during export
+        """
         logger.info("Exporting data to Excel")
 
         try:
@@ -207,6 +256,23 @@ class ExportService:
         include_abstracts: bool = True,
         include_metadata: bool = True
     ) -> str:
+        """Export data to a PDF file.
+
+        This method exports the provided data to a PDF file in the export directory.
+
+        Args:
+            data: The data to export (typically search results or analysis)
+            include_abstracts: Whether to include article abstracts
+            include_metadata: Whether to include metadata (timestamps, etc.)
+
+        Returns:
+            Path to the exported file
+
+        Raises:
+            ValidationError: If the data is invalid
+            ImportError: If reportlab is not installed
+            ExportError: If an error occurs during export
+        """
         logger.info("Exporting data to PDF")
 
         try:
@@ -299,6 +365,22 @@ class ExportService:
         include_abstracts: bool,
         include_metadata: bool
     ) -> Dict[str, Any]:
+        """Filter data based on inclusion flags.
+
+        This internal method filters the data based on the include_abstracts and
+        include_metadata flags, removing fields that should not be included in the export.
+
+        Args:
+            data: The data to filter
+            include_abstracts: Whether to include article abstracts
+            include_metadata: Whether to include metadata (timestamps, etc.)
+
+        Returns:
+            Filtered data dictionary
+
+        Raises:
+            ValidationError: If the data structure is invalid
+        """
         if not isinstance(data, dict):
             raise ValidationError("Data must be a dictionary")
 

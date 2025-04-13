@@ -93,3 +93,4 @@ class PrecisionWeighter:
         Get current precision weights.
         Returns:
             Current precision weights
+        """

@@ -21,17 +21,27 @@ from asf.medical.core.observability import setup_monitoring, get_metrics, run_he
 from asf.medical.core.service_initialization import initialize_services
 from asf.medical.core.redis_event_broker import initialize_event_system, shutdown_event_system
 from asf.medical.core.messaging.initialization import initialize_messaging_system, shutdown_messaging_system
-
 logger = get_logger(__name__)
 
+# Check if middleware modules are available
 try:
+    # Import middleware modules to check availability
     from asf.medical.api.middleware.admin_middleware import add_admin_middleware
     from asf.medical.api.middleware.login_rate_limit_middleware import add_login_rate_limit_middleware
     from asf.medical.api.middleware.csrf_middleware import add_csrf_middleware
     middleware_available = True
-except ImportError:
-    logger.warning("Middleware modules not found. Some security features will be disabled.")
+except ImportError as e:
+    logger.warning(f"Middleware modules not found: {str(e)}. Some security features will be disabled.")
     middleware_available = False
+    # Define dummy functions to avoid errors
+    def add_admin_middleware(app, **kwargs):
+        pass
+
+    def add_login_rate_limit_middleware(app, **kwargs):
+        pass
+
+    def add_csrf_middleware(app, **kwargs):
+        pass
 
 from asf.medical.api.routers.auth import router as auth_router
 from asf.medical.api.routers.search import router as search_router
@@ -63,6 +73,21 @@ logger = get_logger(__name__)
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
+    """Application lifespan context manager.
+
+    This function handles the startup and shutdown of the application.
+    It initializes all required components during startup and
+    properly shuts them down when the application is terminated.
+
+    Args:
+        _: FastAPI application instance
+
+    Yields:
+        None
+
+    Raises:
+        DatabaseError: If there's an error during application startup
+    """
     logger.info(f"Starting application in {settings.ENVIRONMENT} environment")
 
     try:
@@ -129,7 +154,7 @@ async def lifespan(_: FastAPI):
         logger.info("Event system shutdown")
 
         # Clear cache
-        await enhanced_cache_manager.clear()
+        await cache_manager.clear()
         logger.info("Cache cleared")
 
         # Unload models
@@ -139,6 +164,7 @@ async def lifespan(_: FastAPI):
         logger.info("Application shutdown completed successfully")
     except Exception as e:
         logger.error(f"Error during application shutdown: {str(e)}")
+        # Log error but don't raise during shutdown
 
 app = FastAPI(
     title="Medical Research Synthesizer API",
@@ -151,6 +177,15 @@ app = FastAPI(
 )
 
 def custom_openapi():
+    """Generate a custom OpenAPI schema for the application.
+
+    This function extends the default OpenAPI schema with additional
+    information, such as security schemes and tags. It is used by
+    the FastAPI application to generate the OpenAPI schema.
+
+    Returns:
+        dict: The OpenAPI schema
+    """
     if app.openapi_schema:
         return app.openapi_schema
 
@@ -289,6 +324,15 @@ app.include_router(static_router)
 
 @app.get("/", tags=["status"])
 async def root():
+    """Root endpoint that returns the API health status.
+
+    This endpoint performs health checks on various components of the system
+    and returns their status. If all checks pass, it returns a 200 OK response.
+    If any check fails, it returns a 503 Service Unavailable response.
+
+    Returns:
+        JSON response with health check results
+    """
     health_checks = run_health_checks()
     all_ok = all(check.get("status") == "ok" for check in health_checks.values())
 
@@ -302,16 +346,47 @@ async def root():
 
 @app.get("/cache/stats", tags=["admin"])
 async def cache_stats(_: User = Depends(get_admin_user)):
+    """Get cache statistics.
+
+    This endpoint returns statistics about the cache, such as hit rate,
+    miss rate, and size. It requires admin privileges to access.
+
+    Args:
+        _: User object (admin user required)
+
+    Returns:
+        JSON response with cache statistics
+    """
     stats = await cache_manager.get_stats()
     return {"status": "ok", "stats": stats}
 
 @app.get("/metrics", tags=["admin"])
 async def metrics(_: User = Depends(get_admin_user)):
+    """Get system metrics.
+
+    This endpoint returns various metrics about the system, such as
+    request counts, response times, and error rates. It requires
+    admin privileges to access.
+
+    Args:
+        _: User object (admin user required)
+
+    Returns:
+        JSON response with system metrics
+    """
     metrics_data = get_metrics()
     return {"status": "ok", "metrics": metrics_data}
 
 @app.get("/docs", include_in_schema=False)
 async def custom_swagger_ui_html():
+    """Custom Swagger UI endpoint.
+
+    This endpoint serves the ReDoc UI for API documentation.
+    It is not included in the OpenAPI schema.
+
+    Returns:
+        HTML response with ReDoc UI
+    """
     return get_redoc_html(
         openapi_url=app.openapi_url,
         title=f"{app.title} - ReDoc",
@@ -320,4 +395,12 @@ async def custom_swagger_ui_html():
 
 @app.get("/openapi.json", include_in_schema=False)
 async def get_open_api_endpoint():
+    """OpenAPI schema endpoint.
+
+    This endpoint returns the OpenAPI schema for the API.
+    It is not included in the OpenAPI schema itself.
+
+    Returns:
+        JSON response with OpenAPI schema
+    """
     return app.openapi()

@@ -76,6 +76,7 @@ async def create_knowledge_base(
             }
         )
     except ValueError as e:
+        logger.error(f"Error: {str(e)}")
         log_error(e, {"name": request.name, "query": request.query, "user_id": current_user.id})
         logger.warning(f"Validation error in knowledge base creation: {str(e)}")
         return ErrorResponse(
@@ -84,6 +85,7 @@ async def create_knowledge_base(
             code="VALIDATION_ERROR"
         )
     except Exception as e:
+        logger.error(f"Error: {str(e)}")
         log_error(e, {"name": request.name, "query": request.query, "user_id": current_user.id})
         logger.error(f"Error creating knowledge base: {str(e)}")
         raise HTTPException(
@@ -126,6 +128,7 @@ async def list_knowledge_bases(
             }
         )
     except Exception as e:
+        logger.error(f"Error: {str(e)}")
         log_error(e, {"user_id": current_user.id})
         logger.error(f"Error listing knowledge bases: {str(e)}")
         raise HTTPException(
@@ -187,6 +190,7 @@ async def get_knowledge_base(
             }
         )
     except Exception as e:
+        logger.error(f"Error: {str(e)}")
         log_error(e, {"kb_id": kb_id, "user_id": current_user.id})
         logger.error(f"Error retrieving knowledge base: {str(e)}")
         raise HTTPException(
@@ -256,6 +260,7 @@ async def update_knowledge_base(
             }
         )
     except Exception as e:
+        logger.error(f"Error: {str(e)}")
         log_error(e, {"kb_id": kb_id, "user_id": current_user.id})
         logger.error(f"Error updating knowledge base: {str(e)}")
         raise HTTPException(
@@ -331,6 +336,7 @@ async def delete_knowledge_base(
             }
         )
     except Exception as e:
+        logger.error(f"Error: {str(e)}")
         log_error(e, {"kb_id": kb_id, "user_id": current_user.id})
         logger.error(f"Error deleting knowledge base: {str(e)}")
         raise HTTPException(

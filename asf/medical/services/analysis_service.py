@@ -12,7 +12,7 @@ from asf.medical.core.exceptions import (
     AnalysisError, ValidationError,
     ExternalServiceError, DatabaseError, ModelError
 )
-from asf.medical.ml.services.contradiction_service import ContradictionService
+from asf.medical.ml.services.unified_contradiction_service import ContradictionService
 from asf.medical.ml.services.temporal_service import TemporalService
 from asf.medical.services.search_service import SearchService
 from asf.medical.storage.repositories.result_repository import ResultRepository
@@ -46,6 +46,29 @@ class AnalysisService:
         use_lorentz: bool = False,
         user_id: Optional[int] = None
     ) -> Dict[str, Any]:
+        """Analyze contradictions in medical literature based on a query.
+
+        This method searches for medical literature matching the query and
+        analyzes it for contradictions. It identifies statements that contradict
+        each other and provides explanations for the contradictions.
+
+        Args:
+            query: The search query to find relevant medical literature
+            max_results: Maximum number of search results to analyze
+            threshold: Minimum contradiction score threshold (0.0-1.0)
+            use_biomedlm: Whether to use BioMedLM for contradiction detection
+            use_tsmixer: Whether to use TSMixer for temporal contradiction detection
+            use_lorentz: Whether to use Lorentz embeddings for contradiction detection
+            user_id: ID of the user performing the analysis
+
+        Returns:
+            Dictionary containing the contradiction analysis results
+
+        Raises:
+            ValidationError: If the query is empty or invalid
+            AnalysisError: If an error occurs during analysis
+            ExternalServiceError: If an external service call fails
+        """
         if not query or not query.strip():
             raise ValidationError("Query cannot be empty")
         if max_results < 1 or max_results > 100:
@@ -124,6 +147,22 @@ class AnalysisService:
         return analysis_result
     @enhanced_cached(prefix="analyze_cap", data_type="analysis")
     async def analyze_cap(self, user_id: Optional[int] = None) -> Dict[str, Any]:
+        """Perform CAP (Community-Acquired Pneumonia) analysis.
+
+        This method searches for medical literature related to community-acquired
+        pneumonia and analyzes it to identify treatment types, patient populations,
+        and outcomes.
+
+        Args:
+            user_id: ID of the user performing the analysis
+
+        Returns:
+            Dictionary containing the CAP analysis results
+
+        Raises:
+            ExternalServiceError: If the search service call fails
+            AnalysisError: If an error occurs during analysis
+        """
         logger.info("Analyzing CAP literature")
         try:
             search_result = await self.search_service.search(
@@ -216,6 +255,22 @@ class AnalysisService:
                 logger.error(f"Error storing CAP analysis: {str(e)}")
         return analysis_result
     async def get_analysis(self, analysis_id: str) -> Optional[Dict[str, Any]]:
+        """Retrieve a previously performed analysis by ID.
+
+        This method retrieves the results of a previously performed analysis
+        using its unique identifier. It first checks the cache and then falls
+        back to the database if not found in cache.
+
+        Args:
+            analysis_id: The unique identifier of the analysis to retrieve
+
+        Returns:
+            Dictionary containing the analysis results, or None if not found
+
+        Raises:
+            ValidationError: If the analysis ID is empty or invalid
+            DatabaseError: If an error occurs when retrieving from the database
+        """
         if not analysis_id or not analysis_id.strip():
             raise ValidationError("Analysis ID cannot be empty")
         logger.info(f"Getting analysis: {analysis_id}")

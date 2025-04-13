@@ -28,6 +28,8 @@ from asf.medical.api.export_utils_consolidated import (
     export_to_json, export_to_csv, export_to_excel
 )
 from asf.medical.core.observability import async_timed, log_error
+from asf.medical.core.exceptions import ValidationError
+
 
 router = APIRouter(prefix="/export", tags=["export"])
 
@@ -186,9 +188,13 @@ async def export_results(
             )
 
     except HTTPException as e:
+        logger.error(f"Error: {str(e)}")
         raise
 
     except Exception as e:
+        logger.error(f"Error: {str(e)}")
+        logger.error(f"Validation error: {str(e)}")
+        raise ValidationError(f"Validation failed: {str(e)}")
         log_error(e, {
             "format": format,
             "result_id": request.result_id,
@@ -384,6 +390,7 @@ async def download_export(file_name: str):
         )
 
     except HTTPException:
+        logger.error(f"Error: {str(e)}")
         raise
     except Exception as e:
         logger.error(f"Error downloading export: {str(e)}")
