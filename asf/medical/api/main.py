@@ -51,6 +51,8 @@ from asf.medical.api.routers.screening import router as screening_router
 from asf.medical.api.routers.export import router as export_router
 from asf.medical.api.routers.analysis import router as analysis_router
 from asf.medical.api.routers.knowledge_base import router as knowledge_base_router
+from asf.medical.api.routers.terminology import router as terminology_router
+from asf.medical.api.routers.clinical_data import router as clinical_data_router
 from asf.medical.api.routers.async_ml import router as async_ml_router
 from asf.medical.api.routers.model_cache import router as model_cache_router
 from asf.medical.api.routers.task_management import router as task_management_router
@@ -225,6 +227,14 @@ def custom_openapi():
             "description": "Analysis operations for medical research",
         },
         {
+            "name": "terminology",
+            "description": "Medical terminology operations including SNOMED CT access",
+        },
+        {
+            "name": "clinical-data",
+            "description": "Integrated clinical data operations connecting terminology with clinical trials",
+        },
+        {
             "name": "contradiction",
             "description": "Contradiction detection between research claims",
         },
@@ -312,6 +322,8 @@ app.include_router(screening_router, prefix=settings.API_V1_STR, tags=["screenin
 app.include_router(export_router, prefix=settings.API_V1_STR, tags=["export"])
 app.include_router(analysis_router, prefix=settings.API_V1_STR, tags=["analysis"])
 app.include_router(knowledge_base_router, prefix=settings.API_V1_STR, tags=["knowledge_base"])
+app.include_router(terminology_router, prefix=settings.API_V1_STR, tags=["terminology"])
+app.include_router(clinical_data_router, prefix=settings.API_V1_STR, tags=["clinical-data"])
 app.include_router(async_ml_router, prefix=settings.API_V1_STR, tags=["async-ml"])
 app.include_router(model_cache_router)
 app.include_router(task_management_router)

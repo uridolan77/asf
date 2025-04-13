@@ -14,7 +14,7 @@ from asf.medical.core.exceptions import (
     ExternalServiceError, DatabaseError
 )
 from asf.medical.core.logging_config import get_logger
-from asf.medical.clients.ncbi_client import NCBIClient
+from asf.medical.clients.ncbi.ncbi_client import NCBIClient
 from asf.medical.clients.clinical_trials_client import ClinicalTrialsClient
 from asf.medical.storage.repositories.result_repository import ResultRepository
 from asf.medical.storage.repositories.query_repository import QueryRepository

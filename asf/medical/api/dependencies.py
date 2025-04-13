@@ -28,6 +28,8 @@ from asf.medical.services.analysis_service import AnalysisService
 from asf.medical.services.knowledge_base_service import KnowledgeBaseService
 from asf.medical.services.export_service import ExportService
 from asf.medical.services.auth_service import AuthService
+from asf.medical.services.terminology_service import TerminologyService
+from asf.medical.services.clinical_data_service import ClinicalDataService
 
 # ML service imports
 from asf.medical.ml.services.unified_contradiction_service import ContradictionService
@@ -35,8 +37,9 @@ from asf.medical.ml.services.prisma_screening_service import PrismaScreeningServ
 from asf.medical.ml.services.bias_assessment_service import BiasAssessmentService
 
 # Client imports
-from asf.medical.clients.ncbi_client import NCBIClient
-from asf.medical.clients.clinical_trials_client import ClinicalTrialsClient
+from asf.medical.clients.ncbi.ncbi_client import NCBIClient
+from asf.medical.clients.clinical_trials_gov.clinical_trials_client import ClinicalTrialsClient
+from asf.medical.clients.clinical_trials_gov.clinical_trials_client import ClinicalTrialsClient as CTGovClient
 
 # Graph imports
 from asf.medical.graph.graph_service import GraphService
@@ -192,6 +195,48 @@ def get_auth_service() -> AuthService:
         AuthService: The authentication service
     """
     return get_service(AuthService)()
+
+
+def get_terminology_service() -> TerminologyService:
+    """
+    Get the terminology service.
+
+    Returns:
+        TerminologyService: The terminology service
+    """
+    return get_service(TerminologyService)(
+        snomed_access_mode="umls",
+        snomed_api_key=settings.UMLS_API_KEY,
+        snomed_cache_dir=settings.TERMINOLOGY_CACHE_DIR
+    )
+
+
+def get_ct_gov_client() -> CTGovClient:
+    """
+    Get the ClinicalTrials.gov API client.
+
+    Returns:
+        CTGovClient: The ClinicalTrials.gov client
+    """
+    return get_service(CTGovClient)(
+        cache_dir=settings.CLINICAL_TRIALS_CACHE_DIR
+    )
+
+
+def get_clinical_data_service() -> ClinicalDataService:
+    """
+    Get the clinical data service that integrates terminology and clinical trials data.
+
+    Returns:
+        ClinicalDataService: The clinical data service
+    """
+    terminology_service = get_terminology_service()
+    ct_gov_client = get_ct_gov_client()
+    
+    return get_service(ClinicalDataService)(
+        terminology_service=terminology_service,
+        clinical_trials_client=ct_gov_client
+    )
 
 
 def get_search_service() -> SearchService:
