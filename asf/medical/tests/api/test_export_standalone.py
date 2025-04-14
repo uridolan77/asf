@@ -12,7 +12,7 @@ import logging
 # Add the project root to the Python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../..')))
 
-from asf.medical.api.export_utils_consolidated import export_to_json
+from asf.medical.api.export_utils import export_to_json
 from asf.medical.core.exceptions import ValidationError
 
 # Configure logging

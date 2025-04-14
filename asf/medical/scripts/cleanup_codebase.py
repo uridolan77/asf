@@ -10,7 +10,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger("CodebaseCleanup")
 FILES_TO_REMOVE = [
-    r"asf[/\\]medical[/\\]api[/\\]export_utils\.py",
+    # r"asf[/\\]medical[/\\]api[/\\]export_utils\.py",  # Keeping this file as it contains consolidated export functionality
     r"asf[/\\]medical[/\\]ml[/\\]services[/\\]contradiction_service\.py",
     r"asf[/\\]medical[/\\]ml[/\\]services[/\\]enhanced_contradiction_service\.py",
     r"asf[/\\]medical[/\\]api[/\\]routers[/\\]contradiction\.py",
@@ -20,8 +20,9 @@ FILES_TO_REMOVE = [
     r"asf[/\\]__tests[/\\].*\.py",
 ]
 IMPORT_REPLACEMENTS = {
-    r"from asf\.medical\.api\.export_utils import": "from asf.medical.api.export_utils_consolidated import",
-    r"import asf\.medical\.api\.export_utils": "import asf.medical.api.export_utils_consolidated_consolidated_consolidated_consolidated",
+    # Removing the incorrect export utils replacements
+    # r"from asf\.medical\.api\.export_utils import": "from asf.medical.api.export_utils_consolidated import",
+    # r"import asf\.medical\.api\.export_utils": "import asf.medical.api.export_utils_consolidated_consolidated_consolidated_consolidated",
     r"from asf\.medical\.ml\.services\.contradiction_service import ContradictionService": "from asf.medical.ml.services.unified_contradiction_service import ContradictionService",
     r"from asf\.medical\.ml\.services\.enhanced_contradiction_service import ContradictionService": "from asf.medical.ml.services.unified_contradiction_service import ContradictionService",
     r"from asf\.medical\.api\.routers\.contradiction import router as contradiction_router": "from asf.medical.api.routers.unified_contradiction import router as contradiction_router",

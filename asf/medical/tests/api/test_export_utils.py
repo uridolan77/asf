@@ -9,7 +9,7 @@ import pytest
 from fastapi.responses import JSONResponse, StreamingResponse, FileResponse
 from fastapi.testclient import TestClient
 
-from asf.medical.api.export_utils_consolidated import (
+from asf.medical.api.export_utils import (
     export_to_json,
     export_to_csv,
     export_to_excel,

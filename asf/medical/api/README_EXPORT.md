@@ -129,9 +129,9 @@ The following export formats are supported:
 
 ### Export Utilities
 
-The export utilities are implemented in a single module (`export_utils_consolidated.py`) to ensure consistent behavior across all export formats. This module provides functions for exporting data in various formats (JSON, CSV, Excel, PDF) with consistent interfaces and error handling.
+The export utilities are implemented in a single module (`export_utils.py`) to ensure consistent behavior across all export formats. This module provides functions for exporting data in various formats (JSON, CSV, Excel, PDF) with consistent interfaces and error handling.
 
-**Note**: The original `export_utils.py` has been removed as part of the codebase consolidation effort, and all functionality has been migrated to `export_utils_consolidated.py`.
+**Note**: The export utilities have been consolidated into a single comprehensive implementation in `export_utils.py`.
 
 ## Usage Examples
 

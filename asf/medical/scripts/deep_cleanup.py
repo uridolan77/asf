@@ -32,7 +32,6 @@ REPLACEMENTS = {
     r"except Exception as e:\n    logger.error(f\"\1: {str(e)}\")\n    raise DatabaseError(f\"\1: {str(e)}\")",
     r"ContradictionService": "ContradictionService",
     r"ContradictionService": "ContradictionService",
-    r"from asf\.medical\.api\.export_utils import": "from asf.medical.api.export_utils_consolidated import",
     r"from asf\.medical\.storage\.repositories\.base_repository import BaseRepository": 
     "from asf.medical.storage.repositories.enhanced_base_repository import EnhancedBaseRepository",
 }

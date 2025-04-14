@@ -22,7 +22,7 @@ from typing import List, Dict, Any, Optional
 
 import dramatiq
 
-from asf.medical.api.export_utils_consolidated import (
+from asf.medical.api.export_utils import (
     export_to_pdf, export_contradiction_analysis_to_pdf
 )
 

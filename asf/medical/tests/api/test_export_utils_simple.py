@@ -8,7 +8,7 @@ import json
 import pytest
 from fastapi.responses import JSONResponse
 
-from asf.medical.api.export_utils_consolidated import export_to_json
+from asf.medical.api.export_utils import export_to_json
 from asf.medical.core.exceptions import ValidationError
 
 

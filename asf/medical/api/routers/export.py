@@ -24,7 +24,7 @@ from asf.medical.api.auth import get_current_active_user
 from asf.medical.services.search_service import SearchService
 from asf.medical.services.analysis_service import AnalysisService
 from asf.medical.storage.models import User
-from asf.medical.api.export_utils_consolidated import (
+from asf.medical.api.export_utils import (
     export_to_json, export_to_csv, export_to_excel
 )
 from asf.medical.core.observability import async_timed, log_error
