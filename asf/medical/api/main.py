@@ -65,6 +65,9 @@ from asf.medical.api.static import router as static_router
 from asf.medical.core.config import settings
 from asf.medical.core.enhanced_cache import EnhancedCacheManager
 
+# Import our new ML endpoints
+from asf.medical.api.routers import ml_endpoints
+
 # Create a global cache manager instance
 cache_manager = EnhancedCacheManager()
 from asf.medical.storage.database import init_db
@@ -333,6 +336,9 @@ app.include_router(websockets_router)
 app.include_router(task_repository_api_router)
 app.include_router(messaging_metrics_router)
 app.include_router(static_router)
+
+# Register the ML endpoints router with the app
+app.include_router(ml_endpoints.router)
 
 @app.get("/", tags=["status"])
 async def root():
