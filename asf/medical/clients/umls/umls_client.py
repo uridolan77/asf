@@ -6,22 +6,48 @@ import logging
 import time
 import json
 import asyncio
+import random
+import hashlib
 from typing import Dict, List, Optional, Any, Union
 from datetime import datetime, timedelta
 import httpx
+from asf.medical.core.enhanced_cache import enhanced_cache_manager, enhanced_cached
 
 logger = logging.getLogger(__name__)
+
+
+class UMLSClientError(Exception):
+    """Exception raised for UMLS client errors."""
+    def __init__(self, message: str = "UMLS API error", status_code: Optional[int] = None, 
+                 response_text: Optional[str] = None):
+        self.status_code = status_code
+        self.response_text = response_text
+        super().__init__(message)
+        
+    def __str__(self) -> str:
+        """Return a string representation of the error."""
+        if self.status_code:
+            return f"{self.message} (Status code: {self.status_code})"
+        return self.message
+
 
 class UMLSClient:
     """
     Client for interacting with the UMLS API.
     This client provides methods for searching UMLS concepts and retrieving concept details.
+    It includes features like caching, retry logic, and rate limiting.
     """
     def __init__(
         self,
         api_key: str,
         base_url: str = "https://uts-ws.nlm.nih.gov/rest",
-        version: str = "current"
+        version: str = "current",
+        timeout: float = 30.0,
+        max_retries: int = 3,
+        backoff_factor: float = 1.5,
+        requests_per_second: float = 5.0,
+        use_cache: bool = True,
+        cache_ttl: int = 86400  # 24 hours in seconds
     ):
         """
         Initialize a new UMLS API client.
@@ -30,14 +56,26 @@ class UMLSClient:
             api_key: The UMLS API key
             base_url: Base URL for the API (default: https://uts-ws.nlm.nih.gov/rest)
             version: API version (default: "current")
+            timeout: Request timeout in seconds (default: 30.0)
+            max_retries: Maximum number of retries for failed requests (default: 3)
+            backoff_factor: Factor to apply between retry attempts (default: 1.5)
+            requests_per_second: Maximum number of requests per second (default: 5.0)
+            use_cache: Whether to use caching (default: True)
+            cache_ttl: Cache TTL in seconds (default: 86400 - 24 hours)
         """
         self.api_key = api_key
         self.base_url = base_url
         self.version = version
-        self.client = httpx.AsyncClient(timeout=30.0)
+        self.timeout = timeout
+        self.max_retries = max_retries
+        self.backoff_factor = backoff_factor
+        self.requests_per_second = requests_per_second
+        self.use_cache = use_cache
+        self.cache_ttl = cache_ttl
+        
+        self.client = httpx.AsyncClient(timeout=self.timeout)
         self.tgt = None
         self.tgt_expires = 0
-        self.requests_per_second = 5  # UMLS recommends no more than 5 requests per second
         self.last_request_time = 0
     
     async def close(self):
@@ -132,24 +170,26 @@ class UMLSClient:
     async def _make_request(
         self, 
         endpoint: str, 
-        params: Optional[Dict[str, Any]] = None
-    ) -> Optional[Dict[str, Any]]:
+        params: Optional[Dict[str, Any]] = None,
+        retry_count: int = 0
+    ) -> Dict[str, Any]:
         """
-        Make a request to the UMLS API.
+        Make a request to the UMLS API with retry logic and improved error handling.
         
         Args:
             endpoint: API endpoint
             params: Request parameters
+            retry_count: Current retry attempt (used internally)
             
         Returns:
-            Response data if successful, None otherwise
+            Response data if successful
             
         Raises:
-            httpx.HTTPError: If the request fails
+            UMLSClientError: If the request fails after all retries
         """
         service_ticket = await self._get_service_ticket()
         if not service_ticket:
-            return None
+            raise UMLSClientError("Failed to obtain service ticket")
         
         if not params:
             params = {}
@@ -162,16 +202,60 @@ class UMLSClient:
             
             await self._rate_limit()
             response = await self.client.get(url, params=params)
-            response.raise_for_status()
             
-            return response.json()
-        except httpx.HTTPError as e:
-            logger.error(f"API request failed: {str(e)}")
-            return None
-        except json.JSONDecodeError as e:
-            logger.error(f"Failed to decode API response: {str(e)}")
-            return None
+            # Check for HTTP errors
+            if response.status_code >= 400:
+                error_msg = f"UMLS API error: {response.status_code}"
+                logger.warning(f"{error_msg} for {url}")
+                
+                # Handle rate limiting (HTTP 429)
+                if response.status_code == 429 and retry_count < self.max_retries:
+                    retry_count += 1
+                    wait_time = (self.backoff_factor ** retry_count) + random.uniform(0, 0.5)
+                    logger.warning(f"Rate limited. Retrying in {wait_time:.2f} seconds (attempt {retry_count})")
+                    await asyncio.sleep(wait_time)
+                    return await self._make_request(endpoint, params, retry_count)
+                
+                # Handle server errors (HTTP 5xx)
+                elif 500 <= response.status_code < 600 and retry_count < self.max_retries:
+                    retry_count += 1
+                    wait_time = (self.backoff_factor ** retry_count) + random.uniform(0, 0.5)
+                    logger.warning(f"Server error. Retrying in {wait_time:.2f} seconds (attempt {retry_count})")
+                    await asyncio.sleep(wait_time)
+                    return await self._make_request(endpoint, params, retry_count)
+                
+                # For other errors, raise an exception with details
+                else:
+                    response_text = response.text
+                    raise UMLSClientError(error_msg, response.status_code, response_text)
+            
+            try:
+                return response.json()
+            except json.JSONDecodeError as e:
+                error_msg = f"Failed to decode API response: {str(e)}"
+                logger.error(error_msg)
+                raise UMLSClientError(error_msg)
+            
+        except httpx.RequestError as e:
+            logger.error(f"Request error: {str(e)}")
+            
+            # Retry for connection errors and timeouts
+            if retry_count < self.max_retries:
+                retry_count += 1
+                wait_time = (self.backoff_factor ** retry_count) + random.uniform(0, 0.5)
+                logger.warning(f"Connection error. Retrying in {wait_time:.2f} seconds (attempt {retry_count})")
+                await asyncio.sleep(wait_time)
+                return await self._make_request(endpoint, params, retry_count)
+            
+            # If we've exhausted retries, raise the exception
+            raise UMLSClientError(f"Failed to connect to UMLS API after {self.max_retries} retries: {str(e)}")
+        
+        except Exception as e:
+            error_msg = f"Unexpected error: {str(e)}"
+            logger.error(error_msg)
+            raise UMLSClientError(error_msg)
     
+    @enhanced_cached(prefix="umls_search", data_type="umls")
     async def search(
         self, 
         query: str, 
@@ -180,6 +264,42 @@ class UMLSClient:
     ) -> List[Dict[str, Any]]:
         """
         Search for UMLS concepts.
+        
+        Args:
+            query: Search query
+            search_type: Search type (default: "words")
+                Options: "exact", "words", "approximate", "normalizedString"
+            max_results: Maximum number of results to return (default: 20)
+            
+        Returns:
+            List of concept summaries
+        """
+        if not self.use_cache:
+            return await self._search_uncached(query, search_type, max_results)
+        
+        endpoint = f"search/{self.version}"
+        params = {
+            'string': query,
+            'searchType': search_type,
+            'pageSize': max_results,
+            'returnIdType': 'concept'
+        }
+        
+        response = await self._make_request(endpoint, params)
+        
+        if not response or 'result' not in response:
+            return []
+        
+        return response.get('result', {}).get('results', [])
+    
+    async def _search_uncached(
+        self, 
+        query: str, 
+        search_type: str = "words", 
+        max_results: int = 20
+    ) -> List[Dict[str, Any]]:
+        """
+        Search for UMLS concepts without caching.
         
         Args:
             query: Search query
@@ -205,9 +325,31 @@ class UMLSClient:
         
         return response.get('result', {}).get('results', [])
     
+    @enhanced_cached(prefix="umls_concept", data_type="umls")
     async def get_concept(self, concept_id: str) -> Optional[Dict[str, Any]]:
         """
         Get details for a specific UMLS concept.
+        
+        Args:
+            concept_id: Concept ID (e.g., "C0012634")
+            
+        Returns:
+            Concept details if successful, None otherwise
+        """
+        if not self.use_cache:
+            return await self._get_concept_uncached(concept_id)
+            
+        endpoint = f"content/{self.version}/CUI/{concept_id}"
+        response = await self._make_request(endpoint)
+        
+        if not response or 'result' not in response:
+            return None
+        
+        return response.get('result', {})
+    
+    async def _get_concept_uncached(self, concept_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Get details for a specific UMLS concept without caching.
         
         Args:
             concept_id: Concept ID (e.g., "C0012634")
@@ -223,9 +365,31 @@ class UMLSClient:
         
         return response.get('result', {})
     
+    @enhanced_cached(prefix="umls_atoms", data_type="umls")
     async def get_concept_atoms(self, concept_id: str) -> List[Dict[str, Any]]:
         """
         Get atoms for a specific UMLS concept.
+        
+        Args:
+            concept_id: Concept ID (e.g., "C0012634")
+            
+        Returns:
+            List of atoms
+        """
+        if not self.use_cache:
+            return await self._get_concept_atoms_uncached(concept_id)
+            
+        endpoint = f"content/{self.version}/CUI/{concept_id}/atoms"
+        response = await self._make_request(endpoint)
+        
+        if not response or 'result' not in response:
+            return []
+        
+        return response.get('result', [])
+    
+    async def _get_concept_atoms_uncached(self, concept_id: str) -> List[Dict[str, Any]]:
+        """
+        Get atoms for a specific UMLS concept without caching.
         
         Args:
             concept_id: Concept ID (e.g., "C0012634")
@@ -241,9 +405,31 @@ class UMLSClient:
         
         return response.get('result', [])
     
+    @enhanced_cached(prefix="umls_definitions", data_type="umls")
     async def get_concept_definitions(self, concept_id: str) -> List[Dict[str, Any]]:
         """
         Get definitions for a specific UMLS concept.
+        
+        Args:
+            concept_id: Concept ID (e.g., "C0012634")
+            
+        Returns:
+            List of definitions
+        """
+        if not self.use_cache:
+            return await self._get_concept_definitions_uncached(concept_id)
+            
+        endpoint = f"content/{self.version}/CUI/{concept_id}/definitions"
+        response = await self._make_request(endpoint)
+        
+        if not response or 'result' not in response:
+            return []
+        
+        return response.get('result', [])
+    
+    async def _get_concept_definitions_uncached(self, concept_id: str) -> List[Dict[str, Any]]:
+        """
+        Get definitions for a specific UMLS concept without caching.
         
         Args:
             concept_id: Concept ID (e.g., "C0012634")
@@ -259,9 +445,31 @@ class UMLSClient:
         
         return response.get('result', [])
     
+    @enhanced_cached(prefix="umls_relations", data_type="umls")
     async def get_concept_relations(self, concept_id: str) -> List[Dict[str, Any]]:
         """
         Get relations for a specific UMLS concept.
+        
+        Args:
+            concept_id: Concept ID (e.g., "C0012634")
+            
+        Returns:
+            List of relations
+        """
+        if not self.use_cache:
+            return await self._get_concept_relations_uncached(concept_id)
+            
+        endpoint = f"content/{self.version}/CUI/{concept_id}/relations"
+        response = await self._make_request(endpoint)
+        
+        if not response or 'result' not in response:
+            return []
+        
+        return response.get('result', [])
+    
+    async def _get_concept_relations_uncached(self, concept_id: str) -> List[Dict[str, Any]]:
+        """
+        Get relations for a specific UMLS concept without caching.
         
         Args:
             concept_id: Concept ID (e.g., "C0012634")
@@ -277,9 +485,31 @@ class UMLSClient:
         
         return response.get('result', [])
     
+    @enhanced_cached(prefix="umls_semantic_types", data_type="umls")
     async def get_semantic_types(self, concept_id: str) -> List[Dict[str, Any]]:
         """
         Get semantic types for a specific UMLS concept.
+        
+        Args:
+            concept_id: Concept ID (e.g., "C0012634")
+            
+        Returns:
+            List of semantic types
+        """
+        if not self.use_cache:
+            return await self._get_semantic_types_uncached(concept_id)
+            
+        endpoint = f"content/{self.version}/CUI/{concept_id}/semanticTypes"
+        response = await self._make_request(endpoint)
+        
+        if not response or 'result' not in response:
+            return []
+        
+        return response.get('result', [])
+    
+    async def _get_semantic_types_uncached(self, concept_id: str) -> List[Dict[str, Any]]:
+        """
+        Get semantic types for a specific UMLS concept without caching.
         
         Args:
             concept_id: Concept ID (e.g., "C0012634")
@@ -468,3 +698,204 @@ class UMLSClient:
                 break
         
         return results
+
+    async def batch_get_concepts(
+        self, 
+        concept_ids: List[str],
+        max_concurrent: int = 5
+    ) -> Dict[str, Optional[Dict[str, Any]]]:
+        """
+        Get details for multiple UMLS concepts in parallel.
+        
+        Args:
+            concept_ids: List of concept IDs (e.g., ["C0012634", "C0085580"])
+            max_concurrent: Maximum number of concurrent requests (default: 5)
+            
+        Returns:
+            Dictionary mapping concept IDs to their details
+        """
+        if not concept_ids:
+            return {}
+        
+        semaphore = asyncio.Semaphore(max_concurrent)
+        results = {}
+        
+        async def get_concept_with_semaphore(cui: str):
+            async with semaphore:
+                try:
+                    result = await self.get_concept(cui)
+                    return cui, result
+                except Exception as e:
+                    logger.error(f"Error getting concept {cui}: {str(e)}")
+                    return cui, None
+        
+        tasks = [get_concept_with_semaphore(cui) for cui in concept_ids]
+        concept_results = await asyncio.gather(*tasks)
+        
+        for cui, result in concept_results:
+            results[cui] = result
+        
+        return results
+    
+    async def batch_search(
+        self,
+        queries: List[str],
+        search_type: str = "words",
+        max_results: int = 20,
+        max_concurrent: int = 5
+    ) -> Dict[str, List[Dict[str, Any]]]:
+        """
+        Search for multiple terms in parallel.
+        
+        Args:
+            queries: List of search queries
+            search_type: Search type (default: "words")
+            max_results: Maximum results per query (default: 20)
+            max_concurrent: Maximum number of concurrent requests (default: 5)
+            
+        Returns:
+            Dictionary mapping queries to their search results
+        """
+        if not queries:
+            return {}
+        
+        semaphore = asyncio.Semaphore(max_concurrent)
+        results = {}
+        
+        async def search_with_semaphore(query: str):
+            async with semaphore:
+                try:
+                    result = await self.search(query, search_type, max_results)
+                    return query, result
+                except Exception as e:
+                    logger.error(f"Error searching for '{query}': {str(e)}")
+                    return query, []
+        
+        tasks = [search_with_semaphore(query) for query in queries]
+        search_results = await asyncio.gather(*tasks)
+        
+        for query, result in search_results:
+            results[query] = result
+        
+        return results
+
+    async def clear_cache(self, pattern: Optional[str] = None) -> int:
+        """
+        Clear all UMLS-related cache entries or entries matching a specific pattern.
+        
+        Args:
+            pattern: Optional cache key pattern to clear (e.g., "umls_search:*")
+            
+        Returns:
+            Number of cache entries cleared
+        """
+        if not self.use_cache:
+            logger.warning("Cache is disabled for this client")
+            return 0
+        
+        try:
+            if pattern is None:
+                patterns = [
+                    "umls_search:*",      # Search results
+                    "umls_concept:*",     # Concept details
+                    "umls_atoms:*",       # Concept atoms
+                    "umls_definitions:*", # Concept definitions
+                    "umls_relations:*",   # Concept relations
+                    "umls_semantic_types:*" # Semantic types
+                ]
+                total_cleared = 0
+                for p in patterns:
+                    cleared = await enhanced_cache_manager.delete_pattern(p)
+                    logger.info(f"Cleared {cleared} cache entries matching pattern '{p}'")
+                    total_cleared += cleared
+                logger.info(f"Cleared {total_cleared} UMLS-related cache entries in total")
+                return total_cleared
+            else:
+                cleared = await enhanced_cache_manager.delete_pattern(pattern)
+                logger.info(f"Cleared {cleared} cache entries matching pattern '{pattern}'")
+                return cleared
+        except Exception as e:
+            logger.error(f"Error clearing cache: {str(e)}")
+            return 0
+    
+    async def count_cached_items(self, pattern: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Count the number of UMLS-related items in the cache.
+        
+        Args:
+            pattern: Optional cache key pattern to count (e.g., "umls_search:*")
+            
+        Returns:
+            Dictionary with cache statistics
+        """
+        if not self.use_cache:
+            logger.warning("Cache is disabled for this client")
+            return {"enabled": False, "total": 0}
+        
+        try:
+            if pattern is None:
+                patterns = [
+                    "umls_search:*",      # Search results
+                    "umls_concept:*",     # Concept details
+                    "umls_atoms:*",       # Concept atoms
+                    "umls_definitions:*", # Concept definitions
+                    "umls_relations:*",   # Concept relations
+                    "umls_semantic_types:*" # Semantic types
+                ]
+                counts = {}
+                total = 0
+                for p in patterns:
+                    count = await enhanced_cache_manager.count_pattern(p)
+                    counts[p] = count
+                    total += count
+                return {
+                    "enabled": True,
+                    "total": total,
+                    "patterns": counts,
+                    "ttl": self.cache_ttl
+                }
+            else:
+                count = await enhanced_cache_manager.count_pattern(pattern)
+                return {
+                    "enabled": True,
+                    "total": count,
+                    "pattern": pattern,
+                    "ttl": self.cache_ttl
+                }
+        except Exception as e:
+            logger.error(f"Error counting cached items: {str(e)}")
+            return {"enabled": self.use_cache, "error": str(e), "total": 0}
+    
+    async def get_cache_stats(self) -> Dict[str, Any]:
+        """
+        Get statistics about the cache.
+        
+        Returns:
+            Dictionary with cache statistics
+        """
+        if not self.use_cache:
+            logger.warning("Cache is disabled for this client")
+            return {"enabled": False}
+        
+        try:
+            stats = await enhanced_cache_manager.get_stats()
+            patterns = [
+                "umls_search:*",      # Search results
+                "umls_concept:*",     # Concept details
+                "umls_atoms:*",       # Concept atoms
+                "umls_definitions:*", # Concept definitions
+                "umls_relations:*",   # Concept relations
+                "umls_semantic_types:*" # Semantic types
+            ]
+            pattern_counts = {}
+            for pattern in patterns:
+                count = await enhanced_cache_manager.count_pattern(pattern)
+                pattern_counts[pattern] = count
+            stats["umls_patterns"] = pattern_counts
+            stats["umls_total"] = sum(pattern_counts.values())
+            stats["enabled"] = True
+            stats["ttl"] = self.cache_ttl
+            return stats
+        except Exception as e:
+            logger.error(f"Error getting cache stats: {str(e)}")
+            return {"enabled": self.use_cache, "error": str(e)}

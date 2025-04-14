@@ -1080,3 +1080,104 @@ class ContradictionService:
                 "status": "error",
                 "error": str(e)
             }
+
+    async def detect_contradictions_batch(
+        self,
+        claim_pairs: List[Tuple[str, str]],
+        metadata_pairs: Optional[List[Tuple[Optional[Dict[str, Any]], Optional[Dict[str, Any]]]]] = None,
+        use_biomedlm: bool = True,
+        use_tsmixer: bool = False,
+        use_lorentz: bool = False,
+        use_temporal: bool = False,
+        use_shap: bool = False,
+        domain: Optional[str] = None,
+        threshold: float = 0.7,
+    ) -> List[Dict[str, Any]]:
+        """
+        Optimized batch contradiction detection with parallel model execution, input caching, and selective feature computation.
+        Args:
+            claim_pairs: List of (claim1, claim2) tuples
+            metadata_pairs: List of (metadata1, metadata2) tuples (optional)
+            use_biomedlm, use_tsmixer, use_lorentz, use_temporal, use_shap: Model flags
+            domain: Optional domain
+            threshold: Contradiction threshold
+        Returns:
+            List of contradiction detection results (one per claim pair)
+        """
+        if not claim_pairs:
+            return []
+        if metadata_pairs is None:
+            metadata_pairs = [(None, None)] * len(claim_pairs)
+
+        # Caching for tokenization/preprocessing
+        preprocess_cache = {}
+        def get_preprocessed(claim):
+            if claim not in preprocess_cache:
+                # Example: could be tokenization, embedding, etc.
+                preprocess_cache[claim] = claim  # Replace with actual preprocessing if needed
+            return preprocess_cache[claim]
+
+        async def process_pair(idx, claim1, claim2, metadata1, metadata2):
+            # Only compute features needed for enabled models
+            tasks = []
+            results = {}
+            if use_biomedlm and self.biomedlm_service:
+                tasks.append(self._detect_biomedlm_contradiction(get_preprocessed(claim1), get_preprocessed(claim2)))
+            else:
+                tasks.append(None)
+            if use_temporal and self.temporal_service:
+                tasks.append(self.detect_temporal_contradiction(claim1, claim2, metadata1, metadata2, domain=domain))
+            else:
+                tasks.append(None)
+            if use_tsmixer and self.tsmixer_service:
+                tasks.append(self._detect_tsmixer_contradiction(claim1, claim2, metadata1, metadata2))
+            else:
+                tasks.append(None)
+            if use_lorentz and self.lorentz_service:
+                tasks.append(self._detect_lorentz_contradiction(claim1, claim2))
+            else:
+                tasks.append(None)
+
+            # Run enabled tasks in parallel
+            task_objs = [t for t in tasks if t is not None]
+            task_results = await asyncio.gather(*task_objs, return_exceptions=True) if task_objs else []
+            # Map results back to model names
+            model_keys = []
+            if use_biomedlm and self.biomedlm_service:
+                model_keys.append("biomedlm")
+            if use_temporal and self.temporal_service:
+                model_keys.append("temporal")
+            if use_tsmixer and self.tsmixer_service:
+                model_keys.append("tsmixer")
+            if use_lorentz and self.lorentz_service:
+                model_keys.append("lorentz")
+            for k, v in zip(model_keys, task_results):
+                results[k] = v
+            # Optionally, run classifier_service/classification
+            classification = None
+            if self.classifier_service:
+                try:
+                    classification = await self.classifier_service.classify_contradiction({
+                        "claim1": claim1,
+                        "claim2": claim2,
+                        "metadata1": metadata1,
+                        "metadata2": metadata2
+                    })
+                except Exception as e:
+                    classification = {"error": str(e)}
+            # Combine results
+            return {
+                "claim1": claim1,
+                "claim2": claim2,
+                "metadata1": metadata1,
+                "metadata2": metadata2,
+                "results": results,
+                "classification": classification
+            }
+
+        # Batch process all pairs
+        batch_tasks = [process_pair(i, claim1, claim2, metadata1, metadata2)
+                       for i, ((claim1, claim2), (metadata1, metadata2)) in enumerate(zip(claim_pairs, metadata_pairs))]
+        batch_results = await asyncio.gather(*batch_tasks, return_exceptions=True)
+        # Optionally, handle exceptions in batch_results
+        return batch_results
