@@ -18,12 +18,14 @@ Features:
 - Support for various retrieval strategies
 - Context augmentation with graph relationships
 - Explanation generation for retrieved information
+- Ontology-enhanced retrieval with SNOMED CT and MeSH integration
 """
 import logging
 import asyncio
-from typing import Dict, List, Optional, Any, Callable, TypeVar
+from typing import Dict, List, Optional, Any, Callable, TypeVar, Union
 from asf.medical.graph.graph_service import GraphService
 from asf.medical.ml.models.biomedlm import BioMedLMService
+from asf.medical.graph.ontology_integration import OntologyIntegrationService, GraphRAGOntologyEnhancer
 
 # Set up logger
 logger = logging.getLogger(__name__)
@@ -82,7 +84,13 @@ class GraphRAG:
             cls._instance = super(GraphRAG, cls).__new__(cls)
             cls._initialized = False
         return cls._instance
-    def __init__(self, graph_service: Optional[GraphService] = None, biomedlm_service: Optional[BioMedLMService] = None):
+
+    def __init__(
+        self,
+        graph_service: Optional[GraphService] = None,
+        biomedlm_service: Optional[BioMedLMService] = None,
+        ontology_service: Optional[OntologyIntegrationService] = None
+    ):
         """
         Initialize the GraphRAG service.
 
@@ -94,21 +102,54 @@ class GraphRAG:
         The service can be initialized with optional dependencies:
         - graph_service: For interacting with the knowledge graph
         - biomedlm_service: For text generation and analysis
+        - ontology_service: For integrating external medical ontologies
 
         If dependencies are not provided, they will be lazily initialized when needed.
 
         Args:
             graph_service: Graph service instance (optional)
             biomedlm_service: BioMedLM service instance (optional)
+            ontology_service: Ontology integration service instance (optional)
         """
-        if not self._initialized or graph_service is not None or biomedlm_service is not None:
+        if (not self._initialized or 
+            graph_service is not None or 
+            biomedlm_service is not None or
+            ontology_service is not None):
+            
             self.graph_service = graph_service
             self.biomedlm_service = biomedlm_service
+            self.ontology_service = ontology_service
+            self.ontology_enhancer = None
+            
             self._initialized = True
             asyncio.create_task(self._clear_cache())
+            asyncio.create_task(self._initialize_ontology_services())
             logger.info("GraphRAG service initialized with new dependencies")
         else:
             logger.debug("GraphRAG service already initialized, reusing existing instance")
+    
+    async def _initialize_ontology_services(self) -> None:
+        """Initialize ontology services if not already initialized."""
+        if self.ontology_service is None:
+            try:
+                logger.info("Initializing ontology integration service")
+                graph_service = self._get_graph_service()
+                self.ontology_service = OntologyIntegrationService(graph_client=graph_service)
+                await self.ontology_service.initialize()
+            except Exception as e:
+                logger.error(f"Failed to initialize ontology service: {str(e)}")
+                self.ontology_service = None
+        
+        if self.ontology_service and self.ontology_enhancer is None:
+            logger.info("Initializing GraphRAG ontology enhancer")
+            self.ontology_enhancer = GraphRAGOntologyEnhancer(
+                ontology_service=self.ontology_service,
+                expansion_depth=1,
+                include_narrower_concepts=True,
+                include_broader_concepts=False,
+                ontology_weight=0.3
+            )
+
     def _get_graph_service(self) -> GraphService:
         """
         Get the graph service.
@@ -125,6 +166,7 @@ class GraphRAG:
             logger.info("Initializing graph service")
             self.graph_service = GraphService()
         return self.graph_service
+
     def _get_biomedlm_service(self) -> BioMedLMService:
         """
         Get the BioMedLM service.
@@ -147,6 +189,21 @@ class GraphRAG:
                 logger.error(f"Failed to initialize BioMedLM service: {str(e)}")
                 raise RuntimeError(f"BioMedLM service not available: {str(e)}") from e
         return self.biomedlm_service
+
+    def _get_ontology_service(self) -> Optional[OntologyIntegrationService]:
+        """
+        Get the ontology integration service.
+
+        This method returns the ontology integration service instance if available.
+        Unlike other service getters, this does not attempt to create the service
+        if it doesn't exist, since initialization is asynchronous and handled
+        separately.
+
+        Returns:
+            OntologyIntegrationService: The ontology service instance, or None if not available
+        """
+        return self.ontology_service
+
     async def _clear_cache(self) -> None:
         """
         Clear the GraphRAG cache.
@@ -164,6 +221,7 @@ class GraphRAG:
             logger.info("GraphRAG cache cleared")
         except Exception as e:
             logger.warning(f"Failed to clear GraphRAG cache: {str(e)}")
+
     T = TypeVar('T')
     def _safe_execute(self, func: Callable[..., T], *args, **kwargs) -> T:
         """
@@ -189,6 +247,7 @@ class GraphRAG:
         except Exception as e:
             logger.error(f"Error executing {func.__name__}: {str(e)}")
             raise RuntimeError(f"Error executing {func.__name__}: {str(e)}") from e
+
     async def _safe_execute_async(self, func: Callable[..., T], *args, **kwargs) -> T:
         """
         Execute an async function safely with error handling.
@@ -213,6 +272,7 @@ class GraphRAG:
         except Exception as e:
             logger.error(f"Error executing {func.__name__}: {str(e)}")
             raise RuntimeError(f"Error executing {func.__name__}: {str(e)}") from e
+
     def retrieve_articles_by_concept(self, concept: str, max_results: int = 10) -> List[Dict[str, Any]]:
         """
         Retrieve articles that mention a concept.
@@ -233,13 +293,6 @@ class GraphRAG:
             RuntimeError: If the query fails
         """
         logger.info(f"Retrieving articles for concept: {concept}")
-
-        # This is a stub implementation that should be completed
-        # The actual implementation would:
-        # 1. Connect to the graph database
-        # 2. If concept is a name, look up its CUI
-        # 3. Query for articles that mention the concept
-        # 4. Return the results
 
         graph_service = self._get_graph_service()
         return self._safe_execute(
@@ -302,19 +355,27 @@ class GraphRAG:
             max_results
         )
 
-    def search_articles(self, query: str, max_results: int = 10, use_vector_search: bool = True, use_graph_search: bool = True) -> List[Dict[str, Any]]:
+    async def search_articles(
+        self, 
+        query: str, 
+        max_results: int = 10, 
+        use_vector_search: bool = True, 
+        use_graph_search: bool = True,
+        use_ontology_enhancement: bool = True
+    ) -> List[Dict[str, Any]]:
         """
         Search for articles using graph-based retrieval-augmented generation.
 
         This method combines vector search and graph traversal to find relevant articles.
-        It can use vector similarity search, graph-based search, or a combination of both
-        depending on the parameters provided.
+        It can use vector similarity search, graph-based search, ontology enhancement,
+        or a combination of these methods depending on the parameters provided.
 
         Args:
             query: Search query
             max_results: Maximum number of results to return
             use_vector_search: Whether to use vector search
             use_graph_search: Whether to use graph search
+            use_ontology_enhancement: Whether to use ontology enhancement
 
         Returns:
             List of articles matching the search criteria
@@ -329,31 +390,76 @@ class GraphRAG:
             raise ValueError("Search query cannot be empty")
 
         graph_service = self._get_graph_service()
-        return self._safe_execute(
+        
+        # First, perform the base search
+        results = await self._safe_execute_async(
             graph_service.search_articles,
             query,
             max_results,
             use_vector_search,
             use_graph_search
         )
+        
+        # Apply ontology enhancement if requested and available
+        if use_ontology_enhancement and self.ontology_enhancer:
+            try:
+                # Ensure ontology services are initialized
+                if self.ontology_service is None:
+                    await self._initialize_ontology_services()
+                
+                if self.ontology_enhancer:
+                    # Enhance query with ontology concepts
+                    enhanced_query = await self.ontology_enhancer.enhance_search_query(query)
+                    
+                    # If the query was enhanced, perform a search with the enhanced query
+                    if enhanced_query != query:
+                        logger.info(f"Searching with ontology-enhanced query: {enhanced_query}")
+                        enhanced_results = await self._safe_execute_async(
+                            graph_service.search_articles,
+                            enhanced_query,
+                            max_results,
+                            use_vector_search,
+                            use_graph_search
+                        )
+                        
+                        # Enhance retrieval with ontology graph
+                        final_results = await self.ontology_enhancer.enhance_graph_retrieval(
+                            graph_service,
+                            query,
+                            enhanced_results
+                        )
+                        
+                        return final_results
+            except Exception as e:
+                logger.warning(f"Ontology enhancement failed, falling back to base search: {str(e)}")
+        
+        return results
 
-    async def generate_summary(self, query: str, max_articles: int = 5) -> Dict[str, Any]:
+    async def generate_summary(
+        self, 
+        query: str,
+        max_articles: int = 5,
+        use_ontology_enhancement: bool = True
+    ) -> Dict[str, Any]:
         """
         Generate a summary of articles related to a query.
 
         This method searches for articles related to a query and generates a summary
         of the findings. It uses the BioMedLM service to generate the summary based
-        on the retrieved articles.
+        on the retrieved articles. Ontology enhancement can be applied to improve
+        retrieval quality.
 
         Args:
             query: Query string
             max_articles: Maximum number of articles to include in the summary
+            use_ontology_enhancement: Whether to use ontology enhancement for retrieval
 
         Returns:
             Dictionary containing the summary data, including:
             - summary: The generated summary text
             - articles: List of articles used in the summary
             - query: The original query
+            - ontology_enhanced: Whether ontology enhancement was applied
 
         Raises:
             ValueError: If the query is empty or invalid
@@ -364,18 +470,22 @@ class GraphRAG:
         if not query.strip():
             raise ValueError("Query cannot be empty")
 
-        # Search for relevant articles
+        # Search for relevant articles with ontology enhancement if requested
         articles = await self._safe_execute_async(
             self.search_articles,
             query,
-            max_articles
+            max_articles,
+            use_vector_search=True,
+            use_graph_search=True,
+            use_ontology_enhancement=use_ontology_enhancement
         )
 
         if not articles:
             return {
                 "summary": "No relevant articles found.",
                 "articles": [],
-                "query": query
+                "query": query,
+                "ontology_enhanced": use_ontology_enhancement and self.ontology_enhancer is not None
             }
 
         # Generate summary using BioMedLM
@@ -389,65 +499,124 @@ class GraphRAG:
         return {
             "summary": summary,
             "articles": articles,
-            "query": query
+            "query": query,
+            "ontology_enhanced": use_ontology_enhancement and self.ontology_enhancer is not None
         }
 
-    async def get_related_concepts(self, concept_id: str, relationship_type: str = None, max_results: int = 20) -> List[Dict[str, Any]]:
+    async def enrich_knowledge_graph_with_ontologies(
+        self, 
+        node_type: str = "Article", 
+        content_field: str = "abstract",
+        limit: int = 1000
+    ) -> Dict[str, Any]:
         """
-        Get concepts related to a specific concept.
-
-        This method retrieves concepts that are related to a specific concept from the
-        knowledge graph. If a relationship type is provided, it retrieves only concepts
-        with that relationship. Otherwise, it retrieves all related concepts.
-
+        Enrich the knowledge graph with ontology references.
+        
+        This method processes nodes in the knowledge graph and adds references
+        to ontology concepts from SNOMED CT and MeSH.
+        
         Args:
-            concept_id: Concept identifier (CUI)
-            relationship_type: Relationship type (optional)
-            max_results: Maximum number of results to return (default: 20)
-
+            node_type: Type of node to enrich
+            content_field: Field containing text to map to ontologies
+            limit: Maximum number of nodes to process
+            
         Returns:
-            List of dictionaries containing related concept data
-
+            Dictionary with status information
+            
         Raises:
-            ValueError: If the concept_id is empty
-            RuntimeError: If the query fails
+            RuntimeError: If ontology service is not available or enrichment fails
         """
-        logger.info(f"Getting concepts related to: {concept_id}")
-
-        if not concept_id.strip():
-            raise ValueError("Concept ID cannot be empty")
-
-        graph_service = self._get_graph_service()
-        return await self._safe_execute_async(
-            graph_service.get_related_concepts,
-            concept_id,
-            relationship_type,
-            max_results
-        )
-
-    async def get_contradictions(self, article_id: str = None, max_results: int = 20) -> List[Dict[str, Any]]:
+        logger.info(f"Enriching knowledge graph with ontologies: {node_type}.{content_field}")
+        
+        if not self.ontology_service:
+            await self._initialize_ontology_services()
+        
+        if not self.ontology_service:
+            raise RuntimeError("Ontology service not available")
+        
+        try:
+            await self.ontology_service.enrich_graph_with_ontologies(
+                node_type, content_field, limit
+            )
+            
+            return {
+                "status": "success",
+                "message": f"Enriched {node_type} nodes with ontology references",
+                "node_type": node_type,
+                "content_field": content_field,
+                "limit": limit
+            }
+        except Exception as e:
+            logger.error(f"Error enriching knowledge graph with ontologies: {str(e)}")
+            raise RuntimeError(f"Error enriching knowledge graph with ontologies: {str(e)}")
+    
+    async def create_ontology_mappings(self) -> Dict[str, Any]:
         """
-        Get contradictions between articles.
-
-        This method retrieves contradictions between articles from the knowledge graph.
-        If an article_id is provided, it retrieves contradictions involving that article.
-        Otherwise, it retrieves all contradictions.
-
+        Create mappings between different ontologies (e.g., SNOMED CT to MeSH).
+        
+        This method generates and persists mappings between concepts in different
+        ontologies, enabling cross-ontology searches and knowledge integration.
+        
+        Returns:
+            Dictionary with mapping statistics
+            
+        Raises:
+            RuntimeError: If ontology service is not available or mapping fails
+        """
+        logger.info("Creating ontology mappings")
+        
+        if not self.ontology_service:
+            await self._initialize_ontology_services()
+        
+        if not self.ontology_service:
+            raise RuntimeError("Ontology service not available")
+        
+        try:
+            await self.ontology_service.generate_mappings()
+            
+            return {
+                "status": "success",
+                "message": "Generated ontology mappings",
+                "mapping_count": len(self.ontology_service.ontology_mappings)
+            }
+        except Exception as e:
+            logger.error(f"Error creating ontology mappings: {str(e)}")
+            raise RuntimeError(f"Error creating ontology mappings: {str(e)}")
+    
+    async def search_ontology(
+        self, 
+        query: str,
+        source_ontologies: Optional[List[str]] = None,
+        target_ontologies: Optional[List[str]] = None
+    ) -> List[Dict[str, Any]]:
+        """
+        Search for medical concepts in ontologies based on text.
+        
         Args:
-            article_id: Article identifier (PMID) (optional)
-            max_results: Maximum number of results to return (default: 20)
-
+            query: Text to search for
+            source_ontologies: List of ontologies to search in (e.g., ["MESH", "SNOMED"])
+            target_ontologies: List of ontologies to map concepts to
+            
         Returns:
-            List of dictionaries containing contradiction data
-
+            List of matched ontology concepts with mappings
+            
         Raises:
-            RuntimeError: If the query fails
+            RuntimeError: If ontology service is not available or search fails
         """
-        logger.info(f"Getting contradictions{' for article: ' + article_id if article_id else ''}")
-
-        graph_service = self._get_graph_service()
-        return await self._safe_execute_async(
-            graph_service.get_contradictions,
-            article_id,
-            max_results
-        )
+        logger.info(f"Searching ontologies for: {query}")
+        
+        if not self.ontology_service:
+            await self._initialize_ontology_services()
+        
+        if not self.ontology_service:
+            raise RuntimeError("Ontology service not available")
+        
+        try:
+            results = await self.ontology_service.map_text_to_ontologies(
+                query, source_ontologies, target_ontologies
+            )
+            
+            return results
+        except Exception as e:
+            logger.error(f"Error searching ontologies: {str(e)}")
+            raise RuntimeError(f"Error searching ontologies: {str(e)}")
