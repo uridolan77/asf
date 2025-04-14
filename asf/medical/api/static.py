@@ -19,6 +19,9 @@ logger = get_logger(__name__)
 # Get the static directory
 static_dir = Path(__file__).parent.parent / "static"
 
+# Get the templates directory
+templates_dir = Path(__file__).parent / "templates"
+
 # Create the router
 router = APIRouter(tags=["static"])
 
@@ -112,6 +115,29 @@ async def get_observability_dashboard():
     # Check if the file exists
     if not os.path.exists(full_path) or not os.path.isfile(full_path):
         logger.warning("Observability dashboard page not found")
+        raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="File not found")
+
+    # Return the file
+    return FileResponse(full_path)
+
+
+@router.get("/claim-visualizer")
+async def get_claim_visualizer():
+    """
+    Get the scientific claim visualizer page.
+    
+    Returns:
+        FileResponse: The claim visualizer HTML page
+        
+    Raises:
+        HTTPException: If the file is not found
+    """
+    # Construct the full path
+    full_path = templates_dir / "claim_visualizer.html"
+
+    # Check if the file exists
+    if not os.path.exists(full_path) or not os.path.isfile(full_path):
+        logger.warning("Claim visualizer page not found")
         raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="File not found")
 
     # Return the file
