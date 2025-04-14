@@ -1,5 +1,5 @@
 """
-Export Utilities for Medical Research Synthesizer
+Consolidated Export Utilities for Medical Research Synthesizer
 
 This module provides functions to export research data in various formats:
 - JSON
@@ -7,8 +7,8 @@ This module provides functions to export research data in various formats:
 - Excel
 - PDF
 
-It combines the functionality of the original export_utils.py and export_utils_v2.py
-into a single, comprehensive implementation.
+It combines all export functionality into a single, comprehensive implementation
+with common utilities for data validation, cleaning, and metadata handling.
 """
 
 import io
@@ -18,20 +18,171 @@ import os
 import tempfile
 import logging
 import pandas as pd
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Union
+from datetime import datetime
 from fastapi.responses import JSONResponse, StreamingResponse, FileResponse
 from fpdf import FPDF
 
-from asf.medical.core.exceptions import ValidationError
-from asf.medical.api.export_utils_common import (
-    validate_export_data,
-    clean_export_data,
-    get_export_metadata,
-    get_common_fields
-)
+from asf.medical.core.exceptions import ValidationError, ExportError
 
 logger = logging.getLogger(__name__)
 
+
+# Common Utility Functions
+
+def validate_export_data(data: Any) -> List[Dict[str, Any]]:
+    """
+    Validate export data to ensure it's a list of dictionaries.
+    
+    Args:
+        data: Data to validate
+    
+    Returns:
+        Validated list of dictionaries
+    
+    Raises:
+        ValidationError: If data is not a list or contains invalid items
+    """
+    if not isinstance(data, list):
+        raise ValidationError("Data must be a list of dictionaries")
+    
+    for i, item in enumerate(data):
+        if not isinstance(item, dict):
+            raise ValidationError(f"Item at index {i} is not a dictionary")
+    
+    return data
+
+
+def clean_export_data(data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """
+    Clean export data by handling non-serializable values.
+    
+    Args:
+        data: List of dictionaries to clean
+    
+    Returns:
+        Cleaned list of dictionaries
+    """
+    cleaned_data = []
+    
+    for item in data:
+        cleaned_item = {}
+        for key, value in item.items():
+            if value is not None:
+                if isinstance(value, (dict, list, str, int, float, bool, type(None))):
+                    cleaned_item[key] = value
+                else:
+                    cleaned_item[key] = str(value)
+        cleaned_data.append(cleaned_item)
+    
+    return cleaned_data
+
+
+def filter_export_data(
+    data: List[Dict[str, Any]],
+    include_fields: Optional[List[str]] = None,
+    exclude_fields: Optional[List[str]] = None
+) -> List[Dict[str, Any]]:
+    """
+    Filter export data to include or exclude specific fields.
+    
+    Args:
+        data: List of dictionaries to filter
+        include_fields: Fields to include (if None, include all)
+        exclude_fields: Fields to exclude
+    
+    Returns:
+        Filtered list of dictionaries
+    """
+    exclude_fields = exclude_fields or []
+    filtered_data = []
+    
+    for item in data:
+        filtered_item = {}
+        
+        if include_fields:
+            # Include only specified fields
+            for field in include_fields:
+                if field in item and field not in exclude_fields:
+                    filtered_item[field] = item[field]
+        else:
+            # Include all fields except excluded ones
+            for key, value in item.items():
+                if key not in exclude_fields:
+                    filtered_item[key] = value
+        
+        filtered_data.append(filtered_item)
+    
+    return filtered_data
+
+
+def get_export_metadata(query_text: Optional[str] = None) -> Dict[str, Any]:
+    """
+    Generate metadata for export files.
+    
+    Args:
+        query_text: Optional query text that produced the results
+    
+    Returns:
+        Dictionary containing export metadata
+    """
+    metadata = {
+        "exported_at": datetime.now().isoformat(),
+        "timestamp": datetime.now().strftime("%Y%m%d_%H%M%S")
+    }
+    
+    if query_text:
+        metadata["query"] = query_text
+    
+    return metadata
+
+
+def get_common_fields() -> Dict[str, List[str]]:
+    """
+    Get common field lists for different export types.
+    
+    Returns:
+        Dictionary containing field lists for different export types
+    """
+    return {
+        "basic": [
+            'pmid', 'title', 'journal', 'publication_date', 'authors'
+        ],
+        "standard": [
+            'pmid', 'title', 'journal', 'publication_date', 'iso_date',
+            'authors', 'abstract', 'doi'
+        ],
+        "detailed": [
+            'pmid', 'title', 'journal', 'publication_date', 'iso_date',
+            'authors', 'abstract', 'impact_factor', 'journal_quartile',
+            'citation_count', 'authority_score', 'publication_types',
+            'doi', 'mesh_terms'
+        ],
+        "analysis": [
+            'pmid', 'title', 'journal', 'publication_date', 'authors',
+            'abstract', 'contradiction_score', 'contradiction_type',
+            'evidence_level'
+        ]
+    }
+
+
+def handle_export_error(e: Exception, operation: str) -> None:
+    """
+    Handle export errors consistently.
+    
+    Args:
+        e: The exception that occurred
+        operation: The export operation that failed
+    
+    Raises:
+        ExportError: Always raised with consistent formatting
+    """
+    error_message = f"Failed to export data to {operation}: {str(e)}"
+    logger.error(error_message)
+    raise ExportError(error_message) from e
+
+
+# Format-specific Export Functions
 
 def export_to_json(data: List[Dict[str, Any]], query_text: Optional[str] = None) -> JSONResponse:
     """
@@ -64,9 +215,7 @@ def export_to_json(data: List[Dict[str, Any]], query_text: Optional[str] = None)
 
         return JSONResponse(content=response_data)
     except Exception as e:
-        logger.error(f"Error exporting to JSON: {str(e)}")
-        raise ValidationError(f"Failed to export data to JSON: {str(e)}") from e
-
+        handle_export_error(e, "JSON")
 
 
 def export_to_csv(data: List[Dict[str, Any]], query_text: Optional[str] = None) -> StreamingResponse:
@@ -145,8 +294,7 @@ def export_to_csv(data: List[Dict[str, Any]], query_text: Optional[str] = None) 
 
         return response
     except Exception as e:
-        logger.error(f"Error exporting to CSV: {str(e)}")
-        raise ValidationError(f"Failed to export data to CSV: {str(e)}") from e
+        handle_export_error(e, "CSV")
 
 
 def export_to_excel(data: List[Dict[str, Any]], query_text: Optional[str] = None) -> StreamingResponse:
@@ -298,8 +446,7 @@ def export_to_excel(data: List[Dict[str, Any]], query_text: Optional[str] = None
 
         return response
     except Exception as e:
-        logger.error(f"Error exporting to Excel: {str(e)}")
-        raise ValidationError(f"Failed to export data to Excel: {str(e)}") from e
+        handle_export_error(e, "Excel")
 
 
 def export_to_pdf(data: List[Dict[str, Any]], query_text: Optional[str] = None) -> FileResponse:
@@ -386,11 +533,14 @@ def export_to_pdf(data: List[Dict[str, Any]], query_text: Optional[str] = None) 
             background=lambda: os.unlink(temp_file.name)
         )
     except Exception as e:
-        logger.error(f"Error exporting to PDF: {str(e)}")
-        raise ValidationError(f"Failed to export data to PDF: {str(e)}") from e
+        handle_export_error(e, "PDF")
 
 
-def export_contradiction_analysis_to_pdf(analysis: Dict[str, Any], query_text: str, output_path: Optional[str] = None) -> FileResponse:
+def export_contradiction_analysis_to_pdf(
+    analysis: Dict[str, Any], 
+    query_text: str, 
+    output_path: Optional[str] = None
+) -> FileResponse:
     """
     Export contradiction analysis to PDF.
 
@@ -497,5 +647,4 @@ def export_contradiction_analysis_to_pdf(analysis: Dict[str, Any], query_text: s
             background=lambda: os.unlink(output_path)
         )
     except Exception as e:
-        logger.error(f"Error exporting contradiction analysis to PDF: {str(e)}")
-        raise ValidationError(f"Failed to export contradiction analysis to PDF: {str(e)}") from e
+        handle_export_error(e, "PDF")
