@@ -26,6 +26,9 @@ from api.routers.medical_terminology import router as medical_terminology_router
 from api.routers.enhanced_medical_contradiction import router as enhanced_medical_contradiction_router
 from api.routers.medical_clinical_data import router as medical_clinical_data_router
 
+# Import clients router
+from api.clients import router as clients_router
+
 from models.user import User, Role, Base
 from config.config import SessionLocal, engine
 
@@ -38,11 +41,11 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/login")
 
 app = FastAPI()
 
-# Configure CORS - Allow all origins for development
+# Configure CORS - Allow specific origins for development
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins in development
-    allow_credentials=True,
+    allow_origins=["http://localhost:3000", "http://localhost:57104", "http://localhost:57054", "http://10.100.102.28:57104", "http://10.100.102.28:57054"],  # Allow specific origins
+    allow_credentials=False,  # Set to False to avoid preflight issues
     allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["*"],
@@ -55,6 +58,7 @@ app.include_router(medical_contradiction_router)
 app.include_router(medical_terminology_router)
 app.include_router(enhanced_medical_contradiction_router)
 app.include_router(medical_clinical_data_router)
+app.include_router(clients_router)
 
 # Dependency to get DB session
 def get_db():

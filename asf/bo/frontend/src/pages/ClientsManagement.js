@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Box, Paper, Typography, Grid, Card, CardContent, CardHeader, 
-  CardActions, Button, Chip, Divider, CircularProgress, 
+import {
+  Box, Paper, Typography, Grid, Card, CardContent, CardHeader,
+  CardActions, Button, Chip, Divider, CircularProgress,
   IconButton, Tooltip, Alert, LinearProgress, Tab, Tabs
 } from '@mui/material';
-import { 
+import {
   Refresh as RefreshIcon,
   Settings as SettingsIcon,
   CheckCircle as CheckCircleIcon,
@@ -25,14 +25,14 @@ import { useNotification } from '../context/NotificationContext';
 
 /**
  * Medical Clients Management page
- * 
+ *
  * This page provides management functionality for medical clients,
  * including NCBI, UMLS, ClinicalTrials, Cochrane, Crossref, and SNOMED.
  */
 const ClientsManagement = () => {
   const { showSuccess, showError } = useNotification();
   const navigate = useNavigate();
-  
+
   // State
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -43,7 +43,7 @@ const ClientsManagement = () => {
   const [testingClient, setTestingClient] = useState(null);
   const [testResults, setTestResults] = useState(null);
   const [activeTab, setActiveTab] = useState(0);
-  
+
   // Load user data and clients on mount
   useEffect(() => {
     const loadData = async () => {
@@ -57,7 +57,7 @@ const ClientsManagement = () => {
             handleLogout();
           }
         }
-        
+
         // Load clients
         await loadClients();
       } catch (error) {
@@ -67,27 +67,44 @@ const ClientsManagement = () => {
         setLoading(false);
       }
     };
-    
+
     loadData();
   }, []);
-  
+
   // Handle logout
   const handleLogout = () => {
     localStorage.removeItem('token');
     navigate('/');
   };
-  
+
   // Load clients
   const loadClients = async () => {
     setRefreshing(true);
-    
+
     try {
       const result = await apiService.clients.getAll();
-      
+
       if (result.success) {
         setClients(result.data);
       } else {
-        showError(`Failed to load clients: ${result.error}`);
+        // If authentication error, try without authentication
+        if (result.isAuthError) {
+          try {
+            // Direct API call without authentication
+            const response = await fetch('http://localhost:8000/api/medical/clients');
+            if (response.ok) {
+              const data = await response.json();
+              setClients(data);
+            } else {
+              showError(`Failed to load clients: ${response.statusText}`);
+            }
+          } catch (fetchError) {
+            console.error('Error fetching clients directly:', fetchError);
+            showError(`Error loading clients: ${fetchError.message}`);
+          }
+        } else {
+          showError(`Failed to load clients: ${result.error}`);
+        }
       }
     } catch (error) {
       console.error('Error loading clients:', error);
@@ -96,24 +113,24 @@ const ClientsManagement = () => {
       setRefreshing(false);
     }
   };
-  
+
   // Handle client configuration
   const handleConfigureClient = (client) => {
     setSelectedClient(client);
     setConfigDialogOpen(true);
   };
-  
+
   // Handle client configuration update
   const handleUpdateClientConfig = async (clientId, config) => {
     try {
       const result = await apiService.clients.updateClient(clientId, config);
-      
+
       if (result.success) {
         // Update clients list
-        setClients(clients.map(client => 
+        setClients(clients.map(client =>
           client.client_id === clientId ? result.data : client
         ));
-        
+
         showSuccess('Client configuration updated successfully');
       } else {
         showError(`Failed to update client configuration: ${result.error}`);
@@ -123,20 +140,20 @@ const ClientsManagement = () => {
       showError(`Error updating client configuration: ${error.message}`);
     }
   };
-  
+
   // Handle client connection test
   const handleTestConnection = async (clientId) => {
     setTestingClient(clientId);
     setTestResults(null);
-    
+
     try {
       const result = await apiService.clients.testConnection(clientId);
-      
+
       setTestResults({
         clientId,
         ...result.data
       });
-      
+
       if (result.data.success) {
         showSuccess('Connection test successful');
       } else {
@@ -149,12 +166,12 @@ const ClientsManagement = () => {
       setTestingClient(null);
     }
   };
-  
+
   // Handle tab change
   const handleTabChange = (_, newValue) => {
     setActiveTab(newValue);
   };
-  
+
   // Get status chip color
   const getStatusColor = (status) => {
     switch (status) {
@@ -168,7 +185,7 @@ const ClientsManagement = () => {
         return 'default';
     }
   };
-  
+
   // Get status icon
   const getStatusIcon = (status) => {
     switch (status) {
@@ -182,7 +199,7 @@ const ClientsManagement = () => {
         return <InfoIcon />;
     }
   };
-  
+
   // Render client cards
   const renderClientCards = () => {
     return (
@@ -190,11 +207,11 @@ const ClientsManagement = () => {
         <Grid container spacing={3}>
           {clients.map((client) => (
             <Grid item xs={12} md={6} lg={4} key={client.client_id}>
-              <Card 
-                variant="outlined" 
-                sx={{ 
-                  height: '100%', 
-                  display: 'flex', 
+              <Card
+                variant="outlined"
+                sx={{
+                  height: '100%',
+                  display: 'flex',
                   flexDirection: 'column',
                   transition: 'all 0.3s ease',
                   '&:hover': {
@@ -219,13 +236,13 @@ const ClientsManagement = () => {
                   <Typography variant="body2" color="text.secondary" gutterBottom>
                     Last checked: {new Date(client.last_checked).toLocaleString()}
                   </Typography>
-                  
+
                   {client.api_version && (
                     <Typography variant="body2" color="text.secondary" gutterBottom>
                       API Version: {client.api_version}
                     </Typography>
                   )}
-                  
+
                   {client.response_time && (
                     <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
                       <SpeedIcon fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
@@ -234,13 +251,13 @@ const ClientsManagement = () => {
                       </Typography>
                     </Box>
                   )}
-                  
+
                   {client.error_message && (
                     <Alert severity="error" sx={{ mt: 2 }}>
                       {client.error_message}
                     </Alert>
                   )}
-                  
+
                   {testResults && testResults.clientId === client.client_id && (
                     <Box sx={{ mt: 2 }}>
                       <Typography variant="subtitle2" gutterBottom>
@@ -263,21 +280,30 @@ const ClientsManagement = () => {
                   )}
                 </CardContent>
                 <CardActions>
-                  <Button 
-                    size="small" 
+                  <Button
+                    size="small"
                     startIcon={<SettingsIcon />}
                     onClick={() => handleConfigureClient(client)}
                   >
                     Configure
                   </Button>
-                  <Button 
-                    size="small" 
+                  <Button
+                    size="small"
                     startIcon={testingClient === client.client_id ? <CircularProgress size={16} /> : <RefreshIcon />}
                     onClick={() => handleTestConnection(client.client_id)}
                     disabled={testingClient === client.client_id}
                   >
                     Test Connection
                   </Button>
+                  {client.client_id === 'ncbi' && (
+                    <Button
+                      size="small"
+                      color="primary"
+                      onClick={() => navigate('/clients-management/ncbi')}
+                    >
+                      Manage
+                    </Button>
+                  )}
                 </CardActions>
               </Card>
             </Grid>
@@ -286,7 +312,7 @@ const ClientsManagement = () => {
       </StaggeredList>
     );
   };
-  
+
   // Render client usage statistics
   const renderClientUsage = () => {
     return (
@@ -295,7 +321,7 @@ const ClientsManagement = () => {
       </Typography>
     );
   };
-  
+
   if (loading) {
     return (
       <PageLayout
@@ -305,7 +331,7 @@ const ClientsManagement = () => {
       />
     );
   }
-  
+
   return (
     <PageLayout
       title="Medical Clients Management"
@@ -324,22 +350,22 @@ const ClientsManagement = () => {
     >
       <Paper sx={{ mb: 3 }}>
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-          <Tabs 
-            value={activeTab} 
-            onChange={handleTabChange} 
+          <Tabs
+            value={activeTab}
+            onChange={handleTabChange}
             aria-label="client management tabs"
           >
-            <Tab 
-              icon={<SettingsIcon />} 
-              label="Client Configuration" 
-              id="tab-0" 
-              aria-controls="tabpanel-0" 
+            <Tab
+              icon={<SettingsIcon />}
+              label="Client Configuration"
+              id="tab-0"
+              aria-controls="tabpanel-0"
             />
-            <Tab 
-              icon={<BarChartIcon />} 
-              label="Usage Statistics" 
-              id="tab-1" 
-              aria-controls="tabpanel-1" 
+            <Tab
+              icon={<BarChartIcon />}
+              label="Usage Statistics"
+              id="tab-1"
+              aria-controls="tabpanel-1"
             />
           </Tabs>
         </Box>
@@ -362,7 +388,7 @@ const ClientsManagement = () => {
           {activeTab === 1 && renderClientUsage()}
         </Box>
       </Paper>
-      
+
       {/* Additional information */}
       <Paper sx={{ p: 3 }}>
         <Typography variant="h6" gutterBottom>About Medical Clients</Typography>
@@ -393,7 +419,7 @@ const ClientsManagement = () => {
           </Grid>
         </Grid>
       </Paper>
-      
+
       {/* Client configuration dialog */}
       <ClientConfigDialog
         open={configDialogOpen}

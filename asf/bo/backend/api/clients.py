@@ -162,80 +162,80 @@ def save_client_configs(configs):
         return False
 
 @router.get("/", response_model=List[ClientStatus])
-async def get_all_clients(current_user: User = Depends(get_current_user)):
+async def get_all_clients():
     """
     Get status of all medical clients.
-    
+
     This endpoint returns the status of all configured medical clients,
     including NCBI, UMLS, ClinicalTrials, Cochrane, Crossref, and SNOMED.
     """
     clients = load_client_configs()
     result = []
-    
+
     for client_id, client_data in clients.items():
         # Check client status
         status_info = await check_client_status(client_id, client_data)
         result.append(status_info)
-    
+
     return result
 
 @router.get("/{client_id}", response_model=ClientStatus)
 async def get_client(client_id: str, current_user: User = Depends(get_current_user)):
     """
     Get status of a specific medical client.
-    
+
     This endpoint returns the status of a specific medical client,
     including configuration and connection status.
     """
     clients = load_client_configs()
-    
+
     if client_id not in clients:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Client '{client_id}' not found"
         )
-    
+
     # Check client status
     status_info = await check_client_status(client_id, clients[client_id])
     return status_info
 
 @router.put("/{client_id}", response_model=ClientStatus)
 async def update_client(
-    client_id: str, 
+    client_id: str,
     request: ClientUpdateRequest,
     current_user: User = Depends(get_current_user)
 ):
     """
     Update configuration for a specific medical client.
-    
+
     This endpoint updates the configuration for a specific medical client
     and returns the updated status.
     """
     clients = load_client_configs()
-    
+
     if client_id not in clients:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Client '{client_id}' not found"
         )
-    
+
     # Update client configuration
     updated_config = {**clients[client_id]["config"]}
-    
+
     # Update only provided fields
     for key, value in request.config.dict(exclude_unset=True).items():
         if value is not None:
             updated_config[key] = value
-    
+
     clients[client_id]["config"] = updated_config
-    
+
     # Save updated configurations
     if not save_client_configs(clients):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to save client configuration"
         )
-    
+
     # Check client status with updated configuration
     status_info = await check_client_status(client_id, clients[client_id])
     return status_info
@@ -244,18 +244,18 @@ async def update_client(
 async def get_client_usage(client_id: str, current_user: User = Depends(get_current_user)):
     """
     Get usage statistics for a specific medical client.
-    
+
     This endpoint returns usage statistics for a specific medical client,
     including total requests, success rate, and cache hit rate.
     """
     clients = load_client_configs()
-    
+
     if client_id not in clients:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Client '{client_id}' not found"
         )
-    
+
     # Get client usage statistics
     usage_stats = await get_client_usage_stats(client_id, clients[client_id])
     return usage_stats
@@ -264,18 +264,18 @@ async def get_client_usage(client_id: str, current_user: User = Depends(get_curr
 async def test_client_connection(client_id: str, current_user: User = Depends(get_current_user)):
     """
     Test connection to a specific medical client.
-    
+
     This endpoint tests the connection to a specific medical client
     and returns the test results.
     """
     clients = load_client_configs()
-    
+
     if client_id not in clients:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Client '{client_id}' not found"
         )
-    
+
     # Test client connection
     test_result = await test_client_connection_impl(client_id, clients[client_id])
     return test_result
@@ -288,7 +288,7 @@ async def check_client_status(client_id: str, client_data: Dict[str, Any]) -> Cl
         is_connected = False
         error_message = None
         api_version = None
-        
+
         try:
             # Implement client-specific status checks
             if client_id == "ncbi":
@@ -309,13 +309,13 @@ async def check_client_status(client_id: str, client_data: Dict[str, Any]) -> Cl
         except Exception as e:
             is_connected = False
             error_message = str(e)
-        
+
         end_time = datetime.now()
         response_time = (end_time - start_time).total_seconds()
-        
+
         # Determine status
         status_value = "connected" if is_connected else "disconnected"
-        
+
         return ClientStatus(
             client_id=client_id,
             name=client_data["name"],
@@ -365,7 +365,7 @@ async def test_client_connection_impl(client_id: str, client_data: Dict[str, Any
         error_message = None
         api_version = None
         details = {}
-        
+
         try:
             # Implement client-specific connection tests
             if client_id == "ncbi":
@@ -386,10 +386,10 @@ async def test_client_connection_impl(client_id: str, client_data: Dict[str, Any
         except Exception as e:
             is_connected = False
             error_message = str(e)
-        
+
         end_time = datetime.now()
         response_time = (end_time - start_time).total_seconds()
-        
+
         return {
             "success": is_connected,
             "message": "Connection successful" if is_connected else f"Connection failed: {error_message}",
@@ -418,12 +418,12 @@ async def check_ncbi_status(config: Dict[str, Any]) -> tuple:
             }
             if config.get("api_key"):
                 params["api_key"] = config["api_key"]
-            
+
             response = await client.get(
                 f"{config.get('base_url', 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/')}einfo.fcgi",
                 params=params
             )
-            
+
             if response.status_code == 200:
                 return True, "2.0"
             else:
@@ -437,28 +437,28 @@ async def check_umls_status(config: Dict[str, Any]) -> tuple:
     try:
         if not config.get("api_key"):
             return False, None
-        
+
         async with httpx.AsyncClient(timeout=10.0) as client:
             # First, get a ticket granting ticket
             tgt_response = await client.post(
                 "https://utslogin.nlm.nih.gov/cas/v1/api-key",
                 data={"apikey": config["api_key"]}
             )
-            
+
             if tgt_response.status_code != 201:
                 return False, None
-            
+
             tgt = tgt_response.headers.get("location")
-            
+
             # Then, get a service ticket
             st_response = await client.post(
                 tgt,
                 data={"service": "http://umlsks.nlm.nih.gov"}
             )
-            
+
             if st_response.status_code != 200:
                 return False, None
-            
+
             return True, "current"
     except Exception as e:
         logger.error(f"Error checking UMLS status: {str(e)}")
@@ -471,7 +471,7 @@ async def check_clinical_trials_status(config: Dict[str, Any]) -> tuple:
             response = await client.get(
                 f"{config.get('base_url', 'https://clinicaltrials.gov/api/v2')}/info"
             )
-            
+
             if response.status_code == 200:
                 data = response.json()
                 return True, data.get("version", "2.0")
@@ -488,7 +488,7 @@ async def check_cochrane_status(config: Dict[str, Any]) -> tuple:
             response = await client.get(
                 f"{config.get('base_url', 'https://www.cochranelibrary.com')}/api/v1/search"
             )
-            
+
             if response.status_code in [200, 400]:  # 400 is expected without search parameters
                 return True, "1.0"
             else:
@@ -504,12 +504,12 @@ async def check_crossref_status(config: Dict[str, Any]) -> tuple:
             params = {}
             if config.get("email"):
                 params["mailto"] = config["email"]
-            
+
             response = await client.get(
                 f"{config.get('base_url', 'https://api.crossref.org')}/works",
                 params=params
             )
-            
+
             if response.status_code == 200:
                 return True, "1.0"
             else:
@@ -527,7 +527,7 @@ async def check_snomed_status(config: Dict[str, Any]) -> tuple:
         elif config.get("access_mode") == "api" and config.get("api_url"):
             async with httpx.AsyncClient(timeout=10.0) as client:
                 response = await client.get(config["api_url"])
-                
+
                 if response.status_code == 200:
                     return True, "1.0"
                 else:
@@ -552,12 +552,12 @@ async def test_ncbi_connection(config: Dict[str, Any]) -> tuple:
             }
             if config.get("api_key"):
                 params["api_key"] = config["api_key"]
-            
+
             response = await client.get(
                 f"{config.get('base_url', 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/')}esearch.fcgi",
                 params=params
             )
-            
+
             if response.status_code == 200:
                 return True, "2.0", {"response": response.text[:200] + "..."}
             else:
@@ -571,36 +571,36 @@ async def test_umls_connection(config: Dict[str, Any]) -> tuple:
     try:
         if not config.get("api_key"):
             return False, None, {"error": "API key not provided"}
-        
+
         async with httpx.AsyncClient(timeout=10.0) as client:
             # First, get a ticket granting ticket
             tgt_response = await client.post(
                 "https://utslogin.nlm.nih.gov/cas/v1/api-key",
                 data={"apikey": config["api_key"]}
             )
-            
+
             if tgt_response.status_code != 201:
                 return False, None, {"status_code": tgt_response.status_code, "response": tgt_response.text}
-            
+
             tgt = tgt_response.headers.get("location")
-            
+
             # Then, get a service ticket
             st_response = await client.post(
                 tgt,
                 data={"service": "http://umlsks.nlm.nih.gov"}
             )
-            
+
             if st_response.status_code != 200:
                 return False, None, {"status_code": st_response.status_code, "response": st_response.text}
-            
+
             service_ticket = st_response.text
-            
+
             # Test a simple API call
             search_response = await client.get(
                 f"{config.get('base_url', 'https://uts-ws.nlm.nih.gov/rest')}/search/current",
                 params={"string": "heart attack", "ticket": service_ticket}
             )
-            
+
             if search_response.status_code == 200:
                 return True, "current", {"response": str(search_response.json())[:200] + "..."}
             else:
@@ -617,18 +617,18 @@ async def test_clinical_trials_connection(config: Dict[str, Any]) -> tuple:
             info_response = await client.get(
                 f"{config.get('base_url', 'https://clinicaltrials.gov/api/v2')}/info"
             )
-            
+
             if info_response.status_code != 200:
                 return False, None, {"status_code": info_response.status_code, "response": info_response.text}
-            
+
             info_data = info_response.json()
-            
+
             # Test a simple search
             search_response = await client.get(
                 f"{config.get('base_url', 'https://clinicaltrials.gov/api/v2')}/studies",
                 params={"query.term": "covid-19", "pageSize": 1}
             )
-            
+
             if search_response.status_code == 200:
                 return True, info_data.get("version", "2.0"), {
                     "info": info_data,
@@ -653,7 +653,7 @@ async def test_cochrane_connection(config: Dict[str, Any]) -> tuple:
                 f"{config.get('base_url', 'https://www.cochranelibrary.com')}/api/v1/search/cdsr",
                 params={"q": "diabetes"}
             )
-            
+
             if search_response.status_code == 200:
                 return True, "1.0", {"response": str(search_response.json())[:200] + "..."}
             else:
@@ -669,12 +669,12 @@ async def test_crossref_connection(config: Dict[str, Any]) -> tuple:
             params = {"rows": 1}
             if config.get("email"):
                 params["mailto"] = config["email"]
-            
+
             response = await client.get(
                 f"{config.get('base_url', 'https://api.crossref.org')}/works",
                 params=params
             )
-            
+
             if response.status_code == 200:
                 return True, "1.0", {"response": str(response.json())[:200] + "..."}
             else:
@@ -695,7 +695,7 @@ async def test_snomed_connection(config: Dict[str, Any]) -> tuple:
                     f"{config['api_url']}/concepts",
                     params={"term": "myocardial infarction", "limit": 1}
                 )
-                
+
                 if response.status_code == 200:
                     return True, "1.0", {"response": str(response.json())[:200] + "..."}
                 else:

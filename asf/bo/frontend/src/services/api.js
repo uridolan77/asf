@@ -9,7 +9,7 @@ const api = axios.create({
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   },
-  withCredentials: true,
+  withCredentials: false,
 });
 
 // Log requests
@@ -155,6 +155,18 @@ const apiService = {
 
     // Test client connection
     testConnection: (clientId) => apiCall('post', `/api/medical/clients/${clientId}/test`),
+
+    // NCBI specific endpoints
+    ncbi: {
+      // Search PubMed
+      searchPubMed: (query, maxResults = 10) => apiCall('post', '/api/medical/clients/ncbi/search', { query, max_results: maxResults }),
+
+      // Get article details
+      getArticle: (pmid) => apiCall('get', `/api/medical/clients/ncbi/article/${pmid}`),
+
+      // Get citation data
+      getCitations: (pmid) => apiCall('get', `/api/medical/clients/ncbi/citations/${pmid}`),
+    },
   },
 
   // Knowledge base endpoints

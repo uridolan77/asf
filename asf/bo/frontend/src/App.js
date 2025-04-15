@@ -22,6 +22,7 @@ const ClinicalData = lazy(() => import('./pages/ClinicalData'));
 const Analysis = lazy(() => import('./pages/Analysis'));
 const MLServices = lazy(() => import('./pages/MLServices'));
 const ClientsManagement = lazy(() => import('./pages/ClientsManagement'));
+const NCBIClientPage = lazy(() => import('./pages/NCBIClientPage'));
 
 // Loading fallback component
 const LoadingFallback = () => (
@@ -33,11 +34,11 @@ const LoadingFallback = () => (
 // Protected route component
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
-  
+
   if (loading) {
     return <LoadingFallback />;
   }
-  
+
   return isAuthenticated ? children : <Navigate to="/" />;
 };
 
@@ -64,7 +65,7 @@ const AnimatedRoutes = () => {
           <Routes>
             <Route path="/" element={<Login />} />
             <Route path="/register" element={<Register />} />
-            
+
             {/* Protected Routes */}
             <Route path="/dashboard" element={
               <ProtectedRoute>
@@ -111,7 +112,12 @@ const AnimatedRoutes = () => {
                 <ClientsManagement />
               </ProtectedRoute>
             } />
-            
+            <Route path="/clients-management/ncbi" element={
+              <ProtectedRoute>
+                <NCBIClientPage />
+              </ProtectedRoute>
+            } />
+
             {/* Fallback for unknown routes */}
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
