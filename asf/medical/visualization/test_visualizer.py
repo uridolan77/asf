@@ -41,7 +41,7 @@ def test_visualizer(biomedlm_scorer, output_dir: str = "./visualizations"):
     """
     logger.info("Testing contradiction visualizer...")
 
-    from asf.medical.visualization.contradiction_visualizer import ContradictionVisualizer
+    from ..visualization.contradiction_visualizer import ContradictionVisualizer
 
     visualizer = ContradictionVisualizer(output_dir=output_dir)
 
@@ -114,7 +114,7 @@ def test_from_json(json_file: str, output_dir: str = "./visualizations"):
     """
     logger.info(f"Testing visualizer with explanations from {json_file}...")
 
-    from asf.medical.visualization.contradiction_visualizer import ContradictionVisualizer
+    from ..visualization.contradiction_visualizer import ContradictionVisualizer
 
     visualizer = ContradictionVisualizer(output_dir=output_dir)
 
@@ -169,7 +169,7 @@ def main():
         if args.json_file:
             visualization_paths = test_from_json(args.json_file, args.output_dir)
         else:
-            from asf.medical.models.biomedlm_wrapper import BioMedLMScorer
+            from ..models.biomedlm_wrapper import BioMedLMScorer
 
             logger.info(f"Initializing BioMedLMScorer with model: {args.model}")
             biomedlm_scorer = BioMedLMScorer(

@@ -15,9 +15,9 @@ from datetime import datetime
 import time
 import hashlib
 from enum import Enum
-from asf.medical.core.progress_tracker import ProgressTracker
+from ..core.progress_tracker import ProgressTracker
 
-from asf.medical.core.exceptions import (
+from ..core.exceptions import (
     ExportError, ValidationError, FileError
 )
 

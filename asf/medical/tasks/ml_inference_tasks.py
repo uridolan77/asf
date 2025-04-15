@@ -21,11 +21,11 @@ import json
 from typing import Dict, List, Any, Optional
 import dramatiq
 import numpy as np
-from asf.medical.core.observability import (
+from ..core.observability import (
     trace_ml_operation, update_queue_size, update_model_memory_usage,
     log_ml_event, push_metrics
 )
-from asf.medical.ml.services.contradiction_classifier_service import ContradictionType, ContradictionConfidence
+from ..ml.services.contradiction_service import ContradictionType, ContradictionConfidence
 logger = logging.getLogger(__name__)
 task_results = {}
 class NumpyEncoder(json.JSONEncoder):

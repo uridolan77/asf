@@ -10,14 +10,14 @@ import time
 import hashlib
 from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional
-from asf.medical.core.cache import enhanced_cache_manager, enhanced_cached
-from asf.medical.core.progress_tracker import ProgressTracker
-from asf.medical.core.exceptions import (
+from ..core.cache import enhanced_cache_manager, enhanced_cached
+from ..core.progress_tracker import ProgressTracker
+from ..core.exceptions import (
     ResourceNotFoundError, ValidationError,
     ExternalServiceError, DatabaseError, FileError, KnowledgeBaseError
 )
-from asf.medical.services.search_service import SearchService
-from asf.medical.storage.repositories.kb_repository import KnowledgeBaseRepository
+from ..services.search_service import SearchService
+from ..storage.repositories.kb_repository import KnowledgeBaseRepository
 
 logger = logging.getLogger(__name__)
 
@@ -286,7 +286,7 @@ class KnowledgeBaseService:
         await enhanced_cache_manager.set(name_cache_key, kb, data_type="knowledge_base")
         try:
             await self.kb_repository.create_knowledge_base_async(
-                db,  # This will be handled by the repository
+                None,  # Database session will be handled by the repository
                 name=name,
                 query=query,
                 file_path=file_path,
@@ -315,7 +315,7 @@ class KnowledgeBaseService:
             logger.debug(f"Knowledge base found in cache: {name}")
             return cached_kb
         try:
-            kb = await self.kb_repository.get_by_name_async(db, name=name)
+            kb = await self.kb_repository.get_by_name_async(None, name=name)
             if kb:
                 logger.debug(f"Knowledge base found in database: {name}")
                 kb_dict = {
@@ -350,7 +350,7 @@ class KnowledgeBaseService:
             logger.debug(f"Knowledge base found in cache: {kb_id}")
             return cached_kb
         try:
-            kb = await self.kb_repository.get_by_kb_id_async(db, kb_id=kb_id)
+            kb = await self.kb_repository.get_by_kb_id_async(None, kb_id=kb_id)
             if kb:
                 logger.debug(f"Knowledge base found in database: {kb_id}")
                 kb_dict = {
@@ -383,7 +383,7 @@ class KnowledgeBaseService:
             logger.debug(f"Knowledge base list found in cache: {len(cached_list)} items")
             return cached_list
         try:
-            kbs = await self.kb_repository.list_async(db, user_id=user_id)
+            kbs = await self.kb_repository.list_async(None, user_id=user_id)
             kb_dicts = []
             for kb in kbs:
                 kb_dict = {
@@ -489,7 +489,7 @@ class KnowledgeBaseService:
             await enhanced_cache_manager.delete(user_list_cache_key)
         try:
             await self.kb_repository.update_async(
-                db,  # This will be handled by the repository
+                None,  # Database session will be handled by the repository
                 kb_id=kb_id,
                 obj_in={
                     'last_updated': now,
@@ -538,7 +538,7 @@ class KnowledgeBaseService:
             await enhanced_cache_manager.delete(user_list_cache_key)
         logger.debug(f"Removed knowledge base from cache: {kb_id}")
         try:
-            await self.kb_repository.delete_async(db, kb_id=kb_id)
+            await self.kb_repository.delete_async(None, kb_id=kb_id)
             logger.info(f"Deleted knowledge base from database: {kb_id}")
         except Exception as e:
             logger.error(f"Error deleting knowledge base from database: {str(e)}")

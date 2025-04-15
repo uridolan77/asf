@@ -35,8 +35,8 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(level
 logger = logging.getLogger("asf-visualization-example")
 
 # Import the semantic field visualizer
-from asf.medical.visualization.semantic_field_visualizer import SemanticFieldVisualizer
-from asf.medical.graph.graph_service import GraphService
+from ..visualization.semantic_field_visualizer import SemanticFieldVisualizer
+from ..graph.graph_service import GraphService
 
 def check_dependencies() -> bool:
     """Check if all required dependencies are installed."""

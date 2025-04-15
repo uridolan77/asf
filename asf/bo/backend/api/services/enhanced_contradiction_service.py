@@ -14,11 +14,11 @@ if parent_dir not in sys.path:
     sys.path.append(parent_dir)
 
 # Import from the medical modules
-from asf.medical.visualization.contradiction_visualizer import ContradictionVisualizer
-from asf.medical.services.search_service import SearchService
-from asf.medical.services.terminology_service import TerminologyService
-from asf.medical.services.clinical_data_service import ClinicalDataService
-from asf.medical.core.exceptions import ValidationError
+from ..visualization.contradiction_visualizer import ContradictionVisualizer
+from ...services.search_service import SearchService
+from ...services.terminology_service import TerminologyService
+from ...services.clinical_data_service import ClinicalDataService
+from ...core.exceptions import ValidationError
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)

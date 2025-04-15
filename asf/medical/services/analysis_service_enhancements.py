@@ -9,13 +9,13 @@ This module provides enhancements to the Analysis Service, including:
 import logging
 import time
 import hashlib
-from asf.medical.core.exceptions import (
+from ..core.exceptions import (
     ValidationError, ExternalServiceError, ModelError,
     DatabaseError, ResourceNotFoundError, AnalysisError
 )
 from typing import Dict, Any, Callable
-from asf.medical.core.enhanced_cache import enhanced_cache_manager, enhanced_cached
-from asf.medical.core.progress_tracker import ProgressTracker
+from ..core.enhanced_cache import enhanced_cache_manager, enhanced_cached
+from ..core.progress_tracker import ProgressTracker
 logger = logging.getLogger(__name__)
 class AnalysisProgressTracker(ProgressTracker):
     """Progress tracker for analysis operations.

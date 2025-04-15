@@ -5,7 +5,8 @@ This module provides unit tests for the SearchService.
 import pytest
 import logging
 import uuid
-from asf.medical.services.search_service import SearchService
+from unittest.mock import AsyncMock, MagicMock
+from ...services.search_service import SearchService
 logger = logging.getLogger(__name__)
 @pytest.fixture
 def mock_ncbi_client():

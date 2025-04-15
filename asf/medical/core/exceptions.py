@@ -571,3 +571,29 @@ class ModelError(MedicalResearchSynthesizerError):
         self.model = model
         self.specific_message = message
         super().__init__(super_message, details)
+
+
+class ResourceNotFoundError(MedicalResearchSynthesizerError):
+    """
+    Exception raised for model-related errors.
+
+    This is used when machine learning models fail to load or make predictions.
+
+    Attributes:
+        model (str): The model that failed.
+        message (str): The error message.
+    """
+
+    def __init__(self, model: str, message: str, details: Dict[str, Any] = None):
+        """
+        Initialize the ModelError.
+
+        Args:
+            model (str): The model that failed.
+            message (str): The error message.
+            details (Dict[str, Any], optional): Additional details about the error. Defaults to None.
+        """
+        super_message = f"Error in model '{model}': {message}"
+        self.model = model
+        self.specific_message = message
+        super().__init__(super_message, details)

@@ -5,7 +5,10 @@ This module provides unit tests for the AuthService.
 import pytest
 import logging
 from fastapi import HTTPException
-from asf.medical.core.security import get_password_hash, create_access_token
+from unittest.mock import AsyncMock, MagicMock
+from ...core.security import get_password_hash, create_access_token
+from ...services.auth_service import AuthService
+from ...api.auth import get_current_user, get_current_active_user, get_admin_user
 logger = logging.getLogger(__name__)
 TEST_USER_EMAIL = "test@example.com"
 TEST_USER_PASSWORD = "testpassword"

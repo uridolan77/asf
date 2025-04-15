@@ -7,7 +7,7 @@ import pytest
 import logging
 from typing import Dict, Any, List
 
-from asf.medical.ml.services.unified_contradiction_service import ContradictionService
+from ...ml.services.contradiction_service import ContradictionService
 
 logger = logging.getLogger(__name__)
 

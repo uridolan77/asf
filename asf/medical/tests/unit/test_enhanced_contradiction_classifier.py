@@ -2,7 +2,7 @@
 
 import pytest
 
-from asf.medical.ml.services.contradiction_classifier_service import (
+from ...ml.services.contradiction_service import (
     ContradictionClassifierService,
     ContradictionType,
     ContradictionConfidence,

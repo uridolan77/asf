@@ -9,11 +9,11 @@ from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 from jose import JWTError, jwt
 from fastapi import HTTPException, status
-from asf.medical.storage.repositories.user_repository import UserRepository
-from asf.medical.storage.models import User as DBUser
-from asf.medical.core.security import verify_password, get_password_hash
-from asf.medical.core.config import settings
-from asf.medical.core.logging_config import get_logger
+from ..storage.repositories.user_repository import UserRepository
+from ..storage.models import User as DBUser
+from ..core.security import verify_password, get_password_hash
+from ..core.config import settings
+from ..core.logging_config import get_logger
 logger = get_logger(__name__)
 class AuthService:
     """

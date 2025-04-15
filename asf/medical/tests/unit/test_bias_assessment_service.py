@@ -4,7 +4,7 @@ This module provides unit tests for the BiasAssessmentService class.
 """
 import pytest
 import logging
-from asf.medical.ml.services.bias_assessment_service import BiasAssessmentService
+from ...ml.services.bias_assessment_service import BiasAssessmentService
 logger = logging.getLogger(__name__)
 @pytest.mark.unit
 @pytest.mark.service
@@ -13,8 +13,10 @@ class TestBiasAssessmentService:
     """Test cases for BiasAssessmentService."""
     @pytest.mark.asyncio
     async def test_bias_assessment(self, bias_assessment_service: BiasAssessmentService, sample_study_text: str):
-        """Test bias assessment with a sample text.
-    Args:
-        # TODO: Add parameter descriptions
-    Returns:
-        # TODO: Add return description
+        """
+        Test bias assessment with a sample text.
+        Args:
+            # TODO: Add parameter descriptions
+        Returns:
+            # TODO: Add return description
+        """

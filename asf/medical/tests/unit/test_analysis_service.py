@@ -5,7 +5,7 @@ This module provides unit tests for the AnalysisService.
 import pytest
 import logging
 import uuid
-from asf.medical.services.analysis_service import AnalysisService
+from ...services.analysis_service import AnalysisService
 logger = logging.getLogger(__name__)
 @pytest.fixture
 def mock_search_service():

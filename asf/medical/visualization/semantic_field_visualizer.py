@@ -33,8 +33,8 @@ from matplotlib.colors import LinearSegmentedColormap
 import networkx as nx
 
 # Import required modules
-from asf.medical.core.logging_config import get_logger
-from asf.medical.graph.graph_service import GraphService
+from ..core.logging_config import get_logger
+from ..graph.graph_service import GraphService
 
 # Visualization libraries - imported conditionally to handle optional dependencies
 try:

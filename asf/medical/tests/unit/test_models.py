@@ -4,12 +4,12 @@ This module provides unit tests for Pydantic models to ensure data validation ru
 """
 import pytest
 from pydantic import ValidationError
-from asf.medical.api.models.user import UserCreate
-from asf.medical.api.models.token import Token, TokenPayload
-from asf.medical.api.models.study import StudyCreate
-from asf.medical.api.models.contradiction import ContradictionRequest, ContradictionResponse
-from asf.medical.api.models.screening import ScreeningRequest
-from asf.medical.api.models.bias import BiasAssessmentRequest, BiasAssessmentResponse
+from ...api.models.user import UserCreate
+from ...api.models.token import Token, TokenPayload
+from ...api.models.study import StudyCreate
+from ...api.models.contradiction import ContradictionRequest, ContradictionResponse
+from ...api.models.screening import ScreeningRequest
+from ...api.models.bias import BiasAssessmentRequest, BiasAssessmentResponse
 @pytest.mark.unit
 class TestUserModels:
     """Test cases for user models."""

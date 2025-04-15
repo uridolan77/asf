@@ -14,12 +14,12 @@ import hashlib
 import uuid
 from typing import Dict, List, Optional, Any
 from datetime import datetime, timedelta
-from asf.medical.core.exceptions import (
+from ..core.exceptions import (
     ValidationError, ExternalServiceError, DatabaseError,
     ResourceNotFoundError, KnowledgeBaseError
 )
-from asf.medical.core.cache import enhanced_cache_manager, enhanced_cached
-from asf.medical.core.progress_tracker import ProgressTracker
+from ..core.cache import enhanced_cache_manager, enhanced_cached
+from ..core.progress_tracker import ProgressTracker
 logger = logging.getLogger(__name__)
 class KnowledgeBaseProgressTracker(ProgressTracker):
     """Progress tracker for knowledge base operations.
