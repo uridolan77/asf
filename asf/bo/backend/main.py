@@ -8,6 +8,9 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(
 
 # Import routers
 from api.knowledge_base import router as knowledge_base_router
+from api.analysis import router as analysis_router
+from api.export import router as export_router
+from api.ml import router as ml_router
 
 app = FastAPI(title="BO Medical Research Backend")
 
@@ -25,6 +28,9 @@ main_router = APIRouter()
 
 # Include routers
 app.include_router(knowledge_base_router)
+app.include_router(analysis_router)
+app.include_router(export_router)
+app.include_router(ml_router)
 
 # Root endpoint
 @app.get("/")
@@ -35,7 +41,10 @@ async def root():
         "endpoints": [
             {"path": "/api/knowledge-base", "description": "Knowledge Base Management"},
             {"path": "/api/knowledge-base/search", "description": "Search Medical Literature"},
-            {"path": "/api/knowledge-base/search-pico", "description": "PICO Search"}
+            {"path": "/api/knowledge-base/search-pico", "description": "PICO Search"},
+            {"path": "/api/medical/analysis", "description": "Medical Literature Analysis"},
+            {"path": "/api/medical/export", "description": "Export Search and Analysis Results"},
+            {"path": "/api/medical/ml", "description": "Machine Learning Services"}
         ]
     }
 

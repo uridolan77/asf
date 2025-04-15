@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Box, Container, Typography, Breadcrumbs, Link, AppBar, Toolbar, 
-  IconButton, Drawer, Avatar, List, ListItem, ListItemIcon, 
-  ListItemText, Divider, CircularProgress
+import {
+  Box, Container, Typography, Breadcrumbs, Link, AppBar, Toolbar,
+  IconButton, Drawer, Avatar, List, ListItem, ListItemIcon,
+  ListItemText, Divider, Badge, Tooltip, Menu, MenuItem
 } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
+import { useNotification } from '../../context/NotificationContext';
+import { ContentLoader } from '../UI/LoadingIndicators';
+import { FadeIn, SlideIn } from '../UI/Animations';
 
 // Material Icons
 import {
@@ -23,57 +26,21 @@ import {
   NavigateNext as NavigateNextIcon
 } from '@mui/icons-material';
 
-// Custom theme
-import { ThemeProvider, createTheme } from '@mui/material/styles';
-
-const theme = createTheme({
-  palette: {
-    primary: {
-      main: '#3498db',
-    },
-    secondary: {
-      main: '#2ecc71',
-    },
-    error: {
-      main: '#e74c3c',
-    },
-    background: {
-      default: '#f5f7fa',
-    },
-  },
-  typography: {
-    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
-    h1: {
-      fontWeight: 500,
-    },
-    h2: {
-      fontWeight: 500,
-    },
-  },
-  components: {
-    MuiCard: {
-      styleOverrides: {
-        root: {
-          boxShadow: '0 2px 10px rgba(0,0,0,0.08)',
-          borderRadius: '8px',
-        },
-      },
-    },
-  },
-});
-
+// Drawer width
 const drawerWidth = 260;
+
+
 
 /**
  * A consistent page layout component with app bar, sidebar, and content area
  */
-const PageLayout = ({ 
-  title, 
-  breadcrumbs = [], 
+const PageLayout = ({
+  title,
+  breadcrumbs = [],
   actions,
   loading = false,
   user,
-  children 
+  children
 }) => {
   const [drawerOpen, setDrawerOpen] = useState(true);
   const navigate = useNavigate();
@@ -87,23 +54,44 @@ const PageLayout = ({
     setDrawerOpen(!drawerOpen);
   };
 
+  // Notification context
+  const { showSuccess } = useNotification();
+
+  // Profile menu state
+  const [anchorEl, setAnchorEl] = useState(null);
+  const openMenu = Boolean(anchorEl);
+
+  const handleMenuOpen = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  // Handle logout with notification
+  const handleLogoutWithNotification = () => {
+    handleMenuClose();
+    showSuccess('Successfully logged out');
+    handleLogout();
+  };
+
+  // Loading state
   if (loading) {
     return (
-      <ThemeProvider theme={theme}>
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-          <CircularProgress />
-        </Box>
-      </ThemeProvider>
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <ContentLoader height="100vh" message="Loading page..." />
+      </Box>
     );
   }
 
   return (
-    <ThemeProvider theme={theme}>
+    <FadeIn>
       <Box sx={{ display: 'flex', minHeight: '100vh' }}>
         {/* App Bar */}
-        <AppBar 
-          position="fixed" 
-          sx={{ 
+        <AppBar
+          position="fixed"
+          sx={{
             zIndex: (theme) => theme.zIndex.drawer + 1,
             boxShadow: '0 2px 10px rgba(0,0,0,0.08)'
           }}
@@ -121,23 +109,61 @@ const PageLayout = ({
             <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
               Medical Research Synthesizer
             </Typography>
-            <IconButton color="inherit">
-              <NotificationsIcon />
-            </IconButton>
+            <Tooltip title="Notifications">
+              <IconButton color="inherit">
+                <Badge badgeContent={3} color="error">
+                  <NotificationsIcon />
+                </Badge>
+              </IconButton>
+            </Tooltip>
             {user && (
               <Box sx={{ display: 'flex', alignItems: 'center', ml: 2 }}>
                 <Typography variant="subtitle1" sx={{ mr: 1 }}>
                   {user.username}
                 </Typography>
-                <Avatar 
-                  sx={{ 
-                    bgcolor: user.role_id === 2 ? 'secondary.main' : 'primary.main',
-                    width: 32,
-                    height: 32
-                  }}
+                <Tooltip title="Account settings">
+                  <IconButton
+                    onClick={handleMenuOpen}
+                    size="small"
+                    sx={{ ml: 1 }}
+                    aria-controls={openMenu ? 'account-menu' : undefined}
+                    aria-haspopup="true"
+                    aria-expanded={openMenu ? 'true' : undefined}
+                  >
+                    <Avatar
+                      sx={{
+                        bgcolor: user.role_id === 2 ? 'secondary.main' : 'primary.main',
+                        width: 32,
+                        height: 32
+                      }}
+                    >
+                      {user.username.charAt(0).toUpperCase()}
+                    </Avatar>
+                  </IconButton>
+                </Tooltip>
+                <Menu
+                  anchorEl={anchorEl}
+                  id="account-menu"
+                  open={openMenu}
+                  onClose={handleMenuClose}
+                  onClick={handleMenuClose}
+                  transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                  anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
                 >
-                  {user.username.charAt(0).toUpperCase()}
-                </Avatar>
+                  <MenuItem onClick={() => navigate('/settings')}>
+                    <ListItemIcon>
+                      <SettingsIcon fontSize="small" />
+                    </ListItemIcon>
+                    Settings
+                  </MenuItem>
+                  <Divider />
+                  <MenuItem onClick={handleLogoutWithNotification}>
+                    <ListItemIcon>
+                      <LogoutIcon fontSize="small" color="error" />
+                    </ListItemIcon>
+                    Logout
+                  </MenuItem>
+                </Menu>
               </Box>
             )}
           </Toolbar>
@@ -149,8 +175,8 @@ const PageLayout = ({
           sx={{
             width: drawerWidth,
             flexShrink: 0,
-            [`& .MuiDrawer-paper`]: { 
-              width: drawerWidth, 
+            [`& .MuiDrawer-paper`]: {
+              width: drawerWidth,
               boxSizing: 'border-box',
               borderRight: '1px solid rgba(0, 0, 0, 0.12)',
               boxShadow: 'none',
@@ -169,28 +195,42 @@ const PageLayout = ({
                 </ListItemIcon>
                 {drawerOpen && <ListItemText primary="Dashboard" />}
               </ListItem>
-              
+
               <ListItem button onClick={() => navigate('/pico-search')}>
                 <ListItemIcon>
                   <SearchIcon />
                 </ListItemIcon>
                 {drawerOpen && <ListItemText primary="PICO Search" />}
               </ListItem>
-              
+
               <ListItem button onClick={() => navigate('/knowledge-base')}>
                 <ListItemIcon>
                   <BookIcon />
                 </ListItemIcon>
                 {drawerOpen && <ListItemText primary="Knowledge Base" />}
               </ListItem>
-              
+
               <ListItem button onClick={() => navigate('/clinical-data')}>
                 <ListItemIcon>
                   <MedicalServicesIcon />
                 </ListItemIcon>
                 {drawerOpen && <ListItemText primary="Clinical Data" />}
               </ListItem>
-              
+
+              <ListItem button onClick={() => navigate('/analysis')}>
+                <ListItemIcon>
+                  <ScienceIcon />
+                </ListItemIcon>
+                {drawerOpen && <ListItemText primary="Analysis" />}
+              </ListItem>
+
+              <ListItem button onClick={() => navigate('/ml-services')}>
+                <ListItemIcon>
+                  <BiotechIcon />
+                </ListItemIcon>
+                {drawerOpen && <ListItemText primary="ML Services" />}
+              </ListItem>
+
               {user && user.role_id === 2 && (
                 <ListItem button onClick={() => navigate('/users')}>
                   <ListItemIcon>
@@ -199,7 +239,7 @@ const PageLayout = ({
                   {drawerOpen && <ListItemText primary="Users" />}
                 </ListItem>
               )}
-              
+
               <ListItem button onClick={() => navigate('/settings')}>
                 <ListItemIcon>
                   <SettingsIcon />
@@ -207,9 +247,9 @@ const PageLayout = ({
                 {drawerOpen && <ListItemText primary="Settings" />}
               </ListItem>
             </List>
-            
+
             <Divider sx={{ my: 2 }} />
-            
+
             <List>
               <ListItem button onClick={handleLogout}>
                 <ListItemIcon>
@@ -225,9 +265,9 @@ const PageLayout = ({
         <Box component="main" sx={{ flexGrow: 1, p: 3, pt: 10 }}>
           <Container maxWidth="xl">
             {/* Page header */}
-            <Box sx={{ 
-              display: 'flex', 
-              justifyContent: 'space-between', 
+            <Box sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
               alignItems: { xs: 'flex-start', sm: 'center' },
               flexDirection: { xs: 'column', sm: 'row' },
               gap: { xs: 2, sm: 0 },
@@ -237,24 +277,24 @@ const PageLayout = ({
                 <Typography variant="h4" component="h1" gutterBottom={breadcrumbs.length > 0}>
                   {title}
                 </Typography>
-                
+
                 {breadcrumbs.length > 0 && (
-                  <Breadcrumbs 
-                    separator={<NavigateNextIcon fontSize="small" />} 
+                  <Breadcrumbs
+                    separator={<NavigateNextIcon fontSize="small" />}
                     aria-label="breadcrumb"
                   >
-                    <Link 
-                      component={RouterLink} 
-                      to="/dashboard" 
-                      underline="hover" 
+                    <Link
+                      component={RouterLink}
+                      to="/dashboard"
+                      underline="hover"
                       color="inherit"
                     >
                       Dashboard
                     </Link>
-                    
+
                     {breadcrumbs.map((crumb, index) => {
                       const isLast = index === breadcrumbs.length - 1;
-                      
+
                       return isLast ? (
                         <Typography key={index} color="text.primary">
                           {crumb.label}
@@ -274,20 +314,22 @@ const PageLayout = ({
                   </Breadcrumbs>
                 )}
               </Box>
-              
+
               {actions && (
                 <Box sx={{ display: 'flex', gap: 1, mt: { xs: 1, sm: 0 } }}>
                   {actions}
                 </Box>
               )}
             </Box>
-            
+
             {/* Page content */}
-            {children}
+            <SlideIn direction="up">
+              {children}
+            </SlideIn>
           </Container>
         </Box>
       </Box>
-    </ThemeProvider>
+    </FadeIn>
   );
 };
 
