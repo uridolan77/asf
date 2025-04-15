@@ -1,26 +1,45 @@
 // frontend/src/App.js
-import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
-import { ThemeProvider, CssBaseline } from '@mui/material';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
+import { BrowserRouter as Router, Route, Routes, useLocation, Navigate } from 'react-router-dom';
+import { ThemeProvider, CssBaseline, CircularProgress } from '@mui/material';
 import { NotificationProvider } from './context/NotificationContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { TopProgressBar } from './components/UI/LoadingIndicators';
 import { PageTransition } from './components/UI/Animations';
 
 // Theme
 import theme from './theme';
 
-// Pages
-import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
-import Register from './pages/Register';
-import Users from './pages/Users';
-import Settings from './pages/Settings';
-import PICOSearch from './pages/PICOSearch';
-import KnowledgeBase from './pages/KnowledgeBase';
-import ClinicalData from './pages/ClinicalData';
-import Analysis from './pages/Analysis';
-import MLServices from './pages/MLServices';
-import ClientsManagement from './pages/ClientsManagement';
+// Lazy load page components
+const Login = lazy(() => import('./pages/Login'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Register = lazy(() => import('./pages/Register'));
+const Users = lazy(() => import('./pages/Users'));
+const Settings = lazy(() => import('./pages/Settings'));
+const PICOSearch = lazy(() => import('./pages/PICOSearch'));
+const KnowledgeBase = lazy(() => import('./pages/KnowledgeBase'));
+const ClinicalData = lazy(() => import('./pages/ClinicalData'));
+const Analysis = lazy(() => import('./pages/Analysis'));
+const MLServices = lazy(() => import('./pages/MLServices'));
+const ClientsManagement = lazy(() => import('./pages/ClientsManagement'));
+
+// Loading fallback component
+const LoadingFallback = () => (
+  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+    <CircularProgress />
+  </div>
+);
+
+// Protected route component
+const ProtectedRoute = ({ children }) => {
+  const { isAuthenticated, loading } = useAuth();
+  
+  if (loading) {
+    return <LoadingFallback />;
+  }
+  
+  return isAuthenticated ? children : <Navigate to="/" />;
+};
 
 // Animated route change component
 const AnimatedRoutes = () => {
@@ -41,19 +60,62 @@ const AnimatedRoutes = () => {
     <>
       <TopProgressBar loading={isLoading} />
       <PageTransition key={location.pathname}>
-        <Routes>
-          <Route path="/" element={<Login />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/users" element={<Users />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/pico-search" element={<PICOSearch />} />
-          <Route path="/knowledge-base" element={<KnowledgeBase />} />
-          <Route path="/clinical-data" element={<ClinicalData />} />
-          <Route path="/analysis" element={<Analysis />} />
-          <Route path="/ml-services" element={<MLServices />} />
-          <Route path="/clients-management" element={<ClientsManagement />} />
-        </Routes>
+        <Suspense fallback={<LoadingFallback />}>
+          <Routes>
+            <Route path="/" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            
+            {/* Protected Routes */}
+            <Route path="/dashboard" element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/users" element={
+              <ProtectedRoute>
+                <Users />
+              </ProtectedRoute>
+            } />
+            <Route path="/settings" element={
+              <ProtectedRoute>
+                <Settings />
+              </ProtectedRoute>
+            } />
+            <Route path="/pico-search" element={
+              <ProtectedRoute>
+                <PICOSearch />
+              </ProtectedRoute>
+            } />
+            <Route path="/knowledge-base" element={
+              <ProtectedRoute>
+                <KnowledgeBase />
+              </ProtectedRoute>
+            } />
+            <Route path="/clinical-data" element={
+              <ProtectedRoute>
+                <ClinicalData />
+              </ProtectedRoute>
+            } />
+            <Route path="/analysis" element={
+              <ProtectedRoute>
+                <Analysis />
+              </ProtectedRoute>
+            } />
+            <Route path="/ml-services" element={
+              <ProtectedRoute>
+                <MLServices />
+              </ProtectedRoute>
+            } />
+            <Route path="/clients-management" element={
+              <ProtectedRoute>
+                <ClientsManagement />
+              </ProtectedRoute>
+            } />
+            
+            {/* Fallback for unknown routes */}
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          </Routes>
+        </Suspense>
       </PageTransition>
     </>
   );
@@ -65,7 +127,9 @@ function App() {
       <CssBaseline />
       <NotificationProvider>
         <Router>
-          <AnimatedRoutes />
+          <AuthProvider>
+            <AnimatedRoutes />
+          </AuthProvider>
         </Router>
       </NotificationProvider>
     </ThemeProvider>
