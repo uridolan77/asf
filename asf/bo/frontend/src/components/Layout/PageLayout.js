@@ -23,7 +23,8 @@ import {
   ExitToApp as LogoutIcon,
   Notifications as NotificationsIcon,
   MedicalServices as MedicalServicesIcon,
-  NavigateNext as NavigateNextIcon
+  NavigateNext as NavigateNextIcon,
+  SmartToy as SmartToyIcon
 } from '@mui/icons-material';
 
 // Drawer width
@@ -237,6 +238,13 @@ const PageLayout = ({
                   <SettingsIcon />
                 </ListItemIcon>
                 {drawerOpen && <ListItemText primary="Clients Management" />}
+              </ListItem>
+
+              <ListItem button onClick={() => navigate('/llm-management')}>
+                <ListItemIcon>
+                  <SmartToyIcon />
+                </ListItemIcon>
+                {drawerOpen && <ListItemText primary="LLM Management" />}
               </ListItem>
 
               {user && user.role_id === 2 && (

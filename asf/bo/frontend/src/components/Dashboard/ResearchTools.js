@@ -1,12 +1,13 @@
 import React from 'react';
-import { 
-  Card, CardHeader, CardContent, Divider, Grid, Button 
+import {
+  Card, CardHeader, CardContent, Divider, Grid, Button
 } from '@mui/material';
-import { 
+import {
   Search as SearchIcon,
   Book as BookIcon,
   Biotech as BiotechIcon,
-  Science as ScienceIcon
+  Science as ScienceIcon,
+  SmartToy as SmartToyIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 
@@ -15,7 +16,7 @@ import { useNavigate } from 'react-router-dom';
  */
 const ResearchTools = () => {
   const navigate = useNavigate();
-  
+
   // Define tools with their properties
   const tools = [
     {
@@ -45,9 +46,16 @@ const ResearchTools = () => {
       color: 'default',
       path: '/terminology',
       description: 'Look up medical terms and definitions'
+    },
+    {
+      name: 'LLM Management',
+      icon: <SmartToyIcon />,
+      color: 'success',
+      path: '/llm-management',
+      description: 'Manage LLM services and models'
     }
   ];
-  
+
   return (
     <Card>
       <CardHeader title="Research Tools" />

@@ -74,7 +74,7 @@ const Login = () => {
         }}
       >
         <Box sx={{ mb: 3, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <img src={logo} alt="Medical Research Synthesizer Logo" style={{ width: 400, marginBottom: 16 }} />
+          <img src={logo} alt="Medical Research Synthesizer Logo" style={{ width: 600, marginBottom: 16 }} />
         </Box>
         <Avatar sx={{ m: 1, bgcolor: 'primary.main' }}>
           <LockOutlinedIcon />

@@ -1,0 +1,45 @@
+gateway_id: bo_gateway
+default_provider: openai_gpt4_default
+max_retries: 2
+retry_delay_seconds: 1.0
+default_timeout_seconds: 60.0
+allowed_providers: ["openai_gpt4_default", "anthropic_claude3", "biomedlm_local"]
+caching_enabled: true
+cache_default_ttl_seconds: 3600
+default_compliance_mode: "strict"
+logging_level: "INFO"
+
+preload_providers: ["openai_gpt4_default"]
+
+# --- Provider Definitions ---
+additional_config:
+  max_concurrent_batch_requests: 8
+  providers:
+    openai_gpt4_default:
+      provider_type: openai
+      display_name: "OpenAI GPT-4"
+      connection_params:
+        api_key_env_var: OPENAI_API_KEY
+      models:
+        gpt-4-turbo-preview: {}
+        gpt-4: {}
+        gpt-3.5-turbo: {}
+
+    anthropic_claude3:
+      provider_type: anthropic
+      display_name: "Anthropic Claude 3"
+      connection_params:
+        api_key_env_var: ANTHROPIC_API_KEY
+      models:
+        claude-3-opus-20240229: {}
+        claude-3-sonnet-20240229: {}
+        claude-3-haiku-20240307: {}
+
+    biomedlm_local:
+      provider_type: biomedlm
+      display_name: "BioMedLM (Local)"
+      connection_params:
+        model_path: "${BIOMEDLM_MODEL_PATH}"
+        use_gpu: true
+      models:
+        biomedlm-2-7b: {}

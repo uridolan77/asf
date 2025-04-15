@@ -21,6 +21,7 @@ from api.analysis import router as analysis_router
 from api.export import router as export_router
 from api.ml import router as ml_router
 from api.clients import router as clients_router
+from api.routers.llm import llm_router
 
 app = FastAPI(title="BO Medical Research Backend")
 
@@ -42,6 +43,7 @@ app.include_router(analysis_router)
 app.include_router(export_router)
 app.include_router(ml_router)
 app.include_router(clients_router)
+app.include_router(llm_router)
 
 # Root endpoint
 @app.get("/")
@@ -56,7 +58,8 @@ async def root():
             {"path": "/api/medical/analysis", "description": "Medical Literature Analysis"},
             {"path": "/api/medical/export", "description": "Export Search and Analysis Results"},
             {"path": "/api/medical/ml", "description": "Machine Learning Services"},
-            {"path": "/api/medical/clients", "description": "Medical Clients Management"}
+            {"path": "/api/medical/clients", "description": "Medical Clients Management"},
+            {"path": "/api/llm", "description": "LLM Services"}
         ]
     }
 

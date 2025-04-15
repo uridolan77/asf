@@ -84,6 +84,9 @@ export const apiCall = async (method, url, data = null, options = {}) => {
   }
 };
 
+// Import LLM API service
+import llmApi from './llmApi';
+
 // API service methods
 const apiService = {
   // Auth endpoints
@@ -176,6 +179,67 @@ const apiService = {
     create: (data) => apiCall('post', '/api/medical/knowledge-base', data),
     update: (id) => apiCall('post', `/api/medical/knowledge-base/${id}/update`),
     delete: (id) => apiCall('delete', `/api/medical/knowledge-base/${id}`),
+  },
+
+  // LLM API endpoints
+  llm: {
+    // Main LLM endpoints
+    getStatus: () => apiCall('get', '/api/llm/status'),
+    getAvailableModels: () => apiCall('get', '/api/llm/models'),
+    generateText: (requestData) => apiCall('post', '/api/llm/generate', requestData),
+    getUsageStatistics: (startDate, endDate) => apiCall('get', '/api/llm/usage', { start_date: startDate, end_date: endDate }),
+
+    // Gateway endpoints
+    getProviders: () => apiCall('get', '/api/llm/gateway/providers'),
+    getProvider: (providerId) => apiCall('get', `/api/llm/gateway/providers/${providerId}`),
+    updateProvider: (providerId, updateData) => apiCall('put', `/api/llm/gateway/providers/${providerId}`, updateData),
+    testProvider: (providerId) => apiCall('post', `/api/llm/gateway/providers/${providerId}/test`),
+    generateLLMResponse: (requestData) => apiCall('post', '/api/llm/gateway/generate', requestData),
+    getGatewayConfig: () => apiCall('get', '/api/llm/gateway/config'),
+    updateGatewayConfig: (config) => apiCall('put', '/api/llm/gateway/config', config),
+
+    // DSPy endpoints
+    getDspyModules: () => apiCall('get', '/api/llm/dspy/modules'),
+    getDspyModule: (moduleName) => apiCall('get', `/api/llm/dspy/modules/${moduleName}`),
+    registerDspyModule: (moduleName, moduleType, parameters, description) => apiCall('post', '/api/llm/dspy/modules', {
+      module_name: moduleName,
+      module_type: moduleType,
+      parameters,
+      description
+    }),
+    unregisterDspyModule: (moduleName) => apiCall('delete', `/api/llm/dspy/modules/${moduleName}`),
+    executeDspyModule: (moduleName, inputs, config) => apiCall('post', '/api/llm/dspy/execute', {
+      module_name: moduleName,
+      inputs,
+      config
+    }),
+    optimizeDspyModule: (moduleName, metric, numTrials, examples, config) => apiCall('post', '/api/llm/dspy/optimize', {
+      module_name: moduleName,
+      metric,
+      num_trials: numTrials,
+      examples,
+      config
+    }),
+    getDspyConfig: () => apiCall('get', '/api/llm/dspy/config'),
+    updateDspyConfig: (config) => apiCall('put', '/api/llm/dspy/config', config),
+
+    // BiomedLM endpoints
+    getBiomedLMModels: () => apiCall('get', '/api/llm/biomedlm/models'),
+    getBiomedLMModel: (modelId) => apiCall('get', `/api/llm/biomedlm/models/${modelId}`),
+    generateBiomedLMText: (modelId, prompt, params = {}) => apiCall('post', '/api/llm/biomedlm/generate', {
+      model_id: modelId,
+      prompt,
+      ...params
+    }),
+    finetuneBiomedLMModel: (modelId, adapterName, task, dataset, params = {}) => apiCall('post', '/api/llm/biomedlm/finetune', {
+      model_id: modelId,
+      adapter_name: adapterName,
+      task,
+      dataset,
+      ...params
+    }),
+    getBiomedLMConfig: () => apiCall('get', '/api/llm/biomedlm/config'),
+    updateBiomedLMConfig: (config) => apiCall('put', '/api/llm/biomedlm/config', config),
   },
 };
 
