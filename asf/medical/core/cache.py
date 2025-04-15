@@ -1,7 +1,7 @@
 """
 Cache module for the Medical Research Synthesizer.
 
-This module provides a unified caching system with both local and distributed (Redis) 
+This module provides a unified caching system with both local and distributed (Redis)
 cache implementations. The caching system improves performance and reduces redundant
 computations across the application.
 
@@ -58,7 +58,7 @@ class CacheInterface(ABC):
         pass
 
     @abstractmethod
-    async def set(self, key: str, value: Any, ttl: Optional[int] = None, 
+    async def set(self, key: str, value: Any, ttl: Optional[int] = None,
                   namespace: Optional[str] = None) -> bool:
         """
         Set a value in the cache.
@@ -142,7 +142,7 @@ class LRUCache:
                 if key in self.expiry_times and self.expiry_times[key] <= time.time():
                     self.delete(key)
                     return None
-                
+
                 self.access_times[key] = time.time()
                 return self.cache[key]
             return None
@@ -160,10 +160,10 @@ class LRUCache:
             if len(self.cache) >= self.max_size and key not in self.cache:
                 oldest_key = min(self.access_times.items(), key=lambda x: x[1])[0]
                 self.delete(oldest_key)
-            
+
             self.cache[key] = value
             self.access_times[key] = time.time()
-            
+
             if ttl is not None:
                 self.expiry_times[key] = time.time() + ttl
 
@@ -189,7 +189,7 @@ class LRUCache:
     def clear(self) -> int:
         """
         Clear the cache.
-        
+
         Returns:
             int: Number of items cleared.
         """
@@ -209,21 +209,21 @@ class LRUCache:
         """
         with self.lock:
             return len(self.cache)
-            
+
     def cleanup_expired(self) -> int:
         """
         Remove all expired items from the cache.
-        
+
         Returns:
             int: Number of items removed.
         """
         with self.lock:
             now = time.time()
             expired_keys = [key for key, expiry in self.expiry_times.items() if expiry <= now]
-            
+
             for key in expired_keys:
                 self.delete(key)
-                
+
             return len(expired_keys)
 
 class RedisCache(CacheInterface):
@@ -245,14 +245,14 @@ class RedisCache(CacheInterface):
         """
         if not REDIS_AVAILABLE:
             raise ImportError("Redis package not installed. Install with: pip install redis")
-            
+
         self.redis_url = redis_url or os.environ.get("REDIS_URL")
         if not self.redis_url:
             raise ValueError("Redis URL not configured")
-            
+
         self.namespace = namespace
         self.redis_client = redis.from_url(
-            self.redis_url, 
+            self.redis_url,
             decode_responses=False,
             socket_timeout=5.0,
             socket_connect_timeout=5.0,
@@ -264,11 +264,11 @@ class RedisCache(CacheInterface):
     def _get_namespaced_key(self, key: str, namespace: Optional[str] = None) -> str:
         """
         Get the namespaced key.
-        
+
         Args:
             key: The cache key
             namespace: Optional namespace override
-            
+
         Returns:
             Namespaced key
         """
@@ -278,10 +278,10 @@ class RedisCache(CacheInterface):
     async def _serialize(self, value: Any) -> bytes:
         """
         Serialize a value for storage in Redis.
-        
+
         Args:
             value: The value to serialize
-            
+
         Returns:
             Serialized bytes
         """
@@ -296,10 +296,10 @@ class RedisCache(CacheInterface):
     async def _deserialize(self, value: bytes) -> Any:
         """
         Deserialize a value from Redis.
-        
+
         Args:
             value: The value to deserialize
-            
+
         Returns:
             Deserialized value
         """
@@ -335,7 +335,7 @@ class RedisCache(CacheInterface):
             logger.error(f"Redis error getting key {key}: {str(e)}")
             return None
 
-    async def set(self, key: str, value: Any, ttl: Optional[int] = None, 
+    async def set(self, key: str, value: Any, ttl: Optional[int] = None,
                   namespace: Optional[str] = None) -> bool:
         """
         Set a value in the cache with optional TTL.
@@ -351,7 +351,7 @@ class RedisCache(CacheInterface):
         """
         namespaced_key = self._get_namespaced_key(key, namespace)
         ttl = ttl if ttl is not None else self.DEFAULT_TTL
-        
+
         try:
             serialized_value = await self._serialize(value)
             await self.redis_client.set(namespaced_key, serialized_value, ex=ttl)
@@ -395,12 +395,12 @@ class RedisCache(CacheInterface):
                 # Warning: This will clear the entire Redis database
                 await self.redis_client.flushdb()
                 return 1  # We don't know the exact count
-            
+
             # Clear only keys in the namespace
             pattern = f"{ns}:*"
             count = 0
             cursor = 0
-            
+
             while True:
                 cursor, keys = await self.redis_client.scan(cursor, match=pattern, count=100)
                 if keys:
@@ -408,7 +408,7 @@ class RedisCache(CacheInterface):
                     count += deleted
                 if cursor == 0:
                     break
-                    
+
             return count
         except Exception as e:
             logger.error(f"Redis error clearing namespace {ns}: {str(e)}")
@@ -445,7 +445,7 @@ class RedisCache(CacheInterface):
         """
         if not keys:
             return {}
-            
+
         namespaced_keys = [self._get_namespaced_key(key, namespace) for key in keys]
         try:
             values = await self.redis_client.mget(namespaced_keys)
@@ -458,7 +458,7 @@ class RedisCache(CacheInterface):
             logger.error(f"Redis error getting multiple keys: {str(e)}")
             return {}
 
-    async def set_many(self, mapping: Dict[str, Any], ttl: Optional[int] = None, 
+    async def set_many(self, mapping: Dict[str, Any], ttl: Optional[int] = None,
                        namespace: Optional[str] = None) -> bool:
         """
         Set multiple values in the cache.
@@ -473,9 +473,9 @@ class RedisCache(CacheInterface):
         """
         if not mapping:
             return True
-            
+
         ttl = ttl if ttl is not None else self.DEFAULT_TTL
-        
+
         try:
             async with self.redis_client.pipeline() as pipe:
                 for key, value in mapping.items():
@@ -487,7 +487,7 @@ class RedisCache(CacheInterface):
         except Exception as e:
             logger.error(f"Redis error setting multiple keys: {str(e)}")
             return False
-            
+
     async def ping(self) -> bool:
         """
         Check if the Redis server is reachable.
@@ -506,104 +506,104 @@ class LocalCache(CacheInterface):
     Local in-memory cache implementation using LRUCache.
     This implementation is suitable for development environments or as a fallback.
     """
-    
+
     def __init__(self, max_size: int = 1000, namespace: str = ""):
         """
         Initialize the local cache.
-        
+
         Args:
             max_size: Maximum cache size (default: 1000)
             namespace: Optional namespace prefix for all keys
         """
         self.lru_cache = LRUCache(max_size)
         self.namespace = namespace
-        
+
     def _get_namespaced_key(self, key: str, namespace: Optional[str] = None) -> str:
         """Get the namespaced key."""
         ns = namespace or self.namespace
         return f"{ns}:{key}" if ns else key
-        
+
     async def get(self, key: str, namespace: Optional[str] = None) -> Optional[Any]:
         """
         Get a value from the cache.
-        
+
         Args:
             key: The cache key
             namespace: Optional namespace override
-            
+
         Returns:
             Cached value or None if not found
         """
         namespaced_key = self._get_namespaced_key(key, namespace)
         return self.lru_cache.get(namespaced_key)
-        
-    async def set(self, key: str, value: Any, ttl: Optional[int] = None, 
+
+    async def set(self, key: str, value: Any, ttl: Optional[int] = None,
                   namespace: Optional[str] = None) -> bool:
         """
         Set a value in the cache.
-        
+
         Args:
             key: The cache key
             value: The value to cache
             ttl: Time-to-live in seconds
             namespace: Optional namespace override
-            
+
         Returns:
             True if successful
         """
         namespaced_key = self._get_namespaced_key(key, namespace)
         self.lru_cache.set(namespaced_key, value, ttl)
         return True
-        
+
     async def delete(self, key: str, namespace: Optional[str] = None) -> bool:
         """
         Delete a value from the cache.
-        
+
         Args:
             key: The cache key
             namespace: Optional namespace override
-            
+
         Returns:
             True if the key was deleted
         """
         namespaced_key = self._get_namespaced_key(key, namespace)
         return self.lru_cache.delete(namespaced_key)
-        
+
     async def clear(self, namespace: Optional[str] = None) -> int:
         """
         Clear cache entries.
-        
+
         Args:
             namespace: Optional namespace to clear
-            
+
         Returns:
             Number of keys cleared
         """
         if not namespace and not self.namespace:
             return self.lru_cache.clear()
-            
+
         # Clear only keys in the namespace
         ns = namespace or self.namespace
         if not ns:
             return 0
-            
+
         count = 0
         with self.lru_cache.lock:
             keys_to_delete = [
                 key for key in list(self.lru_cache.cache.keys())
                 if key.startswith(f"{ns}:")
             ]
-            
+
             for key in keys_to_delete:
                 if self.lru_cache.delete(key):
                     count += 1
-                    
+
         return count
-        
+
     async def cleanup_expired(self) -> int:
         """
         Remove all expired items from the cache.
-        
+
         Returns:
             Number of items removed
         """
@@ -613,13 +613,13 @@ class CacheManager:
     """
     Unified cache manager supporting both local and distributed caching.
     This class provides a unified interface to cache operations with fallback mechanisms.
-    
+
     In production environments, Redis is used as the primary cache.
     In development environments, a local cache is used as a fallback.
     """
-    
+
     _instance = None
-    
+
     # Default TTL values by data type
     DEFAULT_TTLS = {
         "search": 3600,         # 1 hour
@@ -633,14 +633,14 @@ class CacheManager:
         "explanation": 7200,    # 2 hours
         "default": 3600         # 1 hour
     }
-    
+
     def __new__(cls, *args, **kwargs):
         """Create a singleton instance of the cache manager."""
         if cls._instance is None:
             cls._instance = super(CacheManager, cls).__new__(cls)
             cls._instance._initialized = False
         return cls._instance
-    
+
     def __init__(
         self,
         redis_url: Optional[str] = None,
@@ -651,7 +651,7 @@ class CacheManager:
     ):
         """
         Initialize the CacheManager.
-        
+
         Args:
             redis_url: Redis connection URL
             default_ttl: Default TTL in seconds
@@ -661,16 +661,16 @@ class CacheManager:
         """
         if hasattr(self, '_initialized') and self._initialized:
             return
-            
+
         self.environment = environment or os.environ.get("ENVIRONMENT", "development")
         self.redis_url = redis_url or os.environ.get("REDIS_URL")
         self.default_ttl = default_ttl
         self.namespace = namespace
         self.local_cache_size = local_cache_size
-        
+
         # Set up the local cache always
         self.local_cache = LocalCache(max_size=local_cache_size, namespace=namespace)
-        
+
         # Set up Redis cache if available
         self.redis_cache = None
         if self.redis_url and REDIS_AVAILABLE:
@@ -683,7 +683,7 @@ class CacheManager:
                     raise RuntimeError(f"Failed to initialize Redis cache in production: {str(e)}")
         elif self.environment.lower() == "production":
             logger.warning("Redis is required in production environment but not configured properly.")
-            
+
         # Statistics
         self.stats = {
             "hits": 0,
@@ -694,13 +694,13 @@ class CacheManager:
             "deletes": 0,
             "errors": 0
         }
-        
+
         self._initialized = True
         logger.info(f"Cache manager initialized in {self.environment} environment")
-    
+
     async def get(
-        self, 
-        key: str, 
+        self,
+        key: str,
         namespace: Optional[str] = None,
         data_type: Optional[str] = None
     ) -> Optional[Any]:
@@ -727,7 +727,7 @@ class CacheManager:
             except Exception as e:
                 logger.error(f"Redis cache error: {str(e)}")
                 self.stats["errors"] += 1
-        
+
         # Fall back to local cache
         try:
             value = await self.local_cache.get(key, namespace)
@@ -739,16 +739,16 @@ class CacheManager:
         except Exception as e:
             logger.error(f"Local cache error: {str(e)}")
             self.stats["errors"] += 1
-        
+
         logger.debug(f"Cache miss: {key} ({data_type or 'unknown'})")
         self.stats["misses"] += 1
         return None
-    
+
     async def set(
-        self, 
-        key: str, 
-        value: Any, 
-        ttl: Optional[int] = None, 
+        self,
+        key: str,
+        value: Any,
+        ttl: Optional[int] = None,
         namespace: Optional[str] = None,
         data_type: Optional[str] = None
     ) -> bool:
@@ -771,9 +771,9 @@ class CacheManager:
                 ttl = self.DEFAULT_TTLS[data_type]
             else:
                 ttl = self.default_ttl
-        
+
         success = False
-        
+
         # Set in local cache
         try:
             local_success = await self.local_cache.set(key, value, ttl, namespace)
@@ -781,7 +781,7 @@ class CacheManager:
         except Exception as e:
             logger.error(f"Local cache error: {str(e)}")
             self.stats["errors"] += 1
-        
+
         # Set in Redis if available
         if self.redis_cache:
             try:
@@ -790,13 +790,13 @@ class CacheManager:
             except Exception as e:
                 logger.error(f"Redis cache error: {str(e)}")
                 self.stats["errors"] += 1
-        
+
         if success:
             logger.debug(f"Set in cache: {key} (TTL={ttl}s, {data_type or 'unknown'})")
             self.stats["sets"] += 1
-        
+
         return success
-    
+
     async def delete(self, key: str, namespace: Optional[str] = None) -> bool:
         """
         Delete a value from the cache.
@@ -809,7 +809,7 @@ class CacheManager:
             True if deleted from at least one cache
         """
         success = False
-        
+
         # Delete from local cache
         try:
             local_success = await self.local_cache.delete(key, namespace)
@@ -817,7 +817,7 @@ class CacheManager:
         except Exception as e:
             logger.error(f"Local cache error: {str(e)}")
             self.stats["errors"] += 1
-        
+
         # Delete from Redis if available
         if self.redis_cache:
             try:
@@ -826,13 +826,13 @@ class CacheManager:
             except Exception as e:
                 logger.error(f"Redis cache error: {str(e)}")
                 self.stats["errors"] += 1
-        
+
         if success:
             logger.debug(f"Deleted from cache: {key}")
             self.stats["deletes"] += 1
-        
+
         return success
-    
+
     async def clear(self, namespace: Optional[str] = None) -> int:
         """
         Clear cache entries.
@@ -844,7 +844,7 @@ class CacheManager:
             Number of keys cleared
         """
         count = 0
-        
+
         # Clear local cache
         try:
             local_count = await self.local_cache.clear(namespace)
@@ -852,7 +852,7 @@ class CacheManager:
         except Exception as e:
             logger.error(f"Local cache error: {str(e)}")
             self.stats["errors"] += 1
-        
+
         # Clear Redis if available
         if self.redis_cache:
             try:
@@ -861,13 +861,13 @@ class CacheManager:
             except Exception as e:
                 logger.error(f"Redis cache error: {str(e)}")
                 self.stats["errors"] += 1
-        
+
         if count > 0:
             logger.info(f"Cleared {count} keys from cache{' in namespace ' + namespace if namespace else ''}")
             self.stats["deletes"] += count
-        
+
         return count
-    
+
     async def get_stats(self) -> Dict[str, Any]:
         """
         Get cache statistics.
@@ -876,14 +876,14 @@ class CacheManager:
             Dictionary of statistics
         """
         stats = self.stats.copy()
-        
+
         # Calculate hit rate
         total_requests = stats["hits"] + stats["misses"]
         if total_requests > 0:
             stats["hit_rate"] = stats["hits"] / total_requests
         else:
             stats["hit_rate"] = 0
-            
+
         # Add Redis stats if available
         if self.redis_cache:
             try:
@@ -899,29 +899,29 @@ class CacheManager:
             except Exception as e:
                 logger.error(f"Error getting Redis info: {str(e)}")
                 stats["redis_connected"] = False
-        
+
         # Add local cache info
         stats["local_cache_info"] = {
             "size": self.local_cache.lru_cache.get_size(),
             "max_size": self.local_cache_size
         }
-        
+
         return stats
-    
+
     def generate_key(self, prefix: str, *args, **kwargs) -> str:
         """
         Generate a cache key from a prefix and arguments.
-        
+
         Args:
             prefix: Key prefix
             *args: Positional arguments
             **kwargs: Keyword arguments
-            
+
         Returns:
             Cache key string
         """
         key_parts = [prefix]
-        
+
         # Add args to key
         for arg in args:
             if arg is None:
@@ -930,7 +930,7 @@ class CacheManager:
                 key_parts.append(str(hash(frozenset(arg.__dict__.items()))))
             else:
                 key_parts.append(str(arg))
-        
+
         # Add kwargs to key
         for k, v in sorted(kwargs.items()):
             if v is None:
@@ -939,11 +939,11 @@ class CacheManager:
                 key_parts.append(f"{k}={hash(frozenset(v.__dict__.items()))}")
             else:
                 key_parts.append(f"{k}={v}")
-        
+
         # Create unique hash from key parts
         key_string = ":".join(key_parts)
         return hashlib.md5(key_string.encode()).hexdigest()
-    
+
     async def maintenance(self) -> None:
         """
         Perform maintenance tasks on the caches, such as removing expired items.
@@ -958,10 +958,10 @@ _cache_manager = None
 def get_cache_manager(**kwargs) -> CacheManager:
     """
     Get the singleton CacheManager instance.
-    
+
     Args:
         **kwargs: Initialization parameters passed to CacheManager
-        
+
     Returns:
         The CacheManager instance
     """
@@ -982,7 +982,7 @@ def get_cache_key(*args, **kwargs) -> str:
         str: A unique cache key.
     """
     key_parts = []
-    
+
     # Add args to key
     for arg in args:
         if arg is None:
@@ -992,7 +992,7 @@ def get_cache_key(*args, **kwargs) -> str:
             key_parts.append(str(sorted(arg.__dict__.items())))
         else:
             key_parts.append(str(arg))
-    
+
     # Add sorted kwargs to key
     for k, v in sorted(kwargs.items()):
         if v is None:
@@ -1001,7 +1001,7 @@ def get_cache_key(*args, **kwargs) -> str:
             key_parts.append(f"{k}={sorted(v.__dict__.items())}")
         else:
             key_parts.append(f"{k}={v}")
-    
+
     # Create a unique hash
     key_string = ":".join(key_parts)
     return hashlib.md5(key_string.encode()).hexdigest()
@@ -1015,51 +1015,51 @@ def cached(
 ):
     """
     Decorator for caching function results.
-    
+
     Args:
         prefix: Key prefix for the cache key
         ttl: Time-to-live in seconds
         namespace: Optional cache namespace
         data_type: Type of data for TTL selection
         cache_exceptions: Whether to cache exceptions
-        
+
     Returns:
         Decorated function
     """
     cache_mgr = get_cache_manager()
-    
+
     def decorator(func):
         @wraps(func)
         async def wrapper(*args, **kwargs):
             skip_cache = kwargs.pop("skip_cache", False)
             if skip_cache:
                 return await func(*args, **kwargs)
-            
+
             # Generate cache key
             key = cache_mgr.generate_key(
                 f"{prefix or func.__module__}.{func.__name__}",
-                *args, 
+                *args,
                 **kwargs
             )
-            
+
             # Try to get from cache
             cached_result = await cache_mgr.get(key, namespace, data_type)
-            
+
             if cached_result is not None:
                 # Handle cached exceptions
                 if isinstance(cached_result, dict) and "__exception__" in cached_result:
                     if cache_exceptions:
                         exception_class = cached_result["__exception__"]["class"]
                         exception_args = cached_result["__exception__"]["args"]
-                        
+
                         try:
                             exception_type = eval(exception_class)
                             raise exception_type(*exception_args)
                         except (NameError, SyntaxError):
                             raise Exception(f"{exception_class}: {exception_args}")
-                
+
                 return cached_result
-            
+
             # Execute function and cache result
             try:
                 result = await func(*args, **kwargs)
@@ -1076,27 +1076,27 @@ def cached(
                     }
                     await cache_mgr.set(key, exception_data, ttl, namespace, data_type)
                 raise
-        
+
         return wrapper
-    
+
     return decorator
 
 def clear_cache(keys: Optional[List[str]] = None, namespace: Optional[str] = None) -> int:
     """
     Clear the cache for specific keys or an entire namespace.
-    
+
     Args:
         keys: List of specific keys to clear
         namespace: Namespace to clear
-        
+
     Returns:
         Number of keys cleared
     """
     cache_mgr = get_cache_manager()
-    
+
     async def _clear():
         count = 0
-        
+
         if keys:
             for key in keys:
                 if await cache_mgr.delete(key, namespace):
@@ -1104,7 +1104,7 @@ def clear_cache(keys: Optional[List[str]] = None, namespace: Optional[str] = Non
             return count
         else:
             return await cache_mgr.clear(namespace)
-    
+
     # Execute asynchronously if in an event loop, otherwise use a new loop
     try:
         import asyncio
@@ -1117,3 +1117,15 @@ def clear_cache(keys: Optional[List[str]] = None, namespace: Optional[str] = Non
     except Exception as e:
         logger.error(f"Error clearing cache: {str(e)}")
         return 0
+
+# Enhanced cache functionality is imported in cache_init.py
+# to avoid circular imports
+
+# Mock implementation of redis_cached
+def redis_cached(prefix="", ttl=None, namespace=None, data_type=None, cache_exceptions=False):
+    """Mock implementation of redis_cached decorator."""
+    def decorator(func):
+        async def wrapper(*args, **kwargs):
+            return await func(*args, **kwargs)
+        return wrapper
+    return decorator

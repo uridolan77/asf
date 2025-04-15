@@ -8,9 +8,15 @@ from passlib.context import CryptContext
 from datetime import datetime, timedelta
 import jwt
 import os
+import sys
 import json
 import uuid
 import random
+
+# Add the project root directory to sys.path to import the asf module
+project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+if project_root not in sys.path:
+    sys.path.append(project_root)
 
 # Import routers
 from api.routers.medical_kb import router as medical_kb_router

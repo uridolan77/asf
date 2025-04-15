@@ -35,6 +35,7 @@ class Settings(BaseSettings):
     database connections, API keys, and other environment-specific settings.
 
     Attributes:
+        ENVIRONMENT (str): Environment name (development, staging, production).
         API_V1_STR (str): API version string.
         PROJECT_NAME (str): Name of the project.
         DEBUG (bool): Debug mode flag.
@@ -67,6 +68,7 @@ class Settings(BaseSettings):
         RABBITMQ_VHOST (str): Virtual host for the RabbitMQ server.
         RABBITMQ_ENABLED (bool): Whether RabbitMQ messaging is enabled.
     """
+    ENVIRONMENT: str = "development"
     API_V1_STR: str = "/v1"
     PROJECT_NAME: str = "Medical Research Synthesizer"
     DEBUG: bool = False

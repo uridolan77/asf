@@ -122,6 +122,24 @@ const apiService = {
     getBiasAssessmentTools: () => apiCall('get', '/api/medical/ml/bias/tools'),
   },
 
+  // Medical clients endpoints
+  clients: {
+    // Get all clients
+    getAll: () => apiCall('get', '/api/medical/clients'),
+
+    // Get specific client
+    getClient: (clientId) => apiCall('get', `/api/medical/clients/${clientId}`),
+
+    // Update client configuration
+    updateClient: (clientId, config) => apiCall('put', `/api/medical/clients/${clientId}`, { config }),
+
+    // Get client usage statistics
+    getClientUsage: (clientId) => apiCall('get', `/api/medical/clients/${clientId}/usage`),
+
+    // Test client connection
+    testConnection: (clientId) => apiCall('post', `/api/medical/clients/${clientId}/test`),
+  },
+
   // Knowledge base endpoints
   knowledgeBase: {
     getAll: () => apiCall('get', '/api/medical/knowledge-base'),

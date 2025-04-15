@@ -4,13 +4,23 @@ import os
 import sys
 
 # Add the project root directory to the Python path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
+project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)  # Insert at the beginning of sys.path
+    print(f"Added {project_root} to Python path")
+
+# Also add the parent directory of the project root
+parent_dir = os.path.dirname(project_root)
+if parent_dir not in sys.path:
+    sys.path.insert(0, parent_dir)
+    print(f"Added {parent_dir} to Python path")
 
 # Import routers
 from api.knowledge_base import router as knowledge_base_router
 from api.analysis import router as analysis_router
 from api.export import router as export_router
 from api.ml import router as ml_router
+from api.clients import router as clients_router
 
 app = FastAPI(title="BO Medical Research Backend")
 
@@ -31,6 +41,7 @@ app.include_router(knowledge_base_router)
 app.include_router(analysis_router)
 app.include_router(export_router)
 app.include_router(ml_router)
+app.include_router(clients_router)
 
 # Root endpoint
 @app.get("/")
@@ -44,7 +55,8 @@ async def root():
             {"path": "/api/knowledge-base/search-pico", "description": "PICO Search"},
             {"path": "/api/medical/analysis", "description": "Medical Literature Analysis"},
             {"path": "/api/medical/export", "description": "Export Search and Analysis Results"},
-            {"path": "/api/medical/ml", "description": "Machine Learning Services"}
+            {"path": "/api/medical/ml", "description": "Machine Learning Services"},
+            {"path": "/api/medical/clients", "description": "Medical Clients Management"}
         ]
     }
 

@@ -393,3 +393,61 @@ class ExportError(MedicalResearchSynthesizerError):
         self.format = format
         self.data_type = data_type
         super().__init__(message, details)
+
+
+class SearchError(MedicalResearchSynthesizerError):
+    """
+    Exception raised for search-related errors.
+
+    This is used when search operations fail.
+
+    Attributes:
+        query (str): The search query that failed.
+        source (str): The search source that failed.
+        method (str): The search method that failed.
+    """
+
+    def __init__(self, message: str, query: str = None, source: str = None, method: str = None, details: Dict[str, Any] = None):
+        """
+        Initialize the SearchError.
+
+        Args:
+            message (str): The error message.
+            query (str, optional): The search query that failed. Defaults to None.
+            source (str, optional): The search source that failed. Defaults to None.
+            method (str, optional): The search method that failed. Defaults to None.
+            details (Dict[str, Any], optional): Additional details about the error. Defaults to None.
+        """
+        self.query = query
+        self.source = source
+        self.method = method
+        super().__init__(message, details)
+
+
+class ExternalServiceError(MedicalResearchSynthesizerError):
+    """
+    Exception raised for external service-related errors.
+
+    This is used when external services fail to function properly.
+
+    Attributes:
+        service (str): The external service that failed.
+        endpoint (str): The endpoint that failed.
+        status_code (int): The HTTP status code returned by the service.
+    """
+
+    def __init__(self, message: str, service: str = None, endpoint: str = None, status_code: int = None, details: Dict[str, Any] = None):
+        """
+        Initialize the ExternalServiceError.
+
+        Args:
+            message (str): The error message.
+            service (str, optional): The external service that failed. Defaults to None.
+            endpoint (str, optional): The endpoint that failed. Defaults to None.
+            status_code (int, optional): The HTTP status code returned by the service. Defaults to None.
+            details (Dict[str, Any], optional): Additional details about the error. Defaults to None.
+        """
+        self.service = service
+        self.endpoint = endpoint
+        self.status_code = status_code
+        super().__init__(message, details)

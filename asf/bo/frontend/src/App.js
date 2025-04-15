@@ -20,6 +20,7 @@ import KnowledgeBase from './pages/KnowledgeBase';
 import ClinicalData from './pages/ClinicalData';
 import Analysis from './pages/Analysis';
 import MLServices from './pages/MLServices';
+import ClientsManagement from './pages/ClientsManagement';
 
 // Animated route change component
 const AnimatedRoutes = () => {
@@ -51,6 +52,7 @@ const AnimatedRoutes = () => {
           <Route path="/clinical-data" element={<ClinicalData />} />
           <Route path="/analysis" element={<Analysis />} />
           <Route path="/ml-services" element={<MLServices />} />
+          <Route path="/clients-management" element={<ClientsManagement />} />
         </Routes>
       </PageTransition>
     </>

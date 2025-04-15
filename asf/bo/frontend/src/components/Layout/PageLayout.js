@@ -231,6 +231,13 @@ const PageLayout = ({
                 {drawerOpen && <ListItemText primary="ML Services" />}
               </ListItem>
 
+              <ListItem button onClick={() => navigate('/clients-management')}>
+                <ListItemIcon>
+                  <SettingsIcon />
+                </ListItemIcon>
+                {drawerOpen && <ListItemText primary="Clients Management" />}
+              </ListItem>
+
               {user && user.role_id === 2 && (
                 <ListItem button onClick={() => navigate('/users')}>
                   <ListItemIcon>
