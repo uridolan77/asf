@@ -10,7 +10,7 @@ import time
 import hashlib
 from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional
-from asf.medical.core.enhanced_cache import enhanced_cache_manager, enhanced_cached
+from asf.medical.core.cache import enhanced_cache_manager, enhanced_cached
 from asf.medical.core.progress_tracker import ProgressTracker
 from asf.medical.core.exceptions import (
     ResourceNotFoundError, ValidationError,

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 const Register = () => {
   const [username, setUsername] = useState('');
@@ -10,7 +10,7 @@ const Register = () => {
   const [roles, setRoles] = useState([]);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const history = useHistory();
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Fetch roles from backend if available, else use static roles
@@ -33,14 +33,14 @@ const Register = () => {
     setError('');
     setSuccess('');
     try {
-      await axios.post('/api/register', {
+      await axios.post('http://localhost:8000/api/register', {
         username,
         email,
         password,
         role_id: roleId
       });
       setSuccess('Registration successful! Redirecting to login...');
-      setTimeout(() => history.push('/login'), 1500);
+      setTimeout(() => navigate('http://localhost:8000/login'), 1500);
     } catch (err) {
       setError(err.response?.data?.detail || 'Registration failed');
     }
@@ -104,7 +104,7 @@ const Register = () => {
       </form>
       <div style={{ marginTop: '10px', textAlign: 'center' }}>
         <span>Already have an account? </span>
-        <a href="/login">Login</a>
+        <a href="/login" onClick={e => { e.preventDefault(); navigate('/login'); }}>Login</a>
       </div>
     </div>
   );

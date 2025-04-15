@@ -1,13 +1,13 @@
 // frontend/src/pages/Login.js
 import React, { useState } from 'react';
 import axios from 'axios';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const history = useHistory();
+  const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -18,13 +18,13 @@ const Login = () => {
       const params = new URLSearchParams();
       params.append('username', username); // This is actually email in your backend
       params.append('password', password);
-      const response = await axios.post('/api/login', params, {
+      const response = await axios.post('http://localhost:8000/api/login', params, {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
       });
       if (response.data.access_token) {
         // Store token and redirect
         localStorage.setItem('token', response.data.access_token);
-        history.push('/dashboard');
+        navigate('/dashboard');
       } else {
         setError('Login failed.');
       }
@@ -38,9 +38,9 @@ const Login = () => {
       <h2>Login</h2>
       <form onSubmit={handleLogin}>
         <div style={{ marginBottom: '15px' }}>
-          <label htmlFor="username">Username:</label><br />
+          <label htmlFor="username">Email:</label><br />
           <input 
-            type="text" 
+            type="email" 
             id="username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
@@ -64,7 +64,7 @@ const Login = () => {
       </form>
       <div style={{ marginTop: '10px', textAlign: 'center' }}>
         <span>Don't have an account? </span>
-        <a href="/register">Register</a>
+        <a href="/register" onClick={e => { e.preventDefault(); navigate('/register'); }}>Register</a>
       </div>
     </div>
   );

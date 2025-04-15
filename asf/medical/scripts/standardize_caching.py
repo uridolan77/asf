@@ -40,7 +40,6 @@ EXCLUDE_DIRS = [
     "htmlcov",
 ]
 EXCLUDE_FILES = [
-    ".gitignore",
     ".env",
     "README.md",
     "LICENSE",
