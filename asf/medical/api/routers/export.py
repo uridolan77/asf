@@ -13,22 +13,22 @@ from typing import Dict, Any, Optional
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from fastapi.responses import JSONResponse, FileResponse
 
-from asf.medical.tasks.export_tasks import (
+from ...tasks.export_tasks import (
     generate_pdf_report, generate_contradiction_pdf_report, get_task_result
 )
 
-from asf.medical.api.models.export import ExportRequest
-from asf.medical.api.models.base import APIResponse, ErrorResponse
-from asf.medical.api.dependencies import get_synthesizer, get_search_service, get_analysis_service
-from asf.medical.api.auth import get_current_active_user
-from asf.medical.services.search_service import SearchService
-from asf.medical.services.analysis_service import AnalysisService
-from asf.medical.storage.models import User
-from asf.medical.api.export_utils import (
+from ..models.export import ExportRequest
+from ..models.base import APIResponse, ErrorResponse
+from ..dependencies import get_synthesizer, get_search_service, get_analysis_service
+from ..auth import get_current_active_user
+from ...services.search_service import SearchService
+from ...services.analysis_service import AnalysisService
+from ...storage.models import User
+from ..export_utils import (
     export_to_json, export_to_csv, export_to_excel
 )
-from asf.medical.core.observability import async_timed, log_error
-from asf.medical.core.exceptions import ValidationError
+from ...core.observability import async_timed, log_error
+from ...core.exceptions import ValidationError
 
 
 router = APIRouter(prefix="/export", tags=["export"])

@@ -18,7 +18,7 @@ from pathlib import Path
 import structlog
 from structlog.stdlib import LoggerFactory
 
-from asf.medical.core.config import settings
+from .config import settings
 
 LOGS_DIR = Path(__file__).parent.parent / "logs"
 LOGS_DIR.mkdir(exist_ok=True)

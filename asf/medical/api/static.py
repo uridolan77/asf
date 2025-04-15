@@ -12,7 +12,7 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
 from starlette.status import HTTP_404_NOT_FOUND
 
-from asf.medical.core.logging_config import get_logger
+from ..core.logging_config import get_logger
 
 logger = get_logger(__name__)
 

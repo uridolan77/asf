@@ -7,9 +7,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from datetime import datetime, timezone
 import logging
-from asf.medical.storage.models import Query
-from asf.medical.storage.repositories.enhanced_base_repository import EnhancedBaseRepository
-from asf.medical.core.exceptions import DatabaseError
+from ..models import Query
+from ..repositories.enhanced_base_repository import EnhancedBaseRepository
+from ...core.exceptions import DatabaseError
 logger = logging.getLogger(__name__)
 class QueryRepository(EnhancedBaseRepository[Query]):
     """

@@ -9,14 +9,14 @@ from fastapi.responses import JSONResponse
 from fastapi.exception_handlers import http_exception_handler
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from asf.medical.core.exceptions import (
+from ...core.exceptions import (
     ASFError, NotFoundError, ValidationError, AuthenticationError,
     AuthorizationError, RateLimitError, InvalidRequestError, DatabaseError,
     BusinessLogicError, ExternalServiceError, ModelError, ConfigurationError,
     FileError, ExportError, SearchError, AnalysisError, KnowledgeBaseError,
     ContradictionError, TaskError, DuplicateError
 )
-from asf.medical.core.logging_config import get_logger
+from ...core.logging_config import get_logger
 
 logger = get_logger(__name__)
 

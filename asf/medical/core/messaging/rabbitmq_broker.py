@@ -12,9 +12,9 @@ from enum import Enum
 import aio_pika
 from aio_pika import Message, DeliveryMode, ExchangeType, connect_robust
 from aio_pika.abc import AbstractIncomingMessage, AbstractRobustConnection, AbstractRobustChannel
-from asf.medical.core.config import settings
-from asf.medical.core.logging_config import get_logger
-from asf.medical.core.exceptions import MessageBrokerError, ConnectionError, MessageError
+from ..config import settings
+from ..logging_config import get_logger
+from ..exceptions import MessageBrokerError, ConnectionError, MessageError
 logger = get_logger(__name__)
 T = TypeVar('T')
 class MessagePriority(int, Enum):

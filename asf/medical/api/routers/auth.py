@@ -12,14 +12,14 @@ from fastapi.security import OAuth2PasswordRequestForm
 from jose import JWTError, jwt
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from asf.medical.api.auth import (
+from ..auth import (
     Token, User, UserCreate, UserUpdate, AuthService,
     get_auth_service, get_current_active_user, get_admin_user
 )
-from asf.medical.core.config import settings
-from asf.medical.core.security import create_access_token, create_refresh_token
-from asf.medical.storage.database import get_db_session
-from asf.medical.storage.models import User as DBUser
+from ...core.config import settings
+from ...core.security import create_access_token, create_refresh_token
+from ...storage.database import get_db_session
+from ...storage.models import User as DBUser
 
 router = APIRouter(prefix="/v1/auth", tags=["auth"])
 

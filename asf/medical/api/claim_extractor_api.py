@@ -8,7 +8,7 @@ This module provides REST API endpoints for:
 """
 
 from flask import Blueprint, request, jsonify
-from asf.medical.ml.models.claim_extractor import ClaimExtractor, ExtractedClaim
+from ..ml.models.claim_extractor import ClaimExtractor, ExtractedClaim
 import logging
 
 # Initialize logger

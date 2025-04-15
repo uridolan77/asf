@@ -6,8 +6,8 @@ from typing import Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession
 import logging
 logger = logging.getLogger(__name__)
-from asf.medical.storage.models import Result
-from asf.medical.storage.repositories.enhanced_base_repository import EnhancedBaseRepository
+from ..models import Result
+from .enhanced_base_repository import EnhancedBaseRepository
 class ResultRepository(EnhancedBaseRepository[Result]):
     """
     Repository for result-related database operations.

@@ -10,41 +10,41 @@ from typing import Optional, TypeVar
 from jose import JWTError, jwt
 from fastapi import Depends, HTTPException, status, WebSocket, Query
 
-from asf.medical.api.auth import get_current_user
-from asf.medical.core.config import settings
-from asf.medical.storage.models import User
-from asf.medical.core.service_registry import get_service
-from asf.medical.core.logging_config import get_logger
+from ..auth import get_current_user
+from ..core.config import settings
+from ..storage.models import User
+from ..core.service_registry import get_service
+from ..core.logging_config import get_logger
 
 # Import service and repository types for type annotations
-from asf.medical.storage.repositories.user_repository import UserRepository
-from asf.medical.storage.repositories.query_repository import QueryRepository
-from asf.medical.storage.repositories.result_repository import ResultRepository
-from asf.medical.storage.repositories.kb_repository import KnowledgeBaseRepository
+from ..storage.repositories.user_repository import UserRepository
+from ..storage.repositories.query_repository import QueryRepository
+from ..storage.repositories.result_repository import ResultRepository
+from ..storage.repositories.kb_repository import KnowledgeBaseRepository
 
 # Service imports
-from asf.medical.services.search_service import SearchService
-from asf.medical.services.analysis_service import AnalysisService
-from asf.medical.services.knowledge_base_service import KnowledgeBaseService
-from asf.medical.services.export_service import ExportService
-from asf.medical.services.auth_service import AuthService
-from asf.medical.services.terminology_service import TerminologyService
-from asf.medical.services.clinical_data_service import ClinicalDataService
+from ..services.search_service import SearchService
+from ..services.analysis_service import AnalysisService
+from ..services.knowledge_base_service import KnowledgeBaseService
+from ..services.export_service import ExportService
+from ..services.auth_service import AuthService
+from ..services.terminology_service import TerminologyService
+from ..services.clinical_data_service import ClinicalDataService
 
 # ML service imports
-from asf.medical.ml.services.unified_contradiction_service import ContradictionService
-from asf.medical.ml.services.prisma_screening_service import PrismaScreeningService
-from asf.medical.ml.services.bias_assessment_service import BiasAssessmentService
+from ..ml.services.contradiction_service import ContradictionService
+from ..ml.services.prisma_screening_service import PrismaScreeningService
+from ..ml.services.bias_assessment_service import BiasAssessmentService
 
 # Client imports
-from asf.medical.clients.ncbi.ncbi_client import NCBIClient
-from asf.medical.clients.clinical_trials_gov.clinical_trials_client import ClinicalTrialsClient
-from asf.medical.clients.clinical_trials_gov.clinical_trials_client import ClinicalTrialsClient as CTGovClient
+from ..clients.ncbi.ncbi_client import NCBIClient
+from ..clients.clinical_trials_gov.clinical_trials_client import ClinicalTrialsClient
+from ..clients.clinical_trials_gov.clinical_trials_client import ClinicalTrialsClient as CTGovClient
 
 # Graph imports
-from asf.medical.graph.graph_service import GraphService
-from asf.medical.graph.graph_rag import GraphRAG
-from asf.medical.core.exceptions import DatabaseError, OperationError
+from ..graph.graph_service import GraphService
+from ..graph.graph_rag import GraphRAG
+from ..core.exceptions import DatabaseError, OperationError
 
 
 # Set up logging
@@ -348,5 +348,5 @@ def get_synthesizer():
     Returns:
         A service combining search and analysis functionality
     """
-    from asf.medical.services.synthesizer_service import SynthesizerService
+    from ..services.synthesizer_service import SynthesizerService
     return get_service(SynthesizerService)()

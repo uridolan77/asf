@@ -7,17 +7,17 @@ import logging
 from typing import Dict, Any, List
 from fastapi import APIRouter, Depends, HTTPException, status, Request, Response, BackgroundTasks
 
-from asf.medical.api.models.base import APIResponse, ErrorResponse
-from asf.medical.api.models.knowledge_base import (
+from ..models.base import APIResponse, ErrorResponse
+from ..models.knowledge_base import (
     KnowledgeBaseRequest, 
     KnowledgeBaseResponse
 )
-from asf.medical.api.dependencies import get_knowledge_base_service
-from asf.medical.api.auth import get_current_active_user
-from asf.medical.core.exceptions import KnowledgeBaseError
-from asf.medical.core.observability import async_timed, log_error
-from asf.medical.services.knowledge_base_service import KnowledgeBaseService
-from asf.medical.storage.models import User
+from ..dependencies import get_knowledge_base_service
+from ..auth import get_current_active_user
+from ...core.exceptions import KnowledgeBaseError
+from ...core.observability import async_timed, log_error
+from ...services.knowledge_base_service import KnowledgeBaseService
+from ...storage.models import User
 
 router = APIRouter(prefix="/knowledge-base", tags=["knowledge_base"])
 

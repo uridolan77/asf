@@ -5,7 +5,7 @@ This module provides a repository for user-related database operations.
 from typing import Optional, Dict, Any, List
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from asf.medical.storage.models.user import User
+from ..models.user import User
 import logging
 
 logger = logging.getLogger(__name__)

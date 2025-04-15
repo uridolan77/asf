@@ -19,6 +19,13 @@ Classes:
     MLError: Exception for machine learning-related errors.
     OperationError: Exception for operation-related errors.
     ExportError: Exception for export-related errors.
+    NotFoundError: Exception for resource not found errors.
+    ResourceNotFoundError: Alias for NotFoundError.
+    DuplicateError: Exception for duplicate entity errors.
+    RepositoryError: Exception for repository-related errors.
+    SearchError: Exception for search-related errors.
+    ExternalServiceError: Exception for external service-related errors.
+    ModelError: Exception for model-related errors.
 """
 
 from typing import Dict, Any, Optional
@@ -395,6 +402,93 @@ class ExportError(MedicalResearchSynthesizerError):
         super().__init__(message, details)
 
 
+class NotFoundError(MedicalResearchSynthesizerError):
+    """
+    Exception raised when a resource is not found.
+
+    This is used when a database entity or other resource can't be found.
+
+    Attributes:
+        resource_type (str): The type of resource that was not found.
+        resource_id (str): The ID of the resource that was not found.
+    """
+
+    def __init__(self, resource_type: str, resource_id: str, details: Dict[str, Any] = None):
+        """
+        Initialize the NotFoundError.
+
+        Args:
+            resource_type (str): The type of resource that was not found.
+            resource_id (str): The ID of the resource that was not found.
+            details (Dict[str, Any], optional): Additional details about the error. Defaults to None.
+        """
+        message = f"{resource_type} with ID {resource_id} not found"
+        self.resource_type = resource_type
+        self.resource_id = resource_id
+        super().__init__(message, details)
+
+
+class ResourceNotFoundError(NotFoundError):
+    """
+    Exception raised when a resource is not found.
+    
+    This is an alias for NotFoundError for backward compatibility.
+    """
+    pass
+
+
+class DuplicateError(MedicalResearchSynthesizerError):
+    """
+    Exception raised when a duplicate entity is detected.
+
+    This is used when attempting to create an entity that already exists.
+
+    Attributes:
+        resource_type (str): The type of resource that was duplicated.
+        resource_id (str): The ID of the resource that was duplicated.
+    """
+
+    def __init__(self, resource_type: str, resource_id: str, details: Dict[str, Any] = None):
+        """
+        Initialize the DuplicateError.
+
+        Args:
+            resource_type (str): The type of resource that was duplicated.
+            resource_id (str): The ID of the resource that was duplicated.
+            details (Dict[str, Any], optional): Additional details about the error. Defaults to None.
+        """
+        message = f"{resource_type} with ID {resource_id} already exists"
+        self.resource_type = resource_type
+        self.resource_id = resource_id
+        super().__init__(message, details)
+
+
+class RepositoryError(MedicalResearchSynthesizerError):
+    """
+    Exception raised for repository-related errors.
+
+    This is used when repository operations fail.
+
+    Attributes:
+        repository (str): The repository that failed.
+        operation (str): The operation that failed.
+    """
+
+    def __init__(self, message: str, repository: str = None, operation: str = None, details: Dict[str, Any] = None):
+        """
+        Initialize the RepositoryError.
+
+        Args:
+            message (str): The error message.
+            repository (str, optional): The repository that failed. Defaults to None.
+            operation (str, optional): The operation that failed. Defaults to None.
+            details (Dict[str, Any], optional): Additional details about the error. Defaults to None.
+        """
+        self.repository = repository
+        self.operation = operation
+        super().__init__(message, details)
+
+
 class SearchError(MedicalResearchSynthesizerError):
     """
     Exception raised for search-related errors.
@@ -451,3 +545,29 @@ class ExternalServiceError(MedicalResearchSynthesizerError):
         self.endpoint = endpoint
         self.status_code = status_code
         super().__init__(message, details)
+
+
+class ModelError(MedicalResearchSynthesizerError):
+    """
+    Exception raised for model-related errors.
+
+    This is used when machine learning models fail to load or make predictions.
+
+    Attributes:
+        model (str): The model that failed.
+        message (str): The error message.
+    """
+
+    def __init__(self, model: str, message: str, details: Dict[str, Any] = None):
+        """
+        Initialize the ModelError.
+
+        Args:
+            model (str): The model that failed.
+            message (str): The error message.
+            details (Dict[str, Any], optional): Additional details about the error. Defaults to None.
+        """
+        super_message = f"Error in model '{model}': {message}"
+        self.model = model
+        self.specific_message = message
+        super().__init__(super_message, details)

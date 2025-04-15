@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 
-from asf.medical.core.exceptions import DatabaseError, ResourceNotFoundError
+from ...core.exceptions import DatabaseError, ResourceNotFoundError
 
 logger = logging.getLogger(__name__)
 

@@ -22,7 +22,7 @@ from typing import Union, Any, Optional, Dict, List
 from jose import jwt
 from passlib.context import CryptContext
 
-from asf.medical.core.config import settings
+from .config import settings
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 

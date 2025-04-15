@@ -8,16 +8,16 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, status, Request, Response
 from typing import Dict, Any
 
-from asf.medical.api.models.base import APIResponse, ErrorResponse
-from asf.medical.api.models.analysis import (
+from ..models.base import APIResponse, ErrorResponse
+from ..models.analysis import (
     ContradictionAnalysisRequest,
     CAPAnalysisResponse
 )
-from asf.medical.api.dependencies import get_analysis_service
-from asf.medical.api.auth import get_current_active_user
-from asf.medical.services.analysis_service import AnalysisService
-from asf.medical.storage.models import User
-from asf.medical.core.observability import async_timed, log_error
+from ..dependencies import get_analysis_service
+from ..auth import get_current_active_user
+from ...services.analysis_service import AnalysisService
+from ...storage.models import User
+from ...core.observability import async_timed, log_error
 
 router = APIRouter(prefix="/analysis", tags=["analysis"])
 

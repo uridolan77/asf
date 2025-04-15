@@ -10,9 +10,9 @@ import time
 import xml.etree.ElementTree as ET
 from typing import Dict, List, Optional, Any, Union
 import httpx
-from asf.medical.core.config import settings
-from asf.medical.core.enhanced_cache import enhanced_cache_manager, enhanced_cached
-from asf.medical.core.exceptions import ExternalServiceError, ValidationError
+from ...core.config import settings
+from ...core.enhanced_cache import enhanced_cache_manager, enhanced_cached
+from ...core.exceptions import ExternalServiceError, ValidationError
 logger = logging.getLogger(__name__)
 class NCBIClientError(ExternalServiceError):
     """Exception raised for NCBI client errors."""
@@ -207,7 +207,7 @@ class NCBIClient:
             "cache_ttl": self.cache_ttl,
             "rate_limit": self.rate_limiter.requests_per_second
         }
-    @enhanced_cached(prefix="ncbi_einfo", data_type="search")
+    @enhanced_cached(key_prefix="ncbi_einfo")
     async def get_database_info(self, db: Optional[str] = None, version: str = "2.0") -> Dict[str, Any]:
         params = {}
         if db:
@@ -221,7 +221,7 @@ class NCBIClient:
         except Exception as e:
             logger.error(f"Error getting database info: {str(e)}")
             raise NCBIClientError(f"Failed to get database info: {str(e)}")
-    @enhanced_cached(prefix="ncbi_espell", data_type="search")
+    @enhanced_cached(key_prefix="ncbi_espell")
     async def get_spelling_suggestions(self, term: str, db: str = "pubmed") -> Dict[str, Any]:
         if not term or not term.strip():
             raise ValidationError("Search term cannot be empty")
@@ -236,7 +236,7 @@ class NCBIClient:
         except Exception as e:
             logger.error(f"Error getting spelling suggestions: {str(e)}")
             raise NCBIClientError(f"Failed to get spelling suggestions: {str(e)}")
-    @enhanced_cached(prefix="ncbi_egquery", data_type="search")
+    @enhanced_cached(key_prefix="ncbi_egquery")
     async def search_all_databases(self, term: str) -> Dict[str, Any]:
         if not term or not term.strip():
             raise ValidationError("Search term cannot be empty")
@@ -283,7 +283,7 @@ class NCBIClient:
         except Exception as e:
             logger.error(f"Error matching citations: {str(e)}")
             raise NCBIClientError(f"Failed to match citations: {str(e)}")
-    @enhanced_cached(prefix="ncbi_elink", data_type="search")
+    @enhanced_cached(key_prefix="ncbi_elink")
     async def get_links(self,
                        ids: Union[str, List[str]],
                        dbfrom: str,
@@ -313,21 +313,21 @@ class NCBIClient:
         except Exception as e:
             logger.error(f"Error getting links: {str(e)}")
             raise NCBIClientError(f"Failed to get links: {str(e)}")
-    @enhanced_cached(prefix="ncbi_elink_history", data_type="search")
+    @enhanced_cached(key_prefix="ncbi_elink_history")
     async def get_links_and_post_to_history(self,
                                            ids: Union[str, List[str]],
                                            dbfrom: str,
                                            db: str,
                                            linkname: Optional[str] = None) -> Dict[str, Any]:
         return await self.get_links(ids, dbfrom, db, linkname, cmd="neighbor_history")
-    @enhanced_cached(prefix="ncbi_elink_scores", data_type="search")
+    @enhanced_cached(key_prefix="ncbi_elink_scores")
     async def get_links_with_scores(self,
                                    ids: Union[str, List[str]],
                                    dbfrom: str,
                                    db: str,
                                    linkname: Optional[str] = None) -> Dict[str, Any]:
         return await self.get_links(ids, dbfrom, db, linkname, cmd="neighbor_score")
-    @enhanced_cached(prefix="ncbi_elink_check", data_type="search")
+    @enhanced_cached(key_prefix="ncbi_elink_check")
     async def check_links(self,
                          ids: Union[str, List[str]],
                          dbfrom: str,
@@ -354,7 +354,7 @@ class NCBIClient:
         except Exception as e:
             logger.error(f"Error checking links: {str(e)}")
             raise NCBIClientError(f"Failed to check links: {str(e)}")
-    @enhanced_cached(prefix="ncbi_linkout", data_type="search")
+    @enhanced_cached(key_prefix="ncbi_linkout")
     async def get_linkout_urls(self,
                               ids: Union[str, List[str]],
                               dbfrom: str,
@@ -417,7 +417,7 @@ class NCBIClient:
         except Exception as e:
             logger.error(f"Error getting full-text URL for PMID {pmid}: {str(e)}")
             raise NCBIClientError(f"Failed to get full-text URL: {str(e)}")
-    @enhanced_cached(prefix="pubmed_related", data_type="search")
+    @enhanced_cached(key_prefix="pubmed_related")
     async def get_related_articles(self, pmid: str, max_results: int = 20) -> List[Dict[str, Any]]:
         if not pmid or not pmid.strip():
             raise ValidationError("PMID cannot be empty")
@@ -450,7 +450,7 @@ class NCBIClient:
         except Exception as e:
             logger.error(f"Unexpected error getting related articles for PMID {pmid}: {str(e)}")
             raise NCBIClientError(f"Unexpected error getting related articles: {str(e)}")
-    @enhanced_cached(prefix="pubmed_cited_by", data_type="search")
+    @enhanced_cached(key_prefix="pubmed_cited_by")
     async def get_citing_articles(self, pmid: str, max_results: int = 20) -> List[Dict[str, Any]]:
         if not pmid or not pmid.strip():
             raise ValidationError("PMID cannot be empty")
@@ -481,7 +481,7 @@ class NCBIClient:
         except Exception as e:
             logger.error(f"Unexpected error getting citing articles for PMID {pmid}: {str(e)}")
             raise NCBIClientError(f"Unexpected error getting citing articles: {str(e)}")
-    @enhanced_cached(prefix="pubmed_mesh", data_type="search")
+    @enhanced_cached(key_prefix="pubmed_mesh")
     async def get_mesh_terms(self, pmid: str) -> List[Dict[str, str]]:
         if not pmid or not pmid.strip():
             raise ValidationError("PMID cannot be empty")
@@ -529,7 +529,7 @@ class NCBIClient:
         except Exception as e:
             logger.error(f"Unexpected error getting MeSH terms for PMID {pmid}: {str(e)}")
             raise NCBIClientError(f"Unexpected error getting MeSH terms: {str(e)}")
-    @enhanced_cached(prefix="pubmed_journal_info", data_type="search")
+    @enhanced_cached(key_prefix="pubmed_journal_info")
     async def get_journal_info(self, journal: str) -> Dict[str, Any]:
         if not journal or not journal.strip():
             raise ValidationError("Journal name cannot be empty")
@@ -559,7 +559,7 @@ class NCBIClient:
         except Exception as e:
             logger.error(f"Unexpected error getting journal info for '{journal}': {str(e)}")
             raise NCBIClientError(f"Unexpected error getting journal info: {str(e)}")
-    @enhanced_cached(prefix="sequence_search", data_type="search")
+    @enhanced_cached(key_prefix="sequence_search")
     async def search_sequence_database(self,
                                      query: str,
                                      db: str = "nucleotide",
@@ -609,7 +609,7 @@ class NCBIClient:
         except Exception as e:
             logger.error(f"Unexpected error searching {db} database for '{query}': {str(e)}")
             raise NCBIClientError(f"Unexpected error searching {db} database: {str(e)}")
-    @enhanced_cached(prefix="sequence_fetch", data_type="search")
+    @enhanced_cached(key_prefix="sequence_fetch")
     async def fetch_sequence(self,
                            id: str,
                            db: str = "nucleotide",
@@ -651,7 +651,7 @@ class NCBIClient:
         except Exception as e:
             logger.error(f"Unexpected error fetching sequence {id} from {db} database: {str(e)}")
             raise NCBIClientError(f"Unexpected error fetching sequence: {str(e)}")
-    @enhanced_cached(prefix="taxonomy_fetch", data_type="search")
+    @enhanced_cached(key_prefix="taxonomy_fetch")
     async def get_taxonomy(self, id: Union[str, int]) -> Dict[str, Any]:
         if not id:
             raise ValidationError("Taxonomy ID or name cannot be empty")
@@ -1225,7 +1225,7 @@ class NCBIClient:
         except Exception as e:
             logger.error(f"Unexpected error performing proximity search: {str(e)}")
             raise NCBIClientError(f"Unexpected error performing proximity search: {str(e)}")
-    @enhanced_cached(prefix="pmc_search", data_type="search")
+    @enhanced_cached(key_prefix="pmc_search")
     async def search_pmc(self,
                        query: str,
                        max_results: int = 20,
@@ -1260,7 +1260,7 @@ class NCBIClient:
         except Exception as e:
             logger.error(f"Unexpected error searching PMC for '{query}': {str(e)}")
             raise NCBIClientError(f"Unexpected error searching PMC: {str(e)}")
-    @enhanced_cached(prefix="pmc_fetch", data_type="search")
+    @enhanced_cached(key_prefix="pmc_fetch")
     async def fetch_pmc_article(self, pmcid: str, format: str = "xml") -> str:
         if not pmcid or not pmcid.strip():
             raise ValidationError("PMCID cannot be empty")
@@ -1316,7 +1316,7 @@ class NCBIClient:
         except Exception as e:
             logger.error(f"Error fetching PDF for PMC article {pmcid}: {str(e)}")
             raise NCBIClientError(f"Failed to fetch PDF for PMC article: {str(e)}")
-    @enhanced_cached(prefix="pmc_ids", data_type="search")
+    @enhanced_cached(key_prefix="pmc_ids")
     async def convert_pmid_to_pmcid(self, pmids: Union[str, List[str]]) -> Dict[str, str]:
         if isinstance(pmids, str):
             pmids = [pmids]
@@ -1361,7 +1361,7 @@ class NCBIClient:
         except Exception as e:
             logger.error(f"Unexpected error converting PMIDs to PMCIDs: {str(e)}")
             raise NCBIClientError(f"Unexpected error converting PMIDs to PMCIDs: {str(e)}")
-    @enhanced_cached(prefix="pmc_ids", data_type="search")
+    @enhanced_cached(key_prefix="pmc_ids")
     async def convert_pmcid_to_pmid(self, pmcids: Union[str, List[str]]) -> Dict[str, str]:
         if isinstance(pmcids, str):
             pmcids = [pmcids]
@@ -1412,7 +1412,7 @@ class NCBIClient:
         except Exception as e:
             logger.error(f"Unexpected error converting PMCIDs to PMIDs: {str(e)}")
             raise NCBIClientError(f"Unexpected error converting PMCIDs to PMIDs: {str(e)}")
-    @enhanced_cached(prefix="pmc_extract", data_type="search")
+    @enhanced_cached(key_prefix="pmc_extract")
     async def extract_pmc_article_sections(self, pmcid: str) -> Dict[str, Any]:
         if not pmcid or not pmcid.strip():
             raise ValidationError("PMCID cannot be empty")
@@ -1561,7 +1561,7 @@ class NCBIClient:
             if pub_id_pmid is not None:
                 reference["pmid"] = self._get_element_text(pub_id_pmid)
         return reference
-    @enhanced_cached(prefix="pmc_search_fetch", data_type="search")
+    @enhanced_cached(key_prefix="pmc_search_fetch")
     async def search_and_fetch_pmc(self,
                                  query: str,
                                  max_results: int = 20,
@@ -1618,7 +1618,7 @@ class NCBIClient:
         except Exception as e:
             logger.error(f"Unexpected error in search_and_fetch_pmc for '{query}': {str(e)}")
             raise NCBIClientError(f"Unexpected error searching and fetching PMC articles: {str(e)}")
-    @enhanced_cached(prefix="pmc_batch_fetch", data_type="search")
+    @enhanced_cached(key_prefix="pmc_batch_fetch")
     async def batch_fetch_pmc_articles(self,
                                      pmcids: List[str],
                                      include_full_text: bool = False,
@@ -1753,7 +1753,7 @@ class NCBIClient:
                     raise NCBIClientError(error_msg, response.status_code)
                 result = response.json() if return_json else response.text
                 if self.use_cache and cache_key:
-                    await enhanced_cache_manager.set(cache_key, result, ttl=self.cache_ttl, data_type="search")
+                    await enhanced_cache_manager.set(cache_key, result, ttl=self.cache_ttl)
                 return result
             except httpx.RequestError as e:
                 error_msg = f"Network error: {str(e)}"
@@ -1773,7 +1773,7 @@ class NCBIClient:
                 error_msg = f"Unexpected error: {str(e)}"
                 logger.error(f"{error_msg} for {url}")
                 raise NCBIClientError(error_msg)
-    @enhanced_cached(prefix="pubmed_search", data_type="search")
+    @enhanced_cached(key_prefix="pubmed_search")
     async def search_pubmed(
         self,
         query: str,
@@ -1871,7 +1871,7 @@ class NCBIClient:
                         logger.warning(f"PMID {pmid} not found in response")
                         errors.append(f"PMID {pmid} not found")
                 if self.use_cache and batch_articles:
-                    await enhanced_cache_manager.set(batch_key, batch_articles, ttl=self.cache_ttl, data_type="search")
+                    await enhanced_cache_manager.set(batch_key, batch_articles, ttl=self.cache_ttl)
                 all_articles.extend(batch_articles)
                 logger.info(f"Fetched details for {len(batch_articles)} articles in batch {batch_index+1}/{len(batches)}")
             except NCBIClientError as e:
@@ -1952,7 +1952,7 @@ class NCBIClient:
                         abstract_text = xml_text[abstract_start + 14:abstract_end]
                         batch_abstracts[pmid] = abstract_text
                 if self.use_cache and batch_abstracts:
-                    await enhanced_cache_manager.set(batch_key, batch_abstracts, ttl=self.cache_ttl, data_type="search")
+                    await enhanced_cache_manager.set(batch_key, batch_abstracts, ttl=self.cache_ttl)
                 all_abstracts.update(batch_abstracts)
                 logger.info(f"Fetched abstracts for {len(batch_abstracts)}/{len(batch)} articles in batch {batch_index+1}/{len(batches)}")
                 missing_abstracts = [pmid for pmid in batch if pmid not in batch_abstracts]
@@ -1979,7 +1979,7 @@ class NCBIClient:
         elif errors and not all_abstracts:
             raise NCBIClientError(f"Failed to fetch any article abstracts: {'; '.join(errors[:3])}{'...' if len(errors) > 3 else ''}")
         return all_abstracts
-    @enhanced_cached(prefix="pubmed_abstracts", data_type="search")
+    @enhanced_cached(key_prefix="pubmed_abstracts")
     async def fetch_pubmed_abstracts(
         self,
         id_list: Optional[List[str]] = None,
@@ -2022,7 +2022,7 @@ class NCBIClient:
         except Exception as e:
             logger.error(f"Unexpected error fetching PubMed abstracts: {str(e)}")
             raise NCBIClientError(f"Unexpected error fetching PubMed abstracts: {str(e)}")
-    @enhanced_cached(prefix="pubmed_search_fetch", data_type="search")
+    @enhanced_cached(key_prefix="pubmed_search_fetch")
     async def search_and_fetch_pubmed(
         self,
         query: str,

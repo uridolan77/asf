@@ -15,7 +15,7 @@ import logging
 from dotenv import load_dotenv
 from typing import Dict, Any, List
 
-from asf.medical.clients.umls_client import UMLSClient
+from .umls_client import UMLSClient
 
 # Set up logging
 logging.basicConfig(

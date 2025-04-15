@@ -32,7 +32,7 @@ import inspect
 from abc import ABC, abstractmethod
 from typing import Dict, Any, List, Callable, Optional, Type, TypeVar, Generic, Union
 from datetime import datetime
-from asf.medical.core.logging_config import get_logger
+from .logging_config import get_logger
 
 logger = get_logger(__name__)
 T = TypeVar('T')

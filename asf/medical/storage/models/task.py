@@ -5,10 +5,9 @@ This module defines SQLAlchemy models for tasks and task status.
 import enum
 from datetime import datetime
 from typing import Dict, Any
-from sqlalchemy import Column
-from asf.medical.core.exceptions import Integer, String, DateTime, Float, JSON, ForeignKey, Enum, Text, Boolean
+from sqlalchemy import Column, Integer, String, DateTime, Float, ForeignKey, Text, Boolean, JSON, Enum
 from sqlalchemy.orm import relationship
-from asf.medical.storage.database import Base
+from ..database import Base
 class TaskStatus(str, enum.Enum):
     """Task status enum."""
     PENDING = "pending"

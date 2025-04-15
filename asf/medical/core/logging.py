@@ -24,7 +24,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from typing import Dict, Any
 import contextvars
 
-from asf.medical.core.config import settings
+from .config import settings
 
 class RequestIdMiddleware(BaseHTTPMiddleware):
     """

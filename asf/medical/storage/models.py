@@ -14,10 +14,10 @@ Models:
 - Contradiction: Model for storing detected contradictions
 """
 from sqlalchemy import Column
-from asf.medical.core.exceptions import Integer, String, Float, DateTime, ForeignKey, Boolean, JSON, Text
+from ..core.exceptions import Integer, String, Float, DateTime, ForeignKey, Boolean, JSON, Text
 from sqlalchemy.orm import relationship
 import datetime
-from asf.medical.storage.database import Base
+from database import Base
 class User(Base):
     """
     User model for authentication and authorization.

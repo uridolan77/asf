@@ -8,11 +8,11 @@ from fastapi import APIRouter, Depends, Request, Response
 from typing import Dict, List, Optional, Any
 from pydantic import BaseModel, Field
 
-from asf.medical.ml.services.unified_contradiction_service import ContradictionService
-from asf.medical.api.dependencies import get_contradiction_service, get_current_active_user
-from asf.medical.api.models.base import APIResponse
-from asf.medical.storage.models import User
-from asf.medical.core.observability import async_timed
+from ...ml.services.contradiction_service import ContradictionService
+from ..dependencies import get_contradiction_service, get_current_active_user
+from ..models.base import APIResponse
+from ...storage.models import User
+from ...core.observability import async_timed
 
 router = APIRouter(prefix="/contradiction", tags=["contradiction"])
 

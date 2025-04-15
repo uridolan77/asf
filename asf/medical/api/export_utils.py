@@ -23,7 +23,7 @@ from datetime import datetime
 from fastapi.responses import JSONResponse, StreamingResponse, FileResponse
 from fpdf import FPDF
 
-from asf.medical.core.exceptions import ValidationError, ExportError
+from ..core.exceptions import ValidationError, ExportError
 
 logger = logging.getLogger(__name__)
 

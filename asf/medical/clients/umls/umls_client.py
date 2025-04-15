@@ -11,7 +11,7 @@ import hashlib
 from typing import Dict, List, Optional, Any, Union
 from datetime import datetime, timedelta
 import httpx
-from asf.medical.core.enhanced_cache import enhanced_cache_manager, enhanced_cached
+from ...core.enhanced_cache import enhanced_cache_manager, enhanced_cached
 
 logger = logging.getLogger(__name__)
 
@@ -255,7 +255,7 @@ class UMLSClient:
             logger.error(error_msg)
             raise UMLSClientError(error_msg)
     
-    @enhanced_cached(prefix="umls_search", data_type="umls")
+    @enhanced_cached(key_prefix="umls_search")
     async def search(
         self, 
         query: str, 
@@ -325,7 +325,7 @@ class UMLSClient:
         
         return response.get('result', {}).get('results', [])
     
-    @enhanced_cached(prefix="umls_concept", data_type="umls")
+    @enhanced_cached(key_prefix="umls_concept")
     async def get_concept(self, concept_id: str) -> Optional[Dict[str, Any]]:
         """
         Get details for a specific UMLS concept.
@@ -365,7 +365,7 @@ class UMLSClient:
         
         return response.get('result', {})
     
-    @enhanced_cached(prefix="umls_atoms", data_type="umls")
+    @enhanced_cached(key_prefix="umls_atoms")
     async def get_concept_atoms(self, concept_id: str) -> List[Dict[str, Any]]:
         """
         Get atoms for a specific UMLS concept.
@@ -405,7 +405,7 @@ class UMLSClient:
         
         return response.get('result', [])
     
-    @enhanced_cached(prefix="umls_definitions", data_type="umls")
+    @enhanced_cached(key_prefix="umls_definitions")
     async def get_concept_definitions(self, concept_id: str) -> List[Dict[str, Any]]:
         """
         Get definitions for a specific UMLS concept.
@@ -445,7 +445,7 @@ class UMLSClient:
         
         return response.get('result', [])
     
-    @enhanced_cached(prefix="umls_relations", data_type="umls")
+    @enhanced_cached(key_prefix="umls_relations")
     async def get_concept_relations(self, concept_id: str) -> List[Dict[str, Any]]:
         """
         Get relations for a specific UMLS concept.
@@ -485,7 +485,7 @@ class UMLSClient:
         
         return response.get('result', [])
     
-    @enhanced_cached(prefix="umls_semantic_types", data_type="umls")
+    @enhanced_cached(key_prefix="umls_semantic_types")
     async def get_semantic_types(self, concept_id: str) -> List[Dict[str, Any]]:
         """
         Get semantic types for a specific UMLS concept.

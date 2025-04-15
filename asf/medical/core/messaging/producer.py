@@ -9,8 +9,8 @@ from datetime import datetime
 
 from aio_pika import DeliveryMode
 
-from asf.medical.core.logging_config import get_logger
-from asf.medical.core.messaging.rabbitmq_broker import (
+from ..logging_config import get_logger
+from .rabbitmq_broker import (
     RabbitMQBroker, get_rabbitmq_broker, MessagePriority
 )
 

@@ -11,7 +11,7 @@ Classes:
 import inspect
 from typing import Dict, Type, TypeVar, Optional, Any, Callable, List, Set
 from fastapi import Depends
-from asf.medical.core.logging_config import get_logger
+from .logging_config import get_logger
 
 T = TypeVar('T')
 logger = get_logger(__name__)

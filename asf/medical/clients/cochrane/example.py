@@ -15,7 +15,7 @@ from typing import Dict, Any, Optional, List
 # Add the parent directory to the path to allow importing the client
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
 
-from asf.medical.clients.cochrane import CochraneClient
+from .cochrane_client import CochraneClient
 
 # Configure logging
 logging.basicConfig(

@@ -12,23 +12,23 @@ from fastapi.openapi.docs import get_redoc_html
 from fastapi.openapi.utils import get_openapi
 from contextlib import asynccontextmanager
 
-from asf.medical.storage.models import User
-from asf.medical.api.dependencies import get_admin_user
+from ..storage.models import User
+from .dependencies import get_admin_user
 
-from asf.medical.core.logging_config import get_logger
-from asf.medical.api.middleware import MonitoringMiddleware
-from asf.medical.core.observability import setup_monitoring, get_metrics, run_health_checks
-from asf.medical.core.service_initialization import initialize_services
-from asf.medical.core.redis_event_broker import initialize_event_system, shutdown_event_system
-from asf.medical.core.messaging.initialization import initialize_messaging_system, shutdown_messaging_system
+from ..core.logging_config import get_logger
+from .middleware import MonitoringMiddleware
+from ..core.observability import setup_monitoring, get_metrics, run_health_checks
+from ..core.service_initialization import initialize_services
+from ..core.redis_event_broker import initialize_event_system, shutdown_event_system
+from ..core.messaging.initialization import initialize_messaging_system, shutdown_messaging_system
 logger = get_logger(__name__)
 
 # Check if middleware modules are available
 try:
     # Import middleware modules to check availability
-    from asf.medical.api.middleware.admin_middleware import add_admin_middleware
-    from asf.medical.api.middleware.login_rate_limit_middleware import add_login_rate_limit_middleware
-    from asf.medical.api.middleware.csrf_middleware import add_csrf_middleware
+    from .middleware.admin_middleware import add_admin_middleware
+    from .middleware.login_rate_limit_middleware import add_login_rate_limit_middleware
+    from .middleware.csrf_middleware import add_csrf_middleware
     middleware_available = True
 except ImportError as e:
     logger.warning(f"Middleware modules not found: {str(e)}. Some security features will be disabled.")
@@ -43,36 +43,36 @@ except ImportError as e:
     def add_csrf_middleware(app, **kwargs):
         pass
 
-from asf.medical.api.routers.auth import router as auth_router
-from asf.medical.api.routers.search import router as search_router
-from asf.medical.api.routers.contradiction import router as contradiction_router
-from asf.medical.api.routers.contradiction_resolution import router as contradiction_resolution_router
-from asf.medical.api.routers.screening import router as screening_router
-from asf.medical.api.routers.export import router as export_router
-from asf.medical.api.routers.analysis import router as analysis_router
-from asf.medical.api.routers.knowledge_base import router as knowledge_base_router
-from asf.medical.api.routers.terminology import router as terminology_router
-from asf.medical.api.routers.clinical_data import router as clinical_data_router
-from asf.medical.api.routers.async_ml import router as async_ml_router
-from asf.medical.api.routers.model_cache import router as model_cache_router
-from asf.medical.api.routers.task_management import router as task_management_router
-from asf.medical.api.routers.resource_monitoring import router as resource_monitoring_router
-from asf.medical.api.routers.messaging_tasks import router as messaging_tasks_router
-from asf.medical.api.routers.websockets import router as websockets_router
-from asf.medical.api.routers.task_repository_api import router as task_repository_api_router
-from asf.medical.api.routers.messaging_metrics import router as messaging_metrics_router
-from asf.medical.api.static import router as static_router
-from asf.medical.core.config import settings
-from asf.medical.core.enhanced_cache import EnhancedCacheManager
+from routers.auth import router as auth_router
+from routers.search import router as search_router
+from .routers.contradiction import router as contradiction_router
+from .routers.contradiction_resolution import router as contradiction_resolution_router
+from .routers.screening import router as screening_router
+from .routers.export import router as export_router
+from .routers.analysis import router as analysis_router
+from .routers.knowledge_base import router as knowledge_base_router
+from .routers.terminology import router as terminology_router
+from .routers.clinical_data import router as clinical_data_router
+from .routers.async_ml import router as async_ml_router
+from .routers.model_cache import router as model_cache_router
+from .routers.task_management import router as task_management_router
+from .routers.resource_monitoring import router as resource_monitoring_router
+from .routers.messaging_tasks import router as messaging_tasks_router
+from .routers.websockets import router as websockets_router
+from .routers.task_repository_api import router as task_repository_api_router
+from .routers.messaging_metrics import router as messaging_metrics_router
+from .static import router as static_router
+from ..core.config import settings
+from ..core.enhanced_cache import EnhancedCacheManager
 
 # Import our new ML endpoints
-from asf.medical.api.routers import ml_endpoints
+from .routers import ml_endpoints
 
 # Create a global cache manager instance
 cache_manager = EnhancedCacheManager()
-from asf.medical.storage.database import init_db
-from asf.medical.ml.model_registry import model_registry
-from asf.medical.core.exceptions import DatabaseError
+from ..storage.database import init_db
+from ..ml.model_registry import model_registry
+from ..core.exceptions import DatabaseError
 
 logger = get_logger(__name__)
 

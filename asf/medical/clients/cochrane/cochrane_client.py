@@ -15,9 +15,9 @@ from urllib.parse import urljoin
 import httpx
 from bs4 import BeautifulSoup
 
-from asf.medical.core.rate_limiter import AsyncRateLimiter
-from asf.medical.core.enhanced_cache import enhanced_cache_manager, enhanced_cached
-from asf.medical.core.exceptions import ValidationError
+from ...core.rate_limiter import AsyncRateLimiter
+from ...core.enhanced_cache import enhanced_cache_manager, enhanced_cached
+from ...core.exceptions import ValidationError
 
 # Configure logging
 logger = logging.getLogger(__name__)

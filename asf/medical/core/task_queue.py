@@ -18,8 +18,8 @@ import dramatiq
 from dramatiq.brokers.redis import RedisBroker
 from dramatiq.middleware import Middleware, AgeLimit, TimeLimit, Retries
 
-from asf.medical.core.config import settings
-from asf.medical.core.persistent_task_storage import task_storage
+from .config import settings
+from .task_storage import task_storage
 
 logger = logging.getLogger(__name__)
 

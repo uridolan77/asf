@@ -15,7 +15,7 @@ import logging
 from dotenv import load_dotenv
 from pathlib import Path
 
-from asf.medical.clients.umls_downloader import (
+from .umls_downloader import (
     UMLSDownloader,
     RxNormReleaseType,
     SnomedCTReleaseType,

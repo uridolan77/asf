@@ -25,11 +25,12 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.exc import SQLAlchemyError, OperationalError
+from sqlalchemy.pool import NullPool
 from contextlib import contextmanager
 
-from asf.medical.core.config import settings
-from asf.medical.core.exceptions import DatabaseError
-from asf.medical.core.logging_config import get_logger
+from ..core.config import settings
+from ..core.exceptions import DatabaseError
+from ..core.logging_config import get_logger
 
 logger = get_logger(__name__)
 
@@ -165,11 +166,12 @@ else:
         connect_args=connect_args,
         echo=ECHO_SQL,
         future=True,
-        pool_size=POOL_SIZE if not DATABASE_URL.startswith("sqlite") else None,
-        max_overflow=MAX_OVERFLOW if not DATABASE_URL.startswith("sqlite") else None,
-        pool_timeout=POOL_TIMEOUT if not DATABASE_URL.startswith("sqlite") else None,
-        pool_recycle=POOL_RECYCLE if not DATABASE_URL.startswith("sqlite") else None,
-        pool_pre_ping=True if not DATABASE_URL.startswith("sqlite") else False,
+        # For SQLite, we should skip pool settings entirely rather than setting to None
+        **({"pool_size": POOL_SIZE,
+           "max_overflow": MAX_OVERFLOW,
+           "pool_timeout": POOL_TIMEOUT,
+           "pool_recycle": POOL_RECYCLE,
+           "pool_pre_ping": True} if not DATABASE_URL.startswith("sqlite") else {"poolclass": NullPool})
     )
 
     # Create sync session factory

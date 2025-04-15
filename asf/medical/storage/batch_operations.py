@@ -10,8 +10,8 @@ from sqlalchemy import insert, update, delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import SQLAlchemyError
-from asf.medical.storage.database import is_async
-from asf.medical.core.exceptions import DatabaseError
+from database import is_async
+from ..core.exceptions import DatabaseError
 logger = logging.getLogger(__name__)
 T = TypeVar('T')
 class BatchOperations:

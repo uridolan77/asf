@@ -9,8 +9,8 @@ from typing import Dict, Any, Optional
 
 logger = logging.getLogger(__name__)
 
-# Import base cache functionality
-from asf.medical.core.cache import (
+# Import base cache functionality first
+from .cache import (
     CacheManager,
     get_cache_manager,
     cached,
@@ -18,15 +18,14 @@ from asf.medical.core.cache import (
 )
 
 # Import enhanced cache functionality
-from asf.medical.core.enhanced_cache import (
+# The enhanced_cache_manager is already created in enhanced_cache.py
+from .enhanced_cache import (
     EnhancedCacheManager,
     get_enhanced_cache_manager,
     enhanced_cached,
-    DataSensitivity
+    DataSensitivity,
+    enhanced_cache_manager
 )
-
-# Create enhanced cache manager instance
-enhanced_cache_manager = get_enhanced_cache_manager()
 
 __all__ = [
     'CacheManager',

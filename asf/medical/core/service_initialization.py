@@ -14,8 +14,8 @@ Functions:
 """
 
 from typing import Any, Dict, List
-from asf.medical.core.service_registry import _registry as registry
-from asf.medical.core.logging_config import get_logger
+from .service_registry import _registry as registry
+from .logging_config import get_logger
 
 logger = get_logger(__name__)
 
@@ -52,10 +52,10 @@ def _register_repositories():
     This function registers repository classes as factories in the service registry.
     Repositories are responsible for data access and storage operations.
     """
-    from asf.medical.storage.repositories.user_repository import UserRepository
-    from asf.medical.storage.repositories.query_repository import QueryRepository
-    from asf.medical.storage.repositories.result_repository import ResultRepository
-    from asf.medical.storage.repositories.kb_repository import KnowledgeBaseRepository
+    from ..storage.repositories.user_repository import UserRepository
+    from ..storage.repositories.query_repository import QueryRepository
+    from ..storage.repositories.result_repository import ResultRepository
+    from ..storage.repositories.kb_repository import KnowledgeBaseRepository
 
     # Register repositories as factories (they don't have dependencies)
     registry.register_factory(UserRepository, lambda: UserRepository())
@@ -72,15 +72,15 @@ def _register_services():
     This function registers service classes with their dependencies in the service registry.
     Services provide the core business logic of the application.
     """
-    from asf.medical.services.auth_service import AuthService
-    from asf.medical.services.search_service import SearchService
-    from asf.medical.services.analysis_service import AnalysisService
-    from asf.medical.services.export_service import ExportService
-    from asf.medical.services.knowledge_base_service import KnowledgeBaseService
-    from asf.medical.storage.repositories.user_repository import UserRepository
-    from asf.medical.storage.repositories.query_repository import QueryRepository
-    from asf.medical.storage.repositories.result_repository import ResultRepository
-    from asf.medical.storage.repositories.kb_repository import KnowledgeBaseRepository
+    from ..services.auth_service import AuthService
+    from ..services.search_service import SearchService
+    from ..services.analysis_service import AnalysisService
+    from ..services.export_service import ExportService
+    from ..services.knowledge_base_service import KnowledgeBaseService
+    from ..storage.repositories.user_repository import UserRepository
+    from ..storage.repositories.query_repository import QueryRepository
+    from ..storage.repositories.result_repository import ResultRepository
+    from ..storage.repositories.kb_repository import KnowledgeBaseRepository
 
     # Register services with their dependencies
     registry.register_factory(
@@ -122,9 +122,9 @@ def _register_ml_services():
     ML services provide advanced data processing and analysis capabilities.
     """
     try:
-        from asf.medical.ml.services.contradiction_service import ContradictionService
-        from asf.medical.ml.services.prisma_screening_service import PRISMAScreeningService
-        from asf.medical.ml.services.bias_assessment_service import BiasAssessmentService
+        from ..ml.services.contradiction_service import ContradictionService
+        from ..ml.services.prisma_screening_service import PRISMAScreeningService
+        from ..ml.services.bias_assessment_service import BiasAssessmentService
 
         # Register ML services
         registry.register_factory(

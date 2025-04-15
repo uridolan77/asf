@@ -4,11 +4,11 @@ Messaging system initialization for the Medical Research Synthesizer.
 This module provides functions for initializing the messaging system,
 including setting up exchanges, queues, and bindings.
 """
-from asf.medical.core.logging_config import get_logger
-from asf.medical.core.messaging.rabbitmq_broker import get_rabbitmq_broker
-from asf.medical.core.messaging.producer import get_message_producer
-from asf.medical.core.messaging.consumer import get_message_consumer
-from asf.medical.core.messaging.schemas import EventType, TaskType, CommandType
+from ..logging_config import get_logger
+from .rabbitmq_broker import get_rabbitmq_broker
+from .producer import get_message_producer
+from .consumer import get_message_consumer
+from .schemas import EventType, TaskType, CommandType
 
 logger = get_logger(__name__)
 

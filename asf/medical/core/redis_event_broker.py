@@ -13,9 +13,9 @@ import json
 import asyncio
 from typing import Dict, Any, List, Callable, Set
 import redis.asyncio as redis
-from asf.medical.core.events import Event, EventBroker, event_bus
-from asf.medical.core.config import settings
-from asf.medical.core.logging_config import get_logger
+from .events import Event, EventBroker, event_bus
+from .config import settings
+from .logging_config import get_logger
 
 logger = get_logger(__name__)
 

@@ -12,8 +12,8 @@ from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp, Receive, Scope, Send
 
-from asf.medical.core.observability import log_request, increment_counter
-from asf.medical.core.exceptions import APIError
+from ..core.observability import log_request, increment_counter
+from ..core.exceptions import APIError
 
 
 logger = logging.getLogger(__name__)

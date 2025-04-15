@@ -10,10 +10,10 @@ from sqlalchemy.future import select
 from sqlalchemy.sql import delete, update
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from sqlalchemy import func
-from asf.medical.core.exceptions import (
+from ...core.exceptions import (
     DatabaseError, NotFoundError, DuplicateError, RepositoryError
 )
-from asf.medical.core.logging_config import get_logger
+from ...core.logging_config import get_logger
 T = TypeVar('T')
 class AsyncRepository(Generic[T]):
     """

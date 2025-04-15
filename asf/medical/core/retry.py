@@ -30,7 +30,7 @@ from tenacity import (
     before_sleep_log,
 )
 
-from asf.medical.core.exceptions import ExternalServiceError, DatabaseError
+from .exceptions import ExternalServiceError, DatabaseError
 
 logger = logging.getLogger(__name__)
 

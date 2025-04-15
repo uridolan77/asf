@@ -8,10 +8,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from typing import Dict, List, Optional, Any
 from pydantic import BaseModel
 
-from asf.medical.ml.services.resolution.contradiction_resolution_service import MedicalContradictionResolutionService
-from asf.medical.ml.services.resolution.resolution_models import ResolutionStrategy
+from ...ml.services.resolution.contradiction_resolution_service import MedicalContradictionResolutionService
+from ...ml.services.resolution.resolution_models import ResolutionStrategy
 
-from asf.medical.api.dependencies import get_current_user
+from ..dependencies import get_current_user
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +40,7 @@ router = APIRouter(
     responses={404: {"description": "Not found"}}
 )
 
-from asf.medical.api.dependencies import get_contradiction_service
+from ..dependencies import get_contradiction_service
 
 contradiction_service = get_contradiction_service()
 resolution_service = MedicalContradictionResolutionService()

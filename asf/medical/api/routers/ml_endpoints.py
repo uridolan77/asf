@@ -6,7 +6,7 @@ including claim extraction, biomedical language models, and other ML features.
 """
 
 from fastapi import APIRouter, Depends
-from asf.medical.api.claim_extractor_api import claim_api
+from ..claim_extractor_api import claim_api
 
 # Create the router
 router = APIRouter(prefix="/api/ml", tags=["ml-models"])

@@ -6,9 +6,9 @@ from typing import Dict, List
 from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from pydantic import BaseModel, Field
-from asf.medical.core.logging_config import get_logger
-from asf.medical.api.dependencies import get_admin_user
-from asf.medical.storage.models import User
+from ...core.logging_config import get_logger
+from ..dependencies import get_admin_user
+from ...storage.models import User
 logger = get_logger(__name__)
 router = APIRouter(prefix="/v1/messaging-metrics", tags=["messaging-metrics"])
 class MetricsDataPoint(BaseModel):

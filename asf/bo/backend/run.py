@@ -27,6 +27,26 @@ try:
 except Exception as e:
     print(f"Could not create .pth file: {e}")
 
+# Create __init__.py files if needed to ensure directories are treated as packages
+def ensure_package_structure(start_dir):
+    for root, dirs, files in os.walk(start_dir):
+        # Skip directories that start with . (hidden directories)
+        # and directories that are likely not meant to be Python packages
+        dirs[:] = [d for d in dirs if not d.startswith('.') and d not in ('__pycache__', 'node_modules', 'venv', '.git')]
+        
+        # Create __init__.py if not exists
+        init_file = os.path.join(root, '__init__.py')
+        if not os.path.exists(init_file):
+            try:
+                with open(init_file, 'w') as f:
+                    f.write("# Auto-generated __init__.py file\n")
+                print(f"Created {init_file}")
+            except Exception as e:
+                print(f"Could not create {init_file}: {e}")
+
+# Make sure all directories in the project are treated as packages
+ensure_package_structure(project_root)
+
 if __name__ == '__main__':
     import uvicorn
     from sqlalchemy import text

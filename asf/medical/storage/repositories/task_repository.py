@@ -8,10 +8,10 @@ import uuid
 from sqlalchemy import and_, or_, func, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from asf.medical.storage.models.task import Task, TaskEvent, DeadLetterMessage, TaskStatus
-from asf.medical.storage.repositories.enhanced_base_repository import EnhancedBaseRepository
-from asf.medical.core.exceptions import DatabaseError
-from asf.medical.core.logging_config import get_logger
+from ..models.task import Task, TaskEvent, DeadLetterMessage, TaskStatus
+from .enhanced_base_repository import EnhancedBaseRepository
+from ...core.exceptions import DatabaseError
+from ...core.logging_config import get_logger
 logger = get_logger(__name__)
 class TaskRepository(EnhancedBaseRepository[Task]):
     """

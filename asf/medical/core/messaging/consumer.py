@@ -5,9 +5,9 @@ This module provides a message consumer for consuming messages from the message 
 from typing import Dict, Any, List, Set, TypeVar
 from abc import ABC, abstractmethod
 from aio_pika.abc import AbstractIncomingMessage
-from asf.medical.core.logging_config import get_logger
-from asf.medical.core.messaging.rabbitmq_broker import RabbitMQBroker, get_rabbitmq_broker
-from asf.medical.core.messaging.producer import MessageProducer, get_message_producer
+from ..logging_config import get_logger
+from .rabbitmq_broker import RabbitMQBroker, get_rabbitmq_broker
+from .producer import MessageProducer, get_message_producer
 logger = get_logger(__name__)
 T = TypeVar('T')
 class MessageHandler(ABC):

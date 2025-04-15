@@ -25,12 +25,7 @@ import hashlib
 from typing import Dict, Any, Optional, List, Callable, TypeVar, Union, Tuple
 
 # Import cache functionality
-# Note: These imports are done in a way to avoid circular imports
-# The actual imports will be handled by cache_init.py
-from asf.medical.core.cache import CacheManager, get_cache_manager, get_cache_key
-
-# Create a global instance of the enhanced cache manager
-enhanced_cache_manager = EnhancedCacheManager()
+from .cache import CacheManager, get_cache_manager, get_cache_key
 
 logger = logging.getLogger(__name__)
 T = TypeVar('T')
@@ -404,3 +399,7 @@ def enhanced_cached(
         return wrapper
 
     return decorator
+
+# Create a global instance of the enhanced cache manager - AFTER the class is defined
+enhanced_cache_manager = get_enhanced_cache_manager()
+

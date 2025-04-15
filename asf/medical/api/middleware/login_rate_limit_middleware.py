@@ -11,7 +11,7 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
 
-from asf.medical.core.rate_limiter import enhanced_rate_limiter
+from ...core.rate_limiter import enhanced_rate_limiter
 
 logger = logging.getLogger(__name__)
 

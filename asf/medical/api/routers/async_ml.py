@@ -8,15 +8,15 @@ import json
 from typing import Dict, List, Any, Optional
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 
-from asf.medical.api.auth import get_current_active_user
-from asf.medical.api.models.base import APIResponse
-from asf.medical.storage.models import User
-from asf.medical.tasks.ml_inference_tasks import (
+from ..auth import get_current_active_user
+from ..models.base import APIResponse
+from ...storage.models import User
+from ...tasks.ml_inference_tasks import (
     detect_contradiction, analyze_contradictions_in_articles,
     generate_embeddings, get_task_result
 )
-from asf.medical.core.task_storage import task_storage
-from asf.medical.core.observability import async_timed, log_error
+from ...core.task_storage import task_storage
+from ...core.observability import async_timed, log_error
 
 router = APIRouter(prefix="/async-ml", tags=["async-ml"])
 

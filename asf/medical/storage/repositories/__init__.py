@@ -3,7 +3,7 @@
 This package provides repositories for database operations in the Medical Research Synthesizer.
 """
 
-from asf.medical.storage.repositories.base_repository import BaseRepository
+from asf.medical.storage.repositories.base_repository import AsyncRepository as BaseRepository
 from asf.medical.storage.repositories.enhanced_base_repository import EnhancedBaseRepository
 from asf.medical.storage.repositories.kb_repository import KnowledgeBaseRepository
 from asf.medical.storage.repositories.query_repository import QueryRepository
