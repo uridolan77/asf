@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Box, 
@@ -15,7 +15,9 @@ import {
   Psychology as PsychologyIcon,
   Biotech as BiotechIcon,
   BarChart as BarChartIcon,
-  Refresh as RefreshIcon
+  Refresh as RefreshIcon,
+  Cloud as CloudIcon,
+  Memory as MemoryIcon
 } from '@mui/icons-material';
 
 import PageLayout from '../../components/Layout/PageLayout';
@@ -24,11 +26,13 @@ import apiService from '../../services/api';
 import { useNotification } from '../../context/NotificationContext';
 import useApi from '../../hooks/useApi';
 
-// Import LLM components
-import GatewayDashboard from './GatewayDashboard';
-import DSPyDashboard from './DSPyDashboard';
-import BiomedLMDashboard from './BiomedLMDashboard';
-import UsageDashboard from './UsageDashboard';
+// Lazy load all components to avoid circular dependencies
+const GatewayDashboard = lazy(() => import('./GatewayDashboard'));
+const DSPyDashboard = lazy(() => import('./DSPyDashboard'));
+const BiomedLMDashboard = lazy(() => import('./BiomedLMDashboard'));
+const UsageDashboard = lazy(() => import('./UsageDashboard'));
+const ProviderManagement = lazy(() => import('../../components/LLM/Providers/ProviderManagement'));
+const ModelManagement = lazy(() => import('../../components/LLM/Models/ModelManagement'));
 
 /**
  * LLM Management page with tabs for different LLM components
@@ -50,7 +54,7 @@ const LLMManagement = () => {
     error: userError,
     execute: fetchUser 
   } = useApi(apiService.auth.me, {
-    loadOnMount: true,
+    params: { loadOnMount: true }, // FIX: pass loadOnMount inside params
     onSuccess: (data) => {
       setUser(data);
       setLoading(false);
@@ -191,68 +195,105 @@ const LLMManagement = () => {
             value={activeTab} 
             onChange={handleTabChange} 
             aria-label="LLM management tabs"
-            variant="fullWidth"
+            variant="scrollable"
+            scrollButtons="auto"
           >
             <Tab 
-              icon={<SmartToyIcon />} 
-              label="LLM Gateway" 
+              icon={<CloudIcon />} 
+              label="Providers" 
               id="tab-0" 
               aria-controls="tabpanel-0" 
             />
             <Tab 
-              icon={<PsychologyIcon />} 
-              label="DSPy" 
+              icon={<MemoryIcon />} 
+              label="Models" 
               id="tab-1" 
               aria-controls="tabpanel-1" 
             />
             <Tab 
-              icon={<BiotechIcon />} 
-              label="BiomedLM" 
+              icon={<SmartToyIcon />} 
+              label="Gateway" 
               id="tab-2" 
               aria-controls="tabpanel-2" 
             />
             <Tab 
-              icon={<BarChartIcon />} 
-              label="Usage" 
+              icon={<PsychologyIcon />} 
+              label="DSPy" 
               id="tab-3" 
               aria-controls="tabpanel-3" 
+            />
+            <Tab 
+              icon={<BiotechIcon />} 
+              label="BiomedLM" 
+              id="tab-4" 
+              aria-controls="tabpanel-4" 
+            />
+            <Tab 
+              icon={<BarChartIcon />} 
+              label="Usage" 
+              id="tab-5" 
+              aria-controls="tabpanel-5" 
             />
           </Tabs>
         </Box>
 
         <Box role="tabpanel" hidden={activeTab !== 0} id="tabpanel-0" aria-labelledby="tab-0" sx={{ p: 3 }}>
           {activeTab === 0 && (
-            <GatewayDashboard 
-              status={llmStatus?.components?.gateway} 
-              onRefresh={loadLlmStatus}
-            />
+            <Suspense fallback={<ContentLoader />}>
+              <ProviderManagement />
+            </Suspense>
           )}
         </Box>
 
         <Box role="tabpanel" hidden={activeTab !== 1} id="tabpanel-1" aria-labelledby="tab-1" sx={{ p: 3 }}>
           {activeTab === 1 && (
-            <DSPyDashboard 
-              status={llmStatus?.components?.dspy}
-              onRefresh={loadLlmStatus}
-            />
+            <Suspense fallback={<ContentLoader />}>
+              <ModelManagement />
+            </Suspense>
           )}
         </Box>
 
         <Box role="tabpanel" hidden={activeTab !== 2} id="tabpanel-2" aria-labelledby="tab-2" sx={{ p: 3 }}>
           {activeTab === 2 && (
-            <BiomedLMDashboard 
-              status={llmStatus?.components?.biomedlm}
-              onRefresh={loadLlmStatus}
-            />
+            <Suspense fallback={<ContentLoader />}>
+              <GatewayDashboard 
+                status={llmStatus?.components?.gateway} 
+                onRefresh={loadLlmStatus}
+              />
+            </Suspense>
+          )}
+        </Box>
+
+        <Box role="tabpanel" hidden={activeTab !== 3} id="tabpanel-3" aria-labelledby="tab-3" sx={{ p: 3 }}>
+          {activeTab === 3 && (
+            <Suspense fallback={<ContentLoader />}>
+              <DSPyDashboard 
+                status={llmStatus?.components?.dspy}
+                onRefresh={loadLlmStatus}
+              />
+            </Suspense>
+          )}
+        </Box>
+
+        <Box role="tabpanel" hidden={activeTab !== 4} id="tabpanel-4" aria-labelledby="tab-4" sx={{ p: 3 }}>
+          {activeTab === 4 && (
+            <Suspense fallback={<ContentLoader />}>
+              <BiomedLMDashboard 
+                status={llmStatus?.components?.biomedlm}
+                onRefresh={loadLlmStatus}
+              />
+            </Suspense>
           )}
         </Box>
         
-        <Box role="tabpanel" hidden={activeTab !== 3} id="tabpanel-3" aria-labelledby="tab-3" sx={{ p: 3 }}>
-          {activeTab === 3 && (
-            <UsageDashboard 
-              status={llmStatus}
-              onRefresh={loadLlmStatus}
-            />
+        <Box role="tabpanel" hidden={activeTab !== 5} id="tabpanel-5" aria-labelledby="tab-5" sx={{ p: 3 }}>
+          {activeTab === 5 && (
+            <Suspense fallback={<ContentLoader />}>
+              <UsageDashboard 
+                status={llmStatus}
+                onRefresh={loadLlmStatus}
+              />
+            </Suspense>
           )}
         </Box>
       </Paper>

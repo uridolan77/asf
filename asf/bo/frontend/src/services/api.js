@@ -193,10 +193,18 @@ const apiService = {
     getProviders: () => apiCall('get', '/api/llm/gateway/providers'),
     getProvider: (providerId) => apiCall('get', `/api/llm/gateway/providers/${providerId}`),
     updateProvider: (providerId, updateData) => apiCall('put', `/api/llm/gateway/providers/${providerId}`, updateData),
+    registerProvider: (providerData) => apiCall('post', '/api/llm/gateway/providers', providerData),
+    deleteProvider: (providerId) => apiCall('delete', `/api/llm/gateway/providers/${providerId}`),
     testProvider: (providerId) => apiCall('post', `/api/llm/gateway/providers/${providerId}/test`),
+    
+    // Model management endpoints
+    getModels: (providerId = null, modelType = null) => apiCall('get', '/api/llm/gateway/models', { provider_id: providerId, model_type: modelType }),
+    getModel: (modelId, providerId) => apiCall('get', `/api/llm/gateway/models/${modelId}`, { provider_id: providerId }),
+    createModel: (modelData) => apiCall('post', '/api/llm/gateway/models', modelData),
+    updateModel: (modelId, providerId, updateData) => apiCall('put', `/api/llm/gateway/models/${modelId}`, { ...updateData, provider_id: providerId }),
+    deleteModel: (modelId, providerId) => apiCall('delete', `/api/llm/gateway/models/${modelId}`, { provider_id: providerId }),
+    
     generateLLMResponse: (requestData) => apiCall('post', '/api/llm/gateway/generate', requestData),
-    getGatewayConfig: () => apiCall('get', '/api/llm/gateway/config'),
-    updateGatewayConfig: (config) => apiCall('put', '/api/llm/gateway/config', config),
 
     // DSPy endpoints
     getDspyModules: () => apiCall('get', '/api/llm/dspy/modules'),

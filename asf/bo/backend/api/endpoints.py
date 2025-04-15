@@ -25,6 +25,7 @@ from api.routers.medical_contradiction import router as medical_contradiction_ro
 from api.routers.medical_terminology import router as medical_terminology_router
 from api.routers.enhanced_medical_contradiction import router as enhanced_medical_contradiction_router
 from api.routers.medical_clinical_data import router as medical_clinical_data_router
+from api.routers.llm_gateway import router as llm_gateway_router
 
 # Import clients router
 from api.clients import router as clients_router
@@ -59,6 +60,7 @@ app.include_router(medical_terminology_router)
 app.include_router(enhanced_medical_contradiction_router)
 app.include_router(medical_clinical_data_router)
 app.include_router(clients_router)
+app.include_router(llm_gateway_router)
 
 # Dependency to get DB session
 def get_db():

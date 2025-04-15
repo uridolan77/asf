@@ -38,7 +38,7 @@ const Analysis = () => {
     error: userError,
     execute: fetchUser 
   } = useApi(apiService.auth.me, {
-    loadOnMount: true,
+    params: { loadOnMount: true }, // FIX: pass loadOnMount inside params
     onSuccess: (data) => {
       setUser(data);
       setLoading(false);

@@ -28,9 +28,20 @@ try:
     )
     from asf.medical.llm_gateway.core.factory import ProviderFactory
     LLM_GATEWAY_AVAILABLE = True
+    logging.info("Using actual LLM Gateway implementation")
 except ImportError:
-    LLM_GATEWAY_AVAILABLE = False
-    logging.warning("LLM Gateway not available. Some functionality will be limited.")
+    # If the real implementation is not available, use our mock implementation
+    try:
+        from .llm.mock_gateway import (
+            LLMGatewayClient, LLMRequest, LLMConfig, InterventionContext, 
+            ContentItem, GatewayConfig, ProviderConfig, MCPRole, FinishReason,
+            ProviderFactory
+        )
+        LLM_GATEWAY_AVAILABLE = True
+        logging.warning("Using mock LLM Gateway implementation")
+    except ImportError:
+        LLM_GATEWAY_AVAILABLE = False
+        logging.warning("LLM Gateway not available. Some functionality will be limited.")
 
 router = APIRouter(prefix="/api/llm/gateway", tags=["llm-gateway"])
 
@@ -85,6 +96,51 @@ class LLMResponseModel(BaseModel):
     total_tokens: Optional[int] = None
     latency_ms: Optional[float] = None
     created_at: str
+
+# Provider creation and deletion models
+class ProviderCreateRequest(BaseModel):
+    provider_id: str = Field(..., description="Unique identifier for the provider")
+    provider_type: str = Field(..., description="Type of provider (e.g., openai, anthropic, local)")
+    display_name: str = Field(..., description="Display name for the provider")
+    connection_params: Dict[str, Any] = Field(..., description="Connection parameters for the provider")
+    models: Dict[str, Dict[str, Any]] = Field(..., description="Models supported by the provider")
+    enabled: bool = Field(True, description="Whether the provider is enabled")
+
+class ProviderDeleteResponse(BaseModel):
+    success: bool
+    message: str
+    provider_id: str
+    deleted_at: str
+
+# Model management models
+class ModelInfo(BaseModel):
+    model_id: str = Field(..., description="Unique identifier for the model")
+    provider_id: str = Field(..., description="ID of the provider that owns this model")
+    display_name: str = Field(..., description="Display name for the model")
+    model_type: str = Field(..., description="Type of model (e.g., completion, embedding, chat)")
+    capabilities: List[str] = Field(default_factory=list, description="List of capabilities (e.g., code, vision)")
+    context_window: Optional[int] = Field(None, description="Maximum context window size in tokens")
+    max_output_tokens: Optional[int] = Field(None, description="Maximum number of output tokens")
+    parameters: Optional[Dict[str, Any]] = Field(None, description="Model-specific parameters")
+    created_at: str = Field(..., description="Creation timestamp")
+    updated_at: str = Field(..., description="Last update timestamp")
+
+class ModelCreateRequest(BaseModel):
+    model_id: str = Field(..., description="Unique identifier for the model")
+    provider_id: str = Field(..., description="ID of the provider that owns this model")
+    display_name: str = Field(..., description="Display name for the model")
+    model_type: str = Field(..., description="Type of model (e.g., completion, embedding, chat)")
+    capabilities: List[str] = Field(default_factory=list, description="List of capabilities (e.g., code, vision)")
+    context_window: Optional[int] = Field(None, description="Maximum context window size in tokens")
+    max_output_tokens: Optional[int] = Field(None, description="Maximum number of output tokens")
+    parameters: Optional[Dict[str, Any]] = Field(None, description="Model-specific parameters")
+
+class ModelDeleteResponse(BaseModel):
+    success: bool
+    message: str
+    model_id: str
+    provider_id: str
+    deleted_at: str
 
 # Gateway client instance
 _gateway_client = None
@@ -496,6 +552,430 @@ async def test_provider(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to test provider '{provider_id}': {str(e)}"
+        )
+
+@router.post("/providers", response_model=ProviderStatus)
+async def create_provider(
+    request: ProviderCreateRequest = Body(...),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Create a new LLM provider.
+    
+    This endpoint creates a new LLM provider with the given configuration
+    and returns its status.
+    """
+    if not LLM_GATEWAY_AVAILABLE:
+        raise HTTPException(
+            status_code=status.HTTP_501_NOT_IMPLEMENTED,
+            detail="LLM Gateway is not available. Please check your installation."
+        )
+    
+    try:
+        # Load config from file
+        with open(CONFIG_PATH, 'r') as f:
+            config = yaml.safe_load(f)
+        
+        # Check if provider already exists
+        if request.provider_id in config.get("allowed_providers", []):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Provider '{request.provider_id}' already exists"
+            )
+        
+        # Create provider config
+        provider_config = {
+            "provider_type": request.provider_type,
+            "display_name": request.display_name,
+            "connection_params": request.connection_params,
+            "models": request.models
+        }
+        
+        # Add provider to config
+        if "additional_config" not in config:
+            config["additional_config"] = {}
+        
+        if "providers" not in config["additional_config"]:
+            config["additional_config"]["providers"] = {}
+        
+        config["additional_config"]["providers"][request.provider_id] = provider_config
+        
+        # Add to allowed_providers if enabled
+        if request.enabled:
+            if "allowed_providers" not in config:
+                config["allowed_providers"] = []
+            
+            if request.provider_id not in config["allowed_providers"]:
+                config["allowed_providers"].append(request.provider_id)
+        
+        # Save config to file
+        with open(CONFIG_PATH, 'w') as f:
+            yaml.dump(config, f, default_flow_style=False)
+        
+        # Return provider status
+        return ProviderStatus(
+            provider_id=request.provider_id,
+            status="operational",  # Assuming new provider is operational
+            provider_type=request.provider_type,
+            display_name=request.display_name,
+            models=list(request.models.keys()),
+            checked_at=datetime.utcnow().isoformat(),
+            message="Provider created successfully"
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error creating provider: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create provider: {str(e)}"
+        )
+
+@router.delete("/providers/{provider_id}", response_model=ProviderDeleteResponse)
+async def delete_provider(
+    provider_id: str = Path(..., description="Provider ID"),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Delete an LLM provider.
+    
+    This endpoint deletes the specified LLM provider from the configuration.
+    """
+    if not LLM_GATEWAY_AVAILABLE:
+        raise HTTPException(
+            status_code=status.HTTP_501_NOT_IMPLEMENTED,
+            detail="LLM Gateway is not available. Please check your installation."
+        )
+    
+    try:
+        # Load config from file
+        with open(CONFIG_PATH, 'r') as f:
+            config = yaml.safe_load(f)
+        
+        # Check if provider exists
+        provider_exists = (
+            provider_id in config.get("allowed_providers", []) or
+            provider_id in config.get("additional_config", {}).get("providers", {})
+        )
+        
+        if not provider_exists:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Provider '{provider_id}' not found"
+            )
+        
+        # Remove provider from allowed_providers
+        if provider_id in config.get("allowed_providers", []):
+            config["allowed_providers"].remove(provider_id)
+        
+        # Remove provider from additional_config.providers
+        if provider_id in config.get("additional_config", {}).get("providers", {}):
+            del config["additional_config"]["providers"][provider_id]
+        
+        # Save config to file
+        with open(CONFIG_PATH, 'w') as f:
+            yaml.dump(config, f, default_flow_style=False)
+        
+        # Return success response
+        return ProviderDeleteResponse(
+            success=True,
+            message=f"Provider '{provider_id}' deleted successfully",
+            provider_id=provider_id,
+            deleted_at=datetime.utcnow().isoformat()
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting provider '{provider_id}': {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete provider '{provider_id}': {str(e)}"
+        )
+
+@router.get("/models", response_model=List[ModelInfo])
+async def get_models(
+    provider_id: Optional[str] = Query(None, description="Filter models by provider ID"),
+    model_type: Optional[str] = Query(None, description="Filter models by type"),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get all available LLM models.
+    
+    This endpoint returns information about all available LLM models,
+    optionally filtered by provider ID or model type.
+    """
+    if not LLM_GATEWAY_AVAILABLE:
+        raise HTTPException(
+            status_code=status.HTTP_501_NOT_IMPLEMENTED,
+            detail="LLM Gateway is not available. Please check your installation."
+        )
+    
+    try:
+        # Load config from file
+        with open(CONFIG_PATH, 'r') as f:
+            config = yaml.safe_load(f)
+        
+        models = []
+        providers = config.get("additional_config", {}).get("providers", {})
+        
+        # Iterate through providers and their models
+        for p_id, p_config in providers.items():
+            # Skip if filtering by provider and doesn't match
+            if provider_id and p_id != provider_id:
+                continue
+                
+            provider_models = p_config.get("models", {})
+            
+            for m_id, m_config in provider_models.items():
+                # Get model type from config or default to "chat"
+                m_type = m_config.get("type", "chat")
+                
+                # Skip if filtering by model type and doesn't match
+                if model_type and m_type != model_type:
+                    continue
+                
+                # Extract capabilities
+                capabilities = m_config.get("capabilities", [])
+                if isinstance(capabilities, str):
+                    capabilities = [cap.strip() for cap in capabilities.split(",")]
+                
+                # Create model info object
+                model_info = ModelInfo(
+                    model_id=m_id,
+                    provider_id=p_id,
+                    display_name=m_config.get("display_name", m_id),
+                    model_type=m_type,
+                    capabilities=capabilities,
+                    context_window=m_config.get("context_window"),
+                    max_output_tokens=m_config.get("max_output_tokens"),
+                    parameters=m_config.get("parameters"),
+                    created_at=m_config.get("created_at", datetime.utcnow().isoformat()),
+                    updated_at=m_config.get("updated_at", datetime.utcnow().isoformat())
+                )
+                
+                models.append(model_info)
+        
+        return models
+    except Exception as e:
+        logger.error(f"Error getting models: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get models: {str(e)}"
+        )
+
+@router.post("/models", response_model=ModelInfo)
+async def create_model(
+    request: ModelCreateRequest = Body(...),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Create or register a new LLM model.
+    
+    This endpoint creates or registers a new LLM model for a specific provider.
+    """
+    if not LLM_GATEWAY_AVAILABLE:
+        raise HTTPException(
+            status_code=status.HTTP_501_NOT_IMPLEMENTED,
+            detail="LLM Gateway is not available. Please check your installation."
+        )
+    
+    try:
+        # Load config from file
+        with open(CONFIG_PATH, 'r') as f:
+            config = yaml.safe_load(f)
+        
+        # Check if provider exists
+        if request.provider_id not in config.get("additional_config", {}).get("providers", {}):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Provider '{request.provider_id}' not found"
+            )
+        
+        # Get provider config
+        provider_config = config["additional_config"]["providers"][request.provider_id]
+        
+        # Check if model already exists
+        if request.model_id in provider_config.get("models", {}):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Model '{request.model_id}' already exists for provider '{request.provider_id}'"
+            )
+        
+        # Create model config
+        now = datetime.utcnow().isoformat()
+        model_config = {
+            "display_name": request.display_name,
+            "type": request.model_type,
+            "capabilities": request.capabilities,
+            "context_window": request.context_window,
+            "max_output_tokens": request.max_output_tokens,
+            "parameters": request.parameters or {},
+            "created_at": now,
+            "updated_at": now
+        }
+        
+        # Add model to provider config
+        if "models" not in provider_config:
+            provider_config["models"] = {}
+        
+        provider_config["models"][request.model_id] = model_config
+        
+        # Save config to file
+        with open(CONFIG_PATH, 'w') as f:
+            yaml.dump(config, f, default_flow_style=False)
+        
+        # Return model info
+        return ModelInfo(
+            model_id=request.model_id,
+            provider_id=request.provider_id,
+            display_name=request.display_name,
+            model_type=request.model_type,
+            capabilities=request.capabilities,
+            context_window=request.context_window,
+            max_output_tokens=request.max_output_tokens,
+            parameters=request.parameters,
+            created_at=now,
+            updated_at=now
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error creating model: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create model: {str(e)}"
+        )
+
+@router.delete("/models/{model_id}", response_model=ModelDeleteResponse)
+async def delete_model(
+    model_id: str = Path(..., description="Model ID"),
+    provider_id: str = Query(..., description="Provider ID"),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Delete an LLM model.
+    
+    This endpoint deletes the specified LLM model from a provider's configuration.
+    """
+    if not LLM_GATEWAY_AVAILABLE:
+        raise HTTPException(
+            status_code=status.HTTP_501_NOT_IMPLEMENTED,
+            detail="LLM Gateway is not available. Please check your installation."
+        )
+    
+    try:
+        # Load config from file
+        with open(CONFIG_PATH, 'r') as f:
+            config = yaml.safe_load(f)
+        
+        # Check if provider exists
+        if provider_id not in config.get("additional_config", {}).get("providers", {}):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Provider '{provider_id}' not found"
+            )
+        
+        # Get provider config
+        provider_config = config["additional_config"]["providers"][provider_id]
+        
+        # Check if model exists
+        if model_id not in provider_config.get("models", {}):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Model '{model_id}' not found for provider '{provider_id}'"
+            )
+        
+        # Remove model from provider config
+        del provider_config["models"][model_id]
+        
+        # Save config to file
+        with open(CONFIG_PATH, 'w') as f:
+            yaml.dump(config, f, default_flow_style=False)
+        
+        # Return success response
+        return ModelDeleteResponse(
+            success=True,
+            message=f"Model '{model_id}' deleted successfully from provider '{provider_id}'",
+            model_id=model_id,
+            provider_id=provider_id,
+            deleted_at=datetime.utcnow().isoformat()
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting model '{model_id}' from provider '{provider_id}': {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete model '{model_id}' from provider '{provider_id}': {str(e)}"
+        )
+
+@router.get("/models/{model_id}", response_model=ModelInfo)
+async def get_model(
+    model_id: str = Path(..., description="Model ID"),
+    provider_id: str = Query(..., description="Provider ID"),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get information about a specific LLM model.
+    
+    This endpoint returns detailed information about a specific LLM model.
+    """
+    if not LLM_GATEWAY_AVAILABLE:
+        raise HTTPException(
+            status_code=status.HTTP_501_NOT_IMPLEMENTED,
+            detail="LLM Gateway is not available. Please check your installation."
+        )
+    
+    try:
+        # Load config from file
+        with open(CONFIG_PATH, 'r') as f:
+            config = yaml.safe_load(f)
+        
+        # Check if provider exists
+        if provider_id not in config.get("additional_config", {}).get("providers", {}):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Provider '{provider_id}' not found"
+            )
+        
+        # Get provider config
+        provider_config = config["additional_config"]["providers"][provider_id]
+        
+        # Check if model exists
+        if model_id not in provider_config.get("models", {}):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Model '{model_id}' not found for provider '{provider_id}'"
+            )
+        
+        # Get model config
+        model_config = provider_config["models"][model_id]
+        
+        # Extract capabilities
+        capabilities = model_config.get("capabilities", [])
+        if isinstance(capabilities, str):
+            capabilities = [cap.strip() for cap in capabilities.split(",")]
+        
+        # Return model info
+        return ModelInfo(
+            model_id=model_id,
+            provider_id=provider_id,
+            display_name=model_config.get("display_name", model_id),
+            model_type=model_config.get("type", "chat"),
+            capabilities=capabilities,
+            context_window=model_config.get("context_window"),
+            max_output_tokens=model_config.get("max_output_tokens"),
+            parameters=model_config.get("parameters"),
+            created_at=model_config.get("created_at", datetime.utcnow().isoformat()),
+            updated_at=model_config.get("updated_at", datetime.utcnow().isoformat())
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting model '{model_id}' from provider '{provider_id}': {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get model '{model_id}' from provider '{provider_id}': {str(e)}"
         )
 
 @router.post("/generate", response_model=LLMResponseModel)
