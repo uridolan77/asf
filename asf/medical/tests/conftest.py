@@ -24,15 +24,14 @@ from unittest.mock import MagicMock
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from asf.medical.ml.services.bias_assessment_service import BiasAssessmentService, BiasRisk, BiasDomain
-from asf.medical.ml.services.prisma_screening_service import PRISMAScreeningService, ScreeningStage, ScreeningDecision
-from asf.medical.ml.services.unified_contradiction_service import ContradictionService
-from asf.medical.ml.services.contradiction_classifier_service import ContradictionType, ContradictionConfidence
-from asf.medical.ml.models.biomedlm import BioMedLMService
-from asf.medical.ml.models.tsmixer import TSMixerService
-from asf.medical.ml.models.shap_explainer import SHAPExplainer
-from asf.medical.ml.services.temporal_service import TemporalService
-from asf.medical.core.enhanced_cache import enhanced_cache_manager as cache_manager, enhanced_cached as cached
+from ..ml.services.bias_assessment_service import BiasAssessmentService, BiasRisk, BiasDomain
+from ..ml.services.prisma_screening_service import PRISMAScreeningService, ScreeningStage, ScreeningDecision
+from ..ml.services.contradiction_service import ContradictionService, ContradictionType, ContradictionConfidence
+from ..ml.models.biomedlm import BioMedLMService
+from ..ml.models.tsmixer import TSMixerService
+from ..ml.models.shap_explainer import SHAPExplainer
+from ..ml.services.temporal_service import TemporalService
+from ..core.enhanced_cache import enhanced_cache_manager as cache_manager, enhanced_cached as cached
 
 logging.basicConfig(
     level=logging.INFO,

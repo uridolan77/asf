@@ -1,11 +1,11 @@
 import React from 'react';
-import { 
-  Box, Typography, Button, Paper, Chip, Divider, 
-  Table, TableBody, TableCell, TableContainer, TableHead, 
+import {
+  Box, Typography, Button, Paper, Chip, Divider,
+  Table, TableBody, TableCell, TableContainer, TableHead,
   TableRow, CircularProgress, Grid
 } from '@mui/material';
-import { 
-  Refresh as RefreshIcon, 
+import {
+  Refresh as RefreshIcon,
   Delete as DeleteIcon,
   Add as AddIcon
 } from '@mui/icons-material';
@@ -13,11 +13,11 @@ import {
 /**
  * Component to display knowledge base details
  */
-const KnowledgeBaseDetails = ({ 
-  selectedKB, 
-  loading, 
-  actionInProgress, 
-  onUpdate, 
+const KnowledgeBaseDetails = ({
+  selectedKB,
+  loading,
+  actionInProgress,
+  onUpdate,
   onDelete,
   onCreateNew
 }) => {
@@ -30,11 +30,11 @@ const KnowledgeBaseDetails = ({
 
   if (loading) {
     return (
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        height: '100%' 
+      <Box sx={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100%'
       }}>
         <CircularProgress />
       </Box>
@@ -43,11 +43,11 @@ const KnowledgeBaseDetails = ({
 
   if (!selectedKB) {
     return (
-      <Box sx={{ 
-        display: 'flex', 
+      <Box sx={{
+        display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'center', 
-        alignItems: 'center', 
+        justifyContent: 'center',
+        alignItems: 'center',
         height: '100%',
         p: 3
       }}>
@@ -70,15 +70,33 @@ const KnowledgeBaseDetails = ({
     );
   }
 
+  // Safely access nested properties
+  const safelyGetData = (obj, path, defaultValue = '') => {
+    try {
+      return path.split('.').reduce((o, key) => (o || {})[key], obj) || defaultValue;
+    } catch (e) {
+      return defaultValue;
+    }
+  };
+
+  // Safely format date
+  const formatDate = (dateString) => {
+    try {
+      return new Date(dateString).toLocaleString();
+    } catch (e) {
+      return 'N/A';
+    }
+  };
+
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        mb: 2 
+      <Box sx={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        mb: 2
       }}>
-        <Typography variant="h5">{selectedKB.name}</Typography>
+        <Typography variant="h5">{safelyGetData(selectedKB, 'name', 'Knowledge Base')}</Typography>
         <Box>
           <Button
             variant="outlined"
@@ -106,27 +124,27 @@ const KnowledgeBaseDetails = ({
         <Grid container spacing={2}>
           <Grid item xs={12} md={6}>
             <Typography variant="body2">
-              <strong>Query:</strong> {selectedKB.query}
+              <strong>Query:</strong> {safelyGetData(selectedKB, 'query')}
             </Typography>
           </Grid>
           <Grid item xs={12} md={6}>
             <Typography variant="body2">
-              <strong>Update Schedule:</strong> {selectedKB.update_schedule}
+              <strong>Update Schedule:</strong> {safelyGetData(selectedKB, 'update_schedule')}
             </Typography>
           </Grid>
           <Grid item xs={12} md={4}>
             <Typography variant="body2">
-              <strong>Created:</strong> {new Date(selectedKB.created_at).toLocaleString()}
+              <strong>Created:</strong> {formatDate(safelyGetData(selectedKB, 'created_at'))}
             </Typography>
           </Grid>
           <Grid item xs={12} md={4}>
             <Typography variant="body2">
-              <strong>Last Updated:</strong> {new Date(selectedKB.last_updated).toLocaleString()}
+              <strong>Last Updated:</strong> {formatDate(safelyGetData(selectedKB, 'last_updated'))}
             </Typography>
           </Grid>
           <Grid item xs={12} md={4}>
             <Typography variant="body2">
-              <strong>Articles:</strong> {selectedKB.article_count}
+              <strong>Articles:</strong> {safelyGetData(selectedKB, 'article_count', 0)}
             </Typography>
           </Grid>
         </Grid>
@@ -134,19 +152,19 @@ const KnowledgeBaseDetails = ({
 
       {/* Articles Section */}
       <Typography variant="h6" gutterBottom>
-        Articles ({selectedKB.articles?.length || 0})
+        Articles ({safelyGetData(selectedKB, 'articles.length', 0)})
       </Typography>
-      <TableContainer 
-        component={Paper} 
+      <TableContainer
+        component={Paper}
         elevation={0}
-        sx={{ 
-          mb: 3, 
+        sx={{
+          mb: 3,
           maxHeight: 300,
           overflow: 'auto',
           flex: '0 0 auto'
         }}
       >
-        {selectedKB.articles?.length > 0 ? (
+        {selectedKB?.articles?.length > 0 ? (
           <Table size="small" stickyHeader>
             <TableHead>
               <TableRow>
@@ -157,15 +175,15 @@ const KnowledgeBaseDetails = ({
               </TableRow>
             </TableHead>
             <TableBody>
-              {selectedKB.articles.map(article => (
-                <TableRow key={article.id} hover>
-                  <TableCell>{article.title}</TableCell>
-                  <TableCell>{article.journal}</TableCell>
-                  <TableCell>{article.year}</TableCell>
+              {selectedKB.articles.slice(0, 50).map((article, index) => (
+                <TableRow key={article.id || index} hover>
+                  <TableCell>{safelyGetData(article, 'title')}</TableCell>
+                  <TableCell>{safelyGetData(article, 'journal')}</TableCell>
+                  <TableCell>{safelyGetData(article, 'year')}</TableCell>
                   <TableCell>
                     <Chip
-                      label={`${(article.relevance_score * 100).toFixed(0)}%`}
-                      color={getRelevanceColor(article.relevance_score)}
+                      label={`${(safelyGetData(article, 'relevance_score', 0) * 100).toFixed(0)}%`}
+                      color={getRelevanceColor(safelyGetData(article, 'relevance_score', 0))}
                       size="small"
                     />
                   </TableCell>
@@ -184,25 +202,25 @@ const KnowledgeBaseDetails = ({
 
       {/* Concepts Section */}
       <Typography variant="h6" gutterBottom>
-        Key Concepts ({selectedKB.concepts?.length || 0})
+        Key Concepts ({safelyGetData(selectedKB, 'concepts.length', 0)})
       </Typography>
-      <Box sx={{ 
-        display: 'flex', 
-        flexWrap: 'wrap', 
+      <Box sx={{
+        display: 'flex',
+        flexWrap: 'wrap',
         gap: 1,
         mb: 2,
         flex: '1 1 auto',
         overflow: 'auto'
       }}>
-        {selectedKB.concepts?.length > 0 ? (
-          selectedKB.concepts.map(concept => (
+        {selectedKB?.concepts?.length > 0 ? (
+          selectedKB.concepts.slice(0, 50).map((concept, index) => (
             <Chip
-              key={concept.id}
+              key={concept.id || index}
               label={
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <span>{concept.name}</span>
+                  <span>{safelyGetData(concept, 'name')}</span>
                   <Chip
-                    label={concept.related_articles}
+                    label={safelyGetData(concept, 'related_articles', 0)}
                     size="small"
                     color="primary"
                     sx={{ ml: 0.5, height: 20, '& .MuiChip-label': { px: 1, py: 0 } }}

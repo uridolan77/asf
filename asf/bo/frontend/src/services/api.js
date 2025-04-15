@@ -7,7 +7,24 @@ const api = axios.create({
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
+    'Accept': 'application/json',
   },
+  withCredentials: true,
+});
+
+// Log requests
+api.interceptors.request.use(request => {
+  console.log('Starting Request', request);
+  return request;
+});
+
+// Log responses
+api.interceptors.response.use(response => {
+  console.log('Response:', response);
+  return response;
+}, error => {
+  console.error('Response Error:', error);
+  return Promise.reject(error);
 });
 
 // Request interceptor to add auth token

@@ -9,9 +9,9 @@ import logging
 from typing import Dict, List, Optional, Union, Any
 
 # Import from the medical module
-from asf.medical.services.clinical_data_service import ClinicalDataService
-from asf.medical.services.terminology_service import TerminologyService
-from asf.medical.clients.clinical_trials_gov.clinical_trials_client import ClinicalTrialsClient
+from medical.services.clinical_data_service import ClinicalDataService
+from medical.services.terminology_service import TerminologyService
+from medical.clients.clinical_trials_gov.clinical_trials_client import ClinicalTrialsClient
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)

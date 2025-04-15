@@ -2,6 +2,8 @@
 Integration service for the medical client API.
 """
 import os
+import sys
+import logging
 import json
 import httpx
 from typing import Dict, Any, Optional, List
@@ -11,6 +13,9 @@ from sqlalchemy.orm import Session
 # Import our own models
 from models.user import User
 from config.database import get_db
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class MedicalClientIntegration:
     """
@@ -237,6 +242,7 @@ class MedicalClientIntegration:
             population: Target population
             study_design: Study design type
             years: Publication years to include
+        """
     async def update_knowledge_base(self, db: Session, user_id: int, kb_id: str) -> Dict[str, Any]:
         """
         Trigger an update for a knowledge base.

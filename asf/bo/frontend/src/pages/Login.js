@@ -6,6 +6,7 @@ import {
   Grid, IconButton, InputAdornment, Link, TextField, Typography,
   Alert, CircularProgress
 } from '@mui/material';
+import logo from '../assets/images/asfmrslogo.jpg';
 import {
   LockOutlined as LockOutlinedIcon,
   Visibility as VisibilityIcon,
@@ -46,10 +47,15 @@ const Login = () => {
 
   // Form submission handler
   const onSubmit = async (data) => {
-    await login({
-      username: data.email, // Backend expects username field for email
-      password: data.password
-    });
+    try {
+      console.log('Submitting login with:', { username: data.email, password: data.password });
+      await login({
+        username: data.email, // Backend expects username field for email
+        password: data.password
+      });
+    } catch (error) {
+      console.error('Login submission error:', error);
+    }
   };
 
   const togglePasswordVisibility = () => {
@@ -67,6 +73,9 @@ const Login = () => {
           alignItems: 'center',
         }}
       >
+        <Box sx={{ mb: 3, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <img src={logo} alt="Medical Research Synthesizer Logo" style={{ width: 200, height: 100, marginBottom: 16 }} />
+        </Box>
         <Avatar sx={{ m: 1, bgcolor: 'primary.main' }}>
           <LockOutlinedIcon />
         </Avatar>
@@ -102,7 +111,7 @@ const Login = () => {
                   />
                 )}
               />
-              
+
               <Controller
                 name="password"
                 control={control}
@@ -139,7 +148,7 @@ const Login = () => {
                   />
                 )}
               />
-              
+
               <Button
                 type="submit"
                 fullWidth
@@ -153,7 +162,7 @@ const Login = () => {
                   'Sign In'
                 )}
               </Button>
-              
+
               <Grid container justifyContent="center">
                 <Grid item>
                   <Link component={RouterLink} to="/register" variant="body2">

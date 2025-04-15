@@ -169,7 +169,7 @@ def main():
         if args.json_file:
             visualization_paths = test_from_json(args.json_file, args.output_dir)
         else:
-            from ..models.biomedlm_wrapper import BioMedLMScorer
+            from medical.models.biomedlm_wrapper import BioMedLMScorer
 
             logger.info(f"Initializing BioMedLMScorer with model: {args.model}")
             biomedlm_scorer = BioMedLMScorer(

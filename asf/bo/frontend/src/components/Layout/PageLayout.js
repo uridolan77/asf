@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Box, Container, Typography, Breadcrumbs, Link, AppBar, Toolbar,
   IconButton, Drawer, Avatar, List, ListItem, ListItemIcon,
-  ListItemText, Divider, Badge, Tooltip, Menu, MenuItem
+  ListItemText, Divider, Badge, Tooltip, Menu, MenuItem, useTheme
 } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import { useNotification } from '../../context/NotificationContext';
@@ -44,6 +44,7 @@ const PageLayout = ({
 }) => {
   const [drawerOpen, setDrawerOpen] = useState(true);
   const navigate = useNavigate();
+  const theme = useTheme();
 
   const handleLogout = () => {
     localStorage.removeItem('token');

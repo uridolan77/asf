@@ -19,7 +19,7 @@ Features:
 """
 import logging
 from typing import Dict, List, Any
-from asf.medical.core.config import settings
+from medical.core.config import settings
 logger = logging.getLogger(__name__)
 class GraphService:
     """
@@ -85,11 +85,11 @@ class GraphService:
         """
         if self.client is None:
             if self.graph_db_type == "neo4j":
-                from asf.medical.graph.neo4j_client import Neo4jClient
+                from medical.graph.neo4j_client import Neo4jClient
                 self.client = Neo4jClient()
                 logger.info("Initialized Neo4j client")
             elif self.graph_db_type == "memgraph":
-                from asf.medical.graph.memgraph_client import MemgraphClient
+                from medical.graph.memgraph_client import MemgraphClient
                 self.client = MemgraphClient()
                 logger.info("Initialized Memgraph client")
             else:

@@ -13,13 +13,13 @@ from ..core.exceptions import (
     SearchError, ValidationError,
     ExternalServiceError, DatabaseError
 )
-from ..core.logging_config import get_logger
-from ..clients.ncbi.ncbi_client import NCBIClient
-from ..clients.clinical_trials_gov.clinical_trials_client import ClinicalTrialsClient
-from ..storage.repositories.result_repository import ResultRepository
-from ..storage.repositories.query_repository import QueryRepository
-from ..graph.graph_rag import GraphRAG
-from ..data_ingestion_layer.query_builder import (
+from medical.core.logging_config import get_logger
+from medical.clients.ncbi.ncbi_client import NCBIClient
+from medical.clients.clinical_trials_gov.clinical_trials_client import ClinicalTrialsClient
+from medical.storage.repositories.result_repository import ResultRepository
+from medical.storage.repositories.query_repository import QueryRepository
+from medical.graph.graph_rag import GraphRAG
+from medical.data_ingestion_layer.query_builder import (
     MedicalQueryBuilder, MedicalCondition, MedicalIntervention, OutcomeMetric, StudyDesign
 )
 class SearchMethod(str, Enum):
@@ -68,7 +68,7 @@ class SearchService:
             bool: True if GraphRAG is available, False otherwise
         """
         return self.graph_rag is not None
-    @redis_cached(ttl=3600, key_prefix="search")
+    @redis_cached(ttl=3600, prefix="search")
     async def search(
         self, query: str, max_results: int = 100, page: int = 1, page_size: int = 20,
         user_id: Optional[int] = None, search_method: Union[str, SearchMethod] = SearchMethod.PUBMED,
@@ -261,7 +261,7 @@ class SearchService:
             "result_id": result_id,
             "pagination": pagination_metadata
         }
-    @redis_cached(ttl=3600, key_prefix="search_pico")
+    @redis_cached(ttl=3600, prefix="search_pico")
     async def search_pico(
         self,
         condition: str,

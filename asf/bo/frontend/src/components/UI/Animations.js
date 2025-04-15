@@ -6,9 +6,16 @@ import { styled } from '@mui/material/styles';
  * Fade In animation component
  */
 export const FadeIn = ({ children, ...props }) => {
-  return (
-    <Fade in={true} {...props}>
+  // Create a wrapper div to ensure we always have a valid DOM element
+  const content = (
+    <div style={{ width: '100%', height: '100%' }}>
       {children}
+    </div>
+  );
+
+  return (
+    <Fade in={true} mountOnEnter unmountOnExit {...props}>
+      {content}
     </Fade>
   );
 };
@@ -17,9 +24,16 @@ export const FadeIn = ({ children, ...props }) => {
  * Grow animation component
  */
 export const GrowIn = ({ children, ...props }) => {
-  return (
-    <Grow in={true} {...props}>
+  // Create a wrapper div to ensure we always have a valid DOM element
+  const content = (
+    <div style={{ width: '100%', height: '100%' }}>
       {children}
+    </div>
+  );
+
+  return (
+    <Grow in={true} mountOnEnter unmountOnExit {...props}>
+      {content}
     </Grow>
   );
 };
@@ -28,9 +42,16 @@ export const GrowIn = ({ children, ...props }) => {
  * Slide In animation component
  */
 export const SlideIn = ({ children, direction = 'right', ...props }) => {
-  return (
-    <Slide direction={direction} in={true} {...props}>
+  // Create a wrapper div to ensure we always have a valid DOM element
+  const content = (
+    <div style={{ width: '100%', height: '100%' }}>
       {children}
+    </div>
+  );
+
+  return (
+    <Slide direction={direction} in={true} mountOnEnter unmountOnExit {...props}>
+      {content}
     </Slide>
   );
 };
@@ -39,9 +60,16 @@ export const SlideIn = ({ children, direction = 'right', ...props }) => {
  * Zoom In animation component
  */
 export const ZoomIn = ({ children, ...props }) => {
-  return (
-    <Zoom in={true} {...props}>
+  // Create a wrapper div to ensure we always have a valid DOM element
+  const content = (
+    <div style={{ width: '100%', height: '100%' }}>
       {children}
+    </div>
+  );
+
+  return (
+    <Zoom in={true} mountOnEnter unmountOnExit {...props}>
+      {content}
     </Zoom>
   );
 };
@@ -52,7 +80,7 @@ export const ZoomIn = ({ children, ...props }) => {
 export const StaggeredList = ({ children, staggerDelay = 100, ...props }) => {
   return React.Children.map(children, (child, index) => {
     if (!React.isValidElement(child)) return child;
-    
+
     return (
       <Fade
         in={true}
@@ -69,13 +97,22 @@ export const StaggeredList = ({ children, staggerDelay = 100, ...props }) => {
  * Animated page transition
  */
 export const PageTransition = ({ children, ...props }) => {
+  // Create a wrapper div to ensure we always have a valid DOM element
+  const content = (
+    <div style={{ width: '100%', height: '100%' }}>
+      {children}
+    </div>
+  );
+
   return (
     <Fade
       in={true}
       timeout={300}
+      mountOnEnter
+      unmountOnExit
       {...props}
     >
-      {children}
+      {content}
     </Fade>
   );
 };
@@ -106,32 +143,32 @@ export const HoverAnimation = ({ children, scale, ...props }) => {
  */
 export const AnimatedCounter = ({ value, duration = 1000 }) => {
   const [displayValue, setDisplayValue] = React.useState(0);
-  
+
   React.useEffect(() => {
     let startTime;
     let animationFrame;
     const startValue = displayValue;
     const endValue = value;
-    
+
     const updateValue = (timestamp) => {
       if (!startTime) startTime = timestamp;
       const progress = Math.min((timestamp - startTime) / duration, 1);
       const currentValue = Math.floor(startValue + progress * (endValue - startValue));
-      
+
       setDisplayValue(currentValue);
-      
+
       if (progress < 1) {
         animationFrame = requestAnimationFrame(updateValue);
       }
     };
-    
+
     animationFrame = requestAnimationFrame(updateValue);
-    
+
     return () => {
       cancelAnimationFrame(animationFrame);
     };
   }, [value, duration, displayValue]);
-  
+
   return <span>{displayValue}</span>;
 };
 

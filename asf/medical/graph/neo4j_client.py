@@ -20,7 +20,7 @@ Features:
 import logging
 from typing import Dict, List, Any
 from neo4j import GraphDatabase
-from asf.medical.core.config import settings
+from medical.core.config import settings
 logger = logging.getLogger(__name__)
 class Neo4jClient:
     """

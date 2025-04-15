@@ -54,7 +54,9 @@ const KnowledgeBase = () => {
   } = useApi(apiService.knowledgeBase.getAll, {
     loadOnMount: true,
     onSuccess: (data) => {
-      setKnowledgeBases(data.data.knowledge_bases);
+      if (data && data.knowledge_bases) {
+        setKnowledgeBases(data.knowledge_bases);
+      }
     },
     onError: (error) => {
       showError('Failed to load knowledge bases: ' + error);

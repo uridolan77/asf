@@ -153,8 +153,10 @@ def search_service(mock_ncbi_client, mock_graph_rag, mock_result_repository):
 class TestSearchService:
     """Test cases for SearchService."""
     async def test_search_with_pubmed(self, search_service, mock_ncbi_client):
-        """Test search with PubMed.
-    Args:
-        # TODO: Add parameter descriptions
-    Returns:
-        # TODO: Add return description
+        """
+        Test search with PubMed.
+        Args:
+            # TODO: Add parameter descriptions
+        Returns:
+            # TODO: Add return description
+        """

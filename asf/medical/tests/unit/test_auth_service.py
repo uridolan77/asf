@@ -83,11 +83,13 @@ def auth_service(mock_user_repository):
 class TestAuthService:
     """Test cases for AuthService."""
     async def test_authenticate_user_success(self, auth_service, mock_user_repository):
-        """Test authenticate_user with valid credentials.
-    Args:
-        # TODO: Add parameter descriptions
-    Returns:
-        # TODO: Add return description
+        """
+        Test authenticate_user with valid credentials.
+        Args:
+            # TODO: Add parameter descriptions
+        Returns:
+            # TODO: Add return description
+        """
     async def test_get_current_user_dependency(self, auth_service):
         access_token = create_access_token(subject=TEST_USER_EMAIL)
         mock_auth_service = AsyncMock()

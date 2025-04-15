@@ -23,16 +23,16 @@ Features:
 import logging
 import asyncio
 from typing import Dict, List, Optional, Any, Callable, TypeVar, Union
-from asf.medical.graph.graph_service import GraphService
-from asf.medical.ml.models.biomedlm import BioMedLMService
-from asf.medical.graph.ontology_integration import OntologyIntegrationService, GraphRAGOntologyEnhancer
+from medical.graph.graph_service import GraphService
+from medical.ml.models.biomedlm import BioMedLMService
+from medical.graph.ontology_integration import OntologyIntegrationService, GraphRAGOntologyEnhancer
 
 # Set up logger
 logger = logging.getLogger(__name__)
 
 # Import cache manager
 try:
-    from asf.medical.core.enhanced_cache import enhanced_cache_manager
+    from medical.core.enhanced_cache import enhanced_cache_manager
 except ImportError:
     # Fallback for when enhanced_cache is not available
     logger.warning("Enhanced cache module not available, using dummy implementation")

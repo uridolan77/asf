@@ -5,6 +5,7 @@ This module provides unit tests for the AnalysisService.
 import pytest
 import logging
 import uuid
+from unittest.mock import AsyncMock, MagicMock
 from ...services.analysis_service import AnalysisService
 logger = logging.getLogger(__name__)
 @pytest.fixture
@@ -126,8 +127,10 @@ def analysis_service(mock_search_service, mock_contradiction_service, mock_analy
 class TestAnalysisService:
     """Test cases for AnalysisService."""
     async def test_analyze_contradictions(self, analysis_service, mock_search_service, mock_contradiction_service):
-        """Test analyze_contradictions.
-    Args:
-        # TODO: Add parameter descriptions
-    Returns:
-        # TODO: Add return description
+        """
+        Test analyze_contradictions.
+        Args:
+            # TODO: Add parameter descriptions
+        Returns:
+            # TODO: Add return description
+        """

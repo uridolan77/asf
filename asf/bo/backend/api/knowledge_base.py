@@ -1,19 +1,19 @@
 from typing import Dict, List, Any, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, Body, status
-from asf.medical.services.knowledge_base_service import KnowledgeBaseService
-from asf.medical.services.search_service import SearchService, SearchMethod
-from asf.medical.core.exceptions import ResourceNotFoundError, ValidationError
+from ....medical.services.knowledge_base_service import KnowledgeBaseService
+from ....medical.services.search_service import SearchService, SearchMethod
+from ....medical.core.exceptions import ResourceNotFoundError, ValidationError
 
 router = APIRouter(prefix="/api/knowledge-base", tags=["knowledge-base"])
 
 # This would be properly injected in a real application
 def get_kb_service() -> KnowledgeBaseService:
     """Dependency to get the knowledge base service."""
-    from asf.medical.clients.ncbi.ncbi_client import NCBIClient
-    from asf.medical.clients.clinical_trials_gov.clinical_trials_client import ClinicalTrialsClient
-    from asf.medical.storage.repositories.result_repository import ResultRepository
-    from asf.medical.storage.repositories.query_repository import QueryRepository
-    from asf.medical.graph.graph_rag import GraphRAG
+    from ....medical.clients.ncbi.ncbi_client import NCBIClient
+    from ....medical.clients.clinical_trials_gov.clinical_trials_client import ClinicalTrialsClient
+    from ....medical.storage.repositories.result_repository import ResultRepository
+    from ....medical.storage.repositories.query_repository import QueryRepository
+    from ....medical.graph.graph_rag import GraphRAG
     
     # Initialize dependencies
     ncbi_client = NCBIClient()
@@ -39,11 +39,11 @@ def get_kb_service() -> KnowledgeBaseService:
 
 def get_search_service() -> SearchService:
     """Dependency to get the search service."""
-    from asf.medical.clients.ncbi.ncbi_client import NCBIClient
-    from asf.medical.clients.clinical_trials_gov.clinical_trials_client import ClinicalTrialsClient
-    from asf.medical.storage.repositories.result_repository import ResultRepository
-    from asf.medical.storage.repositories.query_repository import QueryRepository
-    from asf.medical.graph.graph_rag import GraphRAG
+    from ....medical.clients.ncbi.ncbi_client import NCBIClient
+    from ....medical.clients.clinical_trials_gov.clinical_trials_client import ClinicalTrialsClient
+    from ....medical.storage.repositories.result_repository import ResultRepository
+    from ....medical.storage.repositories.query_repository import QueryRepository
+    from ....medical.graph.graph_rag import GraphRAG
     
     # Initialize dependencies
     ncbi_client = NCBIClient()

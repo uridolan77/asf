@@ -27,6 +27,7 @@ from functools import lru_cache
 from datetime import datetime, timedelta
 import logging
 import sqlite3
+import re
 from pathlib import Path
 import pandas as pd
 from tqdm import tqdm

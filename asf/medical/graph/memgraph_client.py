@@ -36,7 +36,7 @@ except ImportError:
             self.MemgraphConnectionError = MockMemgraphExceptions.MemgraphConnectionError
             self.MemgraphQueryError = MockMemgraphExceptions.MemgraphQueryError
     pymemgraph = MockPymemgraph()
-from asf.medical.core.config import settings
+from medical.core.config import settings
 logger = logging.getLogger(__name__)
 class MemgraphClient:
     """

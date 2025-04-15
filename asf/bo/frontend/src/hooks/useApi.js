@@ -17,10 +17,10 @@ import { useNotification } from '../context/NotificationContext';
  * @returns {Object} - API call state and methods
  */
 const useApi = (
-  endpoint, 
-  { 
-    skip = false, 
-    params = {}, 
+  endpoint,
+  {
+    skip = false,
+    params = {},
     initialData = null,
     cacheEnabled = false,
     cacheDuration = 5 * 60 * 1000, // 5 minutes default
@@ -43,8 +43,8 @@ const useApi = (
   // Generate a unique cache key
   const generatedCacheKey = useMemo(() => {
     const baseKey = cacheKey || endpoint;
-    const paramsKey = Object.keys(params).length 
-      ? `-${JSON.stringify(params)}` 
+    const paramsKey = Object.keys(params).length
+      ? `-${JSON.stringify(params)}`
       : '';
     return `${baseKey}${paramsKey}`;
   }, [endpoint, params, cacheKey]);
@@ -56,14 +56,15 @@ const useApi = (
     return now - cachedData.timestamp < cacheDuration;
   }, [cacheDuration]);
 
-  // Fetch data function with caching
-  const fetchData = useCallback(async (overrideParams = {}) => {
+  // Execute API function with caching
+  const execute = useCallback(async (...args) => {
     try {
       setLoading(true);
       setError(null);
 
-      const queryParams = { ...params, ...overrideParams };
-      const queryKey = cacheKey || `${endpoint}-${JSON.stringify(queryParams)}`;
+      // Generate a cache key based on the endpoint and arguments
+      const argsKey = args.length > 0 ? `-${JSON.stringify(args)}` : '';
+      const queryKey = cacheKey || `${endpoint}${argsKey}`;
 
       // Check cache first if enabled
       if (cacheEnabled) {
@@ -75,9 +76,11 @@ const useApi = (
         }
       }
 
-      // Make the API call
-      const response = await api.get(endpoint, { params: queryParams });
-      const result = response.data;
+      // Execute the API function (endpoint is the actual function)
+      const response = await endpoint(...args);
+
+      // Handle both direct responses and responses wrapped in {success, data} format
+      const result = response.success !== undefined ? response.data : response;
 
       // Store in cache if enabled
       if (cacheEnabled) {
@@ -95,21 +98,22 @@ const useApi = (
       if (onError) {
         onError(err);
       } else {
-        const errorMessage = err.response?.data?.message || 'An error occurred while fetching data';
+        const errorMessage = err.response?.data?.message || err.message || 'An error occurred';
         showError(errorMessage);
       }
       return null;
     } finally {
       setLoading(false);
     }
-  }, [endpoint, params, api, cacheEnabled, cache, isCacheValid, cacheKey, onSuccess, onError, showError]);
+  }, [endpoint, cacheEnabled, cache, isCacheValid, cacheKey, onSuccess, onError, showError]);
 
-  // Fetch on mount if not skipped
+  // Execute on mount if not skipped and loadOnMount is true
   useEffect(() => {
-    if (!skip) {
-      fetchData();
+    const loadOnMount = params.loadOnMount;
+    if (!skip && loadOnMount) {
+      execute();
     }
-  }, [skip, fetchData]);
+  }, [skip, params, execute]);
 
   // Clear cache for this endpoint
   const clearCache = useCallback(() => {
@@ -128,7 +132,7 @@ const useApi = (
   // Update data
   const updateData = useCallback((newData) => {
     setData(newData);
-    
+
     if (cacheEnabled) {
       const cachedData = cache.get(generatedCacheKey);
       if (cachedData) {
@@ -145,11 +149,11 @@ const useApi = (
     try {
       setLoading(true);
       const response = await api.post(postEndpoint || endpoint, payload, config);
-      
+
       if (cacheEnabled) {
         clearCache();
       }
-      
+
       if (config.updateLocalData !== false) {
         setData(prevData => {
           // If previous data is an array, add the new item
@@ -159,11 +163,11 @@ const useApi = (
           return response.data;
         });
       }
-      
+
       if (config.onSuccess) {
         config.onSuccess(response.data);
       }
-      
+
       return response.data;
     } catch (err) {
       if (config.onError) {
@@ -185,27 +189,27 @@ const useApi = (
       setLoading(true);
       const putEndpoint = `${endpoint}/${id}`;
       const response = await api.put(putEndpoint, payload);
-      
+
       if (cacheEnabled) {
         clearCache();
       }
-      
+
       if (config.updateLocalData !== false) {
         setData(prevData => {
           // If previous data is an array, update the matching item
           if (Array.isArray(prevData)) {
-            return prevData.map(item => 
+            return prevData.map(item =>
               item.id === id ? { ...item, ...response.data } : item
             );
           }
           return response.data;
         });
       }
-      
+
       if (config.onSuccess) {
         config.onSuccess(response.data);
       }
-      
+
       return response.data;
     } catch (err) {
       if (config.onError) {
@@ -227,11 +231,11 @@ const useApi = (
       setLoading(true);
       const deleteEndpoint = `${endpoint}/${id}`;
       await api.delete(deleteEndpoint);
-      
+
       if (cacheEnabled) {
         clearCache();
       }
-      
+
       if (config.updateLocalData !== false) {
         setData(prevData => {
           // If previous data is an array, remove the deleted item
@@ -241,11 +245,11 @@ const useApi = (
           return null;
         });
       }
-      
+
       if (config.onSuccess) {
         config.onSuccess();
       }
-      
+
       return true;
     } catch (err) {
       if (config.onError) {
@@ -265,7 +269,7 @@ const useApi = (
     data,
     loading,
     error,
-    fetchData,
+    execute,
     postData,
     putData,
     deleteData,

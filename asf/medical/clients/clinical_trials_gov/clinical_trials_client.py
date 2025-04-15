@@ -1324,3 +1324,549 @@ class ClinicalTrialsClient(ObservableClient):
             burst_size: New maximum burst size (if None, keeps current value)
         """
         self.rate_limiter.set_rate_limit(requests_per_second, burst_size)
+
+
+class StudyAnalyzer:
+    """
+    Analyzer for clinical trial study data.
+    
+    This class provides methods for analyzing clinical trial data,
+    extracting insights, and creating visualizations of study characteristics.
+    """
+    
+    def __init__(self, client: 'ClinicalTrialsClient'):
+        """
+        Initialize the study analyzer.
+        
+        Args:
+            client: An initialized ClinicalTrialsClient instance
+        """
+        self.client = client
+        self.logger = logging.getLogger("clinicaltrials.analyzer")
+    
+    async def get_phase_distribution(self, query: str, max_results: int = 500) -> Dict[str, Any]:
+        """
+        Analyze the distribution of clinical trial phases for a given query.
+        
+        Args:
+            query: The search query
+            max_results: Maximum number of results to analyze
+            
+        Returns:
+            Dictionary with phase distribution analysis
+        """
+        # Search for studies matching the query
+        studies = await self.client.search_all_pages(
+            query=query,
+            fields=["NCTId", "BriefTitle", "Phase", "OverallStatus", "EnrollmentCount"],
+            max_studies=max_results
+        )
+        
+        # Count studies by phase
+        phase_counts = {}
+        enrollment_by_phase = {}
+        status_by_phase = {}
+        
+        for study in studies:
+            # Extract phase
+            phase = study.get("phase", "Not Specified")
+            if not phase:
+                phase = "Not Specified"
+                
+            # Count by phase
+            if phase not in phase_counts:
+                phase_counts[phase] = 0
+                enrollment_by_phase[phase] = []
+                status_by_phase[phase] = {}
+                
+            phase_counts[phase] += 1
+            
+            # Track enrollment
+            enrollment = study.get("enrollmentCount")
+            if enrollment:
+                try:
+                    enrollment_by_phase[phase].append(int(enrollment))
+                except (ValueError, TypeError):
+                    pass
+            
+            # Track status
+            status = study.get("overallStatus", "Unknown")
+            if status not in status_by_phase[phase]:
+                status_by_phase[phase][status] = 0
+            status_by_phase[phase][status] += 1
+        
+        # Calculate average enrollment by phase
+        avg_enrollment = {}
+        for phase, enrollments in enrollment_by_phase.items():
+            if enrollments:
+                avg_enrollment[phase] = sum(enrollments) / len(enrollments)
+            else:
+                avg_enrollment[phase] = 0
+        
+        # Prepare results
+        return {
+            "query": query,
+            "total_studies": len(studies),
+            "phase_distribution": phase_counts,
+            "average_enrollment": avg_enrollment,
+            "status_distribution": status_by_phase
+        }
+    
+    async def analyze_study_timeline(self, nct_id: str) -> Dict[str, Any]:
+        """
+        Analyze the timeline of a clinical trial study.
+        
+        Args:
+            nct_id: NCT identifier for the study
+            
+        Returns:
+            Dictionary with timeline analysis
+        """
+        # Get study details
+        study = await self.client.get_study(nct_id)
+        
+        # Extract protocol section
+        protocol = study.get("data", {}).get("study", {}).get("protocolSection", {})
+        
+        # Extract status module for dates
+        status_module = protocol.get("statusModule", {})
+        
+        # Extract key dates
+        start_date_struct = status_module.get("startDateStruct", {})
+        primary_completion_date_struct = status_module.get("primaryCompletionDateStruct", {})
+        completion_date_struct = status_module.get("completionDateStruct", {})
+        
+        # Extract study design info
+        design_module = protocol.get("designModule", {})
+        
+        # Create timeline
+        timeline = {
+            "study_start": {
+                "date": start_date_struct.get("date"),
+                "type": start_date_struct.get("type")
+            },
+            "primary_completion": {
+                "date": primary_completion_date_struct.get("date"),
+                "type": primary_completion_date_struct.get("type")
+            },
+            "study_completion": {
+                "date": completion_date_struct.get("date"),
+                "type": completion_date_struct.get("type")
+            },
+            "current_status": status_module.get("overallStatus"),
+            "why_stopped": status_module.get("whyStopped"),
+            "study_type": design_module.get("studyType"),
+            "phases": design_module.get("phases", []),
+            "enrollment": design_module.get("enrollmentInfo", {}).get("count")
+        }
+        
+        return {
+            "nct_id": nct_id,
+            "title": protocol.get("identificationModule", {}).get("briefTitle"),
+            "timeline": timeline
+        }
+    
+    async def get_outcome_measures(self, nct_id: str) -> Dict[str, Any]:
+        """
+        Get and analyze outcome measures for a study.
+        
+        Args:
+            nct_id: NCT identifier for the study
+            
+        Returns:
+            Dictionary with outcome measures analysis
+        """
+        # Get study details
+        study = await self.client.get_study(nct_id)
+        
+        # Extract protocol section
+        protocol = study.get("data", {}).get("study", {}).get("protocolSection", {})
+        
+        # Extract outcome measures
+        outcome_module = protocol.get("outcomesModule", {})
+        primary_outcomes = outcome_module.get("primaryOutcomes", [])
+        secondary_outcomes = outcome_module.get("secondaryOutcomes", [])
+        other_outcomes = outcome_module.get("otherOutcomes", [])
+        
+        # Process outcome measures
+        def process_outcomes(outcomes, outcome_type):
+            return [{
+                "type": outcome_type,
+                "measure": outcome.get("measure"),
+                "time_frame": outcome.get("timeFrame"),
+                "description": outcome.get("description")
+            } for outcome in outcomes]
+        
+        all_outcomes = []
+        all_outcomes.extend(process_outcomes(primary_outcomes, "Primary"))
+        all_outcomes.extend(process_outcomes(secondary_outcomes, "Secondary"))
+        all_outcomes.extend(process_outcomes(other_outcomes, "Other"))
+        
+        # Get outcome counts by type
+        outcome_counts = {
+            "Primary": len(primary_outcomes),
+            "Secondary": len(secondary_outcomes),
+            "Other": len(other_outcomes),
+            "Total": len(primary_outcomes) + len(secondary_outcomes) + len(other_outcomes)
+        }
+        
+        return {
+            "nct_id": nct_id,
+            "title": protocol.get("identificationModule", {}).get("briefTitle"),
+            "outcome_counts": outcome_counts,
+            "outcomes": all_outcomes
+        }
+    
+    async def compare_studies(self, nct_ids: List[str]) -> Dict[str, Any]:
+        """
+        Compare multiple studies side by side.
+        
+        Args:
+            nct_ids: List of NCT identifiers for the studies
+            
+        Returns:
+            Dictionary with comparative analysis
+        """
+        # Get multiple studies
+        studies = await self.client.get_studies_batch(
+            nct_ids, 
+            fields=["briefTitle", "officialTitle", "overallStatus", "phase", 
+                   "designModule.studyType", "designModule.enrollmentInfo",
+                   "startDateStruct", "completionDateStruct", "conditions",
+                   "interventions", "outcomesModule.primaryOutcomes"]
+        )
+        
+        # Prepare comparison data
+        comparison = {
+            "studies": [],
+            "common_features": {
+                "phases": set(),
+                "statuses": set(),
+                "conditions": set(),
+                "interventions": set(),
+                "outcome_measures": set()
+            }
+        }
+        
+        # Process each study
+        for nct_id, study_data in studies.items():
+            study = study_data.get("data", {}).get("study", {})
+            protocol = study.get("protocolSection", {})
+            identification = protocol.get("identificationModule", {})
+            
+            # Extract key information
+            study_info = {
+                "nct_id": nct_id,
+                "title": identification.get("briefTitle"),
+                "status": protocol.get("statusModule", {}).get("overallStatus"),
+                "phase": protocol.get("designModule", {}).get("phases", [None])[0],
+                "enrollment": protocol.get("designModule", {}).get("enrollmentInfo", {}).get("count"),
+                "study_type": protocol.get("designModule", {}).get("studyType"),
+                "start_date": protocol.get("statusModule", {}).get("startDateStruct", {}).get("date"),
+                "completion_date": protocol.get("statusModule", {}).get("completionDateStruct", {}).get("date"),
+                "conditions": [c.get("name") for c in protocol.get("conditionsModule", {}).get("conditions", [])],
+                "interventions": [i.get("name") for i in protocol.get("armsInterventionsModule", {}).get("interventions", [])],
+                "primary_outcomes": [o.get("measure") for o in protocol.get("outcomesModule", {}).get("primaryOutcomes", [])]
+            }
+            
+            # Add to comparison
+            comparison["studies"].append(study_info)
+            
+            # Update common features
+            if study_info["phase"]:
+                comparison["common_features"]["phases"].add(study_info["phase"])
+            if study_info["status"]:
+                comparison["common_features"]["statuses"].add(study_info["status"])
+            
+            for condition in study_info["conditions"]:
+                comparison["common_features"]["conditions"].add(condition)
+            
+            for intervention in study_info["interventions"]:
+                comparison["common_features"]["interventions"].add(intervention)
+            
+            for outcome in study_info["primary_outcomes"]:
+                comparison["common_features"]["outcome_measures"].add(outcome)
+        
+        # Convert sets to lists for JSON serialization
+        for key, value in comparison["common_features"].items():
+            comparison["common_features"][key] = list(value)
+        
+        return comparison
+    
+    async def get_intervention_distribution(self, query: str, max_results: int = 500) -> Dict[str, Any]:
+        """
+        Analyze the distribution of intervention types for a given query.
+        
+        Args:
+            query: The search query
+            max_results: Maximum number of results to analyze
+            
+        Returns:
+            Dictionary with intervention distribution analysis
+        """
+        # Search for studies matching the query
+        studies = await self.client.search_all_pages(
+            query=query,
+            fields=["NCTId", "BriefTitle", "InterventionType", "InterventionName", "Phase"],
+            max_studies=max_results
+        )
+        
+        # Count studies by intervention type
+        intervention_counts = {}
+        interventions_by_type = {}
+        phases_by_intervention_type = {}
+        
+        for study in studies:
+            # Extract interventions
+            interventions = study.get("interventions", [])
+            
+            if not interventions:
+                # If no interventions, categorize as "Not Specified"
+                if "Not Specified" not in intervention_counts:
+                    intervention_counts["Not Specified"] = 0
+                    interventions_by_type["Not Specified"] = []
+                    phases_by_intervention_type["Not Specified"] = {}
+                
+                intervention_counts["Not Specified"] += 1
+                
+                # Track phase
+                phase = study.get("phase", "Not Specified")
+                if not phase:
+                    phase = "Not Specified"
+                
+                if phase not in phases_by_intervention_type["Not Specified"]:
+                    phases_by_intervention_type["Not Specified"][phase] = 0
+                phases_by_intervention_type["Not Specified"][phase] += 1
+            else:
+                # Process each intervention
+                for intervention in interventions:
+                    int_type = intervention.get("type", "Not Specified")
+                    int_name = intervention.get("name", "Not Specified")
+                    
+                    if not int_type:
+                        int_type = "Not Specified"
+                    
+                    # Count by type
+                    if int_type not in intervention_counts:
+                        intervention_counts[int_type] = 0
+                        interventions_by_type[int_type] = []
+                        phases_by_intervention_type[int_type] = {}
+                    
+                    intervention_counts[int_type] += 1
+                    interventions_by_type[int_type].append(int_name)
+                    
+                    # Track phase
+                    phase = study.get("phase", "Not Specified")
+                    if not phase:
+                        phase = "Not Specified"
+                    
+                    if phase not in phases_by_intervention_type[int_type]:
+                        phases_by_intervention_type[int_type][phase] = 0
+                    phases_by_intervention_type[int_type][phase] += 1
+        
+        # Get top interventions by type
+        top_interventions = {}
+        for int_type, interventions in interventions_by_type.items():
+            # Count frequency of each intervention name
+            name_counts = {}
+            for name in interventions:
+                if name not in name_counts:
+                    name_counts[name] = 0
+                name_counts[name] += 1
+            
+            # Sort by frequency and get top 5
+            sorted_names = sorted(name_counts.items(), key=lambda x: x[1], reverse=True)
+            top_interventions[int_type] = [{"name": name, "count": count} for name, count in sorted_names[:5]]
+        
+        # Prepare results
+        return {
+            "query": query,
+            "total_studies": len(studies),
+            "intervention_distribution": intervention_counts,
+            "top_interventions": top_interventions,
+            "phase_distribution": phases_by_intervention_type
+        }
+    
+    async def analyze_sponsors(self, query: str, max_results: int = 500) -> Dict[str, Any]:
+        """
+        Analyze the distribution of sponsors for a given query.
+        
+        Args:
+            query: The search query
+            max_results: Maximum number of results to analyze
+            
+        Returns:
+            Dictionary with sponsor analysis
+        """
+        # Search for studies matching the query
+        studies = await self.client.search_all_pages(
+            query=query,
+            fields=["NCTId", "BriefTitle", "LeadSponsorName", "LeadSponsorClass", 
+                   "CollaboratorName", "CollaboratorClass", "Phase", "OverallStatus"],
+            max_studies=max_results
+        )
+        
+        # Count studies by sponsor type
+        sponsor_type_counts = {}
+        sponsors_by_type = {}
+        phases_by_sponsor_type = {}
+        
+        for study in studies:
+            # Extract lead sponsor
+            lead_sponsor = study.get("leadSponsor", {})
+            sponsor_name = lead_sponsor.get("name", "Not Specified")
+            sponsor_type = lead_sponsor.get("class", "Not Specified")
+            
+            if not sponsor_type:
+                sponsor_type = "Not Specified"
+            
+            # Count by type
+            if sponsor_type not in sponsor_type_counts:
+                sponsor_type_counts[sponsor_type] = 0
+                sponsors_by_type[sponsor_type] = []
+                phases_by_sponsor_type[sponsor_type] = {}
+            
+            sponsor_type_counts[sponsor_type] += 1
+            sponsors_by_type[sponsor_type].append(sponsor_name)
+            
+            # Track phase
+            phase = study.get("phase", "Not Specified")
+            if not phase:
+                phase = "Not Specified"
+            
+            if phase not in phases_by_sponsor_type[sponsor_type]:
+                phases_by_sponsor_type[sponsor_type][phase] = 0
+            phases_by_sponsor_type[sponsor_type][phase] += 1
+        
+        # Get top sponsors by type
+        top_sponsors = {}
+        for sponsor_type, sponsors in sponsors_by_type.items():
+            # Count frequency of each sponsor name
+            name_counts = {}
+            for name in sponsors:
+                if name not in name_counts:
+                    name_counts[name] = 0
+                name_counts[name] += 1
+            
+            # Sort by frequency and get top 5
+            sorted_names = sorted(name_counts.items(), key=lambda x: x[1], reverse=True)
+            top_sponsors[sponsor_type] = [{"name": name, "count": count} for name, count in sorted_names[:5]]
+        
+        # Prepare results
+        return {
+            "query": query,
+            "total_studies": len(studies),
+            "sponsor_type_distribution": sponsor_type_counts,
+            "top_sponsors": top_sponsors,
+            "phase_distribution": phases_by_sponsor_type
+        }
+
+    async def get_enrollment_statistics(self, query: str, max_results: int = 500) -> Dict[str, Any]:
+        """
+        Analyze enrollment statistics for studies matching a query.
+        
+        Args:
+            query: The search query
+            max_results: Maximum number of results to analyze
+            
+        Returns:
+            Dictionary with enrollment statistics
+        """
+        # Search for studies matching the query
+        studies = await self.client.search_all_pages(
+            query=query,
+            fields=["NCTId", "BriefTitle", "EnrollmentCount", "EnrollmentType", 
+                   "Phase", "OverallStatus", "StartDate", "CompletionDate"],
+            max_studies=max_results
+        )
+        
+        # Process enrollment data
+        enrollments = []
+        enrollment_by_phase = {}
+        enrollment_by_status = {}
+        enrollment_by_year = {}
+        
+        for study in studies:
+            # Extract enrollment count
+            enrollment = study.get("enrollmentCount")
+            if not enrollment:
+                continue
+                
+            try:
+                enrollment = int(enrollment)
+            except (ValueError, TypeError):
+                continue
+                
+            enrollments.append(enrollment)
+            
+            # Track by phase
+            phase = study.get("phase", "Not Specified")
+            if not phase:
+                phase = "Not Specified"
+                
+            if phase not in enrollment_by_phase:
+                enrollment_by_phase[phase] = []
+            enrollment_by_phase[phase].append(enrollment)
+            
+            # Track by status
+            status = study.get("overallStatus", "Not Specified")
+            if not status:
+                status = "Not Specified"
+                
+            if status not in enrollment_by_status:
+                enrollment_by_status[status] = []
+            enrollment_by_status[status].append(enrollment)
+            
+            # Track by start year
+            start_date = study.get("startDate", "")
+            start_year = None
+            
+            if start_date and len(start_date) >= 4:
+                try:
+                    start_year = start_date[:4]
+                except (IndexError, TypeError):
+                    pass
+            
+            if start_year:
+                if start_year not in enrollment_by_year:
+                    enrollment_by_year[start_year] = []
+                enrollment_by_year[start_year].append(enrollment)
+        
+        # Calculate statistics
+        def calculate_stats(values):
+            if not values:
+                return {"min": 0, "max": 0, "mean": 0, "median": 0, "total": 0, "count": 0}
+                
+            values.sort()
+            n = len(values)
+            
+            if n % 2 == 0:
+                median = (values[n//2 - 1] + values[n//2]) / 2
+            else:
+                median = values[n//2]
+                
+            return {
+                "min": min(values),
+                "max": max(values),
+                "mean": sum(values) / n,
+                "median": median,
+                "total": sum(values),
+                "count": n
+            }
+        
+        overall_stats = calculate_stats(enrollments)
+        
+        # Calculate stats by category
+        phase_stats = {phase: calculate_stats(values) for phase, values in enrollment_by_phase.items()}
+        status_stats = {status: calculate_stats(values) for status, values in enrollment_by_status.items()}
+        year_stats = {year: calculate_stats(values) for year, values in enrollment_by_year.items()}
+        
+        # Prepare results
+        return {
+            "query": query,
+            "total_studies_with_enrollment": len(enrollments),
+            "overall_statistics": overall_stats,
+            "by_phase": phase_stats,
+            "by_status": status_stats,
+            "by_year": year_stats
+        }

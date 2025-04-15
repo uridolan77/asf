@@ -8,7 +8,7 @@ import { useNotification } from './NotificationContext';
 const AuthContext = createContext();
 
 // Base API URL
-const API_URL = process.env.REACT_APP_API_URL || '';
+const API_URL = 'http://localhost:8000';  // Hardcoded for now
 
 // Create the AuthProvider component
 export const AuthProvider = ({ children }) => {
@@ -40,26 +40,26 @@ export const AuthProvider = ({ children }) => {
     (response) => response,
     async (error) => {
       const originalRequest = error.config;
-      
+
       // If the error is 401 and we haven't already tried to refresh the token
       if (error.response?.status === 401 && !originalRequest._retry) {
         originalRequest._retry = true;
-        
+
         try {
           // Attempt to refresh the token
           const refreshToken = localStorage.getItem('refreshToken');
           if (!refreshToken) {
             throw new Error('No refresh token available');
           }
-          
-          const res = await axios.post(`${API_URL}/auth/refresh-token`, { 
-            refresh_token: refreshToken 
+
+          const res = await axios.post(`${API_URL}/api/refresh-token`, {
+            refresh_token: refreshToken
           });
-          
+
           // Store the new tokens
           localStorage.setItem('token', res.data.access_token);
           localStorage.setItem('refreshToken', res.data.refresh_token);
-          
+
           // Retry the original request with the new token
           originalRequest.headers.Authorization = `Bearer ${res.data.access_token}`;
           return api(originalRequest);
@@ -69,7 +69,7 @@ export const AuthProvider = ({ children }) => {
           return Promise.reject(refreshError);
         }
       }
-      
+
       return Promise.reject(error);
     }
   );
@@ -78,11 +78,14 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const initAuth = async () => {
       const token = localStorage.getItem('token');
-      
+
       if (token) {
         try {
           // Verify token by fetching user data
-          const response = await api.get('/auth/me');
+          const response = await axios.get(`${API_URL}/api/me`, {
+            headers: { Authorization: `Bearer ${token}` },
+            withCredentials: false, // Set to false for CORS
+          });
           setUser(response.data);
           setIsAuthenticated(true);
         } catch (error) {
@@ -91,10 +94,10 @@ export const AuthProvider = ({ children }) => {
           localStorage.removeItem('refreshToken');
         }
       }
-      
+
       setLoading(false);
     };
-    
+
     initAuth();
   }, []);
 
@@ -102,21 +105,48 @@ export const AuthProvider = ({ children }) => {
   const login = useCallback(async (credentials) => {
     try {
       setLoading(true);
-      const response = await axios.post(`${API_URL}/auth/login`, credentials);
-      
-      const { access_token, refresh_token, user: userData } = response.data;
-      
+      console.log('Login credentials:', credentials);
+      console.log('API URL:', `${API_URL}/api/login`);
+
+      // Use axios for login
+      const response = await axios.post(`${API_URL}/api/login`,
+        new URLSearchParams(credentials).toString(),
+        {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          withCredentials: false, // Set to false for CORS
+        }
+      );
+
+      console.log('Login response:', response);
+
+      const { access_token } = response.data;
+
       localStorage.setItem('token', access_token);
-      localStorage.setItem('refreshToken', refresh_token);
-      
-      setUser(userData);
+
+      // Fetch user data
+      try {
+        const userResponse = await axios.get(`${API_URL}/api/me`, {
+          headers: { Authorization: `Bearer ${access_token}` },
+          withCredentials: false, // Set to false for CORS
+        });
+
+        console.log('User data response:', userResponse);
+        setUser(userResponse.data);
+      } catch (userError) {
+        console.warn('Could not fetch user data:', userError);
+        // Continue login process even if user data fetch fails
+      }
+
       setIsAuthenticated(true);
       showSuccess('Successfully logged in');
-      
+
       navigate('/dashboard');
       return true;
     } catch (error) {
-      const message = error.response?.data?.message || 'Failed to login';
+      console.error('Login error:', error);
+      const message = error.response?.data?.detail || error.message || 'Failed to login';
       showError(message);
       return false;
     } finally {
@@ -137,7 +167,7 @@ export const AuthProvider = ({ children }) => {
   const register = useCallback(async (userData) => {
     try {
       setLoading(true);
-      await axios.post(`${API_URL}/auth/register`, userData);
+      await axios.post(`${API_URL}/api/register`, userData);
       showSuccess('Registration successful! You can now login.');
       navigate('/');
       return true;
@@ -154,7 +184,7 @@ export const AuthProvider = ({ children }) => {
   const updateProfile = useCallback(async (profileData) => {
     try {
       setLoading(true);
-      const response = await api.put('/auth/profile', profileData);
+      const response = await api.put('/api/profile', profileData);
       setUser(response.data);
       showSuccess('Profile updated successfully');
       return true;
