@@ -8,6 +8,7 @@ import Users from './pages/Users';
 import Settings from './pages/Settings';
 import PICOSearch from './pages/PICOSearch';
 import KnowledgeBase from './pages/KnowledgeBase';
+import ClinicalData from './pages/ClinicalData';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
         <Route path="/settings" element={<Settings />} />
         <Route path="/pico-search" element={<PICOSearch />} />
         <Route path="/knowledge-base" element={<KnowledgeBase />} />
+        <Route path="/clinical-data" element={<ClinicalData />} />
       </Routes>
     </Router>
   );

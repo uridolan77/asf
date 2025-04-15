@@ -1,6 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import {
+  Box, Button, Card, CardContent, CardHeader, Divider, FormControlLabel,
+  Grid, IconButton, InputAdornment, MenuItem, Paper, Select, Switch,
+  TextField, Typography, Alert, Snackbar, FormControl, InputLabel
+} from '@mui/material';
+import {
+  Save as SaveIcon,
+  Visibility as VisibilityIcon,
+  VisibilityOff as VisibilityOffIcon,
+  Person as PersonIcon,
+  Email as EmailIcon,
+  Lock as LockIcon,
+  Settings as SettingsIcon
+} from '@mui/icons-material';
+
+import PageLayout from '../components/Layout/PageLayout';
 
 const Settings = () => {
   const [user, setUser] = useState(null);
@@ -121,7 +137,7 @@ const Settings = () => {
 
   const handleProfileSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateProfileForm()) return;
 
     const token = localStorage.getItem('token');
@@ -176,271 +192,284 @@ const Settings = () => {
     }
   };
 
-  if (loading) {
-    return <div style={{ textAlign: 'center', marginTop: '50px' }}>Loading settings...</div>;
-  }
+  // State for password visibility
+  const [showPassword, setShowPassword] = useState({
+    current: false,
+    new: false,
+    confirm: false
+  });
+
+  const togglePasswordVisibility = (field) => {
+    setShowPassword({
+      ...showPassword,
+      [field]: !showPassword[field]
+    });
+  };
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh' }}>
-      {/* Sidebar */}
-      <div style={{ 
-        width: '250px', 
-        backgroundColor: '#2c3e50', 
-        color: 'white', 
-        padding: '20px' 
-      }}>
-        <h2 style={{ marginBottom: '30px' }}>BO Admin</h2>
-        <div style={{ marginBottom: '20px' }}>
-          <div style={{ fontWeight: 'bold' }}>Menu</div>
-          <ul style={{ listStyleType: 'none', padding: 0 }}>
-            <li 
-              style={{ padding: '10px 0', borderBottom: '1px solid #34495e', cursor: 'pointer' }}
-              onClick={() => navigate('/dashboard')}
-            >
-              Dashboard
-            </li>
-            {user && user.role_id === 2 && (
-              <li 
-                style={{ padding: '10px 0', borderBottom: '1px solid #34495e', cursor: 'pointer' }}
-                onClick={() => navigate('/users')}
-              >
-                Users
-              </li>
-            )}
-            <li 
-              style={{ padding: '10px 0', borderBottom: '1px solid #34495e', fontWeight: 'bold', cursor: 'pointer' }}
-            >
-              Settings
-            </li>
-          </ul>
-        </div>
-        <button 
-          onClick={handleLogout}
-          style={{
-            backgroundColor: '#e74c3c',
-            color: 'white',
-            border: 'none',
-            padding: '8px 15px',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            marginTop: '20px'
-          }}
-        >
-          Logout
-        </button>
-      </div>
+    <PageLayout
+      title="Settings"
+      breadcrumbs={[{ label: 'Settings', path: '/settings' }]}
+      loading={loading}
+      user={user}
+    >
+      {/* Alerts */}
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {error}
+        </Alert>
+      )}
 
-      {/* Main content */}
-      <div style={{ flex: 1, padding: '20px' }}>
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center',
-          marginBottom: '20px',
-          padding: '10px',
-          backgroundColor: '#f8f9fa',
-          borderRadius: '5px'
-        }}>
-          <h1>Settings</h1>
-          {user && (
-            <div>
-              <span style={{ marginRight: '10px' }}>{user.username}</span>
-              <span style={{ backgroundColor: '#3498db', color: 'white', padding: '3px 8px', borderRadius: '10px', fontSize: '0.8em' }}>
-                {user.role_id === 1 ? 'User' : 'Admin'}
-              </span>
-            </div>
-          )}
-        </div>
+      {success && (
+        <Alert severity="success" sx={{ mb: 3 }}>
+          {success}
+        </Alert>
+      )}
 
-        {error && (
-          <div style={{ 
-            color: 'white', 
-            backgroundColor: '#e74c3c', 
-            padding: '10px', 
-            borderRadius: '5px', 
-            marginBottom: '20px' 
-          }}>
-            {error}
-          </div>
-        )}
-
-        {success && (
-          <div style={{ 
-            color: 'white', 
-            backgroundColor: '#27ae60', 
-            padding: '10px', 
-            borderRadius: '5px', 
-            marginBottom: '20px' 
-          }}>
-            {success}
-          </div>
-        )}
-
+      <Grid container spacing={3}>
         {/* Profile Settings */}
-        <div style={{ 
-          border: '1px solid #ddd', 
-          borderRadius: '5px',
-          padding: '20px',
-          marginBottom: '20px',
-          backgroundColor: 'white',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-        }}>
-          <h2>Profile Settings</h2>
-          <form onSubmit={handleProfileSubmit}>
-            <div style={{ marginBottom: '15px' }}>
-              <label htmlFor="username" style={{ display: 'block', marginBottom: '5px' }}>Username:</label>
-              <input
-                type="text"
-                id="username"
-                name="username"
-                value={profileData.username}
-                onChange={handleProfileChange}
-                style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
-                required
-              />
-            </div>
-            <div style={{ marginBottom: '15px' }}>
-              <label htmlFor="email" style={{ display: 'block', marginBottom: '5px' }}>Email:</label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={profileData.email}
-                onChange={handleProfileChange}
-                style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
-                required
-              />
-            </div>
-            <h3>Change Password</h3>
-            <div style={{ marginBottom: '15px' }}>
-              <label htmlFor="currentPassword" style={{ display: 'block', marginBottom: '5px' }}>Current Password:</label>
-              <input
-                type="password"
-                id="currentPassword"
-                name="currentPassword"
-                value={profileData.currentPassword}
-                onChange={handleProfileChange}
-                style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
-              />
-            </div>
-            <div style={{ marginBottom: '15px' }}>
-              <label htmlFor="newPassword" style={{ display: 'block', marginBottom: '5px' }}>New Password:</label>
-              <input
-                type="password"
-                id="newPassword"
-                name="newPassword"
-                value={profileData.newPassword}
-                onChange={handleProfileChange}
-                style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
-              />
-            </div>
-            <div style={{ marginBottom: '15px' }}>
-              <label htmlFor="confirmPassword" style={{ display: 'block', marginBottom: '5px' }}>Confirm New Password:</label>
-              <input
-                type="password"
-                id="confirmPassword"
-                name="confirmPassword"
-                value={profileData.confirmPassword}
-                onChange={handleProfileChange}
-                style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
-              />
-            </div>
-            <button 
-              type="submit"
-              style={{
-                backgroundColor: '#3498db',
-                color: 'white',
-                border: 'none',
-                padding: '10px 15px',
-                borderRadius: '4px',
-                cursor: 'pointer'
-              }}
-            >
-              Update Profile
-            </button>
-          </form>
-        </div>
+        <Grid item xs={12} md={6}>
+          <Card sx={{ mb: { xs: 3, md: 0 } }}>
+            <CardHeader
+              title="Profile Settings"
+              avatar={<PersonIcon color="primary" />}
+            />
+            <Divider />
+            <CardContent>
+              <form onSubmit={handleProfileSubmit}>
+                <Grid container spacing={2}>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label="Username"
+                      name="username"
+                      value={profileData.username}
+                      onChange={handleProfileChange}
+                      required
+                      variant="outlined"
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <PersonIcon />
+                          </InputAdornment>
+                        ),
+                      }}
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label="Email"
+                      name="email"
+                      type="email"
+                      value={profileData.email}
+                      onChange={handleProfileChange}
+                      required
+                      variant="outlined"
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <EmailIcon />
+                          </InputAdornment>
+                        ),
+                      }}
+                    />
+                  </Grid>
+
+                  <Grid item xs={12}>
+                    <Typography variant="h6" gutterBottom>
+                      Change Password
+                    </Typography>
+                    <Divider sx={{ mb: 2 }} />
+                  </Grid>
+
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label="Current Password"
+                      name="currentPassword"
+                      type={showPassword.current ? 'text' : 'password'}
+                      value={profileData.currentPassword}
+                      onChange={handleProfileChange}
+                      variant="outlined"
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <LockIcon />
+                          </InputAdornment>
+                        ),
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <IconButton
+                              onClick={() => togglePasswordVisibility('current')}
+                              edge="end"
+                            >
+                              {showPassword.current ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                            </IconButton>
+                          </InputAdornment>
+                        ),
+                      }}
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label="New Password"
+                      name="newPassword"
+                      type={showPassword.new ? 'text' : 'password'}
+                      value={profileData.newPassword}
+                      onChange={handleProfileChange}
+                      variant="outlined"
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <LockIcon />
+                          </InputAdornment>
+                        ),
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <IconButton
+                              onClick={() => togglePasswordVisibility('new')}
+                              edge="end"
+                            >
+                              {showPassword.new ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                            </IconButton>
+                          </InputAdornment>
+                        ),
+                      }}
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label="Confirm New Password"
+                      name="confirmPassword"
+                      type={showPassword.confirm ? 'text' : 'password'}
+                      value={profileData.confirmPassword}
+                      onChange={handleProfileChange}
+                      variant="outlined"
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <LockIcon />
+                          </InputAdornment>
+                        ),
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <IconButton
+                              onClick={() => togglePasswordVisibility('confirm')}
+                              edge="end"
+                            >
+                              {showPassword.confirm ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                            </IconButton>
+                          </InputAdornment>
+                        ),
+                      }}
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Button
+                      type="submit"
+                      variant="contained"
+                      color="primary"
+                      startIcon={<SaveIcon />}
+                    >
+                      Update Profile
+                    </Button>
+                  </Grid>
+                </Grid>
+              </form>
+            </CardContent>
+          </Card>
+        </Grid>
 
         {/* System Settings (Admin Only) */}
-        {user && user.role_id === 2 && (
-          <div style={{ 
-            border: '1px solid #ddd', 
-            borderRadius: '5px',
-            padding: '20px',
-            backgroundColor: 'white',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-          }}>
-            <h2>System Settings</h2>
-            <form onSubmit={handleSystemSettingsSubmit}>
-              <div style={{ marginBottom: '15px' }}>
-                <label htmlFor="sessionTimeout" style={{ display: 'block', marginBottom: '5px' }}>Session Timeout (minutes):</label>
-                <input
-                  type="number"
-                  id="sessionTimeout"
-                  name="sessionTimeout"
-                  value={systemSettings.sessionTimeout}
-                  onChange={handleSystemSettingChange}
-                  style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
-                  min="15"
-                  max="480"
-                  required
-                />
-              </div>
-              <div style={{ marginBottom: '15px' }}>
-                <label htmlFor="language" style={{ display: 'block', marginBottom: '5px' }}>Default Language:</label>
-                <select
-                  id="language"
-                  name="language"
-                  value={systemSettings.language}
-                  onChange={handleSystemSettingChange}
-                  style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
-                >
-                  <option value="en">English</option>
-                  <option value="es">Spanish</option>
-                  <option value="fr">French</option>
-                  <option value="de">German</option>
-                </select>
-              </div>
-              <div style={{ marginBottom: '15px', display: 'flex', alignItems: 'center' }}>
-                <input
-                  type="checkbox"
-                  id="enableNotifications"
-                  name="enableNotifications"
-                  checked={systemSettings.enableNotifications}
-                  onChange={handleSystemSettingChange}
-                  style={{ marginRight: '10px' }}
-                />
-                <label htmlFor="enableNotifications">Enable Email Notifications</label>
-              </div>
-              <div style={{ marginBottom: '15px', display: 'flex', alignItems: 'center' }}>
-                <input
-                  type="checkbox"
-                  id="darkMode"
-                  name="darkMode"
-                  checked={systemSettings.darkMode}
-                  onChange={handleSystemSettingChange}
-                  style={{ marginRight: '10px' }}
-                />
-                <label htmlFor="darkMode">Enable Dark Mode</label>
-              </div>
-              <button 
-                type="submit"
-                style={{
-                  backgroundColor: '#3498db',
-                  color: 'white',
-                  border: 'none',
-                  padding: '10px 15px',
-                  borderRadius: '4px',
-                  cursor: 'pointer'
-                }}
-              >
-                Save System Settings
-              </button>
-            </form>
-          </div>
-        )}
-      </div>
-    </div>
+        <Grid item xs={12} md={6}>
+          {user && user.role_id === 2 && (
+            <Card>
+              <CardHeader
+                title="System Settings"
+                avatar={<SettingsIcon color="primary" />}
+              />
+              <Divider />
+              <CardContent>
+                <form onSubmit={handleSystemSettingsSubmit}>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12}>
+                      <TextField
+                        fullWidth
+                        label="Session Timeout (minutes)"
+                        name="sessionTimeout"
+                        type="number"
+                        value={systemSettings.sessionTimeout}
+                        onChange={handleSystemSettingChange}
+                        variant="outlined"
+                        InputProps={{ inputProps: { min: 15, max: 480 } }}
+                        required
+                      />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <FormControl fullWidth>
+                        <InputLabel id="language-label">Default Language</InputLabel>
+                        <Select
+                          labelId="language-label"
+                          id="language"
+                          name="language"
+                          value={systemSettings.language}
+                          label="Default Language"
+                          onChange={handleSystemSettingChange}
+                        >
+                          <MenuItem value="en">English</MenuItem>
+                          <MenuItem value="es">Spanish</MenuItem>
+                          <MenuItem value="fr">French</MenuItem>
+                          <MenuItem value="de">German</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </Grid>
+                    <Grid item xs={12}>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={systemSettings.enableNotifications}
+                            onChange={handleSystemSettingChange}
+                            name="enableNotifications"
+                            color="primary"
+                          />
+                        }
+                        label="Enable Email Notifications"
+                      />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={systemSettings.darkMode}
+                            onChange={handleSystemSettingChange}
+                            name="darkMode"
+                            color="primary"
+                          />
+                        }
+                        label="Enable Dark Mode"
+                      />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Button
+                        type="submit"
+                        variant="contained"
+                        color="primary"
+                        startIcon={<SaveIcon />}
+                      >
+                        Save System Settings
+                      </Button>
+                    </Grid>
+                  </Grid>
+                </form>
+              </CardContent>
+            </Card>
+          )}
+        </Grid>
+      </Grid>
+    </PageLayout>
   );
 };
 

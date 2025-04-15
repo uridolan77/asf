@@ -26,7 +26,7 @@ const Dashboard = () => {
           }
         });
         setUser(response.data);
-        
+
         // If user is admin, fetch additional stats
         if (response.data.role_id === 2) {
           try {
@@ -68,11 +68,11 @@ const Dashboard = () => {
   return (
     <div style={{ display: 'flex', minHeight: '100vh' }}>
       {/* Sidebar */}
-      <div style={{ 
-        width: '250px', 
-        backgroundColor: '#2c3e50', 
-        color: 'white', 
-        padding: '20px' 
+      <div style={{
+        width: '250px',
+        backgroundColor: '#2c3e50',
+        color: 'white',
+        padding: '20px'
       }}>
         <h2 style={{ marginBottom: '30px' }}>BO Admin</h2>
         <div style={{ marginBottom: '20px' }}>
@@ -80,26 +80,26 @@ const Dashboard = () => {
           <ul style={{ listStyleType: 'none', padding: 0 }}>
             <li style={{ padding: '10px 0', borderBottom: '1px solid #34495e' }}>Dashboard</li>
             {user && user.role_id === 2 && (
-              <li 
+              <li
                 style={{ padding: '10px 0', borderBottom: '1px solid #34495e', cursor: 'pointer' }}
                 onClick={() => navigate('/users')}
               >
                 Users
               </li>
             )}
-            <li 
+            <li
               style={{ padding: '10px 0', borderBottom: '1px solid #34495e', cursor: 'pointer' }}
               onClick={() => navigate('/settings')}
             >
               Settings
             </li>
-            <li 
+            <li
               style={{ padding: '10px 0', borderBottom: '1px solid #34495e', cursor: 'pointer' }}
               onClick={() => navigate('/pico-search')}
             >
               PICO Search
             </li>
-            <li 
+            <li
               style={{ padding: '10px 0', borderBottom: '1px solid #34495e', cursor: 'pointer' }}
               onClick={() => navigate('/knowledge-base')}
             >
@@ -107,7 +107,7 @@ const Dashboard = () => {
             </li>
           </ul>
         </div>
-        <button 
+        <button
           onClick={handleLogout}
           style={{
             backgroundColor: '#e74c3c',
@@ -125,9 +125,9 @@ const Dashboard = () => {
 
       {/* Main content */}
       <div style={{ flex: 1, padding: '20px' }}>
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
           alignItems: 'center',
           marginBottom: '20px',
           padding: '10px',
@@ -149,8 +149,8 @@ const Dashboard = () => {
 
         {/* User info card */}
         {user && (
-          <div style={{ 
-            border: '1px solid #ddd', 
+          <div style={{
+            border: '1px solid #ddd',
             borderRadius: '5px',
             padding: '20px',
             marginBottom: '20px',
@@ -167,8 +167,8 @@ const Dashboard = () => {
 
         {/* Dashboard widgets */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
-          <div style={{ 
-            border: '1px solid #ddd', 
+          <div style={{
+            border: '1px solid #ddd',
             borderRadius: '5px',
             padding: '20px',
             backgroundColor: 'white',
@@ -177,9 +177,9 @@ const Dashboard = () => {
             <h3>Recent Activity</h3>
             <p>No recent activity to display.</p>
           </div>
-          
-          <div style={{ 
-            border: '1px solid #ddd', 
+
+          <div style={{
+            border: '1px solid #ddd',
             borderRadius: '5px',
             padding: '20px',
             backgroundColor: 'white',
@@ -188,9 +188,9 @@ const Dashboard = () => {
             <h3>System Status</h3>
             <p style={{ color: 'green' }}>All systems operational</p>
           </div>
-          
-          <div style={{ 
-            border: '1px solid #ddd', 
+
+          <div style={{
+            border: '1px solid #ddd',
             borderRadius: '5px',
             padding: '20px',
             backgroundColor: 'white',
@@ -217,8 +217,8 @@ const Dashboard = () => {
             )}
           </div>
 
-          <div style={{ 
-            border: '1px solid #ddd', 
+          <div style={{
+            border: '1px solid #ddd',
             borderRadius: '5px',
             padding: '20px',
             backgroundColor: 'white',
@@ -254,19 +254,32 @@ const Dashboard = () => {
                 >
                   Knowledge Base
                 </button>
+                <button
+                  onClick={() => navigate('/clinical-data')}
+                  style={{
+                    backgroundColor: '#16a085',
+                    color: 'white',
+                    border: 'none',
+                    padding: '5px 10px',
+                    borderRadius: '3px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Clinical Data
+                </button>
               </div>
             </div>
-            
-            <div style={{ 
-              padding: '15px', 
-              backgroundColor: '#f0f7ff', 
-              borderRadius: '5px', 
+
+            <div style={{
+              padding: '15px',
+              backgroundColor: '#f0f7ff',
+              borderRadius: '5px',
               marginBottom: '15px',
               borderLeft: '4px solid #3498db'
             }}>
               <h4 style={{ margin: '0 0 10px 0', color: '#2980b9' }}>Community Acquired Pneumonia (CAP) Research</h4>
               <p style={{ margin: '0 0 10px 0' }}>
-                Access the latest research on Community Acquired Pneumonia treatments, 
+                Access the latest research on Community Acquired Pneumonia treatments,
                 diagnostic criteria, and emerging evidence.
               </p>
               <div style={{ display: 'flex', gap: '10px' }}>
@@ -299,7 +312,7 @@ const Dashboard = () => {
                 </button>
               </div>
             </div>
-            
+
             <div style={{ fontSize: '0.9em' }}>
               <p><strong>Recent Medical Research Updates:</strong></p>
               <ul style={{ paddingLeft: '20px' }}>

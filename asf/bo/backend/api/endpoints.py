@@ -18,6 +18,7 @@ from api.routers.medical_search import router as medical_search_router
 from api.routers.medical_contradiction import router as medical_contradiction_router
 from api.routers.medical_terminology import router as medical_terminology_router
 from api.routers.enhanced_medical_contradiction import router as enhanced_medical_contradiction_router
+from api.routers.medical_clinical_data import router as medical_clinical_data_router
 
 from models.user import User, Role, Base
 from config.config import SessionLocal, engine
@@ -46,6 +47,7 @@ app.include_router(medical_search_router)
 app.include_router(medical_contradiction_router)
 app.include_router(medical_terminology_router)
 app.include_router(enhanced_medical_contradiction_router)
+app.include_router(medical_clinical_data_router)
 
 # Dependency to get DB session
 def get_db():
@@ -120,7 +122,7 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
         db_user = get_user_by_email(db, user.email)
         if db_user:
             raise HTTPException(status_code=400, detail="Email already registered")
-        
+
         hashed_password = get_password_hash(user.password)
         new_user = User(
             username=user.username,
@@ -174,33 +176,33 @@ def update_profile(user_data: UserUpdate, token: str = Depends(oauth2_scheme), d
     current_user = db.query(User).filter(User.id == int(user_id)).first()
     if current_user is None:
         raise HTTPException(status_code=404, detail="User not found")
-    
+
     # Check if email is being changed to an existing email
     if user_data.email != current_user.email:
         existing_user = get_user_by_email(db, user_data.email)
         if existing_user:
             raise HTTPException(status_code=400, detail="Email already registered")
-    
+
     # Password change logic
     if user_data.new_password:
         if not user_data.current_password:
             raise HTTPException(status_code=400, detail="Current password is required to set a new password")
-        
+
         # Verify current password
         if not verify_password(user_data.current_password, current_user.password_hash):
             raise HTTPException(status_code=400, detail="Current password is incorrect")
-        
+
         # Update password hash
         current_user.password_hash = get_password_hash(user_data.new_password)
-    
+
     # Update other fields
     current_user.username = user_data.username
     current_user.email = user_data.email
     current_user.updated_at = datetime.utcnow()
-    
+
     db.commit()
     db.refresh(current_user)
-    
+
     return current_user
 
 @app.get("/api/roles")
@@ -218,15 +220,15 @@ def get_current_admin_user(token: str = Depends(oauth2_scheme), db: Session = De
             raise HTTPException(status_code=401, detail="Invalid authentication credentials")
     except jwt.PyJWTError:
         raise HTTPException(status_code=401, detail="Invalid authentication credentials")
-    
+
     user = db.query(User).filter(User.id == int(user_id)).first()
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
-    
+
     # Check if user is admin (role_id = 2)
     if user.role_id != 2:
         raise HTTPException(status_code=403, detail="Not enough permissions")
-    
+
     return user
 
 @app.get("/api/users", response_model=list[UserOut])
@@ -241,7 +243,7 @@ def create_user(user: UserCreate, admin_user: User = Depends(get_current_admin_u
     db_user = get_user_by_email(db, user.email)
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
-    
+
     hashed_password = get_password_hash(user.password)
     new_user = User(
         username=user.username,
@@ -260,11 +262,11 @@ def delete_user(user_id: int, admin_user: User = Depends(get_current_admin_user)
     # Check if user trying to delete themselves
     if admin_user.id == user_id:
         raise HTTPException(status_code=400, detail="Cannot delete your own account")
-    
+
     user = db.query(User).filter(User.id == user_id).first()
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
-    
+
     db.delete(user)
     db.commit()
     return {"message": "User deleted successfully"}
@@ -274,12 +276,12 @@ def get_stats(admin_user: User = Depends(get_current_admin_user), db: Session = 
     """Get system statistics (admin only)."""
     # Count all users
     user_count = db.query(User).count()
-    
+
     # For demo purposes, we'll simulate active sessions
     # In a real app, you'd track this in a sessions table or using Redis
     import random
     active_sessions = random.randint(1, user_count)
-    
+
     return {
         "user_count": user_count,
         "active_sessions": active_sessions
@@ -298,9 +300,9 @@ def update_system_settings(settings: SystemSettings, admin_user: User = Depends(
     SYSTEM_SETTINGS["enableNotifications"] = settings.enableNotifications
     SYSTEM_SETTINGS["darkMode"] = settings.darkMode
     SYSTEM_SETTINGS["language"] = settings.language
-    
+
     # In a real application, this would be saved to a database
-    
+
     return SYSTEM_SETTINGS
 
 # Models for Medical Research API
@@ -345,7 +347,7 @@ class ExportRequest(BaseModel):
 # Medical API endpoints
 @app.post("/api/medical/search")
 def search_medical(
-    query: str = Body(...), 
+    query: str = Body(...),
     max_results: int = Body(20),
     current_user: User = Depends(oauth2_scheme),
     db: Session = Depends(get_db)
@@ -367,7 +369,7 @@ def search_medical(
         }
         for i in range(1, min(max_results + 1, 21))
     ]
-    
+
     return {
         "success": True,
         "message": f"Found {len(articles)} results for query: {query}",
@@ -391,7 +393,7 @@ def search_pico(
     pico_description = f"P: {request.population or request.condition}, " \
                        f"I: {', '.join(request.interventions)}, " \
                        f"O: {', '.join(request.outcomes)}"
-    
+
     articles = [
         {
             "id": f"pico_{i}",
@@ -406,7 +408,7 @@ def search_pico(
         }
         for i in range(1, min(request.max_results + 1, 21))
     ]
-    
+
     return {
         "success": True,
         "message": f"Found {len(articles)} results for PICO query",
@@ -434,7 +436,7 @@ def analyze_contradictions(
         models_used.append("TSMixer")
     if request.use_lorentz:
         models_used.append("Lorentz")
-    
+
     contradiction_pairs = [
         {
             "article1": {
@@ -452,7 +454,7 @@ def analyze_contradictions(
         }
         for i in range(1, min(request.max_results + 1, 11))
     ]
-    
+
     return {
         "success": True,
         "message": f"Identified {len(contradiction_pairs)} contradiction pairs",
@@ -503,7 +505,7 @@ def analyze_cap(
             "contraindications": ["Active untreated infections"]
         }
     ]
-    
+
     diagnostic_criteria = [
         {
             "criterion": "Chest X-ray confirmation",
@@ -530,7 +532,7 @@ def analyze_cap(
             "recommendation": "Recommended to assess severity"
         }
     ]
-    
+
     recent_findings = [
         {
             "title": "Antibiotic resistance trends in CAP",
@@ -554,7 +556,7 @@ def analyze_cap(
             "source": "Lancet Respiratory Medicine"
         }
     ]
-    
+
     return {
         "success": True,
         "message": "Retrieved CAP analysis data",
@@ -585,7 +587,7 @@ def screen_articles(
         "eligibility": "Full-text assessment",
         "included": "Final inclusion"
     }
-    
+
     articles = [
         {
             "id": f"screening_{i}",
@@ -601,18 +603,18 @@ def screen_articles(
         }
         for i in range(1, min(request.max_results + 1, 21))
     ]
-    
+
     # Filter out excluded articles if at the included stage
     if request.stage == "included":
         articles = [a for a in articles if a["status"] == "included"]
-    
+
     prisma_stats = {
         "identification": random.randint(200, 500),
         "screening": random.randint(100, 200),
         "eligibility": random.randint(30, 100),
         "included": len([a for a in articles if a["status"] == "included"])
     }
-    
+
     return {
         "success": True,
         "message": f"Screened articles at {stages.get(request.stage, request.stage)} stage",
@@ -636,13 +638,13 @@ def assess_bias(
     """
     # Default domains if not provided
     domains = request.domains or [
-        "Selection bias", 
+        "Selection bias",
         "Performance bias",
-        "Detection bias", 
-        "Attrition bias", 
+        "Detection bias",
+        "Attrition bias",
         "Reporting bias"
     ]
-    
+
     articles = [
         {
             "id": f"bias_{i}",
@@ -661,7 +663,7 @@ def assess_bias(
         }
         for i in range(1, min(request.max_results + 1, 21))
     ]
-    
+
     summary = {
         domain: {
             "Low": len([a for a in articles if a["bias_assessment"][domain]["risk"] == "Low"]),
@@ -670,7 +672,7 @@ def assess_bias(
         }
         for domain in domains
     }
-    
+
     return {
         "success": True,
         "message": f"Assessed bias in {len(articles)} articles",
@@ -693,7 +695,7 @@ def create_knowledge_base(
     Create a new knowledge base (admin only).
     """
     kb_id = str(uuid.uuid4())
-    
+
     # In a real implementation, this would save to a database
     # For now, we'll just return a mock response
     return {
@@ -731,7 +733,7 @@ def list_knowledge_bases(
         }
         for i in range(1, 6)
     ]
-    
+
     # Include a CAP-specific knowledge base
     cap_kb = {
         "id": str(uuid.uuid4()),
@@ -743,7 +745,7 @@ def list_knowledge_bases(
         "last_updated": (datetime.utcnow() - timedelta(days=2)).isoformat()
     }
     knowledge_bases.append(cap_kb)
-    
+
     return {
         "success": True,
         "message": f"Retrieved {len(knowledge_bases)} knowledge bases",
@@ -765,7 +767,7 @@ def get_knowledge_base(
     # For demonstration, create a mock knowledge base
     # In real implementation, this would fetch from a database
     is_cap = "cap" in kb_id.lower()
-    
+
     kb = {
         "id": kb_id,
         "name": "Community Acquired Pneumonia Research" if is_cap else f"Knowledge Base {kb_id[:4]}",
@@ -793,7 +795,7 @@ def get_knowledge_base(
             for i in range(1, 6)
         ]
     }
-    
+
     # Add CAP-specific concepts if relevant
     if is_cap:
         kb["concepts"].extend([
@@ -813,7 +815,7 @@ def get_knowledge_base(
                 "related_articles": 35
             }
         ])
-    
+
     return {
         "success": True,
         "message": f"Retrieved knowledge base: {kb['name']}",
@@ -868,7 +870,7 @@ def export_results(
 ):
     """
     Export search results in various formats.
-    
+
     Formats supported:
     - csv: Comma-separated values
     - json: JSON format
@@ -877,20 +879,20 @@ def export_results(
     """
     if format not in ["csv", "json", "pdf", "xlsx"]:
         raise HTTPException(status_code=400, detail=f"Unsupported format: {format}")
-    
+
     if not request.result_id and not request.query:
         raise HTTPException(status_code=400, detail="Either result_id or query must be provided")
-    
+
     # Generate mock export data
     result_id = request.result_id or f"query_{uuid.uuid4()}"
     query = request.query or "Exported search results"
-    
+
     if format == "csv":
         content = "title,authors,journal,year,abstract\n"
         for i in range(1, min(request.max_results + 1, 11)):
             content += f"Research Article {i},Author A|Author B,Journal of Medicine,{2023-i},Abstract text for article {i}...\n"
         content_type = "text/csv"
-        
+
     elif format == "json":
         content = json.dumps({
             "query": query,
@@ -908,11 +910,11 @@ def export_results(
             ]
         })
         content_type = "application/json"
-        
+
     else:  # pdf or xlsx (mock)
         content = f"This would be a {format.upper()} file in a real implementation"
         content_type = "text/plain"  # Mock
-    
+
     return {
         "success": True,
         "message": f"Exported results in {format} format",
