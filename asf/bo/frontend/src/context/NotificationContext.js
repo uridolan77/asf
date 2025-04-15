@@ -17,7 +17,8 @@ export const NotificationProvider = ({ children }) => {
 
   // Add a notification
   const addNotification = useCallback((message, severity = 'info', duration = 5000) => {
-    const id = Date.now();
+    // Generate a truly unique ID by combining timestamp with a random string
+    const id = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
     setNotifications(prev => [...prev, { id, message, severity, duration }]);
     return id;
   }, []);
@@ -63,7 +64,7 @@ export const NotificationProvider = ({ children }) => {
       {children}
       
       {/* Render notifications */}
-      {notifications.map(({ id, message, severity, duration }) => (
+      {notifications.map(({ id, message, severity, duration }, index) => (
         <Snackbar
           key={id}
           open={true}
@@ -71,7 +72,7 @@ export const NotificationProvider = ({ children }) => {
           onClose={() => handleClose(id)}
           anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
           TransitionComponent={SlideTransition}
-          sx={{ mt: notifications.indexOf({ id }) * 8 }}
+          sx={{ mt: index * 8 }}
         >
           <Alert 
             onClose={() => handleClose(id)} 

@@ -1,67 +1,65 @@
 import React, { useState, useEffect } from 'react';
 import {
   Box,
-  Typography,
   Paper,
+  Typography,
+  Button,
   Grid,
   Card,
   CardHeader,
   CardContent,
   CardActions,
-  Button,
-  Chip,
-  Divider,
   TextField,
-  CircularProgress,
-  Alert,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Slider,
   FormControl,
   InputLabel,
   Select,
-  MenuItem
+  MenuItem,
+  Alert,
+  Chip,
+  Divider,
+  CircularProgress,
+  IconButton,
+  Tooltip,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails
 } from '@mui/material';
 import {
+  Refresh as RefreshIcon,
   ExpandMore as ExpandMoreIcon,
+  ContentCopy as ContentCopyIcon,
+  CheckCircle as CheckCircleIcon,
+  Description as DescriptionIcon,
   Settings as SettingsIcon,
-  PlayArrow as PlayArrowIcon,
-  Add as AddIcon,
-  Science as ScienceIcon,
-  Tune as TuneIcon
+  Biotech as BiotechIcon
 } from '@mui/icons-material';
 
-import { useNotification } from '../../context/NotificationContext';
 import apiService from '../../services/api';
-import { ContentLoader } from '../../components/UI/LoadingIndicators';
+import { useNotification } from '../../context/NotificationContext';
+import ModelConfigDialog from '../../components/LLM/Models/ModelConfigDialog';
 
 /**
- * BiomedLM Dashboard component
+ * Dashboard for BiomedLM models and operations
  */
 const BiomedLMDashboard = ({ status, onRefresh }) => {
-  const { showSuccess, showError } = useNotification();
-  
+  const [loading, setLoading] = useState(false);
   const [models, setModels] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [generatingText, setGeneratingText] = useState(false);
-  const [selectedModel, setSelectedModel] = useState(null);
+  const [selectedModel, setSelectedModel] = useState('');
   const [prompt, setPrompt] = useState('');
-  const [generationResult, setGenerationResult] = useState(null);
-  const [generationParams, setGenerationParams] = useState({
-    temperature: 0.2,
-    max_tokens: 512,
-    top_p: 0.95,
-    top_k: 50,
-    repetition_penalty: 1.1
-  });
+  const [responseText, setResponseText] = useState('');
+  const [generating, setGenerating] = useState(false);
+  const [configOpen, setConfigOpen] = useState(false);
+  const [currentConfig, setCurrentConfig] = useState(null);
+  const [copySuccess, setCopySuccess] = useState(false);
+  
+  const { showSuccess, showError } = useNotification();
   
   // Load models on mount
   useEffect(() => {
     loadModels();
   }, []);
   
-  // Load models
+  // Load BiomedLM models
   const loadModels = async () => {
     setLoading(true);
     
@@ -70,35 +68,78 @@ const BiomedLMDashboard = ({ status, onRefresh }) => {
       
       if (result.success) {
         setModels(result.data);
-        if (result.data.length > 0) {
-          setSelectedModel(result.data[0].model_id);
+        if (result.data.length > 0 && !selectedModel) {
+          setSelectedModel(result.data[0].id);
         }
       } else {
-        showError(`Failed to load models: ${result.error}`);
+        showError(`Failed to load BiomedLM models: ${result.error}`);
       }
     } catch (error) {
-      console.error('Error loading models:', error);
-      showError(`Error loading models: ${error.message}`);
+      console.error('Error loading BiomedLM models:', error);
+      showError(`Error loading BiomedLM models: ${error.message}`);
     } finally {
       setLoading(false);
     }
   };
   
-  // Handle text generation
-  const handleGenerateText = async () => {
+  // Get BiomedLM configuration
+  const getModelConfig = async () => {
+    try {
+      const result = await apiService.llm.getBiomedLMConfig();
+      
+      if (result.success) {
+        setCurrentConfig(result.data);
+        setConfigOpen(true);
+      } else {
+        showError(`Failed to load BiomedLM configuration: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('Error loading BiomedLM configuration:', error);
+      showError(`Error loading BiomedLM configuration: ${error.message}`);
+    }
+  };
+  
+  // Update BiomedLM configuration
+  const updateModelConfig = async (config) => {
+    try {
+      const result = await apiService.llm.updateBiomedLMConfig(config);
+      
+      if (result.success) {
+        setCurrentConfig(result.data);
+        showSuccess('BiomedLM configuration updated successfully');
+        setConfigOpen(false);
+        if (onRefresh) onRefresh();
+      } else {
+        showError(`Failed to update BiomedLM configuration: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('Error updating BiomedLM configuration:', error);
+      showError(`Error updating BiomedLM configuration: ${error.message}`);
+    }
+  };
+  
+  // Generate text with BiomedLM
+  const generateText = async () => {
     if (!selectedModel || !prompt.trim()) {
       showError('Please select a model and enter a prompt');
       return;
     }
     
-    setGeneratingText(true);
-    setGenerationResult(null);
+    setGenerating(true);
+    setResponseText('');
     
     try {
-      const result = await apiService.llm.generateBiomedLMText(selectedModel, prompt, generationParams);
+      const result = await apiService.llm.generateBiomedLMText(
+        selectedModel, 
+        prompt,
+        {
+          max_tokens: 500,
+          temperature: 0.7
+        }
+      );
       
       if (result.success) {
-        setGenerationResult(result.data);
+        setResponseText(result.data.text);
         showSuccess('Text generated successfully');
       } else {
         showError(`Failed to generate text: ${result.error}`);
@@ -107,315 +148,303 @@ const BiomedLMDashboard = ({ status, onRefresh }) => {
       console.error('Error generating text:', error);
       showError(`Error generating text: ${error.message}`);
     } finally {
-      setGeneratingText(false);
+      setGenerating(false);
     }
   };
   
-  // Handle parameter change
-  const handleParamChange = (param, value) => {
-    setGenerationParams({
-      ...generationParams,
-      [param]: value
-    });
+  // Handle model change
+  const handleModelChange = (event) => {
+    setSelectedModel(event.target.value);
   };
   
-  // Render model cards
-  const renderModelCards = () => {
-    return (
-      <Grid container spacing={3}>
-        {models.map((model) => (
-          <Grid item xs={12} md={6} lg={4} key={model.model_id}>
-            <Card 
-              sx={{ 
-                height: '100%', 
-                display: 'flex', 
-                flexDirection: 'column',
-                transition: 'all 0.3s ease',
-                border: selectedModel === model.model_id ? '2px solid' : 'none',
-                borderColor: 'primary.main',
-                '&:hover': {
-                  boxShadow: 6,
-                  transform: 'translateY(-4px)'
-                }
-              }}
-              onClick={() => setSelectedModel(model.model_id)}
-            >
-              <CardHeader
-                title={model.display_name}
-                subheader={`Base: ${model.base_model}`}
-                action={
-                  model.adapter_type && (
-                    <Chip
-                      label={model.adapter_type.toUpperCase()}
-                      color="secondary"
-                      size="small"
-                    />
-                  )
-                }
-              />
-              <CardContent sx={{ flexGrow: 1 }}>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
-                  {model.description || "No description available"}
-                </Typography>
-                
-                <Typography variant="body2" sx={{ mt: 1 }}>
-                  Parameters: {(model.parameters / 1000000000).toFixed(1)}B
-                </Typography>
-                
-                {model.fine_tuned_for && model.fine_tuned_for.length > 0 && (
-                  <>
-                    <Typography variant="subtitle2" gutterBottom sx={{ mt: 2 }}>
-                      Fine-tuned for:
-                    </Typography>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                      {model.fine_tuned_for.map((task) => (
-                        <Chip
-                          key={task}
-                          label={task}
-                          size="small"
-                          variant="outlined"
-                        />
-                      ))}
-                    </Box>
-                  </>
-                )}
-              </CardContent>
-              <CardActions>
-                <Button
-                  size="small"
-                  startIcon={<PlayArrowIcon />}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedModel(model.model_id);
-                    window.scrollTo({
-                      top: document.getElementById('generation-section').offsetTop - 20,
-                      behavior: 'smooth'
-                    });
-                  }}
-                >
-                  Use for Generation
-                </Button>
-                {model.adapter_type && (
-                  <Button
-                    size="small"
-                    startIcon={<TuneIcon />}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    Adapter Settings
-                  </Button>
-                )}
-              </CardActions>
-            </Card>
-          </Grid>
-        ))}
-        
-        {/* Add new fine-tuning card */}
-        <Grid item xs={12} md={6} lg={4}>
-          <Card 
-            sx={{ 
-              height: '100%', 
-              display: 'flex', 
-              flexDirection: 'column',
-              justifyContent: 'center',
-              alignItems: 'center',
-              p: 3,
-              bgcolor: 'grey.100',
-              border: '2px dashed',
-              borderColor: 'grey.300',
-              cursor: 'pointer',
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                borderColor: 'primary.main',
-                bgcolor: 'grey.200'
-              }
-            }}
-          >
-            <ScienceIcon sx={{ fontSize: 48, color: 'grey.500', mb: 2 }} />
-            <Typography variant="h6" color="text.secondary">
-              Create New Fine-Tuning
-            </Typography>
-          </Card>
-        </Grid>
-      </Grid>
+  // Handle prompt change
+  const handlePromptChange = (event) => {
+    setPrompt(event.target.value);
+  };
+  
+  // Copy response text to clipboard
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(responseText).then(
+      () => {
+        setCopySuccess(true);
+        setTimeout(() => setCopySuccess(false), 2000);
+      },
+      (err) => {
+        console.error('Failed to copy text: ', err);
+        showError('Failed to copy text to clipboard');
+      }
     );
   };
-  
-  // Render text generation section
-  const renderGenerationSection = () => {
-    return (
-      <Paper sx={{ p: 3, mt: 4 }} id="generation-section">
-        <Typography variant="h6" gutterBottom>
-          Text Generation
-        </Typography>
-        
-        <Grid container spacing={3}>
-          <Grid item xs={12}>
-            <FormControl fullWidth variant="outlined">
-              <InputLabel id="model-select-label">Model</InputLabel>
-              <Select
-                labelId="model-select-label"
-                value={selectedModel || ''}
-                onChange={(e) => setSelectedModel(e.target.value)}
-                label="Model"
-              >
-                {models.map((model) => (
-                  <MenuItem key={model.model_id} value={model.model_id}>
-                    {model.display_name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-          
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              label="Prompt"
-              multiline
-              rows={4}
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              placeholder="Enter your prompt here..."
-              variant="outlined"
-            />
-          </Grid>
-          
-          <Grid item xs={12} md={6}>
-            <Typography gutterBottom>Temperature: {generationParams.temperature}</Typography>
-            <Slider
-              value={generationParams.temperature}
-              onChange={(_, value) => handleParamChange('temperature', value)}
-              min={0}
-              max={2}
-              step={0.1}
-              valueLabelDisplay="auto"
-            />
-          </Grid>
-          
-          <Grid item xs={12} md={6}>
-            <Typography gutterBottom>Max Tokens: {generationParams.max_tokens}</Typography>
-            <Slider
-              value={generationParams.max_tokens}
-              onChange={(_, value) => handleParamChange('max_tokens', value)}
-              min={1}
-              max={1024}
-              step={1}
-              valueLabelDisplay="auto"
-            />
-          </Grid>
-          
-          <Grid item xs={12} md={4}>
-            <Typography gutterBottom>Top P: {generationParams.top_p}</Typography>
-            <Slider
-              value={generationParams.top_p}
-              onChange={(_, value) => handleParamChange('top_p', value)}
-              min={0}
-              max={1}
-              step={0.01}
-              valueLabelDisplay="auto"
-            />
-          </Grid>
-          
-          <Grid item xs={12} md={4}>
-            <Typography gutterBottom>Top K: {generationParams.top_k}</Typography>
-            <Slider
-              value={generationParams.top_k}
-              onChange={(_, value) => handleParamChange('top_k', value)}
-              min={1}
-              max={100}
-              step={1}
-              valueLabelDisplay="auto"
-            />
-          </Grid>
-          
-          <Grid item xs={12} md={4}>
-            <Typography gutterBottom>Repetition Penalty: {generationParams.repetition_penalty}</Typography>
-            <Slider
-              value={generationParams.repetition_penalty}
-              onChange={(_, value) => handleParamChange('repetition_penalty', value)}
-              min={1}
-              max={2}
-              step={0.01}
-              valueLabelDisplay="auto"
-            />
-          </Grid>
-          
-          <Grid item xs={12}>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={handleGenerateText}
-              disabled={generatingText || !selectedModel || !prompt.trim()}
-              startIcon={generatingText ? <CircularProgress size={20} /> : <PlayArrowIcon />}
-            >
-              {generatingText ? 'Generating...' : 'Generate Text'}
-            </Button>
-          </Grid>
-          
-          {generationResult && (
-            <Grid item xs={12}>
-              <Paper variant="outlined" sx={{ p: 2, bgcolor: 'grey.50' }}>
-                <Typography variant="subtitle2" gutterBottom>
-                  Generated Text:
-                </Typography>
-                <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
-                  {generationResult.generated_text}
-                </Typography>
-                <Divider sx={{ my: 2 }} />
-                <Typography variant="caption" color="text.secondary">
-                  Generation time: {generationResult.generation_time_ms.toFixed(2)}ms | 
-                  Tokens generated: {generationResult.tokens_generated}
-                </Typography>
-              </Paper>
-            </Grid>
-          )}
-        </Grid>
-      </Paper>
-    );
-  };
-  
-  if (loading) {
-    return <ContentLoader height={200} message="Loading BiomedLM models..." />;
-  }
   
   return (
     <Box>
-      <Typography variant="h6" gutterBottom>
-        BiomedLM Model Management
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Typography variant="h5">
+          <BiotechIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+          BiomedLM Dashboard
+        </Typography>
+        <Box>
+          <Button 
+            variant="outlined" 
+            startIcon={<SettingsIcon />}
+            onClick={getModelConfig}
+            sx={{ mr: 1 }}
+          >
+            Configuration
+          </Button>
+          <Button 
+            variant="outlined" 
+            startIcon={loading ? <CircularProgress size={20} /> : <RefreshIcon />}
+            onClick={loadModels}
+            disabled={loading}
+          >
+            Refresh Models
+          </Button>
+        </Box>
+      </Box>
       
-      <Typography paragraph>
-        Manage BiomedLM models and adapters for medical-specific LLM capabilities.
-        BiomedLM is a specialized language model for biomedical text.
-      </Typography>
-      
-      {/* Model cards */}
-      {models.length > 0 ? (
-        renderModelCards()
-      ) : (
-        <Alert severity="info" sx={{ mb: 3 }}>
-          No BiomedLM models found. Please check your installation.
+      {status?.status !== 'available' && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          BiomedLM service is currently unavailable. Please check the server status.
         </Alert>
       )}
       
-      {/* Text generation section */}
-      {models.length > 0 && renderGenerationSection()}
+      <Grid container spacing={3}>
+        {/* Models Overview */}
+        <Grid item xs={12} md={4}>
+          <Paper sx={{ p: 2, height: '100%' }}>
+            <Typography variant="h6" gutterBottom>
+              Available Models
+            </Typography>
+            
+            {loading ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+                <CircularProgress />
+              </Box>
+            ) : models.length === 0 ? (
+              <Alert severity="info">No BiomedLM models available</Alert>
+            ) : (
+              <Box>
+                {models.map((model) => (
+                  <Card 
+                    key={model.id} 
+                    variant="outlined" 
+                    sx={{ 
+                      mb: 2, 
+                      border: selectedModel === model.id ? '2px solid' : '1px solid',
+                      borderColor: selectedModel === model.id ? 'primary.main' : 'divider',
+                    }}
+                  >
+                    <CardHeader
+                      title={model.name}
+                      subheader={`${model.size} parameters`}
+                      action={
+                        <Chip 
+                          label={model.status} 
+                          color={model.status === 'active' ? 'success' : 'default'}
+                          size="small"
+                        />
+                      }
+                    />
+                    <CardContent sx={{ pt: 0 }}>
+                      <Typography variant="body2" color="text.secondary">
+                        {model.description}
+                      </Typography>
+                      
+                      <Box sx={{ mt: 1 }}>
+                        {model.tags && model.tags.map(tag => (
+                          <Chip 
+                            key={tag} 
+                            label={tag} 
+                            size="small" 
+                            sx={{ mr: 0.5, mt: 0.5 }}
+                          />
+                        ))}
+                      </Box>
+                    </CardContent>
+                    <CardActions>
+                      <Button 
+                        size="small" 
+                        variant={selectedModel === model.id ? 'contained' : 'outlined'}
+                        onClick={() => setSelectedModel(model.id)}
+                      >
+                        {selectedModel === model.id ? 'Selected' : 'Select'}
+                      </Button>
+                      {model.documentation_url && (
+                        <Button 
+                          size="small" 
+                          startIcon={<DescriptionIcon />}
+                          onClick={() => window.open(model.documentation_url, '_blank')}
+                        >
+                          Docs
+                        </Button>
+                      )}
+                    </CardActions>
+                  </Card>
+                ))}
+              </Box>
+            )}
+          </Paper>
+        </Grid>
+        
+        {/* Text Generation */}
+        <Grid item xs={12} md={8}>
+          <Paper sx={{ p: 2 }}>
+            <Typography variant="h6" gutterBottom>
+              Medical Text Generation
+            </Typography>
+            
+            <Box sx={{ mb: 3 }}>
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <InputLabel id="model-select-label">Select BiomedLM Model</InputLabel>
+                <Select
+                  labelId="model-select-label"
+                  id="model-select"
+                  value={selectedModel}
+                  label="Select BiomedLM Model"
+                  onChange={handleModelChange}
+                  disabled={models.length === 0 || generating}
+                >
+                  {models.map((model) => (
+                    <MenuItem key={model.id} value={model.id}>
+                      {model.name} {model.status !== 'active' && `(${model.status})`}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              
+              <TextField
+                label="Enter your medical prompt"
+                multiline
+                rows={4}
+                fullWidth
+                variant="outlined"
+                value={prompt}
+                onChange={handlePromptChange}
+                placeholder="Enter a medical question or prompt for BiomedLM..."
+                disabled={generating}
+                sx={{ mb: 2 }}
+              />
+              
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Button
+                  variant="contained"
+                  onClick={generateText}
+                  disabled={!selectedModel || !prompt.trim() || generating}
+                  startIcon={generating ? <CircularProgress size={20} /> : null}
+                >
+                  {generating ? 'Generating...' : 'Generate Medical Text'}
+                </Button>
+                
+                <Button
+                  variant="outlined"
+                  onClick={() => {
+                    setPrompt('');
+                    setResponseText('');
+                  }}
+                  disabled={generating}
+                >
+                  Clear
+                </Button>
+              </Box>
+            </Box>
+            
+            <Divider sx={{ my: 2 }} />
+            
+            <Box>
+              <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
+                Response
+                {responseText && (
+                  <Tooltip title="Copy to clipboard">
+                    <IconButton onClick={copyToClipboard} sx={{ ml: 1 }}>
+                      {copySuccess ? <CheckCircleIcon color="success" /> : <ContentCopyIcon />}
+                    </IconButton>
+                  </Tooltip>
+                )}
+              </Typography>
+              
+              {generating ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', my: 3 }}>
+                  <CircularProgress />
+                </Box>
+              ) : responseText ? (
+                <Paper
+                  variant="outlined"
+                  sx={{
+                    p: 2,
+                    backgroundColor: 'grey.50',
+                    maxHeight: '300px',
+                    overflowY: 'auto',
+                    whiteSpace: 'pre-wrap'
+                  }}
+                >
+                  {responseText}
+                </Paper>
+              ) : (
+                <Alert severity="info">
+                  Response will appear here after generation
+                </Alert>
+              )}
+            </Box>
+            
+            <Accordion sx={{ mt: 3 }}>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <Typography>Medical Applications</Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <Typography variant="body2" paragraph>
+                  BiomedLM is specialized for medical text processing. Here are some example prompts:
+                </Typography>
+                
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  <Button 
+                    variant="outlined" 
+                    size="small"
+                    onClick={() => setPrompt("Explain the pathophysiology of type 2 diabetes mellitus in simple terms.")}
+                  >
+                    Explain diabetes pathophysiology
+                  </Button>
+                  
+                  <Button 
+                    variant="outlined" 
+                    size="small"
+                    onClick={() => setPrompt("What are the key differences between ACE inhibitors and ARBs for treating hypertension?")}
+                  >
+                    Compare antihypertensives
+                  </Button>
+                  
+                  <Button 
+                    variant="outlined" 
+                    size="small"
+                    onClick={() => setPrompt("Summarize the latest evidence for managing acute ischemic stroke in the emergency setting.")}
+                  >
+                    Stroke management
+                  </Button>
+                  
+                  <Button 
+                    variant="outlined" 
+                    size="small"
+                    onClick={() => setPrompt("Statement 1: Aspirin reduces risk of myocardial infarction.\nStatement 2: Aspirin increases risk of gastrointestinal bleeding.\nAre these statements contradictory? Explain.")}
+                  >
+                    Contradiction analysis
+                  </Button>
+                </Box>
+              </AccordionDetails>
+            </Accordion>
+          </Paper>
+        </Grid>
+      </Grid>
       
-      {/* Fine-tuning section */}
-      <Accordion sx={{ mt: 4 }}>
-        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography variant="subtitle1">Fine-Tuning</Typography>
-        </AccordionSummary>
-        <AccordionDetails>
-          <Typography paragraph>
-            Fine-tune BiomedLM models for specific medical tasks.
-          </Typography>
-          
-          <Typography variant="subtitle2" gutterBottom>
-            Coming soon...
-          </Typography>
-        </AccordionDetails>
-      </Accordion>
+      {/* Configuration Dialog */}
+      {configOpen && currentConfig && (
+        <ModelConfigDialog
+          open={configOpen}
+          onClose={() => setConfigOpen(false)}
+          config={currentConfig}
+          onSave={updateModelConfig}
+          title="BiomedLM Configuration"
+        />
+      )}
     </Box>
   );
 };
