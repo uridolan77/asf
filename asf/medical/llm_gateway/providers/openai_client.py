@@ -9,6 +9,7 @@ import asyncio
 import base64
 import logging
 import os
+from asf.medical.core.secrets import SecretManager
 from datetime import datetime, timezone
 from typing import Any, AsyncGenerator, Dict, List, Optional, Tuple, Union, cast
 
@@ -153,19 +154,35 @@ class OpenAIClient(BaseProvider):
 
             else:
                 # --- Standard OpenAI Configuration ---
-                # First check for direct API key in connection_params
+                # Try multiple sources for the API key in this order:
+                # 1. Direct API key in connection_params
+                # 2. Secret reference in connection_params
+                # 3. Environment variable
+
+                # 1. First check for direct API key in connection_params
                 api_key = provider_config.connection_params.get("api_key")
 
-                # If not found, try environment variable
+                # 2. If not found, check for secret reference
+                if not api_key and provider_config.connection_params.get("api_key_secret"):
+                    secret_ref = provider_config.connection_params.get("api_key_secret")
+                    # Format expected: "category:name" e.g. "llm:openai_api_key"
+                    if ":" in secret_ref:
+                        category, name = secret_ref.split(":", 1)
+                        secret_manager = SecretManager()
+                        api_key = secret_manager.get_secret(category, name)
+                        logger.debug(f"Retrieved API key from secret manager: {category}:{name}")
+
+                # 3. If still not found, try environment variable
                 if not api_key:
                     api_key_env_var = provider_config.connection_params.get("api_key_env_var", "OPENAI_API_KEY")
                     api_key = os.environ.get(api_key_env_var)
 
-                    if not api_key:
-                        logger.error(f"No API key found for provider '{self.provider_id}'. Checked direct config and env var '{api_key_env_var}'")
-                        raise ValueError(
-                            f"OpenAI API key not found for provider '{self.provider_id}'. Checked connection_params.api_key and environment variable '{api_key_env_var}'."
-                        )
+                # If all methods failed, raise error
+                if not api_key:
+                    logger.error(f"No API key found for provider '{self.provider_id}'. Checked direct config, secrets, and env var.")
+                    raise ValueError(
+                        f"OpenAI API key not found for provider '{self.provider_id}'. Checked connection_params.api_key, secrets, and environment variable '{api_key_env_var}'."
+                    )
 
                 # Get organization ID if available
                 org_id = provider_config.connection_params.get("org_id")

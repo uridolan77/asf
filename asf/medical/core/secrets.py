@@ -56,7 +56,7 @@ class SecretManager:
         Initialize the SecretManager.
 
         Args:
-            provider (str, optional): The secrets provider to use ("env", "vault", "aws"). 
+            provider (str, optional): The secrets provider to use ("env", "vault", "aws").
                 Defaults to "env".
             namespace (str, optional): Namespace for organizing secrets. Defaults to None.
         """
@@ -99,6 +99,11 @@ class SecretManager:
             },
             "graph": {
                 "neo4j_password": os.environ.get("NEO4J_PASSWORD", ""),
+            },
+            "llm": {
+                "openai_api_key": os.environ.get("OPENAI_API_KEY", ""),
+                "anthropic_api_key": os.environ.get("ANTHROPIC_API_KEY", ""),
+                "azure_openai_api_key": os.environ.get("AZURE_OPENAI_API_KEY", ""),
             },
         }
 
@@ -207,7 +212,7 @@ class SecretManager:
 
         Args:
             name (str): Name of the secret to rotate.
-            new_value (str, optional): New value for the secret. If not provided, a value will be generated. 
+            new_value (str, optional): New value for the secret. If not provided, a value will be generated.
                 Defaults to None.
 
         Returns:
