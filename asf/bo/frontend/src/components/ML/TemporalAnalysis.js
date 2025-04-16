@@ -20,29 +20,29 @@ import { format } from 'date-fns';
 
 import { useNotification } from '../../context/NotificationContext';
 import apiService from '../../services/api';
-import { ButtonLoader } from '../UI/LoadingIndicators';
-import { FadeIn, HoverAnimation } from '../UI/Animations';
+import { ButtonLoader } from '../UI/LoadingIndicators.js';
+import { FadeIn, HoverAnimation } from '../UI/Animations.js';
 
 /**
  * Temporal Analysis component
- * 
+ *
  * This component allows users to analyze the temporal confidence of medical claims
  * based on publication dates and domain-specific characteristics.
  */
 const TemporalAnalysis = ({ onExport }) => {
   const { showSuccess, showError } = useNotification();
-  
+
   // Form state
   const [publicationDate, setPublicationDate] = useState(null);
   const [referenceDate, setReferenceDate] = useState(null);
   const [domain, setDomain] = useState('general');
   const [includeDetails, setIncludeDetails] = useState(true);
-  
+
   // UI state
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
-  
+
   // Domain options
   const domainOptions = [
     { value: 'general', label: 'General Medicine' },
@@ -54,33 +54,33 @@ const TemporalAnalysis = ({ onExport }) => {
     { value: 'psychiatry', label: 'Psychiatry' },
     { value: 'surgery', label: 'Surgery' }
   ];
-  
+
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!publicationDate) {
       showError('Please select a publication date');
       setError('Please select a publication date');
       return;
     }
-    
+
     setIsAnalyzing(true);
     setError('');
-    
+
     try {
       const params = {
         publication_date: format(publicationDate, 'yyyy-MM-dd'),
         domain,
         include_details: includeDetails
       };
-      
+
       if (referenceDate) {
         params.reference_date = format(referenceDate, 'yyyy-MM-dd');
       }
-      
+
       const result = await apiService.ml.calculateTemporalConfidence(params);
-      
+
       if (result.success) {
         setResult(result.data);
         showSuccess('Temporal analysis completed successfully');
@@ -96,18 +96,18 @@ const TemporalAnalysis = ({ onExport }) => {
       setIsAnalyzing(false);
     }
   };
-  
+
   // Handle export
   const handleExport = (format) => {
     if (!result) return;
-    
+
     if (onExport) {
       onExport(format, {
         analysis_id: result.analysis_id
       });
     }
   };
-  
+
   // Get confidence color
   const getConfidenceColor = (confidence) => {
     if (confidence >= 0.8) return 'success';
@@ -115,7 +115,7 @@ const TemporalAnalysis = ({ onExport }) => {
     if (confidence >= 0.3) return 'warning';
     return 'error';
   };
-  
+
   // Get decay rate description
   const getDecayRateDescription = (decayRate) => {
     if (decayRate >= 0.8) return 'Very Fast';
@@ -124,7 +124,7 @@ const TemporalAnalysis = ({ onExport }) => {
     if (decayRate >= 0.1) return 'Slow';
     return 'Very Slow';
   };
-  
+
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>
       <Box sx={{ width: '100%' }}>
@@ -136,15 +136,15 @@ const TemporalAnalysis = ({ onExport }) => {
               <InfoIcon fontSize="small" sx={{ ml: 1, color: 'text.secondary' }} />
             </Tooltip>
           </Typography>
-          
+
           <Divider sx={{ mb: 3 }} />
-          
+
           {error && (
             <Alert severity="error" sx={{ mb: 3 }}>
               {error}
             </Alert>
           )}
-          
+
           <form onSubmit={handleSubmit}>
             <Grid container spacing={3}>
               {/* Publication Date */}
@@ -163,7 +163,7 @@ const TemporalAnalysis = ({ onExport }) => {
                   )}
                 />
               </Grid>
-              
+
               {/* Reference Date */}
               <Grid item xs={12} md={6}>
                 <DatePicker
@@ -179,7 +179,7 @@ const TemporalAnalysis = ({ onExport }) => {
                   )}
                 />
               </Grid>
-              
+
               {/* Domain */}
               <Grid item xs={12} md={6}>
                 <FormControl fullWidth>
@@ -198,7 +198,7 @@ const TemporalAnalysis = ({ onExport }) => {
                   </Select>
                 </FormControl>
               </Grid>
-              
+
               {/* Include Details */}
               <Grid item xs={12} md={6}>
                 <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
@@ -213,7 +213,7 @@ const TemporalAnalysis = ({ onExport }) => {
                   />
                 </Box>
               </Grid>
-              
+
               {/* Action buttons */}
               <Grid item xs={12}>
                 <Box sx={{ display: 'flex', gap: 2 }}>
@@ -227,7 +227,7 @@ const TemporalAnalysis = ({ onExport }) => {
                   >
                     {isAnalyzing ? 'Analyzing...' : 'Calculate Temporal Confidence'}
                   </Button>
-                  
+
                   <Button
                     variant="outlined"
                     onClick={() => {
@@ -245,7 +245,7 @@ const TemporalAnalysis = ({ onExport }) => {
             </Grid>
           </form>
         </Paper>
-        
+
         {/* Results */}
         {result && (
           <FadeIn>
@@ -254,7 +254,7 @@ const TemporalAnalysis = ({ onExport }) => {
                 <Typography variant="h6">
                   Temporal Confidence Results
                 </Typography>
-                
+
                 <Box>
                   <Button
                     variant="outlined"
@@ -273,9 +273,9 @@ const TemporalAnalysis = ({ onExport }) => {
                   </Button>
                 </Box>
               </Box>
-              
+
               <Divider sx={{ mb: 3 }} />
-              
+
               <Grid container spacing={3}>
                 <Grid item xs={12}>
                   <HoverAnimation>
@@ -302,7 +302,7 @@ const TemporalAnalysis = ({ onExport }) => {
                             <Typography variant="body1" sx={{ mb: 2 }}>
                               {new Date(result.publication_date).toLocaleDateString()}
                             </Typography>
-                            
+
                             <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                               <AccessTimeIcon sx={{ mr: 1, color: 'text.secondary' }} />
                               <Typography variant="subtitle2">
@@ -313,7 +313,7 @@ const TemporalAnalysis = ({ onExport }) => {
                               {new Date(result.reference_date).toLocaleDateString()}
                             </Typography>
                           </Grid>
-                          
+
                           <Grid item xs={12} md={6}>
                             <Typography variant="subtitle2" gutterBottom>
                               Domain:
@@ -321,7 +321,7 @@ const TemporalAnalysis = ({ onExport }) => {
                             <Typography variant="body1" sx={{ mb: 2 }}>
                               {domainOptions.find(d => d.value === result.domain)?.label || result.domain}
                             </Typography>
-                            
+
                             <Typography variant="subtitle2" gutterBottom>
                               Time Elapsed:
                             </Typography>
@@ -329,7 +329,7 @@ const TemporalAnalysis = ({ onExport }) => {
                               {result.years_elapsed.toFixed(1)} years
                             </Typography>
                           </Grid>
-                          
+
                           <Grid item xs={12}>
                             <Typography variant="subtitle2" gutterBottom>
                               Temporal Confidence: {(result.confidence * 100).toFixed(1)}%
@@ -340,7 +340,7 @@ const TemporalAnalysis = ({ onExport }) => {
                               color={getConfidenceColor(result.confidence)}
                               sx={{ height: 10, borderRadius: 5, mb: 2 }}
                             />
-                            
+
                             <Typography variant="body2" sx={{ mt: 2 }}>
                               {result.explanation}
                             </Typography>
@@ -350,7 +350,7 @@ const TemporalAnalysis = ({ onExport }) => {
                     </Card>
                   </HoverAnimation>
                 </Grid>
-                
+
                 {/* Detailed Analysis */}
                 {result.details && (
                   <Grid item xs={12}>
@@ -382,7 +382,7 @@ const TemporalAnalysis = ({ onExport }) => {
                                 color="error"
                                 sx={{ height: 10, borderRadius: 5, mb: 2 }}
                               />
-                              
+
                               <Typography variant="body2">
                                 {result.details.decay_explanation}
                               </Typography>
@@ -390,7 +390,7 @@ const TemporalAnalysis = ({ onExport }) => {
                           </Card>
                         </HoverAnimation>
                       </Grid>
-                      
+
                       <Grid item xs={12} md={6}>
                         <HoverAnimation>
                           <Card variant="outlined">
@@ -415,7 +415,7 @@ const TemporalAnalysis = ({ onExport }) => {
                                 color="success"
                                 sx={{ height: 10, borderRadius: 5, mb: 2 }}
                               />
-                              
+
                               <Typography variant="body2">
                                 {result.details.stability_explanation}
                               </Typography>
@@ -423,7 +423,7 @@ const TemporalAnalysis = ({ onExport }) => {
                           </Card>
                         </HoverAnimation>
                       </Grid>
-                      
+
                       {result.details.recent_developments && (
                         <Grid item xs={12}>
                           <HoverAnimation>
@@ -436,7 +436,7 @@ const TemporalAnalysis = ({ onExport }) => {
                                 <Typography variant="body2" sx={{ mb: 2 }}>
                                   {result.details.developments_explanation}
                                 </Typography>
-                                
+
                                 {result.details.recent_developments.map((development, index) => (
                                   <Box key={index} sx={{ mb: 2 }}>
                                     <Typography variant="subtitle2" gutterBottom>
@@ -451,7 +451,7 @@ const TemporalAnalysis = ({ onExport }) => {
                                       </Typography>
                                       <Chip
                                         label={development.impact}
-                                        color={development.impact === 'High' ? 'error' : 
+                                        color={development.impact === 'High' ? 'error' :
                                                development.impact === 'Medium' ? 'warning' : 'info'}
                                         size="small"
                                       />

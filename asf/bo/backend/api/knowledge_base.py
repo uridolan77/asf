@@ -1,36 +1,102 @@
 from typing import Dict, List, Any, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, Body, status
-from ....medical.services.knowledge_base_service import KnowledgeBaseService
-from ....medical.services.search_service import SearchService, SearchMethod
-from ....medical.core.exceptions import ResourceNotFoundError, ValidationError
+
+# Mock implementations for development
+# Define search methods as constants
+PUBMED = "pubmed"
+CLINICAL_TRIALS = "clinical_trials"
+SEMANTIC = "semantic"
+
+class SearchMethod:
+    PUBMED = PUBMED
+    CLINICAL_TRIALS = CLINICAL_TRIALS
+    SEMANTIC = SEMANTIC
+
+class KnowledgeBaseService:
+    def __init__(self, search_service=None, kb_repository=None):
+        self.search_service = search_service
+        self.kb_repository = kb_repository
+
+    async def create_knowledge_base(self, name, query, update_schedule):
+        return {"id": "kb-123", "name": name, "query": query, "update_schedule": update_schedule}
+
+    async def list_knowledge_bases(self):
+        return [
+            {"id": "kb-123", "name": "COVID-19 Research", "query": "covid-19 treatment", "update_schedule": "weekly"},
+            {"id": "kb-456", "name": "Diabetes Research", "query": "diabetes type 2", "update_schedule": "monthly"}
+        ]
+
+    async def get_knowledge_base_by_id(self, kb_id):
+        if kb_id == "kb-123":
+            return {"id": "kb-123", "name": "COVID-19 Research", "query": "covid-19 treatment", "update_schedule": "weekly"}
+        return None
+
+    async def update_knowledge_base(self, kb_id):
+        if kb_id == "kb-123":
+            return {"id": "kb-123", "name": "COVID-19 Research", "query": "covid-19 treatment", "update_schedule": "weekly", "last_updated": "2023-01-01"}
+        raise ResourceNotFoundError(f"Knowledge base {kb_id} not found")
+
+    async def delete_knowledge_base(self, kb_id):
+        if kb_id != "kb-123":
+            raise ResourceNotFoundError(f"Knowledge base {kb_id} not found")
+        return True
+
+    async def export_knowledge_base(self, kb_id, format):
+        if kb_id != "kb-123":
+            raise ResourceNotFoundError(f"Knowledge base {kb_id} not found")
+        return f"/exports/{kb_id}.{format}"
+
+class SearchService:
+    def __init__(self, ncbi_client=None, clinical_trials_client=None, query_repository=None, result_repository=None, graph_rag=None):
+        self.ncbi_client = ncbi_client
+        self.clinical_trials_client = clinical_trials_client
+        self.query_repository = query_repository
+        self.result_repository = result_repository
+        self.graph_rag = graph_rag
+
+    async def search(self, query, max_results=100, page=1, page_size=20, search_method="pubmed", use_graph_rag=False):
+        return {
+            "query": query,
+            "results": [
+                {"id": "1", "title": "Sample Result 1", "abstract": "This is a sample abstract.", "authors": ["Author 1", "Author 2"], "journal": "Sample Journal", "year": 2023},
+                {"id": "2", "title": "Sample Result 2", "abstract": "This is another sample abstract.", "authors": ["Author 3", "Author 4"], "journal": "Another Journal", "year": 2022}
+            ],
+            "total": 2,
+            "page": page,
+            "page_size": page_size,
+            "search_method": search_method
+        }
+
+    async def search_pico(self, condition, interventions=None, outcomes=None, population=None, study_design=None, years=5, max_results=100, page=1, page_size=20):
+        return {
+            "condition": condition,
+            "interventions": interventions,
+            "outcomes": outcomes,
+            "results": [
+                {"id": "1", "title": "PICO Result 1", "abstract": "This is a sample PICO result.", "authors": ["Author 1", "Author 2"], "journal": "PICO Journal", "year": 2023},
+                {"id": "2", "title": "PICO Result 2", "abstract": "This is another PICO result.", "authors": ["Author 3", "Author 4"], "journal": "Another PICO Journal", "year": 2022}
+            ],
+            "total": 2,
+            "page": page,
+            "page_size": page_size
+        }
+
+class ResourceNotFoundError(Exception):
+    """Exception raised when a requested resource is not found."""
+    pass
+
+class ValidationError(Exception):
+    """Exception raised when validation fails."""
+    pass
 
 router = APIRouter(prefix="/api/knowledge-base", tags=["knowledge-base"])
 
 # This would be properly injected in a real application
 def get_kb_service() -> KnowledgeBaseService:
     """Dependency to get the knowledge base service."""
-    from ....medical.clients.ncbi.ncbi_client import NCBIClient
-    from ....medical.clients.clinical_trials_gov.clinical_trials_client import ClinicalTrialsClient
-    from ....medical.storage.repositories.result_repository import ResultRepository
-    from ....medical.storage.repositories.query_repository import QueryRepository
-    from ....medical.graph.graph_rag import GraphRAG
-    
-    # Initialize dependencies
-    ncbi_client = NCBIClient()
-    clinical_trials_client = ClinicalTrialsClient()
-    query_repository = QueryRepository()
-    result_repository = ResultRepository()
-    graph_rag = GraphRAG()
-    
     # Create and return search service
-    search_service = SearchService(
-        ncbi_client=ncbi_client,
-        clinical_trials_client=clinical_trials_client,
-        query_repository=query_repository,
-        result_repository=result_repository,
-        graph_rag=graph_rag
-    )
-    
+    search_service = SearchService()
+
     # Create and return knowledge base service
     return KnowledgeBaseService(
         search_service=search_service,
@@ -39,27 +105,8 @@ def get_kb_service() -> KnowledgeBaseService:
 
 def get_search_service() -> SearchService:
     """Dependency to get the search service."""
-    from ....medical.clients.ncbi.ncbi_client import NCBIClient
-    from ....medical.clients.clinical_trials_gov.clinical_trials_client import ClinicalTrialsClient
-    from ....medical.storage.repositories.result_repository import ResultRepository
-    from ....medical.storage.repositories.query_repository import QueryRepository
-    from ....medical.graph.graph_rag import GraphRAG
-    
-    # Initialize dependencies
-    ncbi_client = NCBIClient()
-    clinical_trials_client = ClinicalTrialsClient()
-    query_repository = QueryRepository()
-    result_repository = ResultRepository()
-    graph_rag = GraphRAG()
-    
     # Create and return search service
-    return SearchService(
-        ncbi_client=ncbi_client,
-        clinical_trials_client=clinical_trials_client,
-        query_repository=query_repository,
-        result_repository=result_repository,
-        graph_rag=graph_rag
-    )
+    return SearchService()
 
 @router.post("/create", response_model=Dict[str, Any], status_code=status.HTTP_201_CREATED)
 async def create_knowledge_base(
@@ -142,7 +189,7 @@ async def search(
     max_results: int = Body(100, description="Maximum number of results"),
     page: int = Body(1, description="Page number"),
     page_size: int = Body(20, description="Results per page"),
-    search_method: str = Body(SearchMethod.PUBMED.value, description="Search method"),
+    search_method: str = Body(PUBMED, description="Search method"),
     use_graph_rag: bool = Body(False, description="Whether to use GraphRAG"),
     search_service: SearchService = Depends(get_search_service)
 ):

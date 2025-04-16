@@ -1,9 +1,9 @@
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Grid, 
-  Alert, 
-  Box, 
+import {
+  Grid,
+  Alert,
+  Box,
   Typography,
   Card,
   CardContent
@@ -25,7 +25,7 @@ import {
 } from 'recharts';
 
 // Import PageLayout component
-import PageLayout from '../components/Layout/PageLayout';
+import PageLayout from '../components/Layout/PageLayout.js';
 
 // Import Dashboard components
 import {
@@ -36,11 +36,11 @@ import {
 } from '../components/Dashboard';
 
 // Import custom hooks
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext.jsx';
 import useApi from '../hooks/useApi';
 
 // Import skeleton loader
-import { DashboardSkeleton } from '../components/UI/SkeletonLoaders';
+import { DashboardSkeleton } from '../components/UI/SkeletonLoaders.js';
 
 // Chart colors
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
@@ -52,35 +52,35 @@ const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'
 const Dashboard = () => {
   const { user, hasRole } = useAuth();
   const navigate = useNavigate();
-  
+
   // Fetch dashboard statistics with caching enabled
-  const { 
-    data: stats, 
-    loading: statsLoading, 
-    error: statsError 
-  } = useApi('/api/stats', { 
+  const {
+    data: stats,
+    loading: statsLoading,
+    error: statsError
+  } = useApi('/api/stats', {
     cacheEnabled: true,
     cacheDuration: 5 * 60 * 1000 // 5 minutes
   });
-  
+
   // Fetch research metrics with caching
-  const { 
-    data: researchMetrics, 
-    loading: metricsLoading 
-  } = useApi('/api/research-metrics', { 
-    cacheEnabled: true 
+  const {
+    data: researchMetrics,
+    loading: metricsLoading
+  } = useApi('/api/research-metrics', {
+    cacheEnabled: true
   });
-  
+
   // Fetch recent updates
-  const { 
-    data: recentUpdates, 
-    loading: updatesLoading 
+  const {
+    data: recentUpdates,
+    loading: updatesLoading
   } = useApi('/api/recent-updates');
 
   // Memoize the aggregated research metrics
   const aggregatedMetrics = useMemo(() => {
     if (!researchMetrics) return null;
-    
+
     // Group data by category
     const categories = {};
     researchMetrics.forEach(item => {
@@ -89,14 +89,14 @@ const Dashboard = () => {
       }
       categories[item.category] += item.count;
     });
-    
+
     // Convert to array for chart display
     return Object.keys(categories).map(category => ({
       name: category,
       value: categories[category]
     }));
   }, [researchMetrics]);
-  
+
   // Memoize the monthly trends data
   const monthlyTrends = useMemo(() => {
     if (!stats?.monthly_data) return [];
@@ -105,7 +105,7 @@ const Dashboard = () => {
 
   // Determine if all data is loading
   const isLoading = statsLoading || metricsLoading || updatesLoading;
-  
+
   // Recent medical research updates (fallback data)
   const fallbackUpdates = [
     {
@@ -160,36 +160,36 @@ const Dashboard = () => {
 
         {/* Quick stats cards */}
         <Grid item xs={12} md={4}>
-          <StatCard 
-            title="Total Users" 
-            value={stats?.user_count || 0} 
+          <StatCard
+            title="Total Users"
+            value={stats?.user_count || 0}
             actionText={hasRole('admin') ? "Manage Users" : null}
             onAction={() => navigate('/users')}
           />
         </Grid>
-        
+
         <Grid item xs={12} md={4}>
-          <StatCard 
-            title="Active Sessions" 
-            value={stats?.active_sessions || 0} 
+          <StatCard
+            title="Active Sessions"
+            value={stats?.active_sessions || 0}
           />
         </Grid>
-        
+
         <Grid item xs={12} md={4}>
-          <StatCard 
-            title="System Status" 
+          <StatCard
+            title="System Status"
             value={stats?.system_status || "Operational"}
             icon={
-              <Box sx={{ 
-                width: 12, 
-                height: 12, 
-                borderRadius: '50%', 
+              <Box sx={{
+                width: 12,
+                height: 12,
+                borderRadius: '50%',
                 bgcolor: stats?.system_status === 'Operational' ? 'success.main' : 'error.main'
               }} />
             }
           />
         </Grid>
-        
+
         {/* Monthly trends chart */}
         <Grid item xs={12} md={8}>
           <Card>
@@ -216,7 +216,7 @@ const Dashboard = () => {
             </CardContent>
           </Card>
         </Grid>
-        
+
         {/* Research distribution pie chart */}
         <Grid item xs={12} md={4}>
           <Card>

@@ -35,7 +35,7 @@ import {
 } from '@mui/icons-material';
 
 import apiService from '../../services/api';
-import { useNotification } from '../../context/NotificationContext';
+import { useNotification } from '../../context/NotificationContext.jsx';
 import ModelConfigDialog from '../../components/LLM/Models/ModelConfigDialog';
 
 /**
@@ -51,21 +51,21 @@ const BiomedLMDashboard = ({ status, onRefresh }) => {
   const [configOpen, setConfigOpen] = useState(false);
   const [currentConfig, setCurrentConfig] = useState(null);
   const [copySuccess, setCopySuccess] = useState(false);
-  
+
   const { showSuccess, showError } = useNotification();
-  
+
   // Load models on mount
   useEffect(() => {
     loadModels();
   }, []);
-  
+
   // Load BiomedLM models
   const loadModels = async () => {
     setLoading(true);
-    
+
     try {
       const result = await apiService.llm.getBiomedLMModels();
-      
+
       if (result.success) {
         setModels(result.data);
         if (result.data.length > 0 && !selectedModel) {
@@ -81,12 +81,12 @@ const BiomedLMDashboard = ({ status, onRefresh }) => {
       setLoading(false);
     }
   };
-  
+
   // Get BiomedLM configuration
   const getModelConfig = async () => {
     try {
       const result = await apiService.llm.getBiomedLMConfig();
-      
+
       if (result.success) {
         setCurrentConfig(result.data);
         setConfigOpen(true);
@@ -98,12 +98,12 @@ const BiomedLMDashboard = ({ status, onRefresh }) => {
       showError(`Error loading BiomedLM configuration: ${error.message}`);
     }
   };
-  
+
   // Update BiomedLM configuration
   const updateModelConfig = async (config) => {
     try {
       const result = await apiService.llm.updateBiomedLMConfig(config);
-      
+
       if (result.success) {
         setCurrentConfig(result.data);
         showSuccess('BiomedLM configuration updated successfully');
@@ -117,27 +117,27 @@ const BiomedLMDashboard = ({ status, onRefresh }) => {
       showError(`Error updating BiomedLM configuration: ${error.message}`);
     }
   };
-  
+
   // Generate text with BiomedLM
   const generateText = async () => {
     if (!selectedModel || !prompt.trim()) {
       showError('Please select a model and enter a prompt');
       return;
     }
-    
+
     setGenerating(true);
     setResponseText('');
-    
+
     try {
       const result = await apiService.llm.generateBiomedLMText(
-        selectedModel, 
+        selectedModel,
         prompt,
         {
           max_tokens: 500,
           temperature: 0.7
         }
       );
-      
+
       if (result.success) {
         setResponseText(result.data.text);
         showSuccess('Text generated successfully');
@@ -151,17 +151,17 @@ const BiomedLMDashboard = ({ status, onRefresh }) => {
       setGenerating(false);
     }
   };
-  
+
   // Handle model change
   const handleModelChange = (event) => {
     setSelectedModel(event.target.value);
   };
-  
+
   // Handle prompt change
   const handlePromptChange = (event) => {
     setPrompt(event.target.value);
   };
-  
+
   // Copy response text to clipboard
   const copyToClipboard = () => {
     navigator.clipboard.writeText(responseText).then(
@@ -175,7 +175,7 @@ const BiomedLMDashboard = ({ status, onRefresh }) => {
       }
     );
   };
-  
+
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
@@ -184,16 +184,16 @@ const BiomedLMDashboard = ({ status, onRefresh }) => {
           BiomedLM Dashboard
         </Typography>
         <Box>
-          <Button 
-            variant="outlined" 
+          <Button
+            variant="outlined"
             startIcon={<SettingsIcon />}
             onClick={getModelConfig}
             sx={{ mr: 1 }}
           >
             Configuration
           </Button>
-          <Button 
-            variant="outlined" 
+          <Button
+            variant="outlined"
             startIcon={loading ? <CircularProgress size={20} /> : <RefreshIcon />}
             onClick={loadModels}
             disabled={loading}
@@ -202,13 +202,13 @@ const BiomedLMDashboard = ({ status, onRefresh }) => {
           </Button>
         </Box>
       </Box>
-      
+
       {status?.status !== 'available' && (
         <Alert severity="error" sx={{ mb: 3 }}>
           BiomedLM service is currently unavailable. Please check the server status.
         </Alert>
       )}
-      
+
       <Grid container spacing={3}>
         {/* Models Overview */}
         <Grid item xs={12} md={4}>
@@ -216,7 +216,7 @@ const BiomedLMDashboard = ({ status, onRefresh }) => {
             <Typography variant="h6" gutterBottom>
               Available Models
             </Typography>
-            
+
             {loading ? (
               <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
                 <CircularProgress />
@@ -226,11 +226,11 @@ const BiomedLMDashboard = ({ status, onRefresh }) => {
             ) : (
               <Box>
                 {models.map((model) => (
-                  <Card 
-                    key={model.id} 
-                    variant="outlined" 
-                    sx={{ 
-                      mb: 2, 
+                  <Card
+                    key={model.id}
+                    variant="outlined"
+                    sx={{
+                      mb: 2,
                       border: selectedModel === model.id ? '2px solid' : '1px solid',
                       borderColor: selectedModel === model.id ? 'primary.main' : 'divider',
                     }}
@@ -239,8 +239,8 @@ const BiomedLMDashboard = ({ status, onRefresh }) => {
                       title={model.name}
                       subheader={`${model.size} parameters`}
                       action={
-                        <Chip 
-                          label={model.status} 
+                        <Chip
+                          label={model.status}
                           color={model.status === 'active' ? 'success' : 'default'}
                           size="small"
                         />
@@ -250,29 +250,29 @@ const BiomedLMDashboard = ({ status, onRefresh }) => {
                       <Typography variant="body2" color="text.secondary">
                         {model.description}
                       </Typography>
-                      
+
                       <Box sx={{ mt: 1 }}>
                         {model.tags && model.tags.map(tag => (
-                          <Chip 
-                            key={tag} 
-                            label={tag} 
-                            size="small" 
+                          <Chip
+                            key={tag}
+                            label={tag}
+                            size="small"
                             sx={{ mr: 0.5, mt: 0.5 }}
                           />
                         ))}
                       </Box>
                     </CardContent>
                     <CardActions>
-                      <Button 
-                        size="small" 
+                      <Button
+                        size="small"
                         variant={selectedModel === model.id ? 'contained' : 'outlined'}
                         onClick={() => setSelectedModel(model.id)}
                       >
                         {selectedModel === model.id ? 'Selected' : 'Select'}
                       </Button>
                       {model.documentation_url && (
-                        <Button 
-                          size="small" 
+                        <Button
+                          size="small"
                           startIcon={<DescriptionIcon />}
                           onClick={() => window.open(model.documentation_url, '_blank')}
                         >
@@ -286,14 +286,14 @@ const BiomedLMDashboard = ({ status, onRefresh }) => {
             )}
           </Paper>
         </Grid>
-        
+
         {/* Text Generation */}
         <Grid item xs={12} md={8}>
           <Paper sx={{ p: 2 }}>
             <Typography variant="h6" gutterBottom>
               Medical Text Generation
             </Typography>
-            
+
             <Box sx={{ mb: 3 }}>
               <FormControl fullWidth sx={{ mb: 2 }}>
                 <InputLabel id="model-select-label">Select BiomedLM Model</InputLabel>
@@ -312,7 +312,7 @@ const BiomedLMDashboard = ({ status, onRefresh }) => {
                   ))}
                 </Select>
               </FormControl>
-              
+
               <TextField
                 label="Enter your medical prompt"
                 multiline
@@ -325,7 +325,7 @@ const BiomedLMDashboard = ({ status, onRefresh }) => {
                 disabled={generating}
                 sx={{ mb: 2 }}
               />
-              
+
               <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                 <Button
                   variant="contained"
@@ -335,7 +335,7 @@ const BiomedLMDashboard = ({ status, onRefresh }) => {
                 >
                   {generating ? 'Generating...' : 'Generate Medical Text'}
                 </Button>
-                
+
                 <Button
                   variant="outlined"
                   onClick={() => {
@@ -348,9 +348,9 @@ const BiomedLMDashboard = ({ status, onRefresh }) => {
                 </Button>
               </Box>
             </Box>
-            
+
             <Divider sx={{ my: 2 }} />
-            
+
             <Box>
               <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
                 Response
@@ -362,7 +362,7 @@ const BiomedLMDashboard = ({ status, onRefresh }) => {
                   </Tooltip>
                 )}
               </Typography>
-              
+
               {generating ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center', my: 3 }}>
                   <CircularProgress />
@@ -386,7 +386,7 @@ const BiomedLMDashboard = ({ status, onRefresh }) => {
                 </Alert>
               )}
             </Box>
-            
+
             <Accordion sx={{ mt: 3 }}>
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                 <Typography>Medical Applications</Typography>
@@ -395,34 +395,34 @@ const BiomedLMDashboard = ({ status, onRefresh }) => {
                 <Typography variant="body2" paragraph>
                   BiomedLM is specialized for medical text processing. Here are some example prompts:
                 </Typography>
-                
+
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                  <Button 
-                    variant="outlined" 
+                  <Button
+                    variant="outlined"
                     size="small"
                     onClick={() => setPrompt("Explain the pathophysiology of type 2 diabetes mellitus in simple terms.")}
                   >
                     Explain diabetes pathophysiology
                   </Button>
-                  
-                  <Button 
-                    variant="outlined" 
+
+                  <Button
+                    variant="outlined"
                     size="small"
                     onClick={() => setPrompt("What are the key differences between ACE inhibitors and ARBs for treating hypertension?")}
                   >
                     Compare antihypertensives
                   </Button>
-                  
-                  <Button 
-                    variant="outlined" 
+
+                  <Button
+                    variant="outlined"
                     size="small"
                     onClick={() => setPrompt("Summarize the latest evidence for managing acute ischemic stroke in the emergency setting.")}
                   >
                     Stroke management
                   </Button>
-                  
-                  <Button 
-                    variant="outlined" 
+
+                  <Button
+                    variant="outlined"
                     size="small"
                     onClick={() => setPrompt("Statement 1: Aspirin reduces risk of myocardial infarction.\nStatement 2: Aspirin increases risk of gastrointestinal bleeding.\nAre these statements contradictory? Explain.")}
                   >
@@ -434,7 +434,7 @@ const BiomedLMDashboard = ({ status, onRefresh }) => {
           </Paper>
         </Grid>
       </Grid>
-      
+
       {/* Configuration Dialog */}
       {configOpen && currentConfig && (
         <ModelConfigDialog

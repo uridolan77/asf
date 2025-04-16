@@ -12,20 +12,20 @@ import {
   Info as InfoIcon
 } from '@mui/icons-material';
 
-import { useNotification } from '../../context/NotificationContext';
+import { useNotification } from '../../context/NotificationContext.jsx';
 import apiService from '../../services/api';
-import { ButtonLoader } from '../UI/LoadingIndicators';
-import { FadeIn, StaggeredList } from '../UI/Animations';
+import { ButtonLoader } from '../UI/LoadingIndicators.js';
+import { FadeIn, StaggeredList } from '../UI/Animations.js';
 
 /**
  * Contradiction Analysis component
- * 
+ *
  * This component allows users to analyze contradictions in medical literature
  * based on a query.
  */
 const ContradictionAnalysis = ({ onExport }) => {
   const { showSuccess, showError } = useNotification();
-  
+
   // Form state
   const [query, setQuery] = useState('');
   const [maxResults, setMaxResults] = useState(20);
@@ -33,25 +33,25 @@ const ContradictionAnalysis = ({ onExport }) => {
   const [useBioMedLM, setUseBioMedLM] = useState(true);
   const [useTSMixer, setUseTSMixer] = useState(false);
   const [useLorentz, setUseLorentz] = useState(false);
-  
+
   // UI state
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [results, setResults] = useState(null);
   const [error, setError] = useState('');
-  
+
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!query.trim()) {
       showError('Please enter a search query');
       setError('Please enter a search query');
       return;
     }
-    
+
     setIsAnalyzing(true);
     setError('');
-    
+
     try {
       const params = {
         query: query.trim(),
@@ -61,9 +61,9 @@ const ContradictionAnalysis = ({ onExport }) => {
         use_tsmixer: useTSMixer,
         use_lorentz: useLorentz
       };
-      
+
       const result = await apiService.analysis.contradictions(params);
-      
+
       if (result.success) {
         setResults(result.data.data);
         showSuccess('Contradiction analysis completed successfully');
@@ -79,25 +79,25 @@ const ContradictionAnalysis = ({ onExport }) => {
       setIsAnalyzing(false);
     }
   };
-  
+
   // Handle export
   const handleExport = (format) => {
     if (!results) return;
-    
+
     if (onExport) {
       onExport(format, {
         analysis_id: results.analysis_id
       });
     }
   };
-  
+
   // Get contradiction severity color
   const getSeverityColor = (severity) => {
     if (severity >= 0.8) return 'error';
     if (severity >= 0.5) return 'warning';
     return 'info';
   };
-  
+
   return (
     <Box sx={{ width: '100%' }}>
       <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
@@ -108,15 +108,15 @@ const ContradictionAnalysis = ({ onExport }) => {
             <InfoIcon fontSize="small" sx={{ ml: 1, color: 'text.secondary' }} />
           </Tooltip>
         </Typography>
-        
+
         <Divider sx={{ mb: 3 }} />
-        
+
         {error && (
           <Alert severity="error" sx={{ mb: 3 }}>
             {error}
           </Alert>
         )}
-        
+
         <form onSubmit={handleSubmit}>
           <Grid container spacing={3}>
             {/* Query field */}
@@ -134,7 +134,7 @@ const ContradictionAnalysis = ({ onExport }) => {
                 required
               />
             </Grid>
-            
+
             {/* Max results */}
             <Grid item xs={12} md={4}>
               <Typography variant="subtitle2" gutterBottom>
@@ -154,7 +154,7 @@ const ContradictionAnalysis = ({ onExport }) => {
                 valueLabelDisplay="auto"
               />
             </Grid>
-            
+
             {/* Threshold */}
             <Grid item xs={12} md={4}>
               <Typography variant="subtitle2" gutterBottom>
@@ -174,7 +174,7 @@ const ContradictionAnalysis = ({ onExport }) => {
                 valueLabelDisplay="auto"
               />
             </Grid>
-            
+
             {/* Model options */}
             <Grid item xs={12} md={4}>
               <Typography variant="subtitle2" gutterBottom>
@@ -210,7 +210,7 @@ const ContradictionAnalysis = ({ onExport }) => {
                 />
               </Box>
             </Grid>
-            
+
             {/* Action buttons */}
             <Grid item xs={12}>
               <Box sx={{ display: 'flex', gap: 2 }}>
@@ -224,7 +224,7 @@ const ContradictionAnalysis = ({ onExport }) => {
                 >
                   {isAnalyzing ? 'Analyzing...' : 'Analyze Contradictions'}
                 </Button>
-                
+
                 <Button
                   variant="outlined"
                   onClick={() => {
@@ -240,7 +240,7 @@ const ContradictionAnalysis = ({ onExport }) => {
           </Grid>
         </form>
       </Paper>
-      
+
       {/* Results */}
       {results && (
         <FadeIn>
@@ -248,14 +248,14 @@ const ContradictionAnalysis = ({ onExport }) => {
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
               <Typography variant="h6">
                 Analysis Results
-                <Chip 
-                  size="small" 
-                  label={`${results.contradictions.length} contradictions found`} 
-                  color="primary" 
-                  sx={{ ml: 1 }} 
+                <Chip
+                  size="small"
+                  label={`${results.contradictions.length} contradictions found`}
+                  color="primary"
+                  sx={{ ml: 1 }}
                 />
               </Typography>
-              
+
               <Box>
                 <Button
                   variant="outlined"
@@ -274,17 +274,17 @@ const ContradictionAnalysis = ({ onExport }) => {
                 </Button>
               </Box>
             </Box>
-            
+
             <Divider sx={{ mb: 3 }} />
-            
+
             <Typography variant="subtitle1" gutterBottom>
               Query: {results.query}
             </Typography>
-            
+
             <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
               Analysis ID: {results.analysis_id} | Date: {new Date(results.timestamp).toLocaleString()}
             </Typography>
-            
+
             {results.contradictions.length > 0 ? (
               <StaggeredList>
                 {results.contradictions.map((contradiction, index) => (
@@ -329,7 +329,7 @@ const ContradictionAnalysis = ({ onExport }) => {
                           </Paper>
                         </Grid>
                       </Grid>
-                      
+
                       <Box sx={{ mt: 2 }}>
                         <Typography variant="subtitle2" gutterBottom>
                           Explanation:

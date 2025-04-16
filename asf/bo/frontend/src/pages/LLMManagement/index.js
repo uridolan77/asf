@@ -1,16 +1,16 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Box, 
-  Tab, 
-  Tabs, 
-  Paper, 
-  Typography, 
-  Alert, 
+import {
+  Box,
+  Tab,
+  Tabs,
+  Paper,
+  Typography,
+  Alert,
   Button,
   CircularProgress
 } from '@mui/material';
-import { 
+import {
   SmartToy as SmartToyIcon,
   Psychology as PsychologyIcon,
   Biotech as BiotechIcon,
@@ -21,9 +21,9 @@ import {
 } from '@mui/icons-material';
 
 import PageLayout from '../../components/Layout/PageLayout';
-import { ContentLoader } from '../../components/UI/LoadingIndicators';
+import { ContentLoader } from '../../components/UI/LoadingIndicators.js';
 import apiService from '../../services/api';
-import { useNotification } from '../../context/NotificationContext';
+import { useNotification } from '../../context/NotificationContext.jsx';
 import useApi from '../../hooks/useApi';
 
 // Lazy load all components to avoid circular dependencies
@@ -50,16 +50,16 @@ const LLMManagement = () => {
       biomedlm: { status: 'unknown', models: [], models_count: 0 }
     }
   });
-  
+
   const navigate = useNavigate();
   const { showSuccess, showError } = useNotification();
-  
+
   // Use API hook for fetching user data
-  const { 
-    data: userData, 
-    loading: userLoading, 
+  const {
+    data: userData,
+    loading: userLoading,
     error: userError,
-    execute: fetchUser 
+    execute: fetchUser
   } = useApi(apiService.auth.me, {
     params: {
       loadOnMount: true
@@ -76,34 +76,34 @@ const LLMManagement = () => {
       setLoading(false);
     }
   });
-  
+
   // Load LLM status on mount - separate from user loading
   useEffect(() => {
     loadLlmStatus();
   }, []);
-  
+
   // Handle logout
   const handleLogout = () => {
     localStorage.removeItem('token');
     navigate('/');
   };
-  
+
   // Handle tab change
   const handleTabChange = (_, newValue) => {
     setActiveTab(newValue);
   };
-  
+
   // Load LLM status
   const loadLlmStatus = async () => {
     setRefreshing(true);
-    
+
     try {
       // We'll simulate a successful response for development
       // Once backend is ready, uncomment the actual API call
-      
-      /* 
+
+      /*
       const result = await apiService.llm.getStatus();
-      
+
       if (result.success) {
         setLlmStatus(result.data);
         showSuccess('LLM status loaded successfully');
@@ -118,14 +118,14 @@ const LLMManagement = () => {
         showError(`Failed to load LLM status: ${result.error}`);
       }
       */
-      
+
       // Simulated response for development
       setTimeout(() => {
         setLlmStatus({
           overall_status: 'operational',
           components: {
-            gateway: { 
-              status: 'available', 
+            gateway: {
+              status: 'available',
               details: {
                 providers: [
                   { id: 'openai', name: 'OpenAI', type: 'API', is_active: true, requires_api_key: true, models_count: 5 },
@@ -139,8 +139,8 @@ const LLMManagement = () => {
                 ]
               }
             },
-            dspy: { 
-              status: 'available', 
+            dspy: {
+              status: 'available',
               modules: [
                 { name: 'MedicalSummarizer', module_type: 'Summarization', optimized: true, description: 'Summarizes medical text', tags: ['medical', 'nlp'] },
                 { name: 'EvidenceExtractor', module_type: 'Extraction', optimized: false, description: 'Extracts evidences from medical literature', tags: ['evidence', 'medical'] },
@@ -148,8 +148,8 @@ const LLMManagement = () => {
               ],
               modules_count: 3
             },
-            biomedlm: { 
-              status: 'available', 
+            biomedlm: {
+              status: 'available',
               models: [
                 { id: 'biomedlm-base', name: 'BioMedLM Base', status: 'active', size: '7B', description: 'Base biomedical language model', tags: ['medical', 'base'] },
                 { id: 'biomedlm-clinical', name: 'BioMedLM Clinical', status: 'active', size: '13B', description: 'Clinical-focused biomedical model', tags: ['clinical', 'medical'] }
@@ -184,7 +184,7 @@ const LLMManagement = () => {
     // Implementation will be replaced with actual API calls
     console.log('Fetching BiomedLM status');
   };
-  
+
   if (loading) {
     return (
       <PageLayout
@@ -194,7 +194,7 @@ const LLMManagement = () => {
       />
     );
   }
-  
+
   return (
     <PageLayout
       title="LLM Management"
@@ -216,25 +216,25 @@ const LLMManagement = () => {
         <Paper sx={{ mb: 3, p: 2 }}>
           <Typography variant="h6" gutterBottom>
             LLM System Status: {' '}
-            <Box component="span" sx={{ 
-              color: 
-                llmStatus.overall_status === 'operational' ? 'success.main' : 
-                llmStatus.overall_status === 'degraded' ? 'warning.main' : 
-                'error.main' 
+            <Box component="span" sx={{
+              color:
+                llmStatus.overall_status === 'operational' ? 'success.main' :
+                llmStatus.overall_status === 'degraded' ? 'warning.main' :
+                'error.main'
             }}>
               {llmStatus.overall_status.toUpperCase()}
             </Box>
           </Typography>
-          
+
           <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
             {Object.entries(llmStatus.components).map(([component, status]) => (
-              <Paper 
+              <Paper
                 key={component}
-                sx={{ 
-                  p: 1.5, 
+                sx={{
+                  p: 1.5,
                   minWidth: 200,
-                  bgcolor: 
-                    status.status === 'available' ? 'success.light' : 
+                  bgcolor:
+                    status.status === 'available' ? 'success.light' :
                     'error.light',
                   color: 'common.white'
                 }}
@@ -265,52 +265,52 @@ const LLMManagement = () => {
           </Box>
         </Paper>
       )}
-      
+
       {/* Main tabs */}
       <Paper sx={{ mb: 3 }}>
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-          <Tabs 
-            value={activeTab} 
-            onChange={handleTabChange} 
+          <Tabs
+            value={activeTab}
+            onChange={handleTabChange}
             aria-label="LLM management tabs"
             variant="scrollable"
             scrollButtons="auto"
           >
-            <Tab 
-              icon={<CloudIcon />} 
-              label="Providers" 
-              id="tab-0" 
-              aria-controls="tabpanel-0" 
+            <Tab
+              icon={<CloudIcon />}
+              label="Providers"
+              id="tab-0"
+              aria-controls="tabpanel-0"
             />
-            <Tab 
-              icon={<MemoryIcon />} 
-              label="Models" 
-              id="tab-1" 
-              aria-controls="tabpanel-1" 
+            <Tab
+              icon={<MemoryIcon />}
+              label="Models"
+              id="tab-1"
+              aria-controls="tabpanel-1"
             />
-            <Tab 
-              icon={<SmartToyIcon />} 
-              label="Gateway" 
-              id="tab-2" 
-              aria-controls="tabpanel-2" 
+            <Tab
+              icon={<SmartToyIcon />}
+              label="Gateway"
+              id="tab-2"
+              aria-controls="tabpanel-2"
             />
-            <Tab 
-              icon={<PsychologyIcon />} 
-              label="DSPy" 
-              id="tab-3" 
-              aria-controls="tabpanel-3" 
+            <Tab
+              icon={<PsychologyIcon />}
+              label="DSPy"
+              id="tab-3"
+              aria-controls="tabpanel-3"
             />
-            <Tab 
-              icon={<BiotechIcon />} 
-              label="BiomedLM" 
-              id="tab-4" 
-              aria-controls="tabpanel-4" 
+            <Tab
+              icon={<BiotechIcon />}
+              label="BiomedLM"
+              id="tab-4"
+              aria-controls="tabpanel-4"
             />
-            <Tab 
-              icon={<BarChartIcon />} 
-              label="Usage" 
-              id="tab-5" 
-              aria-controls="tabpanel-5" 
+            <Tab
+              icon={<BarChartIcon />}
+              label="Usage"
+              id="tab-5"
+              aria-controls="tabpanel-5"
             />
           </Tabs>
         </Box>
@@ -334,8 +334,8 @@ const LLMManagement = () => {
         <Box role="tabpanel" hidden={activeTab !== 2} id="tabpanel-2" aria-labelledby="tab-2" sx={{ p: 3 }}>
           {activeTab === 2 && (
             <Suspense fallback={<ContentLoader />}>
-              <GatewayDashboard 
-                status={llmStatus?.components?.gateway} 
+              <GatewayDashboard
+                status={llmStatus?.components?.gateway}
                 onRefresh={loadLlmStatus}
               />
             </Suspense>
@@ -345,7 +345,7 @@ const LLMManagement = () => {
         <Box role="tabpanel" hidden={activeTab !== 3} id="tabpanel-3" aria-labelledby="tab-3" sx={{ p: 3 }}>
           {activeTab === 3 && (
             <Suspense fallback={<ContentLoader />}>
-              <DSPyDashboard 
+              <DSPyDashboard
                 status={llmStatus?.components?.dspy}
                 onRefresh={loadLlmStatus}
               />
@@ -356,18 +356,18 @@ const LLMManagement = () => {
         <Box role="tabpanel" hidden={activeTab !== 4} id="tabpanel-4" aria-labelledby="tab-4" sx={{ p: 3 }}>
           {activeTab === 4 && (
             <Suspense fallback={<ContentLoader />}>
-              <BiomedLMDashboard 
+              <BiomedLMDashboard
                 status={llmStatus?.components?.biomedlm}
                 onRefresh={loadLlmStatus}
               />
             </Suspense>
           )}
         </Box>
-        
+
         <Box role="tabpanel" hidden={activeTab !== 5} id="tabpanel-5" aria-labelledby="tab-5" sx={{ p: 3 }}>
           {activeTab === 5 && (
             <Suspense fallback={<ContentLoader />}>
-              <UsageDashboard 
+              <UsageDashboard
                 status={llmStatus}
                 onRefresh={loadLlmStatus}
               />

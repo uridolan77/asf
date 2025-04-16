@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Box, Grid, Paper } from '@mui/material';
 
 import apiService from '../services/api';
-import { useNotification } from '../context/NotificationContext';
+import { useNotification } from '../context/NotificationContext.jsx';
 import useApi from '../hooks/useApi';
 
 import PageLayout from '../components/Layout/PageLayout';

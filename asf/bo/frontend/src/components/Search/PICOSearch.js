@@ -21,8 +21,8 @@ import {
 } from '@mui/icons-material';
 import { useNotification } from '../../context/NotificationContext';
 import apiService from '../../services/api';
-import { ButtonLoader } from '../UI/LoadingIndicators';
-import { HoverAnimation, StaggeredList } from '../UI/Animations';
+import { ButtonLoader } from '../UI/LoadingIndicators.js';
+import { HoverAnimation, StaggeredList } from '../UI/Animations.js';
 
 /**
  * Enhanced PICO search component with improved UX

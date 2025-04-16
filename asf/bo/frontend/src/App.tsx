@@ -1,17 +1,17 @@
-// frontend/src/App.js
+// frontend/src/App.tsx
 import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Route, Routes, useLocation, Navigate } from 'react-router-dom';
 import { ThemeProvider, CssBaseline, CircularProgress } from '@mui/material';
-import { NotificationProvider } from './context/NotificationContext';
-import { AuthProvider, useAuth } from './context/AuthContext';
-import { TopProgressBar } from './components/UI/LoadingIndicators';
-import { PageTransition } from './components/UI/Animations';
+import { NotificationProvider } from './context/NotificationContext.jsx';
+import { AuthProvider, useAuth } from './context/AuthContext.jsx';
+import { TopProgressBar } from './components/UI/LoadingIndicators.jsx';
+import { PageTransition } from './components/UI/Animations.jsx';
 
 // Theme
 import theme from './theme';
 
 // Lazy load page components
-const Login = lazy(() => import('./pages/Login'));
+const Login = lazy(() => import('./pages/Login.jsx'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Register = lazy(() => import('./pages/Register'));
 const Users = lazy(() => import('./pages/Users'));
@@ -26,27 +26,31 @@ const NCBIClientPage = lazy(() => import('./pages/NCBIClientPage'));
 const LLMManagement = lazy(() => import('./pages/LLMManagement'));
 
 // Loading fallback component
-const LoadingFallback = () => (
+const LoadingFallback: React.FC = () => (
   <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
     <CircularProgress />
   </div>
 );
 
+interface ProtectedRouteProps {
+  children: React.ReactNode;
+}
+
 // Protected route component
-const ProtectedRoute = ({ children }) => {
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
 
   if (loading) {
     return <LoadingFallback />;
   }
 
-  return isAuthenticated ? children : <Navigate to="/" />;
+  return isAuthenticated ? <>{children}</> : <Navigate to="/" />;
 };
 
 // Animated route change component
-const AnimatedRoutes = () => {
+const AnimatedRoutes: React.FC = () => {
   const location = useLocation();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   // Simulate loading on route change
   useEffect(() => {
@@ -133,7 +137,7 @@ const AnimatedRoutes = () => {
   );
 };
 
-function App() {
+const App: React.FC = () => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />

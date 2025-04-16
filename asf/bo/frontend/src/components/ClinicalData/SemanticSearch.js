@@ -192,7 +192,7 @@ const SemanticSearch = () => {
                         <Chip
                           key={index}
                           label={searchTerm}
-                          color={searchTerm === results.normalized_term ? 'primary' : 'default'}
+                          color={searchTerm === results.normalized_term ? 'primary' : 'info'}
                           size="small"
                           variant={searchTerm === results.normalized_term ? 'filled' : 'outlined'}
                         />
@@ -234,7 +234,7 @@ const SemanticSearch = () => {
                                 trial.OverallStatus === 'Recruiting' ? 'success' :
                                 trial.OverallStatus === 'Completed' ? 'primary' :
                                 trial.OverallStatus === 'Active, not recruiting' ? 'info' :
-                                'default'
+                                'warning'
                               }
                               variant="outlined"
                             />

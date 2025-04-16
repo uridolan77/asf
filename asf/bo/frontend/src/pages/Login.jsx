@@ -1,4 +1,4 @@
-// frontend/src/pages/Login.js
+// frontend/src/pages/Login.jsx
 import React from 'react';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import {
@@ -6,7 +6,7 @@ import {
   Grid, IconButton, InputAdornment, Link, TextField, Typography,
   Alert, CircularProgress
 } from '@mui/material';
-import logo from '../assets/images/asfmrslogo.jpg';
+import logo from '../assets/images/asfmrslogo.png';
 import {
   LockOutlined as LockOutlinedIcon,
   Visibility as VisibilityIcon,
@@ -17,7 +17,7 @@ import {
 import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext.jsx';
 
 // Form validation schema
 const schema = yup.object({
@@ -74,7 +74,7 @@ const Login = () => {
         }}
       >
         <Box sx={{ mb: 3, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <img src={logo} alt="Medical Research Synthesizer Logo" style={{ width: 600, marginBottom: 16 }} />
+          <img src={logo} alt="Medical Research Synthesizer Logo" style={{ width: 555, marginBottom: 16 }} />
         </Box>
         <Avatar sx={{ m: 1, bgcolor: 'primary.main' }}>
           <LockOutlinedIcon />

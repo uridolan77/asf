@@ -15,20 +15,20 @@ import {
   Psychology as PsychologyIcon
 } from '@mui/icons-material';
 
-import { useNotification } from '../../context/NotificationContext';
+import { useNotification } from '../../context/NotificationContext.jsx';
 import apiService from '../../services/api';
-import { ButtonLoader } from '../UI/LoadingIndicators';
-import { FadeIn, StaggeredList, HoverAnimation } from '../UI/Animations';
+import { ButtonLoader } from '../UI/LoadingIndicators.js';
+import { FadeIn, StaggeredList, HoverAnimation } from '../UI/Animations.js';
 
 /**
  * Contradiction Detection component
- * 
+ *
  * This component allows users to detect contradictions between two medical claims
  * using various ML models.
  */
 const ContradictionDetection = ({ onExport }) => {
   const { showSuccess, showError } = useNotification();
-  
+
   // Form state
   const [claim1, setClaim1] = useState('');
   const [claim2, setClaim2] = useState('');
@@ -39,25 +39,25 @@ const ContradictionDetection = ({ onExport }) => {
   const [useTemporal, setUseTemporal] = useState(false);
   const [useShap, setUseShap] = useState(false);
   const [domain, setDomain] = useState('');
-  
+
   // UI state
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
-  
+
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!claim1.trim() || !claim2.trim()) {
       showError('Please enter both claims');
       setError('Please enter both claims');
       return;
     }
-    
+
     setIsAnalyzing(true);
     setError('');
-    
+
     try {
       const params = {
         claim1: claim1.trim(),
@@ -70,9 +70,9 @@ const ContradictionDetection = ({ onExport }) => {
         use_shap: useShap,
         domain: domain.trim() || null
       };
-      
+
       const result = await apiService.ml.detectContradiction(params);
-      
+
       if (result.success) {
         setResult(result.data);
         showSuccess('Contradiction detection completed successfully');
@@ -88,32 +88,32 @@ const ContradictionDetection = ({ onExport }) => {
       setIsAnalyzing(false);
     }
   };
-  
+
   // Handle export
   const handleExport = (format) => {
     if (!result) return;
-    
+
     if (onExport) {
       onExport(format, {
         analysis_id: result.analysis_id
       });
     }
   };
-  
+
   // Get contradiction severity color
   const getContradictionColor = (score) => {
     if (score >= 0.8) return 'error';
     if (score >= 0.5) return 'warning';
     return 'success';
   };
-  
+
   // Get model contribution color
   const getModelContributionColor = (contribution) => {
     if (contribution >= 0.7) return 'primary';
     if (contribution >= 0.4) return 'secondary';
     return 'default';
   };
-  
+
   return (
     <Box sx={{ width: '100%' }}>
       <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
@@ -124,15 +124,15 @@ const ContradictionDetection = ({ onExport }) => {
             <InfoIcon fontSize="small" sx={{ ml: 1, color: 'text.secondary' }} />
           </Tooltip>
         </Typography>
-        
+
         <Divider sx={{ mb: 3 }} />
-        
+
         {error && (
           <Alert severity="error" sx={{ mb: 3 }}>
             {error}
           </Alert>
         )}
-        
+
         <form onSubmit={handleSubmit}>
           <Grid container spacing={3}>
             {/* Claim 1 field */}
@@ -152,7 +152,7 @@ const ContradictionDetection = ({ onExport }) => {
                 rows={3}
               />
             </Grid>
-            
+
             {/* Claim 2 field */}
             <Grid item xs={12}>
               <Typography variant="subtitle2" gutterBottom>
@@ -170,7 +170,7 @@ const ContradictionDetection = ({ onExport }) => {
                 rows={3}
               />
             </Grid>
-            
+
             {/* Domain field */}
             <Grid item xs={12} md={4}>
               <Typography variant="subtitle2" gutterBottom>
@@ -184,7 +184,7 @@ const ContradictionDetection = ({ onExport }) => {
                 onChange={(e) => setDomain(e.target.value)}
               />
             </Grid>
-            
+
             {/* Threshold */}
             <Grid item xs={12} md={8}>
               <Typography variant="subtitle2" gutterBottom>
@@ -204,7 +204,7 @@ const ContradictionDetection = ({ onExport }) => {
                 valueLabelDisplay="auto"
               />
             </Grid>
-            
+
             {/* Model options */}
             <Grid item xs={12}>
               <Typography variant="subtitle2" gutterBottom>
@@ -273,7 +273,7 @@ const ContradictionDetection = ({ onExport }) => {
                 />
               </Box>
             </Grid>
-            
+
             {/* Action buttons */}
             <Grid item xs={12}>
               <Box sx={{ display: 'flex', gap: 2 }}>
@@ -287,7 +287,7 @@ const ContradictionDetection = ({ onExport }) => {
                 >
                   {isAnalyzing ? 'Analyzing...' : 'Detect Contradiction'}
                 </Button>
-                
+
                 <Button
                   variant="outlined"
                   onClick={() => {
@@ -305,7 +305,7 @@ const ContradictionDetection = ({ onExport }) => {
           </Grid>
         </form>
       </Paper>
-      
+
       {/* Results */}
       {result && (
         <FadeIn>
@@ -314,7 +314,7 @@ const ContradictionDetection = ({ onExport }) => {
               <Typography variant="h6">
                 Contradiction Analysis Results
               </Typography>
-              
+
               <Box>
                 <Button
                   variant="outlined"
@@ -333,9 +333,9 @@ const ContradictionDetection = ({ onExport }) => {
                 </Button>
               </Box>
             </Box>
-            
+
             <Divider sx={{ mb: 3 }} />
-            
+
             <Grid container spacing={3}>
               <Grid item xs={12}>
                 <HoverAnimation>
@@ -373,7 +373,7 @@ const ContradictionDetection = ({ onExport }) => {
                           </Paper>
                         </Grid>
                       </Grid>
-                      
+
                       <Box sx={{ mt: 3 }}>
                         <Typography variant="subtitle2" gutterBottom>
                           Contradiction Score: {(result.contradiction_score * 100).toFixed(1)}%
@@ -384,7 +384,7 @@ const ContradictionDetection = ({ onExport }) => {
                           color={getContradictionColor(result.contradiction_score)}
                           sx={{ height: 10, borderRadius: 5, mb: 2 }}
                         />
-                        
+
                         {result.explanation && (
                           <Box sx={{ mt: 2 }}>
                             <Typography variant="subtitle2" gutterBottom>
@@ -400,7 +400,7 @@ const ContradictionDetection = ({ onExport }) => {
                   </Card>
                 </HoverAnimation>
               </Grid>
-              
+
               {/* Model Contributions */}
               {result.model_contributions && (
                 <Grid item xs={12}>
@@ -438,7 +438,7 @@ const ContradictionDetection = ({ onExport }) => {
                   </Grid>
                 </Grid>
               )}
-              
+
               {/* Temporal Analysis */}
               {result.temporal_analysis && (
                 <Grid item xs={12}>
@@ -449,11 +449,11 @@ const ContradictionDetection = ({ onExport }) => {
                     <Card variant="outlined">
                       <CardHeader
                         title="Temporal Contradiction Assessment"
-                        subheader={result.temporal_analysis.is_temporal_contradiction ? 
+                        subheader={result.temporal_analysis.is_temporal_contradiction ?
                           'Temporal contradiction detected' : 'No temporal contradiction detected'}
                         action={
                           <Chip
-                            label={result.temporal_analysis.is_temporal_contradiction ? 
+                            label={result.temporal_analysis.is_temporal_contradiction ?
                               'Temporal Contradiction' : 'No Temporal Contradiction'}
                             color={result.temporal_analysis.is_temporal_contradiction ? 'error' : 'success'}
                             size="small"
@@ -479,7 +479,7 @@ const ContradictionDetection = ({ onExport }) => {
                             </Typography>
                           </Grid>
                         </Grid>
-                        
+
                         {result.temporal_analysis.explanation && (
                           <Box sx={{ mt: 2 }}>
                             <Typography variant="subtitle2" gutterBottom>
@@ -495,7 +495,7 @@ const ContradictionDetection = ({ onExport }) => {
                   </HoverAnimation>
                 </Grid>
               )}
-              
+
               {/* SHAP Explanations */}
               {result.shap_explanations && (
                 <Grid item xs={12}>
@@ -512,7 +512,7 @@ const ContradictionDetection = ({ onExport }) => {
                         <Typography variant="body2" sx={{ mb: 2 }}>
                           The following features contributed most to the contradiction assessment:
                         </Typography>
-                        
+
                         {result.shap_explanations.features.map((feature, index) => (
                           <Box key={index} sx={{ mb: 2 }}>
                             <Typography variant="subtitle2" gutterBottom>

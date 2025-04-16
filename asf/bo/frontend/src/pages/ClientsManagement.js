@@ -21,7 +21,7 @@ import { ClientConfigDialog } from '../components/Clients';
 import { ContentLoader } from '../components/UI/LoadingIndicators';
 import { FadeIn, StaggeredList } from '../components/UI/Animations';
 import apiService from '../services/api';
-import { useNotification } from '../context/NotificationContext';
+import { useNotification } from '../context/NotificationContext.jsx';
 
 /**
  * Medical Clients Management page

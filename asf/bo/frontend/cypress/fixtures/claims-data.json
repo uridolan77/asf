@@ -1,0 +1,50 @@
+{
+  "claims": [
+    {
+      "id": "claim-1",
+      "text": "Regular exercise reduces the risk of cardiovascular disease",
+      "source": "Source 1",
+      "confidence": 0.92,
+      "evidence": [
+        { "id": "ev-1", "text": "Study showing correlation between exercise and heart health", "url": "https://example.com/study1" }
+      ],
+      "connections": ["claim-2", "claim-3"]
+    },
+    {
+      "id": "claim-2",
+      "text": "30 minutes of moderate exercise daily is sufficient for cardiovascular benefits",
+      "source": "Source 1",
+      "confidence": 0.85,
+      "evidence": [
+        { "id": "ev-2", "text": "Research on minimum effective exercise duration", "url": "https://example.com/study2" }
+      ],
+      "connections": ["claim-1"]
+    },
+    {
+      "id": "claim-3",
+      "text": "Exercise has no significant impact on cardiovascular health",
+      "source": "Source 2",
+      "confidence": 0.45,
+      "evidence": [
+        { "id": "ev-3", "text": "Contrarian study with methodological limitations", "url": "https://example.com/study3" }
+      ],
+      "connections": ["claim-1"],
+      "contradiction": ["claim-1"]
+    },
+    {
+      "id": "claim-4",
+      "text": "Resistance training improves cardiovascular health",
+      "source": "Source 3",
+      "confidence": 0.78,
+      "evidence": [
+        { "id": "ev-4", "text": "Study on weight training and heart health", "url": "https://example.com/study4" }
+      ],
+      "connections": []
+    }
+  ],
+  "metadata": {
+    "totalClaims": 4,
+    "contradictions": 1,
+    "sources": 3
+  }
+}

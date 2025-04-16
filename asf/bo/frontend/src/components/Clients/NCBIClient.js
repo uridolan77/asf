@@ -17,11 +17,11 @@ import {
   Search as SearchIcon
 } from '@mui/icons-material';
 import apiService from '../../services/api';
-import { useNotification } from '../../context/NotificationContext';
+import { useNotification } from '../../context/NotificationContext.jsx';
 
 /**
  * NCBI Client Component
- * 
+ *
  * This component provides functionality for configuring and testing
  * the NCBI (National Center for Biotechnology Information) client.
  */
@@ -63,7 +63,7 @@ const NCBIClient = ({ client, onRefresh, onConfigUpdate }) => {
 
     try {
       const result = await apiService.clients.updateClient(client.client_id, config);
-      
+
       if (result.success) {
         showSuccess('NCBI client configuration updated successfully');
         if (onConfigUpdate) {
@@ -84,12 +84,12 @@ const NCBIClient = ({ client, onRefresh, onConfigUpdate }) => {
   const handleTestConnection = async () => {
     setTestLoading(true);
     setTestResults(null);
-    
+
     try {
       const result = await apiService.clients.testConnection(client.client_id);
-      
+
       setTestResults(result.data);
-      
+
       if (result.data.success) {
         showSuccess('NCBI connection test successful');
       } else {
@@ -284,9 +284,9 @@ const NCBIClient = ({ client, onRefresh, onConfigUpdate }) => {
                   <Typography variant="subtitle2" gutterBottom>
                     Details:
                   </Typography>
-                  <pre style={{ 
-                    backgroundColor: '#f5f5f5', 
-                    padding: '8px', 
+                  <pre style={{
+                    backgroundColor: '#f5f5f5',
+                    padding: '8px',
                     borderRadius: '4px',
                     overflow: 'auto',
                     maxHeight: '200px',

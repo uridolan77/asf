@@ -43,7 +43,7 @@ const ResearchTools = () => {
     {
       name: 'Medical Terminology',
       icon: <ScienceIcon />,
-      color: 'default',
+      color: 'warning',
       path: '/terminology',
       description: 'Look up medical terms and definitions'
     },

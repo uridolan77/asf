@@ -1,8 +1,8 @@
-// frontend/src/context/AuthContext.js
+// frontend/src/context/AuthContext.jsx
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { useNotification } from './NotificationContext';
+import { useNotification } from './NotificationContext.jsx';
 
 // Create the AuthContext
 const AuthContext = createContext();

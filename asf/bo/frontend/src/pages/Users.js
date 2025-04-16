@@ -190,7 +190,7 @@ const Users = () => {
                       <TableCell>
                         <Chip
                           label={user.role_id === 1 ? 'User' : 'Admin'}
-                          color={user.role_id === 2 ? 'primary' : 'default'}
+                          color={user.role_id === 2 ? 'primary' : 'info'}
                           size="small"
                         />
                       </TableCell>

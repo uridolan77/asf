@@ -7,8 +7,8 @@ import {
 } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import { useNotification } from '../../context/NotificationContext';
-import { ContentLoader } from '../UI/LoadingIndicators';
-import { FadeIn, SlideIn } from '../UI/Animations';
+import { ContentLoader } from '../UI/LoadingIndicators.js';
+import { FadeIn, SlideIn } from '../UI/Animations.js';
 
 // Material Icons
 import {

@@ -18,56 +18,56 @@ import {
 
 import { useNotification } from '../../context/NotificationContext';
 import apiService from '../../services/api';
-import { ContentLoader } from '../UI/LoadingIndicators';
-import { FadeIn, StaggeredList } from '../UI/Animations';
+import { ContentLoader } from '../UI/LoadingIndicators.js';
+import { FadeIn, StaggeredList } from '../UI/Animations.js';
 
 /**
  * Analysis History component
- * 
+ *
  * This component displays the history of analyses performed by the user.
  */
 const AnalysisHistory = ({ onViewAnalysis, onExport }) => {
   const { showSuccess, showError } = useNotification();
-  
+
   // State
   const [isLoading, setIsLoading] = useState(false);
   const [history, setHistory] = useState(null);
   const [error, setError] = useState('');
-  
+
   // Pagination state
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  
+
   // Filter state
   const [analysisType, setAnalysisType] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  
+
   // Load analysis history on mount and when filters change
   useEffect(() => {
     loadAnalysisHistory();
   }, [page, rowsPerPage, analysisType]);
-  
+
   // Load analysis history
   const loadAnalysisHistory = async () => {
     setIsLoading(true);
     setError('');
-    
+
     try {
       const params = {
         page: page + 1, // API uses 1-based indexing
         page_size: rowsPerPage
       };
-      
+
       if (analysisType) {
         params.analysis_type = analysisType;
       }
-      
+
       if (searchQuery) {
         params.query = searchQuery;
       }
-      
+
       const result = await apiService.analysis.getHistory(params);
-      
+
       if (result.success) {
         setHistory(result.data.data);
       } else {
@@ -82,32 +82,32 @@ const AnalysisHistory = ({ onViewAnalysis, onExport }) => {
       setIsLoading(false);
     }
   };
-  
+
   // Handle page change
   const handleChangePage = (_, newPage) => {
     setPage(newPage);
   };
-  
+
   // Handle rows per page change
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
-  
+
   // Handle view analysis
   const handleViewAnalysis = (analysisId) => {
     if (onViewAnalysis) {
       onViewAnalysis(analysisId);
     }
   };
-  
+
   // Handle export analysis
   const handleExportAnalysis = (analysisId, format) => {
     if (onExport) {
       onExport(format, { analysis_id: analysisId });
     }
   };
-  
+
   // Get analysis type chip color
   const getAnalysisTypeColor = (type) => {
     switch (type.toLowerCase()) {
@@ -121,17 +121,17 @@ const AnalysisHistory = ({ onViewAnalysis, onExport }) => {
         return 'default';
     }
   };
-  
+
   // Handle search
   const handleSearch = () => {
     setPage(0);
     loadAnalysisHistory();
   };
-  
+
   if (isLoading && !history) {
     return <ContentLoader height={400} message="Loading analysis history..." />;
   }
-  
+
   return (
     <Box sx={{ width: '100%' }}>
       <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
@@ -139,7 +139,7 @@ const AnalysisHistory = ({ onViewAnalysis, onExport }) => {
           <Typography variant="h6">
             Analysis History
           </Typography>
-          
+
           <Button
             variant="outlined"
             startIcon={<RefreshIcon />}
@@ -149,9 +149,9 @@ const AnalysisHistory = ({ onViewAnalysis, onExport }) => {
             Refresh
           </Button>
         </Box>
-        
+
         <Divider sx={{ mb: 3 }} />
-        
+
         {/* Filters */}
         <Box sx={{ mb: 3 }}>
           <Grid container spacing={2} alignItems="center">
@@ -196,10 +196,10 @@ const AnalysisHistory = ({ onViewAnalysis, onExport }) => {
             </Grid>
           </Grid>
         </Box>
-        
+
         {error ? (
-          <Alert 
-            severity="error" 
+          <Alert
+            severity="error"
             action={
               <Button color="inherit" size="small" onClick={loadAnalysisHistory}>
                 Retry
@@ -273,7 +273,7 @@ const AnalysisHistory = ({ onViewAnalysis, onExport }) => {
                 </TableBody>
               </Table>
             </TableContainer>
-            
+
             <TablePagination
               component="div"
               count={history.total_count}

@@ -13,55 +13,55 @@ import {
   Storage as CsvIcon
 } from '@mui/icons-material';
 
-import { useNotification } from '../../context/NotificationContext';
+import { useNotification } from '../../context/NotificationContext.jsx';
 import apiService from '../../services/api';
 
 /**
  * Export Dialog component
- * 
+ *
  * This component provides a dialog for exporting search results or analysis results
  * to various formats (JSON, CSV, Excel, PDF).
  */
-const ExportDialog = ({ 
-  open, 
-  onClose, 
+const ExportDialog = ({
+  open,
+  onClose,
   resultId = null,
   analysisId = null,
   query = null,
   title = 'Export Results'
 }) => {
   const { showSuccess, showError } = useNotification();
-  
+
   // State
   const [format, setFormat] = useState('pdf');
   const [includeAbstracts, setIncludeAbstracts] = useState(true);
   const [includeMetadata, setIncludeMetadata] = useState(true);
   const [maxResults, setMaxResults] = useState(20);
-  
+
   // Export status
   const [isExporting, setIsExporting] = useState(false);
   const [exportTaskId, setExportTaskId] = useState(null);
   const [exportProgress, setExportProgress] = useState(0);
   const [exportError, setExportError] = useState('');
   const [downloadUrl, setDownloadUrl] = useState('');
-  
+
   // Handle format change
   const handleFormatChange = (event) => {
     setFormat(event.target.value);
   };
-  
+
   // Handle export
   const handleExport = async () => {
     if (!resultId && !analysisId && !query) {
       showError('No data to export');
       return;
     }
-    
+
     setIsExporting(true);
     setExportError('');
     setExportTaskId(null);
     setDownloadUrl('');
-    
+
     try {
       const params = {
         result_id: resultId,
@@ -71,15 +71,15 @@ const ExportDialog = ({
         include_abstracts: includeAbstracts,
         include_metadata: includeMetadata
       };
-      
+
       const result = await apiService.export.toFormat(format, params);
-      
+
       if (result.success) {
         if (result.data.data.task_id) {
           // Background task
           setExportTaskId(result.data.data.task_id);
           showSuccess('Export started. Please wait while we prepare your file.');
-          
+
           // Start polling for status
           pollExportStatus(result.data.data.task_id);
         } else if (result.data.data.download_url) {
@@ -100,17 +100,17 @@ const ExportDialog = ({
       setIsExporting(false);
     }
   };
-  
+
   // Poll export status
   const pollExportStatus = async (taskId) => {
     try {
       const result = await apiService.export.getStatus(taskId);
-      
+
       if (result.success) {
         const status = result.data.data;
-        
+
         setExportProgress(status.progress);
-        
+
         if (status.status === 'completed') {
           setDownloadUrl(status.download_url);
           showSuccess('Export completed successfully');
@@ -135,14 +135,14 @@ const ExportDialog = ({
       setIsExporting(false);
     }
   };
-  
+
   // Handle download
   const handleDownload = () => {
     if (downloadUrl) {
       window.open(downloadUrl, '_blank');
     }
   };
-  
+
   // Reset state when dialog closes
   const handleClose = () => {
     if (!isExporting) {
@@ -157,7 +157,7 @@ const ExportDialog = ({
       onClose();
     }
   };
-  
+
   // Get format icon
   const getFormatIcon = () => {
     switch (format) {
@@ -173,7 +173,7 @@ const ExportDialog = ({
         return <DownloadIcon />;
     }
   };
-  
+
   return (
     <Dialog
       open={open}
@@ -188,7 +188,7 @@ const ExportDialog = ({
             {exportError}
           </Alert>
         )}
-        
+
         {isExporting ? (
           <Box sx={{ textAlign: 'center', py: 3 }}>
             <CircularProgress variant="determinate" value={exportProgress} size={60} sx={{ mb: 2 }} />
@@ -224,7 +224,7 @@ const ExportDialog = ({
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
               Select the format and options for your export.
             </Typography>
-            
+
             <Grid container spacing={2}>
               <Grid item xs={12}>
                 <FormControl fullWidth>
@@ -242,14 +242,14 @@ const ExportDialog = ({
                   </Select>
                 </FormControl>
               </Grid>
-              
+
               <Grid item xs={12}>
                 <Divider sx={{ my: 1 }} />
                 <Typography variant="subtitle2" gutterBottom>
                   Export Options
                 </Typography>
               </Grid>
-              
+
               <Grid item xs={12}>
                 <FormControl fullWidth>
                   <InputLabel id="max-results-label">Maximum Results</InputLabel>
@@ -267,7 +267,7 @@ const ExportDialog = ({
                   </Select>
                 </FormControl>
               </Grid>
-              
+
               <Grid item xs={12}>
                 <FormControlLabel
                   control={
@@ -279,7 +279,7 @@ const ExportDialog = ({
                   label="Include Abstracts"
                 />
               </Grid>
-              
+
               <Grid item xs={12}>
                 <FormControlLabel
                   control={

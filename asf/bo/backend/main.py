@@ -22,13 +22,14 @@ from api.export import router as export_router
 from api.ml import router as ml_router
 from api.clients import router as clients_router
 from api.routers.llm import llm_router
+from api.endpoints import router as endpoints_router
 
 app = FastAPI(title="BO Medical Research Backend")
 
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, replace with specific origins
+    allow_origins=["http://localhost:5173", "http://localhost:5174"],  # Allow specific frontend URLs
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -44,6 +45,7 @@ app.include_router(export_router)
 app.include_router(ml_router)
 app.include_router(clients_router)
 app.include_router(llm_router)
+app.include_router(endpoints_router, tags=["Authentication"])
 
 # Root endpoint
 @app.get("/")

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { useNotification } from '../context/NotificationContext';
+import { useAuth } from '../context/AuthContext.jsx';
+import { useNotification } from '../context/NotificationContext.jsx';
 
 /**
  * Custom hook for making API calls with caching and memoization

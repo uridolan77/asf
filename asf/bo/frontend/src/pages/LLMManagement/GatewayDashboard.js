@@ -76,33 +76,33 @@ const GatewayDashboard = ({ status, onRefresh }) => {
     presence_penalty: 0,
     frequency_penalty: 0
   });
-  
+
   const { showSuccess, showError } = useNotification();
-  
+
   // Load providers on mount
   useEffect(() => {
     loadProviders();
   }, []);
-  
+
   // Load models when provider changes
   useEffect(() => {
     if (selectedProvider) {
       loadModels(selectedProvider);
     }
   }, [selectedProvider]);
-  
+
   // Load gateway providers
   const loadProviders = async () => {
     setLoading(true);
-    
+
     try {
       const result = await apiService.llm.getProviders();
-      
+
       if (result.success) {
         setProviders(result.data);
         const active = result.data.filter(p => p.is_active);
         setActiveProviders(active);
-        
+
         if (active.length > 0 && !selectedProvider) {
           setSelectedProvider(active[0].id);
         }
@@ -116,12 +116,12 @@ const GatewayDashboard = ({ status, onRefresh }) => {
       setLoading(false);
     }
   };
-  
+
   // Load models for a provider
   const loadModels = async (providerId) => {
     try {
       const result = await apiService.llm.getModels(providerId);
-      
+
       if (result.success) {
         setProviderModels(result.data);
         if (result.data.length > 0) {
@@ -141,12 +141,12 @@ const GatewayDashboard = ({ status, onRefresh }) => {
       setSelectedModel('');
     }
   };
-  
+
   // Test provider connection
   const testProvider = async (providerId) => {
     try {
       const result = await apiService.llm.testProvider(providerId);
-      
+
       if (result.success) {
         showSuccess(`Connection to ${providerId} successful`);
       } else {
@@ -157,17 +157,17 @@ const GatewayDashboard = ({ status, onRefresh }) => {
       showError(`Error testing provider connection: ${error.message}`);
     }
   };
-  
+
   // Generate text
   const generateText = async () => {
     if (!selectedProvider || !selectedModel || !prompt.trim()) {
       showError('Please select a provider, model, and enter a prompt');
       return;
     }
-    
+
     setGenerating(true);
     setResponseText('');
-    
+
     try {
       const result = await apiService.llm.generateLLMResponse({
         provider_id: selectedProvider,
@@ -175,11 +175,11 @@ const GatewayDashboard = ({ status, onRefresh }) => {
         prompt: prompt,
         ...advancedSettings
       });
-      
+
       if (result.success) {
         setResponseText(result.data.text);
         showSuccess('Text generated successfully');
-        
+
         // Add to history
         setHistory(prev => [{
           id: Date.now().toString(),
@@ -200,28 +200,28 @@ const GatewayDashboard = ({ status, onRefresh }) => {
       setGenerating(false);
     }
   };
-  
+
   // Handle provider change
   const handleProviderChange = (event) => {
     setSelectedProvider(event.target.value);
     setSelectedModel('');
   };
-  
+
   // Handle model change
   const handleModelChange = (event) => {
     setSelectedModel(event.target.value);
   };
-  
+
   // Handle prompt change
   const handlePromptChange = (event) => {
     setPrompt(event.target.value);
   };
-  
+
   // Handle tab change
   const handleTabChange = (_, newValue) => {
     setActiveTab(newValue);
   };
-  
+
   // Handle advanced setting change
   const handleSettingChange = (setting, value) => {
     setAdvancedSettings(prev => ({
@@ -229,7 +229,7 @@ const GatewayDashboard = ({ status, onRefresh }) => {
       [setting]: value
     }));
   };
-  
+
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
@@ -238,16 +238,16 @@ const GatewayDashboard = ({ status, onRefresh }) => {
           LLM Gateway Dashboard
         </Typography>
         <Box>
-          <Button 
-            variant="outlined" 
+          <Button
+            variant="outlined"
             startIcon={<HistoryIcon />}
             onClick={() => setHistoryDialogOpen(true)}
             sx={{ mr: 1 }}
           >
             History
           </Button>
-          <Button 
-            variant="outlined" 
+          <Button
+            variant="outlined"
             startIcon={loading ? <CircularProgress size={20} /> : <RefreshIcon />}
             onClick={loadProviders}
             disabled={loading}
@@ -256,16 +256,16 @@ const GatewayDashboard = ({ status, onRefresh }) => {
           </Button>
         </Box>
       </Box>
-      
+
       {status?.status !== 'available' && (
         <Alert severity="error" sx={{ mb: 3 }}>
           LLM Gateway service is currently unavailable. Please check the server status.
         </Alert>
       )}
-      
-      <Tabs 
-        value={activeTab} 
-        onChange={handleTabChange} 
+
+      <Tabs
+        value={activeTab}
+        onChange={handleTabChange}
         aria-label="Gateway tabs"
         sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}
       >
@@ -273,7 +273,7 @@ const GatewayDashboard = ({ status, onRefresh }) => {
         <Tab label="Provider Status" id="tab-1" aria-controls="tabpanel-1" />
         <Tab label="Settings" id="tab-2" aria-controls="tabpanel-2" />
       </Tabs>
-      
+
       {/* Text Generation Panel */}
       <Box role="tabpanel" hidden={activeTab !== 0} id="tabpanel-0" aria-labelledby="tab-0">
         {activeTab === 0 && (
@@ -299,7 +299,7 @@ const GatewayDashboard = ({ status, onRefresh }) => {
                         ))}
                       </Select>
                     </FormControl>
-                    
+
                     <FormControl fullWidth>
                       <InputLabel id="model-select-label">Model</InputLabel>
                       <Select
@@ -318,7 +318,7 @@ const GatewayDashboard = ({ status, onRefresh }) => {
                       </Select>
                     </FormControl>
                   </Box>
-                  
+
                   <TextField
                     label="Prompt"
                     multiline
@@ -330,7 +330,7 @@ const GatewayDashboard = ({ status, onRefresh }) => {
                     placeholder="Enter your prompt here..."
                     disabled={generating}
                   />
-                  
+
                   <Accordion>
                     <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                       <Typography>Advanced Settings</Typography>
@@ -406,7 +406,7 @@ const GatewayDashboard = ({ status, onRefresh }) => {
                       </Grid>
                     </AccordionDetails>
                   </Accordion>
-                  
+
                   <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                     <Button
                       variant="contained"
@@ -416,7 +416,7 @@ const GatewayDashboard = ({ status, onRefresh }) => {
                     >
                       {generating ? 'Generating...' : 'Generate'}
                     </Button>
-                    
+
                     <Button
                       variant="outlined"
                       onClick={() => {
@@ -428,13 +428,13 @@ const GatewayDashboard = ({ status, onRefresh }) => {
                       Clear
                     </Button>
                   </Box>
-                  
+
                   <Divider sx={{ my: 2 }} />
-                  
+
                   <Typography variant="h6" gutterBottom>
                     Response
                   </Typography>
-                  
+
                   {generating ? (
                     <Box sx={{ display: 'flex', justifyContent: 'center', my: 3 }}>
                       <CircularProgress />
@@ -463,7 +463,7 @@ const GatewayDashboard = ({ status, onRefresh }) => {
           </Grid>
         )}
       </Box>
-      
+
       {/* Provider Status Panel */}
       <Box role="tabpanel" hidden={activeTab !== 1} id="tabpanel-1" aria-labelledby="tab-1">
         {activeTab === 1 && (
@@ -471,7 +471,7 @@ const GatewayDashboard = ({ status, onRefresh }) => {
             <Typography variant="h6" gutterBottom>
               LLM Provider Status
             </Typography>
-            
+
             {loading ? (
               <Box sx={{ display: 'flex', justifyContent: 'center', my: 3 }}>
                 <CircularProgress />
@@ -490,9 +490,9 @@ const GatewayDashboard = ({ status, onRefresh }) => {
                           <CloudQueueIcon color={provider.is_active ? 'success' : 'disabled'} />
                         }
                         action={
-                          <Chip 
-                            label={provider.is_active ? 'Active' : 'Inactive'} 
-                            color={provider.is_active ? 'success' : 'default'}
+                          <Chip
+                            label={provider.is_active ? 'Active' : 'Inactive'}
+                            color={provider.is_active ? 'success' : 'error'}
                             size="small"
                           />
                         }
@@ -501,7 +501,7 @@ const GatewayDashboard = ({ status, onRefresh }) => {
                         <Typography variant="body2" color="text.secondary" gutterBottom>
                           {provider.description || 'No description available'}
                         </Typography>
-                        
+
                         <List dense>
                           <ListItem>
                             <ListItemIcon sx={{ minWidth: '32px' }}>
@@ -511,19 +511,19 @@ const GatewayDashboard = ({ status, onRefresh }) => {
                                 <ErrorIcon fontSize="small" color="warning" />
                               )}
                             </ListItemIcon>
-                            <ListItemText 
-                              primary="API Key Required" 
+                            <ListItemText
+                              primary="API Key Required"
                               secondary={provider.requires_api_key ? 'Yes' : 'No'}
                             />
                           </ListItem>
-                          
+
                           {provider.models_count !== undefined && (
                             <ListItem>
                               <ListItemIcon sx={{ minWidth: '32px' }}>
                                 <SmartToyIcon fontSize="small" />
                               </ListItemIcon>
-                              <ListItemText 
-                                primary="Available Models" 
+                              <ListItemText
+                                primary="Available Models"
                                 secondary={provider.models_count}
                               />
                             </ListItem>
@@ -531,14 +531,14 @@ const GatewayDashboard = ({ status, onRefresh }) => {
                         </List>
                       </CardContent>
                       <CardActions>
-                        <Button 
-                          size="small" 
+                        <Button
+                          size="small"
                           onClick={() => testProvider(provider.id)}
                           startIcon={<CheckIcon />}
                         >
                           Test Connection
                         </Button>
-                        <Button 
+                        <Button
                           size="small"
                           onClick={() => {
                             setSelectedProvider(provider.id);
@@ -556,7 +556,7 @@ const GatewayDashboard = ({ status, onRefresh }) => {
           </Paper>
         )}
       </Box>
-      
+
       {/* Settings Panel */}
       <Box role="tabpanel" hidden={activeTab !== 2} id="tabpanel-2" aria-labelledby="tab-2">
         {activeTab === 2 && (
@@ -564,14 +564,14 @@ const GatewayDashboard = ({ status, onRefresh }) => {
             <Typography variant="h6" gutterBottom>
               Gateway Settings
             </Typography>
-            
+
             <Alert severity="info" sx={{ mb: 3 }}>
               Gateway settings can be configured on the Providers and Models tabs in the main LLM Management panel.
             </Alert>
           </Paper>
         )}
       </Box>
-      
+
       {/* History Dialog */}
       <Dialog
         open={historyDialogOpen}
@@ -582,8 +582,8 @@ const GatewayDashboard = ({ status, onRefresh }) => {
         <DialogTitle>
           <Box display="flex" alignItems="center" justifyContent="space-between">
             <Typography variant="h6">Generation History</Typography>
-            <Button 
-              size="small" 
+            <Button
+              size="small"
               startIcon={<DeleteIcon />}
               onClick={() => setHistory([])}
               disabled={history.length === 0}
@@ -605,9 +605,9 @@ const GatewayDashboard = ({ status, onRefresh }) => {
                         <Typography sx={{ flexGrow: 1 }}>
                           {item.prompt.length > 50 ? `${item.prompt.slice(0, 50)}...` : item.prompt}
                         </Typography>
-                        <Chip 
-                          label={item.provider} 
-                          size="small" 
+                        <Chip
+                          label={item.provider}
+                          size="small"
                           sx={{ mr: 1 }}
                         />
                         <Typography variant="caption" color="text.secondary">
@@ -621,27 +621,27 @@ const GatewayDashboard = ({ status, onRefresh }) => {
                         <Paper variant="outlined" sx={{ p: 1, mb: 2, backgroundColor: 'grey.50' }}>
                           <Typography variant="body2">{item.prompt}</Typography>
                         </Paper>
-                        
+
                         <Typography variant="subtitle2" gutterBottom>Response:</Typography>
                         <Paper variant="outlined" sx={{ p: 1, mb: 2, backgroundColor: 'grey.50', maxHeight: '200px', overflowY: 'auto' }}>
                           <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>{item.response}</Typography>
                         </Paper>
-                        
+
                         <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                           <Typography variant="caption">
                             Provider: {item.provider} | Model: {item.model}
                           </Typography>
-                          
+
                           {item.stats && Object.keys(item.stats).length > 0 && (
                             <Typography variant="caption">
-                              Tokens: {item.stats.total_tokens || 'N/A'} | 
+                              Tokens: {item.stats.total_tokens || 'N/A'} |
                               Time: {item.stats.latency_ms ? `${item.stats.latency_ms}ms` : 'N/A'}
                             </Typography>
                           )}
                         </Box>
-                        
+
                         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
-                          <Button 
+                          <Button
                             size="small"
                             onClick={() => {
                               setPrompt(item.prompt);

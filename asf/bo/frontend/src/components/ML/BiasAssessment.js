@@ -20,44 +20,44 @@ import {
 
 import { useNotification } from '../../context/NotificationContext';
 import apiService from '../../services/api';
-import { ButtonLoader, ContentLoader } from '../UI/LoadingIndicators';
+import { ButtonLoader, ContentLoader } from '../UI/LoadingIndicators.js';
 import { FadeIn, HoverAnimation } from '../UI/Animations';
 
 /**
  * Bias Assessment component
- * 
+ *
  * This component allows users to assess bias in medical articles
  * using various bias assessment tools like ROBINS-I, RoB 2, etc.
  */
 const BiasAssessment = ({ onExport }) => {
   const { showSuccess, showError } = useNotification();
-  
+
   // Form state
   const [articleId, setArticleId] = useState('');
   const [title, setTitle] = useState('');
   const [abstract, setAbstract] = useState('');
   const [fullText, setFullText] = useState('');
   const [assessmentType, setAssessmentType] = useState('robins-i');
-  
+
   // UI state
   const [isAssessing, setIsAssessing] = useState(false);
   const [isLoadingTools, setIsLoadingTools] = useState(true);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
   const [biasTools, setBiasTools] = useState([]);
-  
+
   // Load bias assessment tools on mount
   useEffect(() => {
     loadBiasTools();
   }, []);
-  
+
   // Load bias assessment tools
   const loadBiasTools = async () => {
     setIsLoadingTools(true);
-    
+
     try {
       const result = await apiService.ml.getBiasAssessmentTools();
-      
+
       if (result.success) {
         setBiasTools(result.data.tools);
       } else {
@@ -70,20 +70,20 @@ const BiasAssessment = ({ onExport }) => {
       setIsLoadingTools(false);
     }
   };
-  
+
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!articleId.trim() && !abstract.trim() && !fullText.trim()) {
       showError('Please provide either an article ID, abstract, or full text');
       setError('Please provide either an article ID, abstract, or full text');
       return;
     }
-    
+
     setIsAssessing(true);
     setError('');
-    
+
     try {
       const params = {
         article_id: articleId.trim() || null,
@@ -92,9 +92,9 @@ const BiasAssessment = ({ onExport }) => {
         full_text: fullText.trim() || null,
         assessment_type: assessmentType
       };
-      
+
       const result = await apiService.ml.assessBias(params);
-      
+
       if (result.success) {
         setResult(result.data);
         showSuccess('Bias assessment completed successfully');
@@ -110,18 +110,18 @@ const BiasAssessment = ({ onExport }) => {
       setIsAssessing(false);
     }
   };
-  
+
   // Handle export
   const handleExport = (format) => {
     if (!result) return;
-    
+
     if (onExport) {
       onExport(format, {
         analysis_id: result.assessment_id
       });
     }
   };
-  
+
   // Get risk of bias color
   const getBiasRiskColor = (risk) => {
     switch (risk.toLowerCase()) {
@@ -136,7 +136,7 @@ const BiasAssessment = ({ onExport }) => {
         return 'info';
     }
   };
-  
+
   // Get risk of bias icon
   const getBiasRiskIcon = (risk) => {
     switch (risk.toLowerCase()) {
@@ -151,7 +151,7 @@ const BiasAssessment = ({ onExport }) => {
         return <HelpIcon color="info" />;
     }
   };
-  
+
   // Get domain score
   const getDomainScore = (score) => {
     if (score >= 0.8) return 5;
@@ -160,11 +160,11 @@ const BiasAssessment = ({ onExport }) => {
     if (score >= 0.2) return 2;
     return 1;
   };
-  
+
   if (isLoadingTools) {
     return <ContentLoader height={200} message="Loading bias assessment tools..." />;
   }
-  
+
   return (
     <Box sx={{ width: '100%' }}>
       <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
@@ -175,15 +175,15 @@ const BiasAssessment = ({ onExport }) => {
             <InfoIcon fontSize="small" sx={{ ml: 1, color: 'text.secondary' }} />
           </Tooltip>
         </Typography>
-        
+
         <Divider sx={{ mb: 3 }} />
-        
+
         {error && (
           <Alert severity="error" sx={{ mb: 3 }}>
             {error}
           </Alert>
         )}
-        
+
         <form onSubmit={handleSubmit}>
           <Grid container spacing={3}>
             {/* Article ID */}
@@ -198,7 +198,7 @@ const BiasAssessment = ({ onExport }) => {
                 helperText="Enter a PubMed ID (PMID) or DOI"
               />
             </Grid>
-            
+
             {/* Assessment Type */}
             <Grid item xs={12} md={6}>
               <FormControl fullWidth>
@@ -217,7 +217,7 @@ const BiasAssessment = ({ onExport }) => {
                 </Select>
               </FormControl>
             </Grid>
-            
+
             {/* Title */}
             <Grid item xs={12}>
               <TextField
@@ -229,7 +229,7 @@ const BiasAssessment = ({ onExport }) => {
                 onChange={(e) => setTitle(e.target.value)}
               />
             </Grid>
-            
+
             {/* Abstract */}
             <Grid item xs={12}>
               <TextField
@@ -244,7 +244,7 @@ const BiasAssessment = ({ onExport }) => {
                 helperText="Required if article ID is not provided"
               />
             </Grid>
-            
+
             {/* Full Text */}
             <Grid item xs={12}>
               <TextField
@@ -259,7 +259,7 @@ const BiasAssessment = ({ onExport }) => {
                 helperText="Provides more accurate assessment if available"
               />
             </Grid>
-            
+
             {/* Action buttons */}
             <Grid item xs={12}>
               <Box sx={{ display: 'flex', gap: 2 }}>
@@ -273,7 +273,7 @@ const BiasAssessment = ({ onExport }) => {
                 >
                   {isAssessing ? 'Assessing...' : 'Assess Bias'}
                 </Button>
-                
+
                 <Button
                   variant="outlined"
                   onClick={() => {
@@ -292,7 +292,7 @@ const BiasAssessment = ({ onExport }) => {
           </Grid>
         </form>
       </Paper>
-      
+
       {/* Results */}
       {result && (
         <FadeIn>
@@ -301,7 +301,7 @@ const BiasAssessment = ({ onExport }) => {
               <Typography variant="h6">
                 Bias Assessment Results
               </Typography>
-              
+
               <Box>
                 <Button
                   variant="outlined"
@@ -320,9 +320,9 @@ const BiasAssessment = ({ onExport }) => {
                 </Button>
               </Box>
             </Box>
-            
+
             <Divider sx={{ mb: 3 }} />
-            
+
             <Grid container spacing={3}>
               <Grid item xs={12}>
                 <HoverAnimation>
@@ -347,7 +347,7 @@ const BiasAssessment = ({ onExport }) => {
                           <Typography variant="body2" sx={{ mb: 2 }}>
                             {result.article_id || 'Not provided'}
                           </Typography>
-                          
+
                           <Typography variant="subtitle2" gutterBottom>
                             Assessment Tool:
                           </Typography>
@@ -355,7 +355,7 @@ const BiasAssessment = ({ onExport }) => {
                             {result.assessment_type}
                           </Typography>
                         </Grid>
-                        
+
                         <Grid item xs={12} md={6}>
                           <Typography variant="subtitle2" gutterBottom>
                             Assessment Date:
@@ -363,7 +363,7 @@ const BiasAssessment = ({ onExport }) => {
                           <Typography variant="body2" sx={{ mb: 2 }}>
                             {new Date(result.assessment_date).toLocaleString()}
                           </Typography>
-                          
+
                           <Typography variant="subtitle2" gutterBottom>
                             Study Type:
                           </Typography>
@@ -371,7 +371,7 @@ const BiasAssessment = ({ onExport }) => {
                             {result.study_type || 'Not determined'}
                           </Typography>
                         </Grid>
-                        
+
                         <Grid item xs={12}>
                           <Typography variant="subtitle2" gutterBottom>
                             Overall Risk of Bias:
@@ -382,7 +382,7 @@ const BiasAssessment = ({ onExport }) => {
                               {result.overall_risk}
                             </Typography>
                           </Box>
-                          
+
                           {result.summary && (
                             <Box sx={{ mt: 2 }}>
                               <Typography variant="subtitle2" gutterBottom>
@@ -399,13 +399,13 @@ const BiasAssessment = ({ onExport }) => {
                   </Card>
                 </HoverAnimation>
               </Grid>
-              
+
               {/* Domain Assessments */}
               <Grid item xs={12}>
                 <Typography variant="h6" gutterBottom>
                   Domain Assessments
                 </Typography>
-                
+
                 {result.domains.map((domain, index) => (
                   <Accordion key={index} sx={{ mb: 1 }}>
                     <AccordionSummary
@@ -435,7 +435,7 @@ const BiasAssessment = ({ onExport }) => {
                       <Typography variant="body2" gutterBottom>
                         {domain.description}
                       </Typography>
-                      
+
                       <Box sx={{ mt: 2 }}>
                         <Typography variant="subtitle2" gutterBottom>
                           Assessment:
@@ -443,7 +443,7 @@ const BiasAssessment = ({ onExport }) => {
                         <Typography variant="body2" sx={{ mb: 2 }}>
                           {domain.assessment}
                         </Typography>
-                        
+
                         <Typography variant="subtitle2" gutterBottom>
                           Score: {(domain.score * 100).toFixed(1)}%
                         </Typography>
@@ -453,7 +453,7 @@ const BiasAssessment = ({ onExport }) => {
                           color={getBiasRiskColor(domain.risk)}
                           sx={{ height: 10, borderRadius: 5, mb: 2 }}
                         />
-                        
+
                         {domain.criteria && domain.criteria.length > 0 && (
                           <Box sx={{ mt: 2 }}>
                             <Typography variant="subtitle2" gutterBottom>
@@ -492,7 +492,7 @@ const BiasAssessment = ({ onExport }) => {
                   </Accordion>
                 ))}
               </Grid>
-              
+
               {/* Recommendations */}
               {result.recommendations && result.recommendations.length > 0 && (
                 <Grid item xs={12}>
@@ -505,7 +505,7 @@ const BiasAssessment = ({ onExport }) => {
                         <Typography variant="body2" sx={{ mb: 2 }}>
                           Based on the bias assessment, the following recommendations are provided:
                         </Typography>
-                        
+
                         <Box component="ul" sx={{ pl: 2 }}>
                           {result.recommendations.map((recommendation, index) => (
                             <Box component="li" key={index} sx={{ mb: 1 }}>

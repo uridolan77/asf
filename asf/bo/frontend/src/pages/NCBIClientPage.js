@@ -14,7 +14,7 @@ import { NCBIClient, NCBIPubMedSearch } from '../components/Clients';
 import { ContentLoader } from '../components/UI/LoadingIndicators';
 import { FadeIn } from '../components/UI/Animations';
 import apiService from '../services/api';
-import { useNotification } from '../context/NotificationContext';
+import { useNotification } from '../context/NotificationContext.jsx';
 
 /**
  * NCBI Client Management Page

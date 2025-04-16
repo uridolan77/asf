@@ -5,19 +5,19 @@ import { createTheme } from '@mui/material/styles';
 const theme = createTheme({
   palette: {
     primary: {
-      main: '#100F0D',
+      main: '#2B8DAA',
       light: '#42a5f5',
       dark: '#1565c0',
       contrastText: '#fff',
     },
     secondary: {
-      main: '#9c27b0',
+      main: '#D373A3',
       light: '#ba68c8',
       dark: '#7b1fa2',
       contrastText: '#fff',
     },
     error: {
-      main: '#d32f2f',
+      main: '#C2474C',
       light: '#ef5350',
       dark: '#c62828',
       contrastText: '#fff',
@@ -41,7 +41,7 @@ const theme = createTheme({
       contrastText: '#fff',
     },
     background: {
-      default: '#DBD0CE',
+      default: '#EBEBEB',
       paper: '#ffffff',
     },
   },
