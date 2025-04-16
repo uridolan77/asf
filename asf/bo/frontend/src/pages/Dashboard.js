@@ -1,7 +1,28 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import { Grid, Alert, Box } from '@mui/material';
+import { 
+  Grid, 
+  Alert, 
+  Box, 
+  Typography,
+  Card,
+  CardContent
+} from '@mui/material';
+import {
+  BarChart,
+  Bar,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell
+} from 'recharts';
 
 // Import PageLayout component
 import PageLayout from '../components/Layout/PageLayout';
@@ -14,69 +35,79 @@ import {
   WelcomeHeader
 } from '../components/Dashboard';
 
+// Import custom hooks
+import { useAuth } from '../context/AuthContext';
+import useApi from '../hooks/useApi';
+
+// Import skeleton loader
+import { DashboardSkeleton } from '../components/UI/SkeletonLoaders';
+
+// Chart colors
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
+
 /**
  * Dashboard page component
  * Displays overview of the system and quick access to main features
  */
 const Dashboard = () => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [userCount, setUserCount] = useState(0);
-  const [activeSessions, setActiveSessions] = useState(0);
+  const { user, hasRole } = useAuth();
   const navigate = useNavigate();
+  
+  // Fetch dashboard statistics with caching enabled
+  const { 
+    data: stats, 
+    loading: statsLoading, 
+    error: statsError 
+  } = useApi('/api/stats', { 
+    cacheEnabled: true,
+    cacheDuration: 5 * 60 * 1000 // 5 minutes
+  });
+  
+  // Fetch research metrics with caching
+  const { 
+    data: researchMetrics, 
+    loading: metricsLoading 
+  } = useApi('/api/research-metrics', { 
+    cacheEnabled: true 
+  });
+  
+  // Fetch recent updates
+  const { 
+    data: recentUpdates, 
+    loading: updatesLoading 
+  } = useApi('/api/recent-updates');
 
-  useEffect(() => {
-    const fetchUserData = async () => {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        navigate('/');
-        return;
+  // Memoize the aggregated research metrics
+  const aggregatedMetrics = useMemo(() => {
+    if (!researchMetrics) return null;
+    
+    // Group data by category
+    const categories = {};
+    researchMetrics.forEach(item => {
+      if (!categories[item.category]) {
+        categories[item.category] = 0;
       }
+      categories[item.category] += item.count;
+    });
+    
+    // Convert to array for chart display
+    return Object.keys(categories).map(category => ({
+      name: category,
+      value: categories[category]
+    }));
+  }, [researchMetrics]);
+  
+  // Memoize the monthly trends data
+  const monthlyTrends = useMemo(() => {
+    if (!stats?.monthly_data) return [];
+    return stats.monthly_data;
+  }, [stats]);
 
-      try {
-        const response = await axios.get('http://localhost:8000/api/me', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        setUser(response.data);
-        
-        // If user is admin, fetch additional stats
-        if (response.data.role_id === 2) {
-          try {
-            const statsResponse = await axios.get('http://localhost:8000/api/stats', {
-              headers: {
-                'Authorization': `Bearer ${token}`
-              }
-            });
-            setUserCount(statsResponse.data.user_count || 0);
-            setActiveSessions(statsResponse.data.active_sessions || 0);
-          } catch (statsErr) {
-            console.error('Failed to fetch stats:', statsErr);
-          }
-        }
-      } catch (err) {
-        console.error('Failed to fetch user data:', err);
-        setError('Failed to load user data. You may need to log in again.');
-        if (err.response && (err.response.status === 401 || err.response.status === 403)) {
-          handleLogout();
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUserData();
-  }, [navigate]);
-
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    navigate('/');
-  };
-
-  // Recent medical research updates
-  const recentUpdates = [
+  // Determine if all data is loading
+  const isLoading = statsLoading || metricsLoading || updatesLoading;
+  
+  // Recent medical research updates (fallback data)
+  const fallbackUpdates = [
     {
       title: "Procalcitonin-guided antibiotic therapy in CAP shows promising results",
       date: "Apr 2025"
@@ -94,18 +125,30 @@ const Dashboard = () => {
   // Define actions for the page header if needed
   const pageActions = null;
 
+  // Show skeleton loader while loading
+  if (isLoading) {
+    return (
+      <PageLayout
+        title="Dashboard"
+        breadcrumbs={[]}
+        loading={isLoading}
+      >
+        <DashboardSkeleton />
+      </PageLayout>
+    );
+  }
+
   return (
     <PageLayout
       title="Dashboard"
       breadcrumbs={[]}
-      loading={loading}
       user={user}
       actions={pageActions}
     >
       {/* Display error message if any */}
-      {error && (
+      {statsError && (
         <Alert severity="error" sx={{ mb: 3 }}>
-          {error}
+          Failed to load dashboard statistics. Please try again later.
         </Alert>
       )}
 
@@ -119,8 +162,8 @@ const Dashboard = () => {
         <Grid item xs={12} md={4}>
           <StatCard 
             title="Total Users" 
-            value={userCount} 
-            actionText={user?.role_id === 2 ? "Manage Users" : null}
+            value={stats?.user_count || 0} 
+            actionText={hasRole('admin') ? "Manage Users" : null}
             onAction={() => navigate('/users')}
           />
         </Grid>
@@ -128,28 +171,87 @@ const Dashboard = () => {
         <Grid item xs={12} md={4}>
           <StatCard 
             title="Active Sessions" 
-            value={activeSessions} 
+            value={stats?.active_sessions || 0} 
           />
         </Grid>
         
         <Grid item xs={12} md={4}>
           <StatCard 
             title="System Status" 
-            value="Operational"
+            value={stats?.system_status || "Operational"}
             icon={
               <Box sx={{ 
                 width: 12, 
                 height: 12, 
                 borderRadius: '50%', 
-                bgcolor: 'success.main'
+                bgcolor: stats?.system_status === 'Operational' ? 'success.main' : 'error.main'
               }} />
             }
           />
         </Grid>
+        
+        {/* Monthly trends chart */}
+        <Grid item xs={12} md={8}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Monthly Activity
+              </Typography>
+              <Box sx={{ height: 300 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart
+                    data={monthlyTrends}
+                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Line type="monotone" dataKey="searches" stroke="#8884d8" activeDot={{ r: 8 }} />
+                    <Line type="monotone" dataKey="analyses" stroke="#82ca9d" />
+                  </LineChart>
+                </ResponsiveContainer>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+        
+        {/* Research distribution pie chart */}
+        <Grid item xs={12} md={4}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Research Distribution
+              </Typography>
+              <Box sx={{ height: 300 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={aggregatedMetrics || []}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                    >
+                      {(aggregatedMetrics || []).map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value) => [`${value} studies`, null]} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
 
         {/* Featured research */}
         <Grid item xs={12}>
-          <FeaturedResearch updates={recentUpdates} />
+          <FeaturedResearch updates={recentUpdates?.items || fallbackUpdates} />
         </Grid>
 
         {/* Research tools */}
