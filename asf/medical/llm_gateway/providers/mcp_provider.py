@@ -46,7 +46,7 @@ except ImportError:
 
 # --- Gateway Imports ---
 # Use absolute paths assuming standard project structure
-from llm_gateway.core.models import (
+from asf.medical.llm_gateway.core.models import (
     ContentItem, ErrorDetails, ErrorLevel, FinishReason, GatewayConfig,
     InterventionContext, LLMConfig, LLMRequest, LLMResponse,
     MCPContentType as GatewayMCPContentType, MCPMetadata, MCPRole as GatewayMCPRole,
@@ -54,7 +54,7 @@ from llm_gateway.core.models import (
     ToolResult as GatewayToolResult, # Renamed to avoid conflict
     ToolUseRequest, UsageStats, MCPUsage
 )
-from llm_gateway.providers.base import BaseProvider # Use absolute path
+from asf.medical.llm_gateway.providers.base import BaseProvider # Use absolute path
 
 logger = logging.getLogger(__name__)
 

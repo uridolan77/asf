@@ -20,28 +20,14 @@ from ..auth import get_current_user, User
 from ..utils import handle_api_error
 
 # Import LLM Gateway components
-try:
-    from asf.medical.llm_gateway.core.client import LLMGatewayClient
-    from asf.medical.llm_gateway.core.models import (
-        LLMRequest, LLMConfig, InterventionContext, ContentItem,
-        GatewayConfig, ProviderConfig, MCPRole
-    )
-    from asf.medical.llm_gateway.core.factory import ProviderFactory
-    LLM_GATEWAY_AVAILABLE = True
-    logging.info("Using actual LLM Gateway implementation")
-except ImportError:
-    # If the real implementation is not available, use our mock implementation
-    try:
-        from .llm.mock_gateway import (
-            LLMGatewayClient, LLMRequest, LLMConfig, InterventionContext, 
-            ContentItem, GatewayConfig, ProviderConfig, MCPRole, FinishReason,
-            ProviderFactory
-        )
-        LLM_GATEWAY_AVAILABLE = True
-        logging.warning("Using mock LLM Gateway implementation")
-    except ImportError:
-        LLM_GATEWAY_AVAILABLE = False
-        logging.warning("LLM Gateway not available. Some functionality will be limited.")
+from asf.medical.llm_gateway.core.client import LLMGatewayClient
+from asf.medical.llm_gateway.core.models import (
+    LLMRequest, LLMConfig, InterventionContext, ContentItem,
+    GatewayConfig, ProviderConfig, MCPRole, FinishReason
+)
+from asf.medical.llm_gateway.core.factory import ProviderFactory
+LLM_GATEWAY_AVAILABLE = True
+logging.info("Using LLM Gateway implementation")
 
 router = APIRouter(prefix="/api/llm/gateway", tags=["llm-gateway"])
 
@@ -161,8 +147,28 @@ def get_gateway_client():
             with open(CONFIG_PATH, 'r') as f:
                 config_dict = yaml.safe_load(f)
             
-            # Create GatewayConfig from dict
-            gateway_config = GatewayConfig(**config_dict)
+            # Create config with error handling for unsupported parameters
+            try:
+                gateway_config = GatewayConfig(**config_dict)
+            except TypeError as e:
+                error_msg = str(e)
+                
+                # Extract the parameter name from the error message
+                import re
+                match = re.search(r"unexpected keyword argument '([^']+)'", error_msg)
+                if match:
+                    param_name = match.group(1)
+                    logger.warning(f"Removing unsupported parameter from GatewayConfig: {param_name}")
+                    
+                    # Remove the problematic parameter
+                    if param_name in config_dict:
+                        del config_dict[param_name]
+                        
+                    # Try again after removing the parameter
+                    return get_gateway_client()
+                else:
+                    # If we can't extract a parameter name, re-raise the error
+                    raise
             
             # Create provider factory
             provider_factory = ProviderFactory()
@@ -1035,12 +1041,29 @@ async def generate_llm_response(
         latency_ms = (end_time - start_time).total_seconds() * 1000
         
         # Create response model
+        generated_content = ""
+        if response.generated_content is not None:
+            if isinstance(response.generated_content, str):
+                generated_content = response.generated_content
+            elif isinstance(response.generated_content, list):
+                # If it's a list of ContentItems, extract the text content
+                text_parts = []
+                for item in response.generated_content:
+                    if hasattr(item, "text_content") and item.text_content:
+                        text_parts.append(item.text_content)
+                    elif hasattr(item, "type") and item.type == "text" and hasattr(item, "data") and "text" in item.data:
+                        text_parts.append(item.data["text"])
+                generated_content = " ".join(text_parts)
+            else:
+                # Convert to string as a fallback
+                generated_content = str(response.generated_content)
+
         return LLMResponseModel(
             request_id=response.request_id,
-            content=response.generated_content,
+            content=generated_content,
             model=request.model,
             provider_id=request.provider_id or "default",
-            finish_reason=response.finish_reason.value,
+            finish_reason=response.finish_reason.value if response.finish_reason else "unknown",
             prompt_tokens=response.usage.prompt_tokens if response.usage else None,
             completion_tokens=response.usage.completion_tokens if response.usage else None,
             total_tokens=response.usage.total_tokens if response.usage else None,

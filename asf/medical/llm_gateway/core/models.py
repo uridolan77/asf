@@ -694,6 +694,10 @@ class AsyncIterableStreamChunk(AsyncGenerator[StreamChunk, None]):
 
 # --- Gateway Pipeline Interface (Abstract) ---
 
+class RoutingError(Exception):
+    """Custom exception for provider routing failures."""
+    pass
+
 class GatewayPipeline:
     """Abstract interface for Gateway pipelines, implemented by providers."""
     

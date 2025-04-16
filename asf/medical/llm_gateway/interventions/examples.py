@@ -4,10 +4,10 @@ import logging
 import re
 from typing import Optional, List
 
-from llm_gateway.core.models import (
+from asf.medical.llm_gateway.core.models import (
     LLMRequest, LLMResponse, StreamChunk, InterventionContext, FinishReason, ErrorDetails, ErrorLevel
 )
-from llm_gateway.interventions.base import BaseIntervention, InterventionHookType
+from asf.medical.llm_gateway.interventions.base import BaseIntervention, InterventionHookType
 
 logger = logging.getLogger(__name__)
 

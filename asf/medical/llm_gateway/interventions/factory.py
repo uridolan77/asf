@@ -5,8 +5,8 @@ import logging
 from typing import Dict, List, Optional, Type, Any
 
 # Ensure correct import paths based on your project structure
-from llm_gateway.core.models import GatewayConfig
-from llm_gateway.interventions.base import BaseIntervention
+from asf.medical.llm_gateway.core.models import GatewayConfig
+from asf.medical.llm_gateway.interventions.base import BaseIntervention
 
 logger = logging.getLogger(__name__)
 

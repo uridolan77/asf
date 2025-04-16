@@ -47,7 +47,7 @@ except ImportError:
     )
 
 # Gateway imports
-from llm_gateway.core.models import (
+from asf.medical.llm_gateway.core.models import (
     ContentItem,
     ErrorDetails,
     ErrorLevel,
@@ -68,7 +68,7 @@ from llm_gateway.core.models import (
     ToolUseRequest,
     UsageStats,
 )
-from llm_gateway.providers.base import BaseProvider
+from asf.medical.llm_gateway.providers.base import BaseProvider
 
 class OpenAIRole(str, Enum):
     """Specific roles recognized by the OpenAI Chat Completions API."""

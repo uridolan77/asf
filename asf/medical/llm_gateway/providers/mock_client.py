@@ -15,7 +15,7 @@ from datetime import datetime
 from typing import Any, AsyncGenerator, Dict, List, Optional, Union, cast
 
 # Gateway imports
-from llm_gateway.core.models import (
+from asf.medical.llm_gateway.core.models import (
     ContentItem,
     ErrorDetails,
     ErrorLevel,
@@ -35,7 +35,7 @@ from llm_gateway.core.models import (
     ToolUseRequest,
     UsageStats,
 )
-from llm_gateway.providers.base import BaseProvider # Assuming this exists
+from asf.medical.llm_gateway.providers.base import BaseProvider # Assuming this exists
 
 logger = logging.getLogger(__name__)
 

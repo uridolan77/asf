@@ -5,17 +5,17 @@ from typing import Dict, Type, Optional, List
 import asyncio
 
 # Gateway core models
-from llm_gateway.core.models import ProviderConfig, GatewayConfig
+from asf.medical.llm_gateway.core.models import ProviderConfig, GatewayConfig
 
 # Base provider interface (assuming it exists)
-from llm_gateway.providers.base import BaseProvider
+from asf.medical.llm_gateway.providers.base import BaseProvider
 
 # Import specific provider implementations
 # It's important that these classes are imported so the factory knows about them.
-from llm_gateway.providers.openai_client import OpenAIClient
-from llm_gateway.providers.anthropic_client import AnthropicClient
-from llm_gateway.providers.mcp_provider import MCPProvider
-from llm_gateway.providers.mock_client import MockClient # Assuming a mock provider exists
+from asf.medical.llm_gateway.providers.openai_client import OpenAIClient
+from asf.medical.llm_gateway.providers.anthropic_client import AnthropicClient
+from asf.medical.llm_gateway.providers.mcp_provider import MCPProvider
+from asf.medical.llm_gateway.providers.mock_client import MockClient # Assuming a mock provider exists
 
 logger = logging.getLogger(__name__)
 

@@ -33,13 +33,34 @@ try:
         RateLimitError,
         AnthropicError,
     )
+    ANTHROPIC_AVAILABLE = True
 except ImportError:
-    raise ImportError(
-        "Anthropic SDK not found. Please install it using 'pip install anthropic'"
-    )
+    logging.warning("Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'")
+    # Define placeholder types to allow the module to import
+    class Message: pass
+    class MessageParam: pass
+    class TextBlockParam: pass
+    class ImageBlockParam: pass
+    class ToolParam: pass
+    class MessageStreamEvent: pass
+    class AnthropicUsage: pass
+    class ContentBlockDeltaEvent: pass
+    class ContentBlockStartEvent: pass
+    class ContentBlockStopEvent: pass
+    class MessageStartEvent: pass
+    class MessageStopEvent: pass
+    class MessageDeltaEvent: pass
+    class APIError(Exception): pass
+    class APIStatusError(Exception): pass
+    class APITimeoutError(Exception): pass
+    class RateLimitError(Exception): pass
+    class AnthropicError(Exception): pass
+    class AsyncAnthropic: pass
+    # Flag to indicate the SDK is not available
+    ANTHROPIC_AVAILABLE = False
 
 # Gateway imports
-from llm_gateway.core.models import (
+from asf.medical.llm_gateway.core.models import (
     BaseGatewayModel, # Use for internal mapping if needed
     ContentItem,
     ErrorDetails,
@@ -60,7 +81,7 @@ from llm_gateway.core.models import (
     ToolUseRequest,
     UsageStats,
 )
-from llm_gateway.providers.base import BaseProvider # Assuming this exists
+from asf.medical.llm_gateway.providers.base import BaseProvider # Assuming this exists
 
 logger = logging.getLogger(__name__)
 
@@ -106,13 +127,17 @@ class AnthropicClient(BaseProvider):
         self.gateway_config = gateway_config
         self._client: Optional[AsyncAnthropic] = None
 
+        # Check if Anthropic SDK is available
+        if not ANTHROPIC_AVAILABLE:
+            logger.warning(f"Anthropic SDK not available for provider '{self.provider_id}'. The provider will be in a non-functional state.")
+            return
+
         # --- Configuration ---
         api_key_env_var = provider_config.connection_params.get("api_key_env_var", "ANTHROPIC_API_KEY")
         api_key = os.environ.get(api_key_env_var)
         if not api_key:
-            raise ValueError(
-                f"API key environment variable '{api_key_env_var}' not found for provider '{self.provider_id}'."
-            )
+            logger.error(f"API key environment variable '{api_key_env_var}' not found for provider '{self.provider_id}'.")
+            return
 
         # Get retry/timeout settings from provider_config or fallback to gateway_config
         self._max_retries = provider_config.connection_params.get("max_retries", gateway_config.max_retries)
@@ -129,7 +154,7 @@ class AnthropicClient(BaseProvider):
             logger.info(f"Initialized AnthropicClient provider '{self.provider_id}'")
         except Exception as e:
             logger.error(f"Failed to initialize Anthropic SDK client for provider {self.provider_id}: {e}", exc_info=True)
-            raise ConnectionError(f"Anthropic SDK client initialization failed: {e}") from e
+            # Don't raise an exception, just log the error
 
     async def cleanup(self):
         """Closes the Anthropic client."""
@@ -154,8 +179,32 @@ class AnthropicClient(BaseProvider):
         response_obj: Optional[Message] = None
         error_details: Optional[ErrorDetails] = None
 
+        # Check if Anthropic SDK is available
+        if not ANTHROPIC_AVAILABLE:
+            error_details = ErrorDetails(
+                code="PROVIDER_DEPENDENCY_MISSING",
+                message="Anthropic SDK is not installed. Please install it using 'pip install anthropic'",
+                level=ErrorLevel.ERROR,
+                provider_error_details={"missing_dependency": "anthropic"},
+                retryable=False
+            )
+            return self._map_response(
+                anthropic_response=None,
+                original_request=request,
+                error_details=error_details,
+                llm_latency_ms=0,
+                total_duration_ms=(datetime.utcnow() - start_time).total_seconds() * 1000.0
+            )
+
         if not self._client:
-             raise ConnectionError("Anthropic client is not initialized.")
+             error_details = self._map_error(ConnectionError("Anthropic client is not initialized."))
+             return self._map_response(
+                 anthropic_response=None,
+                 original_request=request,
+                 error_details=error_details,
+                 llm_latency_ms=0,
+                 total_duration_ms=(datetime.utcnow() - start_time).total_seconds() * 1000.0
+             )
 
         try:
             # 1. Map Gateway Request to Anthropic API format
@@ -213,6 +262,18 @@ class AnthropicClient(BaseProvider):
         accumulated_usage: Optional[UsageStats] = None
         final_finish_reason: Optional[FinishReason] = None
         last_tool_use_requests: Optional[List[ToolUseRequest]] = None
+
+        # Check if Anthropic SDK is available
+        if not ANTHROPIC_AVAILABLE:
+            error_details = ErrorDetails(
+                code="PROVIDER_DEPENDENCY_MISSING",
+                message="Anthropic SDK is not installed. Please install it using 'pip install anthropic'",
+                level=ErrorLevel.ERROR,
+                provider_error_details={"missing_dependency": "anthropic"},
+                retryable=False
+            )
+            yield self._create_error_chunk(request_id, 0, error_details)
+            return
 
         if not self._client:
             logger.error(f"Anthropic client not initialized for streaming request {request_id}")

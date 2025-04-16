@@ -78,20 +78,20 @@ const Dashboard = () => {
         // Fetch stats data - Keeping this as is for compatibility
         const statsResponse = await api.get('/api/stats');
         setStatsData(statsResponse.data);
-        
+
         // Fetch research metrics - Keeping this as is for compatibility
         const metricsResponse = await api.get('/api/research-metrics');
         setMetricsData(metricsResponse.data);
-        
+
         // Fetch recent updates - Keeping this as is for compatibility
         const updatesResponse = await api.get('/api/recent-updates');
         setUpdatesData(updatesResponse.data);
-        
+
         // Use direct import for apiService instead of relying on context
         try {
           // Import apiService directly
           const apiServiceModule = await import('../services/api').then(module => module.default);
-          
+
           // Try ML services status with direct import
           const mlServicesResponse = await apiServiceModule.ml.getServicesStatus();
           if (mlServicesResponse.success && mlServicesResponse.data?.services) {
@@ -109,9 +109,13 @@ const Dashboard = () => {
             { name: "Evidence Grader", status: "degraded", health: "degraded" }
           ]);
         }
-        
-            setLlmUsageData(Array.isArray(llmUsageResponse.data) ? 
-              llmUsageResponse.data : 
+
+        // Fetch LLM usage data
+        try {
+          const llmUsageResponse = await api.get('/api/llm-usage');
+          if (llmUsageResponse.data) {
+            setLlmUsageData(Array.isArray(llmUsageResponse.data) ?
+              llmUsageResponse.data :
               llmUsageResponse.data.usage || []);
           } else {
             throw new Error('Invalid response format');
@@ -126,12 +130,12 @@ const Dashboard = () => {
             { model: "mistralai/Mixtral-8x7B", usage_count: 980 }
           ]);
         }
-        
+
         setError(null);
       } catch (err) {
         console.error('Error fetching dashboard data:', err);
         setError('Failed to load dashboard data. Using fallback data instead.');
-        
+
         // Set fallback data for all metrics
         if (!statsData) {
           setStatsData({
@@ -146,7 +150,7 @@ const Dashboard = () => {
             ]
           });
         }
-        
+
         if (!metricsData) {
           setMetricsData([
             { category: "Cardiology", count: 120 },
@@ -156,11 +160,11 @@ const Dashboard = () => {
             { category: "Pediatrics", count: 40 }
           ]);
         }
-        
+
         if (!updatesData) {
           setUpdatesData({ items: fallbackUpdates });
         }
-        
+
         if (!mlServicesData) {
           setMlServicesData([
             { name: "Claim Extractor", status: "operational", health: "healthy" },
@@ -169,7 +173,7 @@ const Dashboard = () => {
             { name: "Evidence Grader", status: "degraded", health: "degraded" }
           ]);
         }
-        
+
         if (!llmUsageData) {
           setLlmUsageData([
             { model: "gpt-4o", usage_count: 2580 },

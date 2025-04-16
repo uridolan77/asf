@@ -1,0 +1,43 @@
+2025-04-15 22:07:00,495 - api.clients - ERROR - C:\code\asf\asf\bo\backend\api\clients.py:518 - Error checking Crossref status: 
+2025-04-15 22:07:16,585 - api.clients - ERROR - C:\code\asf\asf\bo\backend\api\clients.py:518 - Error checking Crossref status: 
+2025-04-15 22:30:04,931 - api.clients - ERROR - C:\code\asf\asf\bo\backend\api\clients.py:518 - Error checking Crossref status: 
+2025-04-15 23:12:19,683 - api.clients - ERROR - C:\code\asf\asf\bo\backend\api\clients.py:518 - Error checking Crossref status: 
+2025-04-16 00:56:55,410 - api.clients - ERROR - C:\code\asf\asf\bo\backend\api\clients.py:518 - Error checking Crossref status: 
+2025-04-16 00:58:42,364 - api.clients - ERROR - C:\code\asf\asf\bo\backend\api\clients.py:518 - Error checking Crossref status: 
+2025-04-16 01:06:25,510 - api.clients - ERROR - C:\code\asf\asf\bo\backend\api\clients.py:518 - Error checking Crossref status: 
+2025-04-16 01:42:54,445 - api.routers.llm_gateway - ERROR - C:\code\asf\asf\bo\backend\api\routers\llm_gateway.py:174 - Failed to initialize LLM Gateway client: GatewayConfig.__init__() got an unexpected keyword argument 'max_retries'
+2025-04-16 01:42:55,213 - api.routers.llm_gateway - ERROR - C:\code\asf\asf\bo\backend\api\routers\llm_gateway.py:174 - Failed to initialize LLM Gateway client: GatewayConfig.__init__() got an unexpected keyword argument 'max_retries'
+2025-04-16 01:42:55,466 - api.routers.llm_gateway - ERROR - C:\code\asf\asf\bo\backend\api\routers\llm_gateway.py:174 - Failed to initialize LLM Gateway client: GatewayConfig.__init__() got an unexpected keyword argument 'max_retries'
+2025-04-16 01:42:55,618 - api.routers.llm_gateway - ERROR - C:\code\asf\asf\bo\backend\api\routers\llm_gateway.py:174 - Failed to initialize LLM Gateway client: GatewayConfig.__init__() got an unexpected keyword argument 'max_retries'
+2025-04-16 01:43:45,463 - api.routers.llm_gateway - ERROR - C:\code\asf\asf\bo\backend\api\routers\llm_gateway.py:174 - Failed to initialize LLM Gateway client: GatewayConfig.__init__() got an unexpected keyword argument 'max_retries'
+2025-04-16 01:43:45,973 - api.routers.llm_gateway - ERROR - C:\code\asf\asf\bo\backend\api\routers\llm_gateway.py:174 - Failed to initialize LLM Gateway client: GatewayConfig.__init__() got an unexpected keyword argument 'max_retries'
+2025-04-16 02:59:05,537 - api.clients - ERROR - C:\code\asf\asf\bo\backend\api\clients.py:518 - Error checking Crossref status: 
+2025-04-16 03:27:07,483 - api.clients - ERROR - C:\code\asf\asf\bo\backend\api\clients.py:518 - Error checking Crossref status: 
+2025-04-16 20:57:51,808 - api.routers.llm_gateway - ERROR - C:\code\asf\asf\bo\backend\api\routers\llm_gateway.py:174 - Failed to initialize LLM Gateway client: GatewayConfig.__init__() got an unexpected keyword argument 'cache_default_ttl_seconds'
+2025-04-16 23:25:20,030 - api.routers.llm_gateway - ERROR - C:\code\asf\asf\bo\backend\api\routers\llm_gateway.py:174 - Failed to initialize LLM Gateway client: GatewayConfig.__init__() got an unexpected keyword argument 'cache_default_ttl_seconds'
+2025-04-16 23:30:54,622 - api.routers.llm_gateway - ERROR - C:\code\asf\asf\bo\backend\api\routers\llm_gateway.py:186 - Failed to initialize LLM Gateway client: GatewayConfig.__init__() got an unexpected keyword argument 'caching_enabled'
+2025-04-16 23:32:54,076 - api.routers.llm_gateway - ERROR - C:\code\asf\asf\bo\backend\api\routers\llm_gateway.py:199 - Failed to initialize LLM Gateway client: GatewayConfig.__init__() got an unexpected keyword argument 'caching_enabled'
+2025-04-16 23:33:25,521 - api.routers.llm_gateway - ERROR - C:\code\asf\asf\bo\backend\api\routers\llm_gateway.py:199 - Failed to initialize LLM Gateway client: GatewayConfig.__init__() got an unexpected keyword argument 'caching_enabled'
+2025-04-17 00:09:14,032 - asf.medical.llm_gateway.core.manager - ERROR - C:\code\asf\asf\medical\llm_gateway\core\manager.py:128 - Error during intervention manager processing for 06262911-68dc-4e15-bb63-7bc39335a943: Configuration not found for provider handling model 'gpt-3.5-turbo'
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\core\manager.py", line 106, in process_request
+    raise ValueError(f"Configuration not found for provider handling model '{modified_request.config.model_identifier}'")
+ValueError: Configuration not found for provider handling model 'gpt-3.5-turbo'
+2025-04-17 00:09:14,036 - api.routers.llm_gateway - ERROR - C:\code\asf\asf\bo\backend\api\routers\llm_gateway.py:1059 - Error generating LLM response: 1 validation error for LLMResponseModel
+content
+  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]
+    For further information visit https://errors.pydantic.dev/2.11/v/string_type
+2025-04-17 00:09:51,841 - asf.medical.llm_gateway.core.manager - ERROR - C:\code\asf\asf\medical\llm_gateway\core\manager.py:128 - Error during intervention manager processing for a12b1d5f-f6f1-4d34-90b9-611916c97c5e: Configuration not found for provider handling model 'gpt-3.5-turbo'
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\core\manager.py", line 106, in process_request
+    raise ValueError(f"Configuration not found for provider handling model '{modified_request.config.model_identifier}'")
+ValueError: Configuration not found for provider handling model 'gpt-3.5-turbo'
+2025-04-17 00:09:51,846 - api.routers.llm_gateway - ERROR - C:\code\asf\asf\bo\backend\api\routers\llm_gateway.py:1059 - Error generating LLM response: 1 validation error for LLMResponseModel
+content
+  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]
+    For further information visit https://errors.pydantic.dev/2.11/v/string_type
+2025-04-17 00:16:38,785 - asf.medical.llm_gateway.core.manager - ERROR - C:\code\asf\asf\medical\llm_gateway\core\manager.py:128 - Error during intervention manager processing for d1c972ea-2ecc-46f6-8f2a-e3ec58bce82a: Configuration not found for provider handling model 'gpt-3.5-turbo'
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\core\manager.py", line 106, in process_request
+    raise ValueError(f"Configuration not found for provider handling model '{modified_request.config.model_identifier}'")
+ValueError: Configuration not found for provider handling model 'gpt-3.5-turbo'

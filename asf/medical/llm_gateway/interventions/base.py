@@ -4,7 +4,7 @@ import abc
 import logging
 from typing import AsyncGenerator, Optional, Any, Dict, Literal
 
-from llm_gateway.core.models import (
+from asf.medical.llm_gateway.core.models import (
     LLMRequest,
     LLMResponse,
     StreamChunk,

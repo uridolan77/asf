@@ -10,7 +10,7 @@ import logging
 from datetime import datetime
 from typing import AsyncGenerator, Optional, Dict, Any
 
-from llm_gateway.core.models import (
+from asf.medical.llm_gateway.core.models import (
     LLMRequest,
     LLMResponse,
     ProviderConfig,
