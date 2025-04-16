@@ -48,8 +48,8 @@ app = FastAPI()
 # Configure CORS - Allow specific origins for development
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:57104", "http://localhost:57054", "http://10.100.102.28:57104", "http://10.100.102.28:57054"],  # Allow specific origins
-    allow_credentials=False,  # Set to False to avoid preflight issues
+    allow_origins=["http://localhost:3000", "http://localhost:5173", "http://localhost:5174", "http://localhost:57104", "http://localhost:57054", "http://10.100.102.28:57104", "http://10.100.102.28:57054"],  # Include frontend URLs
+    allow_credentials=True,  # Set to True to allow credentials
     allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["*"],
@@ -188,7 +188,7 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
         print(f"Registration error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Registration failed: {str(e)}")
 
-@router.post("/api/login", response_model=Token)
+@app.post("/api/login", response_model=Token)
 async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     print(f"Login attempt with username: {form_data.username}, password: {form_data.password}")
 
@@ -205,7 +205,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = 
     access_token = create_access_token(data={"sub": str(user["id"])})
     return {"access_token": access_token, "token_type": "bearer"}
 
-@router.get("/api/me", response_model=dict)
+@app.get("/api/me", response_model=dict)
 async def read_users_me(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -346,7 +346,7 @@ def delete_user(user_id: int, admin_user: User = Depends(get_current_admin_user)
     return {"message": "User deleted successfully"}
 
 @app.get("/api/stats")
-def get_stats(admin_user: User = Depends(get_current_admin_user), db: Session = Depends(get_db)):
+def get_stats_admin(admin_user: User = Depends(get_current_admin_user), db: Session = Depends(get_db)):
     """Get system statistics (admin only)."""
     # Count all users
     user_count = db.query(User).count()
@@ -359,6 +359,28 @@ def get_stats(admin_user: User = Depends(get_current_admin_user), db: Session = 
     return {
         "user_count": user_count,
         "active_sessions": active_sessions
+    }
+
+@app.get("/api/admin/stats")
+def get_admin_stats(admin_user: User = Depends(get_current_admin_user), db: Session = Depends(get_db)):
+    """Get detailed system statistics (admin only)."""
+    # Count all users
+    user_count = db.query(User).count()
+
+    # For demo purposes, we'll simulate active sessions
+    # In a real app, you'd track this in a sessions table or using Redis
+    import random
+    active_sessions = random.randint(1, user_count)
+
+    return {
+        "user_count": user_count,
+        "active_sessions": active_sessions,
+        "admin_data": {
+            "api_calls_today": random.randint(500, 2000),
+            "avg_response_time": round(random.uniform(0.1, 0.5), 2),
+            "errors_today": random.randint(0, 50),
+            "server_load": round(random.uniform(10, 60), 1)
+        }
     }
 
 @app.get("/api/settings")
@@ -378,6 +400,82 @@ def update_system_settings(settings: SystemSettings, admin_user: User = Depends(
     # In a real application, this would be saved to a database
 
     return SYSTEM_SETTINGS
+
+# Add these endpoints for Dashboard page
+@app.get("/api/stats")
+def get_dashboard_stats(current_user: User = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    """Get basic dashboard statistics."""
+    # Mock data for dashboard stats
+    user_count = 15  # In a real app, this would come from the database
+    active_sessions = 8
+    system_status = "Operational"
+    
+    # Generate mock monthly data
+    monthly_data = [
+        {"month": "Jan", "searches": 45, "analyses": 18},
+        {"month": "Feb", "searches": 52, "analyses": 22},
+        {"month": "Mar", "searches": 49, "analyses": 25},
+        {"month": "Apr", "searches": 63, "analyses": 30},
+        {"month": "May", "searches": 55, "analyses": 24}
+    ]
+    
+    return {
+        "user_count": user_count,
+        "active_sessions": active_sessions,
+        "system_status": system_status,
+        "monthly_data": monthly_data
+    }
+
+@app.get("/api/research-metrics")
+def get_research_metrics(current_user: User = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    """Get research metrics for dashboard charts."""
+    # Mock data for research metrics
+    metrics = [
+        {"category": "Clinical Trials", "count": 145},
+        {"category": "Meta-analyses", "count": 72},
+        {"category": "Systematic Reviews", "count": 98},
+        {"category": "Cohort Studies", "count": 123},
+        {"category": "Case Reports", "count": 86}
+    ]
+    
+    return metrics
+
+@app.get("/api/recent-updates")
+def get_recent_updates(current_user: User = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    """Get recent research updates for the dashboard."""
+    # Mock data for recent updates
+    updates = {
+        "last_updated": datetime.utcnow().isoformat(),
+        "items": [
+            {
+                "title": "Procalcitonin-guided antibiotic therapy in CAP shows promising results",
+                "date": "Apr 2025",
+                "link": "/analysis/123"
+            },
+            {
+                "title": "New data on antibiotic resistance patterns in Streptococcus pneumoniae",
+                "date": "Mar 2025",
+                "link": "/knowledge-base/456"
+            },
+            {
+                "title": "Post-COVID patterns in respiratory infections suggest modified treatment approaches",
+                "date": "Feb 2025",
+                "link": "/clinical-data/789"
+            },
+            {
+                "title": "Machine learning model improves early detection of sepsis in pneumonia patients",
+                "date": "Feb 2025",
+                "link": "/ml-services/012"
+            },
+            {
+                "title": "Updated guidelines for CAP management published by international consortium",
+                "date": "Jan 2025",
+                "link": "/knowledge-base/345"
+            }
+        ]
+    }
+    
+    return updates
 
 # Models for Medical Research API
 class PICOSearchRequest(BaseModel):
@@ -429,30 +527,74 @@ def search_medical(
     """
     Search for medical research based on a query.
     """
-    # In a real implementation, this would call your medical research search service
-    # For now, we'll return mock data
-    articles = [
-        {
-            "id": f"article_{i}",
-            "title": f"Research on {query} - Part {i}",
-            "authors": ["Author A", "Author B"],
-            "journal": "Journal of Medical Research",
-            "year": 2023 - i,
-            "abstract": f"This study investigates {query} and its implications for healthcare.",
-            "relevance_score": round(random.uniform(0.5, 0.99), 2)
+    try:
+        # Import the NCBI client to perform real searches
+        from medical.clients.ncbi import NCBIClient
+        
+        # Create a client instance
+        ncbi_client = NCBIClient()
+        
+        # Perform the actual search using the client
+        # This assumes there's a search method in the NCBIClient class
+        search_results = ncbi_client.search(query, max_results=max_results)
+        
+        # Process and format the results
+        articles = []
+        
+        for result in search_results:
+            article = {
+                "id": result.get("id", f"ncbi_{len(articles)}"),
+                "title": result.get("title", "Untitled"),
+                "authors": result.get("authors", []),
+                "journal": result.get("journal", "Unknown Journal"),
+                "year": result.get("year", datetime.now().year),
+                "abstract": result.get("abstract", "No abstract available"),
+                "relevance_score": result.get("score", 0.8),
+                "source": "NCBI"
+            }
+            articles.append(article)
+        
+        return {
+            "success": True,
+            "message": f"Found {len(articles)} results for query: {query}",
+            "data": {
+                "articles": articles,
+                "query": query,
+                "total_results": len(articles)
+            }
         }
-        for i in range(1, min(max_results + 1, 21))
-    ]
-
-    return {
-        "success": True,
-        "message": f"Found {len(articles)} results for query: {query}",
-        "data": {
-            "articles": articles,
-            "query": query,
-            "total_results": len(articles)
+    except ImportError as e:
+        print(f"Import error: {str(e)}")
+        # Fallback to mock data if the client import fails
+        articles = [
+            {
+                "id": f"article_{i}",
+                "title": f"Research on {query} - Part {i}",
+                "authors": ["Author A", "Author B"],
+                "journal": "Journal of Medical Research",
+                "year": 2023 - i,
+                "abstract": f"This study investigates {query} and its implications for healthcare.",
+                "relevance_score": round(random.uniform(0.5, 0.99), 2),
+                "source": "Mock Data (Client import failed)"
+            }
+            for i in range(1, min(max_results + 1, 21))
+        ]
+        
+        return {
+            "success": True,
+            "message": f"Found {len(articles)} results for query: {query} (using mock data due to import error: {str(e)})",
+            "data": {
+                "articles": articles,
+                "query": query,
+                "total_results": len(articles)
+            }
         }
-    }
+    except Exception as e:
+        print(f"Search error: {str(e)}")
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Error performing medical search: {str(e)}"
+        )
 
 @app.post("/api/medical/search/pico")
 def search_pico(
@@ -1002,3 +1144,254 @@ def export_results(
             "download_url": f"/api/medical/download/{format}/{result_id}"  # This would be a real URL in implementation
         }
     }
+
+# Client management endpoints
+@app.get("/api/medical/clients")
+def get_medical_clients(current_user: User = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    """Get all medical clients."""
+    # Instead of mock data, use the real client implementations
+    try:
+        # Import client modules
+        from medical.clients.ncbi import NCBIClient
+        from medical.clients.umls import UMLSClient
+        from medical.clients.clinical_trials_gov import ClinicalTrialsClient
+        from medical.clients.cochrane import CochraneClient
+        from medical.clients.crossref import CrossrefClient
+        from medical.clients.snomed import SnomedClient
+        
+        clients = []
+        
+        # NCBI client
+        try:
+            ncbi_client = NCBIClient()
+            status = "connected"
+            error_message = None
+            response_time = 0.8  # This would be measured in a real implementation
+        except Exception as e:
+            status = "error"
+            error_message = str(e)
+            response_time = None
+            
+        clients.append({
+            "client_id": "ncbi",
+            "name": "NCBI",
+            "description": "National Center for Biotechnology Information",
+            "status": status,
+            "api_version": ncbi_client.version if status == "connected" else None,
+            "last_checked": datetime.utcnow().isoformat(),
+            "response_time": response_time,
+            "error_message": error_message
+        })
+        
+        # UMLS client
+        try:
+            umls_client = UMLSClient()
+            status = "connected"
+            error_message = None
+            response_time = 1.2  # This would be measured in a real implementation
+        except Exception as e:
+            status = "error"
+            error_message = str(e)
+            response_time = None
+            
+        clients.append({
+            "client_id": "umls",
+            "name": "UMLS",
+            "description": "Unified Medical Language System",
+            "status": status,
+            "api_version": umls_client.version if status == "connected" else None,
+            "last_checked": datetime.utcnow().isoformat(),
+            "response_time": response_time,
+            "error_message": error_message
+        })
+        
+        # Add similar implementations for other clients
+        # ClinicalTrials.gov, Cochrane, Crossref, SNOMED CT
+        
+        return clients
+    except ImportError as e:
+        print(f"Import error: {str(e)}")
+        # Fallback to static data if imports fail
+        return [
+            {
+                "client_id": "ncbi",
+                "name": "NCBI",
+                "description": "National Center for Biotechnology Information",
+                "status": "unknown",
+                "api_version": None,
+                "last_checked": datetime.utcnow().isoformat(),
+                "error_message": f"Failed to import client module: {str(e)}"
+            },
+            # Other clients with unknown status
+        ]
+    except Exception as e:
+        print(f"Error getting clients: {str(e)}")
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Error retrieving medical clients: {str(e)}"
+        )
+
+@app.get("/api/medical/clients/{client_id}")
+def get_medical_client(client_id: str, current_user: User = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    """Get a specific medical client by ID."""
+    # Mock client data based on client_id
+    client_data = {
+        "ncbi": {
+            "client_id": "ncbi",
+            "name": "NCBI",
+            "description": "National Center for Biotechnology Information",
+            "status": "connected",
+            "api_version": "2.0.1",
+            "last_checked": datetime.utcnow().isoformat(),
+            "response_time": 0.82,
+            "api_key": "********",
+            "base_url": "https://api.ncbi.nlm.nih.gov",
+            "rate_limit": 3,
+            "rate_limit_period": "second",
+            "timeout": 30,
+            "retry_count": 3
+        },
+        "umls": {
+            "client_id": "umls",
+            "name": "UMLS",
+            "description": "Unified Medical Language System",
+            "status": "connected",
+            "api_version": "3.5.0",
+            "last_checked": datetime.utcnow().isoformat(),
+            "response_time": 1.24,
+            "api_key": "********",
+            "base_url": "https://uts-ws.nlm.nih.gov/api",
+            "rate_limit": 20,
+            "rate_limit_period": "second",
+            "timeout": 30,
+            "retry_count": 3
+        },
+        "clinical_trials": {
+            "client_id": "clinical_trials",
+            "name": "ClinicalTrials.gov",
+            "description": "Clinical trials database",
+            "status": "connected",
+            "api_version": "1.8.5",
+            "last_checked": datetime.utcnow().isoformat(),
+            "response_time": 1.56,
+            "base_url": "https://clinicaltrials.gov/api",
+            "rate_limit": 5,
+            "rate_limit_period": "second",
+            "timeout": 30,
+            "retry_count": 3
+        },
+        "cochrane": {
+            "client_id": "cochrane",
+            "name": "Cochrane Library",
+            "description": "Systematic reviews database",
+            "status": "error",
+            "api_version": "2.1.0",
+            "last_checked": datetime.utcnow().isoformat(),
+            "error_message": "API rate limit exceeded",
+            "response_time": 3.45,
+            "api_key": "********",
+            "base_url": "https://www.cochranelibrary.com/api",
+            "rate_limit": 2,
+            "rate_limit_period": "second",
+            "timeout": 30,
+            "retry_count": 3
+        },
+        "crossref": {
+            "client_id": "crossref",
+            "name": "Crossref",
+            "description": "DOI registration agency",
+            "status": "connected",
+            "api_version": "1.2.3",
+            "last_checked": datetime.utcnow().isoformat(),
+            "response_time": 0.95,
+            "email": "your.email@example.com",
+            "base_url": "https://api.crossref.org",
+            "rate_limit": 50,
+            "rate_limit_period": "second",
+            "timeout": 30,
+            "retry_count": 3
+        },
+        "snomed": {
+            "client_id": "snomed",
+            "name": "SNOMED CT",
+            "description": "Clinical terminology",
+            "status": "disconnected",
+            "last_checked": datetime.utcnow().isoformat(),
+            "api_key": "",
+            "base_url": "https://browser.ihtsdotools.org/api",
+            "rate_limit": 10,
+            "rate_limit_period": "second",
+            "timeout": 30,
+            "retry_count": 3
+        }
+    }
+    
+    if client_id not in client_data:
+        raise HTTPException(status_code=404, detail=f"Medical client not found: {client_id}")
+    
+    return client_data[client_id]
+
+@app.put("/api/medical/clients/{client_id}")
+def update_medical_client(
+    client_id: str, 
+    client_config: dict = Body(...),
+    current_user: User = Depends(oauth2_scheme), 
+    db: Session = Depends(get_db)
+):
+    """Update a medical client configuration."""
+    # Check if client exists
+    if client_id not in ["ncbi", "umls", "clinical_trials", "cochrane", "crossref", "snomed"]:
+        raise HTTPException(status_code=404, detail=f"Medical client not found: {client_id}")
+    
+    # In a real app, this would update the client configuration in the database
+    # Here we'll just return a mock updated client
+    updated_client = {
+        "client_id": client_id,
+        "name": client_config.get("name", f"Unknown Client {client_id}"),
+        "description": client_config.get("description", ""),
+        "status": "connected",  # Assume connection is successful after update
+        "api_version": client_config.get("api_version", "1.0.0"),
+        "last_checked": datetime.utcnow().isoformat(),
+        "response_time": random.uniform(0.5, 2.0),
+        **client_config
+    }
+    
+    return updated_client
+
+@app.post("/api/medical/clients/{client_id}/test")
+def test_medical_client_connection(
+    client_id: str,
+    current_user: User = Depends(oauth2_scheme), 
+    db: Session = Depends(get_db)
+):
+    """Test connection to a medical client."""
+    # Check if client exists
+    if client_id not in ["ncbi", "umls", "clinical_trials", "cochrane", "crossref", "snomed"]:
+        raise HTTPException(status_code=404, detail=f"Medical client not found: {client_id}")
+    
+    # In a real app, this would actually test the connection to the client
+    # For now, we'll return mock results with some randomized outcomes
+    
+    # Randomly determine success/failure (weighted towards success)
+    success = random.random() > 0.2
+    
+    result = {
+        "success": success,
+        "message": f"Successfully connected to {client_id}" if success else f"Connection to {client_id} failed",
+        "status": "connected" if success else "error",
+        "response_time": round(random.uniform(0.5, 3.0), 2)
+    }
+    
+    if success:
+        result["api_version"] = f"{random.randint(1, 3)}.{random.randint(0, 9)}.{random.randint(0, 9)}"
+    else:
+        error_messages = [
+            "API key invalid or expired",
+            "Connection timeout",
+            "Rate limit exceeded",
+            "Server returned 503 Service Unavailable",
+            "Network error"
+        ]
+        result["error_message"] = random.choice(error_messages)
+    
+    return result

@@ -115,7 +115,7 @@ export const AuthProvider = ({ children }) => {
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
           },
-          withCredentials: false, // Set to false for CORS
+          withCredentials: true, // Enable credentials for CORS
         }
       );
 
@@ -129,7 +129,7 @@ export const AuthProvider = ({ children }) => {
       try {
         const userResponse = await axios.get(`${API_URL}/api/me`, {
           headers: { Authorization: `Bearer ${access_token}` },
-          withCredentials: false, // Set to false for CORS
+          withCredentials: true, // Enable credentials for CORS
         });
 
         console.log('User data response:', userResponse);

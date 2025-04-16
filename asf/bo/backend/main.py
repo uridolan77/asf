@@ -29,7 +29,7 @@ app = FastAPI(title="BO Medical Research Backend")
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:5174"],  # Allow specific frontend URLs
+    allow_origins=["http://localhost:3000", "http://localhost:5173", "http://localhost:5174", "http://localhost:57104", "http://localhost:57054", "http://10.100.102.28:57104", "http://10.100.102.28:57054"],  # Allow all frontend URLs
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -45,7 +45,7 @@ app.include_router(export_router)
 app.include_router(ml_router)
 app.include_router(clients_router)
 app.include_router(llm_router)
-app.include_router(endpoints_router, tags=["Authentication"])
+app.include_router(endpoints_router, prefix="/api", tags=["Authentication"])
 
 # Root endpoint
 @app.get("/")

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Grid,
@@ -37,7 +37,6 @@ import {
 
 // Import custom hooks
 import { useAuth } from '../context/AuthContext.jsx';
-import useApi from '../hooks/useApi';
 
 // Import skeleton loader
 import { DashboardSkeleton } from '../components/UI/SkeletonLoaders.js';
@@ -50,40 +49,50 @@ const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'
  * Displays overview of the system and quick access to main features
  */
 const Dashboard = () => {
-  const { user, hasRole } = useAuth();
+  const { user, hasRole, api } = useAuth();
   const navigate = useNavigate();
+  const [statsData, setStatsData] = useState(null);
+  const [metricsData, setMetricsData] = useState(null);
+  const [updatesData, setUpdatesData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Fetch dashboard statistics with caching enabled
-  const {
-    data: stats,
-    loading: statsLoading,
-    error: statsError
-  } = useApi('/api/stats', {
-    cacheEnabled: true,
-    cacheDuration: 5 * 60 * 1000 // 5 minutes
-  });
+  // Load dashboard data
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      setLoading(true);
+      try {
+        // Fetch stats data
+        const statsResponse = await api.get('/api/stats');
+        setStatsData(statsResponse.data);
+        
+        // Fetch research metrics
+        const metricsResponse = await api.get('/api/research-metrics');
+        setMetricsData(metricsResponse.data);
+        
+        // Fetch recent updates
+        const updatesResponse = await api.get('/api/recent-updates');
+        setUpdatesData(updatesResponse.data);
+        
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching dashboard data:', err);
+        setError('Failed to load dashboard data. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  // Fetch research metrics with caching
-  const {
-    data: researchMetrics,
-    loading: metricsLoading
-  } = useApi('/api/research-metrics', {
-    cacheEnabled: true
-  });
-
-  // Fetch recent updates
-  const {
-    data: recentUpdates,
-    loading: updatesLoading
-  } = useApi('/api/recent-updates');
+    fetchDashboardData();
+  }, [api]);
 
   // Memoize the aggregated research metrics
   const aggregatedMetrics = useMemo(() => {
-    if (!researchMetrics) return null;
+    if (!metricsData) return null;
 
     // Group data by category
     const categories = {};
-    researchMetrics.forEach(item => {
+    metricsData.forEach(item => {
       if (!categories[item.category]) {
         categories[item.category] = 0;
       }
@@ -95,16 +104,13 @@ const Dashboard = () => {
       name: category,
       value: categories[category]
     }));
-  }, [researchMetrics]);
+  }, [metricsData]);
 
   // Memoize the monthly trends data
   const monthlyTrends = useMemo(() => {
-    if (!stats?.monthly_data) return [];
-    return stats.monthly_data;
-  }, [stats]);
-
-  // Determine if all data is loading
-  const isLoading = statsLoading || metricsLoading || updatesLoading;
+    if (!statsData?.monthly_data) return [];
+    return statsData.monthly_data;
+  }, [statsData]);
 
   // Recent medical research updates (fallback data)
   const fallbackUpdates = [
@@ -126,12 +132,12 @@ const Dashboard = () => {
   const pageActions = null;
 
   // Show skeleton loader while loading
-  if (isLoading) {
+  if (loading) {
     return (
       <PageLayout
         title="Dashboard"
         breadcrumbs={[]}
-        loading={isLoading}
+        loading={loading}
       >
         <DashboardSkeleton />
       </PageLayout>
@@ -146,9 +152,9 @@ const Dashboard = () => {
       actions={pageActions}
     >
       {/* Display error message if any */}
-      {statsError && (
+      {error && (
         <Alert severity="error" sx={{ mb: 3 }}>
-          Failed to load dashboard statistics. Please try again later.
+          {error}
         </Alert>
       )}
 
@@ -162,7 +168,7 @@ const Dashboard = () => {
         <Grid item xs={12} md={4}>
           <StatCard
             title="Total Users"
-            value={stats?.user_count || 0}
+            value={statsData?.user_count || 0}
             actionText={hasRole('admin') ? "Manage Users" : null}
             onAction={() => navigate('/users')}
           />
@@ -171,20 +177,20 @@ const Dashboard = () => {
         <Grid item xs={12} md={4}>
           <StatCard
             title="Active Sessions"
-            value={stats?.active_sessions || 0}
+            value={statsData?.active_sessions || 0}
           />
         </Grid>
 
         <Grid item xs={12} md={4}>
           <StatCard
             title="System Status"
-            value={stats?.system_status || "Operational"}
+            value={statsData?.system_status || "Operational"}
             icon={
               <Box sx={{
                 width: 12,
                 height: 12,
                 borderRadius: '50%',
-                bgcolor: stats?.system_status === 'Operational' ? 'success.main' : 'error.main'
+                bgcolor: statsData?.system_status === 'Operational' ? 'success.main' : 'error.main'
               }} />
             }
           />
@@ -251,7 +257,7 @@ const Dashboard = () => {
 
         {/* Featured research */}
         <Grid item xs={12}>
-          <FeaturedResearch updates={recentUpdates?.items || fallbackUpdates} />
+          <FeaturedResearch updates={updatesData?.items || fallbackUpdates} />
         </Grid>
 
         {/* Research tools */}
