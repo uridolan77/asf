@@ -20,12 +20,15 @@ additional_config:
       provider_type: biomedlm
     openai_gpt4_default:
       connection_params:
-        # Option 1: Direct API key (not recommended for production)
-        api_key: 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
-        # Option 2: Secret reference (recommended for production)
+        # IMPORTANT: Do not store API keys directly in this file!
+        # Use one of the following methods instead:
+
+        # Option 1: Secret reference (recommended for production)
         api_key_secret: llm:openai_api_key
-        # Option 3: Environment variable fallback
+
+        # Option 2: Environment variable fallback
         api_key_env_var: OPENAI_API_KEY
+
         base_url: ''
       display_name: OpenAI GPT-4
       models:

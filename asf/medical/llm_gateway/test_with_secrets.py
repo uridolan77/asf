@@ -10,6 +10,9 @@ import logging
 import os
 import sys
 import yaml
+import sys
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+from asf.bo.backend.api.routers.llm.utils import load_config
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -51,8 +54,8 @@ async def test_with_secrets():
             return False
 
         logger.info(f"Loading configuration from {config_path}")
-        with open(config_path, 'r') as f:
-            config_dict = yaml.safe_load(f)
+        # Load configuration using the utility function that handles local config
+        config_dict = load_config(config_path)
 
         # Initialize Secret Manager
         secret_manager = SecretManager()
