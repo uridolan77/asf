@@ -138,6 +138,7 @@ class CLPEFTService:
         train_dataset,
         eval_dataset=None,
         training_args=None,
+        strategy_config=None,
         **kwargs
     ) -> Dict[str, Any]:
         """
@@ -149,6 +150,7 @@ class CLPEFTService:
             train_dataset: Training dataset
             eval_dataset: Evaluation dataset (optional)
             training_args: Training arguments (optional)
+            strategy_config: Configuration for the CL strategy (optional)
             **kwargs: Additional arguments for the trainer
 
         Returns:
@@ -160,12 +162,25 @@ class CLPEFTService:
             # Load adapter
             adapter = CLPEFTAdapter.load_adapter(adapter_id, registry=self.registry)
 
+            # Get adapter metadata
+            adapter_metadata = self.registry.get_adapter(adapter_id)
+            cl_strategy = adapter_metadata.get('cl_strategy', 'naive')
+
+            # Prepare strategy configuration
+            if strategy_config is None:
+                strategy_config = {}
+
+            # Add task-specific prompts for generative replay if provided
+            if cl_strategy == 'generative_replay' and 'task_prompts' in kwargs:
+                strategy_config['task_prompts'] = kwargs.pop('task_prompts')
+
             # Train adapter
             results = adapter.train_on_task(
                 task_id,
                 train_dataset,
                 eval_dataset,
                 training_args,
+                strategy_config=strategy_config,
                 **kwargs
             )
 
