@@ -61,7 +61,9 @@ const LLMManagement = () => {
     error: userError,
     execute: fetchUser 
   } = useApi(apiService.auth.me, {
-    loadOnMount: true,
+    params: {
+      loadOnMount: true
+    },
     onSuccess: (data) => {
       setUser(data);
       setLoading(false);
