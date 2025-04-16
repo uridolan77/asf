@@ -65,8 +65,9 @@ from .static import router as static_router
 from ..core.config import settings
 from ..core.enhanced_cache import EnhancedCacheManager
 
-# Import our new ML endpoints
+# Import our ML endpoints and LLM management modules
 from .routers import ml_endpoints
+from .routers.llm_management import router as llm_management_router
 
 # Create a global cache manager instance
 cache_manager = EnhancedCacheManager()
@@ -337,8 +338,9 @@ app.include_router(task_repository_api_router)
 app.include_router(messaging_metrics_router)
 app.include_router(static_router)
 
-# Register the ML endpoints router with the app
+# Register the ML endpoints and LLM management routers with the app
 app.include_router(ml_endpoints.router)
+app.include_router(llm_management_router, tags=["llm-management"])
 
 @app.get("/", tags=["status"])
 async def root():

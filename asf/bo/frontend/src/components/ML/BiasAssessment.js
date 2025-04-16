@@ -19,7 +19,8 @@ import {
 } from '@mui/icons-material';
 
 import { useNotification } from '../../context/NotificationContext';
-import apiService from '../../services/api';
+// Import apiService as a fallback
+import defaultApiService from '../../services/api';
 import { ButtonLoader, ContentLoader } from '../UI/LoadingIndicators.js';
 import { FadeIn, HoverAnimation } from '../UI/Animations';
 
@@ -29,7 +30,9 @@ import { FadeIn, HoverAnimation } from '../UI/Animations';
  * This component allows users to assess bias in medical articles
  * using various bias assessment tools like ROBINS-I, RoB 2, etc.
  */
-const BiasAssessment = ({ onExport }) => {
+const BiasAssessment = ({ onExport, apiService }) => {
+  // Use provided apiService or fall back to the default
+  const api = apiService || defaultApiService;
   const { showSuccess, showError } = useNotification();
 
   // Form state
@@ -56,7 +59,7 @@ const BiasAssessment = ({ onExport }) => {
     setIsLoadingTools(true);
 
     try {
-      const result = await apiService.ml.getBiasAssessmentTools();
+      const result = await api.ml.getBiasAssessmentTools();
 
       if (result.success) {
         setBiasTools(result.data.tools);
@@ -93,7 +96,7 @@ const BiasAssessment = ({ onExport }) => {
         assessment_type: assessmentType
       };
 
-      const result = await apiService.ml.assessBias(params);
+      const result = await api.ml.assessBias(params);
 
       if (result.success) {
         setResult(result.data);

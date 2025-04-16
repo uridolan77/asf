@@ -129,6 +129,32 @@ const apiService = {
 
   // ML service endpoints
   ml: {
+    // Get ML services status - try both possible endpoints
+    getServicesStatus: async () => {
+      // First try the medical API endpoint
+      const medicalResponse = await apiCall('get', '/api/ml/services/status');
+      if (medicalResponse.success) {
+        return medicalResponse;
+      }
+
+      // If that fails, try the BO backend endpoint
+      const boResponse = await apiCall('get', '/api/medical/ml/services/status');
+      return boResponse;
+    },
+
+    // Get ML services metrics
+    getServicesMetrics: async () => {
+      // First try the medical API endpoint
+      const medicalResponse = await apiCall('get', '/api/ml/services/metrics');
+      if (medicalResponse.success) {
+        return medicalResponse;
+      }
+
+      // If that fails, try the BO backend endpoint
+      const boResponse = await apiCall('get', '/api/medical/ml/services/metrics');
+      return boResponse;
+    },
+
     // Contradiction detection
     detectContradiction: (params) => apiCall('post', '/api/medical/ml/contradiction', params),
     detectContradictionsBatch: (params) => apiCall('post', '/api/medical/ml/contradiction/batch', params),
@@ -196,14 +222,14 @@ const apiService = {
     registerProvider: (providerData) => apiCall('post', '/api/llm/gateway/providers', providerData),
     deleteProvider: (providerId) => apiCall('delete', `/api/llm/gateway/providers/${providerId}`),
     testProvider: (providerId) => apiCall('post', `/api/llm/gateway/providers/${providerId}/test`),
-    
+
     // Model management endpoints
     getModels: (providerId = null, modelType = null) => apiCall('get', '/api/llm/gateway/models', { provider_id: providerId, model_type: modelType }),
     getModel: (modelId, providerId) => apiCall('get', `/api/llm/gateway/models/${modelId}`, { provider_id: providerId }),
     createModel: (modelData) => apiCall('post', '/api/llm/gateway/models', modelData),
     updateModel: (modelId, providerId, updateData) => apiCall('put', `/api/llm/gateway/models/${modelId}`, { ...updateData, provider_id: providerId }),
     deleteModel: (modelId, providerId) => apiCall('delete', `/api/llm/gateway/models/${modelId}`, { provider_id: providerId }),
-    
+
     generateLLMResponse: (requestData) => apiCall('post', '/api/llm/gateway/generate', requestData),
 
     // DSPy endpoints

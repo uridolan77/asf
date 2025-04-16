@@ -29,7 +29,7 @@ import { useNotification } from '../context/NotificationContext.jsx';
  * This page provides management functionality for medical clients,
  * including NCBI, UMLS, ClinicalTrials, Cochrane, Crossref, and SNOMED.
  */
-const ClientsManagement = () => {
+const ClientsManagementPage = () => {
   const { user, api } = useAuth();
   const { showSuccess, showError } = useNotification();
   const navigate = useNavigate();
@@ -380,4 +380,4 @@ const ClientsManagement = () => {
   );
 };
 
-export default ClientsManagement;
+export default ClientsManagementPage;

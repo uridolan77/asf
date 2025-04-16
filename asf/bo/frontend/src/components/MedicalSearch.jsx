@@ -4,13 +4,15 @@ import {
   Grid, InputLabel, MenuItem, Paper, Select, Tab, Tabs, 
   TextField, Typography, CircularProgress
 } from '@mui/material';
-import axios from 'axios';
+import { useAuth } from '../context/AuthContext.jsx';
 
 /**
  * Medical literature search component
  * Supports both standard search and PICO search
  */
 const MedicalSearch = () => {
+  const { api } = useAuth(); // Use the authenticated API client
+  
   // State for tab selection (0 = Standard, 1 = PICO)
   const [tabValue, setTabValue] = useState(0);
 
@@ -75,7 +77,7 @@ const MedicalSearch = () => {
     setError('');
     
     try {
-      const response = await axios.post('/api/knowledge-base/search', {
+      const response = await api.post('/api/knowledge-base/search', {
         query,
         max_results: maxResults,
         page,
@@ -107,7 +109,7 @@ const MedicalSearch = () => {
       const filteredInterventions = interventions.filter(i => i.trim());
       const filteredOutcomes = outcomes.filter(o => o.trim());
       
-      const response = await axios.post('/api/knowledge-base/search-pico', {
+      const response = await api.post('/api/knowledge-base/search-pico', {
         condition,
         interventions: filteredInterventions,
         outcomes: filteredOutcomes,

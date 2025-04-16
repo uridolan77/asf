@@ -16,12 +16,12 @@ const Dashboard = lazy(() => import('./pages/Dashboard.jsx'));
 const Register = lazy(() => import('./pages/Register'));
 const Users = lazy(() => import('./pages/Users'));
 const Settings = lazy(() => import('./pages/Settings'));
-const PICOSearch = lazy(() => import('./pages/PICOSearch'));
-const KnowledgeBase = lazy(() => import('./pages/KnowledgeBase'));
+const SearchPage = lazy(() => import('./pages/SearchPage'));
+const KnowledgeBasePage = lazy(() => import('./pages/KnowledgeBasePage'));
 const ClinicalData = lazy(() => import('./pages/ClinicalData'));
 const Analysis = lazy(() => import('./pages/Analysis'));
 const MLServices = lazy(() => import('./pages/MLServices'));
-const ClientsManagement = lazy(() => import('./pages/ClientsManagement'));
+const ClientsManagementPage = lazy(() => import('./pages/ClientsManagementPage'));
 const NCBIClientPage = lazy(() => import('./pages/NCBIClientPage'));
 const LLMManagement = lazy(() => import('./pages/LLMManagement'));
 
@@ -85,14 +85,19 @@ const AnimatedRoutes = () => {
                 <Settings />
               </ProtectedRoute>
             } />
+            <Route path="/search" element={
+              <ProtectedRoute>
+                <SearchPage />
+              </ProtectedRoute>
+            } />
             <Route path="/pico-search" element={
               <ProtectedRoute>
-                <PICOSearch />
+                <SearchPage />
               </ProtectedRoute>
             } />
             <Route path="/knowledge-base" element={
               <ProtectedRoute>
-                <KnowledgeBase />
+                <KnowledgeBasePage />
               </ProtectedRoute>
             } />
             <Route path="/clinical-data" element={
@@ -112,7 +117,7 @@ const AnimatedRoutes = () => {
             } />
             <Route path="/clients-management" element={
               <ProtectedRoute>
-                <ClientsManagement />
+                <ClientsManagementPage />
               </ProtectedRoute>
             } />
             <Route path="/clients-management/ncbi" element={

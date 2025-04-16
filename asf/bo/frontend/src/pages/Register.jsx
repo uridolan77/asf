@@ -58,7 +58,7 @@ const Register = () => {
   const [success, setSuccess] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
-  const { register } = useAuth();
+  const { register, api } = useAuth();
   const { showSuccess, showError } = useNotification();
 
   useEffect(() => {
@@ -71,10 +71,9 @@ const Register = () => {
     // Try to fetch roles from backend if available
     async function fetchRoles() {
       try {
-        const response = await fetch('http://localhost:8000/api/roles');
-        if (response.ok) {
-          const data = await response.json();
-          setRoles(data);
+        const response = await api.get('/api/roles');
+        if (response.data) {
+          setRoles(response.data);
         }
       } catch (err) {
         // Silently fail and use default roles
@@ -83,7 +82,7 @@ const Register = () => {
     }
     
     fetchRoles();
-  }, []);
+  }, [api]);
 
   const handleRegister = async (e) => {
     e.preventDefault();

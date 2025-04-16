@@ -74,7 +74,8 @@ const GatewayDashboard = ({ status, onRefresh }) => {
     stream: false,
     top_p: 1,
     presence_penalty: 0,
-    frequency_penalty: 0
+    frequency_penalty: 0,
+    system_prompt: ''
   });
 
   const { showSuccess, showError } = useNotification();
@@ -83,6 +84,19 @@ const GatewayDashboard = ({ status, onRefresh }) => {
   useEffect(() => {
     loadProviders();
   }, []);
+
+  // Update providers when status changes
+  useEffect(() => {
+    if (status?.details?.providers) {
+      setProviders(status.details.providers);
+      const active = status.details.active_providers || [];
+      setActiveProviders(active);
+
+      if (active.length > 0 && !selectedProvider) {
+        setSelectedProvider(active[0].id);
+      }
+    }
+  }, [status, selectedProvider]);
 
   // Load models when provider changes
   useEffect(() => {
@@ -100,11 +114,16 @@ const GatewayDashboard = ({ status, onRefresh }) => {
 
       if (result.success) {
         setProviders(result.data);
-        const active = result.data.filter(p => p.is_active);
+        // Filter active providers (those with status 'operational' or 'available')
+        const active = result.data.filter(p =>
+          p.status === 'operational' ||
+          p.status === 'available' ||
+          p.is_active
+        );
         setActiveProviders(active);
 
         if (active.length > 0 && !selectedProvider) {
-          setSelectedProvider(active[0].id);
+          setSelectedProvider(active[0].provider_id || active[0].id);
         }
       } else {
         showError(`Failed to load LLM providers: ${result.error}`);
@@ -123,9 +142,21 @@ const GatewayDashboard = ({ status, onRefresh }) => {
       const result = await apiService.llm.getModels(providerId);
 
       if (result.success) {
-        setProviderModels(result.data);
-        if (result.data.length > 0) {
-          setSelectedModel(result.data[0].id);
+        // Transform the data to match the expected format if needed
+        const models = result.data.map(model => ({
+          id: model.model_id,
+          name: model.display_name || model.model_id,
+          provider_id: model.provider_id,
+          type: model.model_type,
+          capabilities: model.capabilities || [],
+          context_window: model.context_window,
+          max_output_tokens: model.max_output_tokens
+        }));
+
+        setProviderModels(models);
+
+        if (models.length > 0) {
+          setSelectedModel(models[0].id);
         } else {
           setSelectedModel('');
         }
@@ -149,6 +180,8 @@ const GatewayDashboard = ({ status, onRefresh }) => {
 
       if (result.success) {
         showSuccess(`Connection to ${providerId} successful`);
+        // Refresh providers list to update status
+        loadProviders();
       } else {
         showError(`Connection to ${providerId} failed: ${result.error}`);
       }
@@ -171,24 +204,33 @@ const GatewayDashboard = ({ status, onRefresh }) => {
     try {
       const result = await apiService.llm.generateLLMResponse({
         provider_id: selectedProvider,
-        model_id: selectedModel,
+        model: selectedModel,  // Backend expects 'model', not 'model_id'
         prompt: prompt,
-        ...advancedSettings
+        temperature: advancedSettings.temperature,
+        max_tokens: advancedSettings.max_tokens,
+        stream: advancedSettings.stream,
+        system_prompt: advancedSettings.system_prompt || undefined
       });
 
       if (result.success) {
-        setResponseText(result.data.text);
+        // The backend returns content in result.data.content
+        setResponseText(result.data.content || result.data.text || '');
         showSuccess('Text generated successfully');
 
-        // Add to history
+        // Add to history with usage statistics
         setHistory(prev => [{
           id: Date.now().toString(),
           timestamp: new Date().toISOString(),
           provider: selectedProvider,
           model: selectedModel,
           prompt,
-          response: result.data.text,
-          stats: result.data.stats || {}
+          response: result.data.content || result.data.text || '',
+          stats: {
+            prompt_tokens: result.data.prompt_tokens,
+            completion_tokens: result.data.completion_tokens,
+            total_tokens: result.data.total_tokens,
+            latency_ms: result.data.latency_ms
+          }
         }, ...prev]);
       } else {
         showError(`Failed to generate text: ${result.error}`);
@@ -293,8 +335,9 @@ const GatewayDashboard = ({ status, onRefresh }) => {
                         disabled={loading || generating || activeProviders.length === 0}
                       >
                         {activeProviders.map((provider) => (
-                          <MenuItem key={provider.id} value={provider.id}>
-                            {provider.name} ({provider.type})
+                          <MenuItem key={provider.provider_id || provider.id} value={provider.provider_id || provider.id}>
+                            {provider.display_name || provider.name || provider.provider_id || provider.id}
+                            {` (${provider.provider_type || provider.type || 'Unknown'})`}
                           </MenuItem>
                         ))}
                       </Select>
@@ -311,8 +354,9 @@ const GatewayDashboard = ({ status, onRefresh }) => {
                         disabled={loading || generating || !selectedProvider || providerModels.length === 0}
                       >
                         {providerModels.map((model) => (
-                          <MenuItem key={model.id} value={model.id}>
-                            {model.name}
+                          <MenuItem key={model.model_id || model.id} value={model.model_id || model.id}>
+                            {model.display_name || model.name || model.model_id || model.id}
+                            {model.type && ` (${model.type})`}
                           </MenuItem>
                         ))}
                       </Select>
@@ -337,6 +381,19 @@ const GatewayDashboard = ({ status, onRefresh }) => {
                     </AccordionSummary>
                     <AccordionDetails>
                       <Grid container spacing={2}>
+                        <Grid item xs={12}>
+                          <TextField
+                            label="System Prompt"
+                            multiline
+                            rows={2}
+                            fullWidth
+                            variant="outlined"
+                            value={advancedSettings.system_prompt}
+                            onChange={(e) => handleSettingChange('system_prompt', e.target.value)}
+                            placeholder="Optional system instructions for the LLM"
+                            helperText="Instructions that define the LLM's behavior and context"
+                          />
+                        </Grid>
                         <Grid item xs={12} sm={6} md={4}>
                           <TextField
                             label="Temperature"
@@ -346,6 +403,7 @@ const GatewayDashboard = ({ status, onRefresh }) => {
                             value={advancedSettings.temperature}
                             onChange={(e) => handleSettingChange('temperature', parseFloat(e.target.value))}
                             inputProps={{ step: 0.1, min: 0, max: 2 }}
+                            helperText="Controls randomness (0=deterministic, 1=creative)"
                           />
                         </Grid>
                         <Grid item xs={12} sm={6} md={4}>
@@ -357,6 +415,7 @@ const GatewayDashboard = ({ status, onRefresh }) => {
                             value={advancedSettings.max_tokens}
                             onChange={(e) => handleSettingChange('max_tokens', parseInt(e.target.value))}
                             inputProps={{ min: 1, max: 4096 }}
+                            helperText="Maximum length of the generated response"
                           />
                         </Grid>
                         <Grid item xs={12} sm={6} md={4}>
@@ -368,6 +427,7 @@ const GatewayDashboard = ({ status, onRefresh }) => {
                             value={advancedSettings.top_p}
                             onChange={(e) => handleSettingChange('top_p', parseFloat(e.target.value))}
                             inputProps={{ step: 0.1, min: 0, max: 1 }}
+                            helperText="Controls diversity via nucleus sampling"
                           />
                         </Grid>
                         <Grid item xs={12} sm={6} md={4}>
@@ -379,6 +439,7 @@ const GatewayDashboard = ({ status, onRefresh }) => {
                             value={advancedSettings.presence_penalty}
                             onChange={(e) => handleSettingChange('presence_penalty', parseFloat(e.target.value))}
                             inputProps={{ step: 0.1, min: -2, max: 2 }}
+                            helperText="Penalizes new tokens based on presence in text"
                           />
                         </Grid>
                         <Grid item xs={12} sm={6} md={4}>
@@ -390,6 +451,7 @@ const GatewayDashboard = ({ status, onRefresh }) => {
                             value={advancedSettings.frequency_penalty}
                             onChange={(e) => handleSettingChange('frequency_penalty', parseFloat(e.target.value))}
                             inputProps={{ step: 0.1, min: -2, max: 2 }}
+                            helperText="Penalizes new tokens based on frequency in text"
                           />
                         </Grid>
                         <Grid item xs={12} sm={6} md={4}>
@@ -481,31 +543,47 @@ const GatewayDashboard = ({ status, onRefresh }) => {
             ) : (
               <Grid container spacing={2}>
                 {providers.map((provider) => (
-                  <Grid item xs={12} md={6} lg={4} key={provider.id}>
+                  <Grid item xs={12} md={6} lg={4} key={provider.provider_id || provider.id}>
                     <Card variant="outlined">
                       <CardHeader
-                        title={provider.name}
-                        subheader={provider.type}
+                        title={provider.display_name || provider.name || provider.provider_id || provider.id}
+                        subheader={provider.provider_type || provider.type}
                         avatar={
-                          <CloudQueueIcon color={provider.is_active ? 'success' : 'disabled'} />
+                          <CloudQueueIcon
+                            color={
+                              provider.status === 'operational' ||
+                              provider.status === 'available' ||
+                              provider.is_active ? 'success' : 'disabled'
+                            }
+                          />
                         }
                         action={
                           <Chip
-                            label={provider.is_active ? 'Active' : 'Inactive'}
-                            color={provider.is_active ? 'success' : 'error'}
+                            label={
+                              provider.status === 'operational' ? 'Operational' :
+                              provider.status === 'available' ? 'Available' :
+                              provider.status === 'degraded' ? 'Degraded' :
+                              provider.status === 'error' ? 'Error' :
+                              provider.is_active ? 'Active' : 'Inactive'
+                            }
+                            color={
+                              provider.status === 'operational' || provider.status === 'available' ? 'success' :
+                              provider.status === 'degraded' ? 'warning' :
+                              provider.is_active ? 'success' : 'error'
+                            }
                             size="small"
                           />
                         }
                       />
                       <CardContent>
                         <Typography variant="body2" color="text.secondary" gutterBottom>
-                          {provider.description || 'No description available'}
+                          {provider.message || provider.description || 'No description available'}
                         </Typography>
 
                         <List dense>
                           <ListItem>
                             <ListItemIcon sx={{ minWidth: '32px' }}>
-                              {provider.requires_api_key ? (
+                              {(provider.connection_params?.api_key_env_var || provider.requires_api_key) ? (
                                 <CheckIcon fontSize="small" color="success" />
                               ) : (
                                 <ErrorIcon fontSize="small" color="warning" />
@@ -513,18 +591,18 @@ const GatewayDashboard = ({ status, onRefresh }) => {
                             </ListItemIcon>
                             <ListItemText
                               primary="API Key Required"
-                              secondary={provider.requires_api_key ? 'Yes' : 'No'}
+                              secondary={(provider.connection_params?.api_key_env_var || provider.requires_api_key) ? 'Yes' : 'No'}
                             />
                           </ListItem>
 
-                          {provider.models_count !== undefined && (
+                          {(provider.models_count !== undefined || (provider.models && Object.keys(provider.models).length > 0)) && (
                             <ListItem>
                               <ListItemIcon sx={{ minWidth: '32px' }}>
                                 <SmartToyIcon fontSize="small" />
                               </ListItemIcon>
                               <ListItemText
                                 primary="Available Models"
-                                secondary={provider.models_count}
+                                secondary={provider.models_count || (provider.models ? Object.keys(provider.models).length : 0)}
                               />
                             </ListItem>
                           )}
@@ -533,7 +611,7 @@ const GatewayDashboard = ({ status, onRefresh }) => {
                       <CardActions>
                         <Button
                           size="small"
-                          onClick={() => testProvider(provider.id)}
+                          onClick={() => testProvider(provider.provider_id || provider.id)}
                           startIcon={<CheckIcon />}
                         >
                           Test Connection
@@ -541,7 +619,7 @@ const GatewayDashboard = ({ status, onRefresh }) => {
                         <Button
                           size="small"
                           onClick={() => {
-                            setSelectedProvider(provider.id);
+                            setSelectedProvider(provider.provider_id || provider.id);
                             setActiveTab(0);
                           }}
                         >

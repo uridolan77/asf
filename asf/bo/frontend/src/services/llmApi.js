@@ -1,7 +1,8 @@
 import axios from 'axios';
 import { handleApiResponse } from './apiUtils';
 
-const API_URL = process.env.REACT_APP_API_URL || '';
+// Replace process.env with import.meta.env for Vite compatibility
+const API_URL = import.meta.env.VITE_API_URL || '';
 
 /**
  * LLM API service for interacting with the LLM API endpoints

@@ -19,7 +19,8 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { format } from 'date-fns';
 
 import { useNotification } from '../../context/NotificationContext';
-import apiService from '../../services/api';
+// Import apiService as a fallback
+import defaultApiService from '../../services/api';
 import { ButtonLoader } from '../UI/LoadingIndicators.js';
 import { FadeIn, HoverAnimation } from '../UI/Animations.js';
 
@@ -29,7 +30,9 @@ import { FadeIn, HoverAnimation } from '../UI/Animations.js';
  * This component allows users to analyze the temporal confidence of medical claims
  * based on publication dates and domain-specific characteristics.
  */
-const TemporalAnalysis = ({ onExport }) => {
+const TemporalAnalysis = ({ onExport, apiService }) => {
+  // Use provided apiService or fall back to the default
+  const api = apiService || defaultApiService;
   const { showSuccess, showError } = useNotification();
 
   // Form state
@@ -79,7 +82,7 @@ const TemporalAnalysis = ({ onExport }) => {
         params.reference_date = format(referenceDate, 'yyyy-MM-dd');
       }
 
-      const result = await apiService.ml.calculateTemporalConfidence(params);
+      const result = await api.ml.calculateTemporalConfidence(params);
 
       if (result.success) {
         setResult(result.data);

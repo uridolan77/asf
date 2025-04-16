@@ -16,7 +16,8 @@ import {
 } from '@mui/icons-material';
 
 import { useNotification } from '../../context/NotificationContext.jsx';
-import apiService from '../../services/api';
+// Import apiService as a fallback
+import defaultApiService from '../../services/api';
 import { ButtonLoader } from '../UI/LoadingIndicators.js';
 import { FadeIn, StaggeredList, HoverAnimation } from '../UI/Animations.js';
 
@@ -26,7 +27,9 @@ import { FadeIn, StaggeredList, HoverAnimation } from '../UI/Animations.js';
  * This component allows users to detect contradictions between two medical claims
  * using various ML models.
  */
-const ContradictionDetection = ({ onExport }) => {
+const ContradictionDetection = ({ onExport, apiService }) => {
+  // Use provided apiService or fall back to the default
+  const api = apiService || defaultApiService;
   const { showSuccess, showError } = useNotification();
 
   // Form state
@@ -71,7 +74,7 @@ const ContradictionDetection = ({ onExport }) => {
         domain: domain.trim() || null
       };
 
-      const result = await apiService.ml.detectContradiction(params);
+      const result = await api.ml.detectContradiction(params);
 
       if (result.success) {
         setResult(result.data);
