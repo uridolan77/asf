@@ -19,7 +19,7 @@ from asf.medical.llm_gateway.core.models import (
     InterventionContext,
     LLMConfig,
     LLMRequest,
-    LLMResponse, 
+    LLMResponse,
     MCPContentType as GatewayMCPContentType,
     MCPMetadata,
     MCPRole as GatewayMCPRole,
@@ -98,12 +98,25 @@ class InterventionManager:
 
             # 2. Get provider and generate response
             # Fetch provider config based on model_identifier
-            # This lookup logic needs refinement based on how configs are stored/passed
-            provider_configs = getattr(self.gateway_config, 'providers', {})
-            provider_id = self._get_provider_id_for_model(modified_request.config.model_identifier) # Need this helper
-            provider_conf = provider_configs.get(provider_id)
-            if not provider_conf:
+            provider_id = self._get_provider_id_for_model(modified_request.config.model_identifier)
+
+            # Get provider configs from additional_config.providers
+            provider_configs = self.gateway_config.additional_config.get('providers', {})
+            provider_conf_dict = provider_configs.get(provider_id)
+
+            if not provider_conf_dict:
+                logger.error(f"Provider '{provider_id}' not found in configuration for model '{modified_request.config.model_identifier}'")
+                logger.debug(f"Available providers: {list(provider_configs.keys())}")
                 raise ValueError(f"Configuration not found for provider handling model '{modified_request.config.model_identifier}'")
+
+            # Convert dictionary to ProviderConfig object
+            provider_conf = ProviderConfig(
+                provider_id=provider_id,
+                provider_type=provider_conf_dict.get('provider_type', 'unknown'),
+                models=provider_conf_dict.get('models', {}),
+                connection_params=provider_conf_dict.get('connection_params', {}),
+                description=provider_conf_dict.get('display_name', '')
+            )
 
             provider = await self.provider_factory.get_provider(provider_id, provider_conf, self.gateway_config)
 
@@ -182,9 +195,25 @@ class InterventionManager:
 
             # 2. Get Provider and Start Streaming
             provider_id = self._get_provider_id_for_model(modified_request.config.model_identifier)
-            provider_configs = getattr(self.gateway_config, 'providers', {})
-            provider_conf = provider_configs.get(provider_id)
-            if not provider_conf: raise ValueError(f"Config not found for provider handling model '{modified_request.config.model_identifier}'")
+
+            # Get provider configs from additional_config.providers
+            provider_configs = self.gateway_config.additional_config.get('providers', {})
+            provider_conf_dict = provider_configs.get(provider_id)
+
+            if not provider_conf_dict:
+                logger.error(f"Provider '{provider_id}' not found in configuration for model '{modified_request.config.model_identifier}'")
+                logger.debug(f"Available providers: {list(provider_configs.keys())}")
+                raise ValueError(f"Config not found for provider handling model '{modified_request.config.model_identifier}'")
+
+            # Convert dictionary to ProviderConfig object
+            provider_conf = ProviderConfig(
+                provider_id=provider_id,
+                provider_type=provider_conf_dict.get('provider_type', 'unknown'),
+                models=provider_conf_dict.get('models', {}),
+                connection_params=provider_conf_dict.get('connection_params', {}),
+                description=provider_conf_dict.get('display_name', '')
+            )
+
             provider = await self.provider_factory.get_provider(provider_id, provider_conf, self.gateway_config)
 
             # 3. Stream Interventions (Chunk-level processing - Complex!)
@@ -335,15 +364,15 @@ class InterventionManager:
         """Helper to determine which provider_id handles a given model."""
         # This needs a robust way to map model IDs to provider IDs.
         # Simplistic approach: Iterate through provider configs in GatewayConfig.
-        provider_configs = getattr(self.gateway_config, 'providers', {})
+        provider_configs = self.gateway_config.additional_config.get('providers', {})
         for provider_id, config in provider_configs.items():
-             # Check if model_identifier is listed in this provider's config.models
-             # The structure of config.models needs to be defined (e.g., just a list or dict)
-             if isinstance(config.models, list) and model_identifier in config.models:
+             # Check if model_identifier is listed in this provider's models
+             models = config.get('models', {})
+             if model_identifier in models:
+                  logger.debug(f"Found model '{model_identifier}' in provider '{provider_id}'")
                   return provider_id
-             elif isinstance(config.models, dict) and model_identifier in config.models:
-                  return provider_id
-        # Fallback to default provider if model not explicitly listed? Or raise error?
+
+        # Fallback to default provider if model not explicitly listed
         default_provider = self.gateway_config.default_provider
         logger.warning(f"Model '{model_identifier}' not explicitly mapped to a provider. Falling back to default provider '{default_provider}'.")
         if not default_provider:

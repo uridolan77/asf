@@ -9,7 +9,7 @@ import asyncio
 import base64
 import logging
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, AsyncGenerator, Dict, List, Optional, Tuple, Union, cast
 
 # --- OpenAI SDK Imports ---
@@ -153,16 +153,25 @@ class OpenAIClient(BaseProvider):
 
             else:
                 # --- Standard OpenAI Configuration ---
-                api_key_env_var = provider_config.connection_params.get("api_key_env_var", "OPENAI_API_KEY")
-                org_id_env_var = provider_config.connection_params.get("org_id_env_var", "OPENAI_ORG_ID") # Optional
+                # First check for direct API key in connection_params
+                api_key = provider_config.connection_params.get("api_key")
 
-                api_key = os.environ.get(api_key_env_var)
-                org_id = os.environ.get(org_id_env_var)
-
+                # If not found, try environment variable
                 if not api_key:
-                    raise ValueError(
-                        f"Standard OpenAI API key environment variable '{api_key_env_var}' not found for provider '{self.provider_id}'."
-                    )
+                    api_key_env_var = provider_config.connection_params.get("api_key_env_var", "OPENAI_API_KEY")
+                    api_key = os.environ.get(api_key_env_var)
+
+                    if not api_key:
+                        logger.error(f"No API key found for provider '{self.provider_id}'. Checked direct config and env var '{api_key_env_var}'")
+                        raise ValueError(
+                            f"OpenAI API key not found for provider '{self.provider_id}'. Checked connection_params.api_key and environment variable '{api_key_env_var}'."
+                        )
+
+                # Get organization ID if available
+                org_id = provider_config.connection_params.get("org_id")
+                if not org_id:
+                    org_id_env_var = provider_config.connection_params.get("org_id_env_var", "OPENAI_ORG_ID") # Optional
+                    org_id = os.environ.get(org_id_env_var)
 
                 self._client = AsyncOpenAI(
                     api_key=api_key,
@@ -195,7 +204,7 @@ class OpenAIClient(BaseProvider):
         """
         Generate a response from OpenAI using the non-streaming Chat Completions API.
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
         llm_latency_ms: Optional[float] = None
         response_obj: Optional[ChatCompletion] = None
         error_details: Optional[ErrorDetails] = None
@@ -211,11 +220,11 @@ class OpenAIClient(BaseProvider):
 
             # 2. Call OpenAI API
             logger.debug(f"Sending request to OpenAI model '{model_id}': {openai_params}")
-            llm_call_start = datetime.utcnow()
+            llm_call_start = datetime.now(timezone.utc)
 
             response_obj = await self._client.chat.completions.create(**openai_params)
 
-            llm_latency_ms = (datetime.utcnow() - llm_call_start).total_seconds() * 1000
+            llm_latency_ms = (datetime.now(timezone.utc) - llm_call_start).total_seconds() * 1000
             logger.debug(f"Received response from OpenAI model '{model_id}'. ID: {response_obj.id}")
 
         except (APITimeoutError, asyncio.TimeoutError) as e:
@@ -250,7 +259,7 @@ class OpenAIClient(BaseProvider):
             error_details = self._map_error(e, retryable=False)
 
         # 3. Map OpenAI Response back to Gateway LLMResponse
-        total_duration_ms = (datetime.utcnow() - start_time).total_seconds() * 1000
+        total_duration_ms = (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
 
         final_response = self._map_response(
             openai_response=response_obj,
@@ -295,7 +304,8 @@ class OpenAIClient(BaseProvider):
             stream = await self._client.chat.completions.create(**openai_params)
 
             async for chunk in stream:
-                chunk_start_time = datetime.utcnow()
+                # Time tracking for chunk processing if needed
+                # chunk_start_time = datetime.now(timezone.utc)
                 mapped_chunk = None
                 delta: Optional[ChoiceDelta] = None
                 finish_reason_str: Optional[str] = None
@@ -322,7 +332,6 @@ class OpenAIClient(BaseProvider):
                     # -- Tool Call Delta --
                     if delta.tool_calls:
                         # Accumulate tool call chunks
-                        tool_deltas_to_yield = []
                         for tool_call_delta in delta.tool_calls:
                             index = tool_call_delta.index
                             if index not in accumulated_tool_calls:
@@ -524,7 +533,6 @@ class OpenAIClient(BaseProvider):
          elif isinstance(content, list) and all(isinstance(item, ContentItem) for item in content):
               # Multimodal content or multiple text parts
               parts: List[ChatCompletionContentPartParam] = []
-              has_image = False
               for item in content:
                    if item.type == GatewayContentType.TEXT and item.text_content:
                         parts.append({"type": "text", "text": item.text_content})
@@ -532,7 +540,6 @@ class OpenAIClient(BaseProvider):
                         try:
                              image_url_data = self._create_openai_image_url(item)
                              parts.append({"type": "image_url", "image_url": image_url_data})
-                             has_image = True
                         except ValueError as e:
                              logger.warning(f"Skipping image content item due to error: {e}")
                    else:

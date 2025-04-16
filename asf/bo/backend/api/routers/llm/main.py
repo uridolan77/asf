@@ -11,8 +11,20 @@ import logging
 
 from ...auth import get_current_user, User
 
+# Import sub-routers
+from .gateway import router as gateway_router
+from .dspy import router as dspy_router
+from .biomedlm import router as biomedlm_router
+from .debug import router as debug_router
+
 # Create the main LLM router
 router = APIRouter(prefix="/api/llm", tags=["llm"])
+
+# Include sub-routers
+router.include_router(gateway_router)
+router.include_router(dspy_router)
+router.include_router(biomedlm_router)
+router.include_router(debug_router)
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +32,7 @@ logger = logging.getLogger(__name__)
 async def llm_root(current_user: User = Depends(get_current_user)):
     """
     Root endpoint for LLM API.
-    
+
     Returns information about available LLM endpoints.
     """
     return {
@@ -51,6 +63,17 @@ async def llm_root(current_user: User = Depends(get_current_user)):
                     "/api/llm/biomedlm/models",
                     "/api/llm/biomedlm/generate",
                     "/api/llm/biomedlm/finetune"
+                ]
+            },
+            {
+                "name": "debug",
+                "description": "Debugging tools for LLM Gateway",
+                "endpoints": [
+                    "/api/llm/debug/config",
+                    "/api/llm/debug/environment",
+                    "/api/llm/debug/test-openai",
+                    "/api/llm/debug/diagnostics",
+                    "/api/llm/debug/logs"
                 ]
             }
         ]

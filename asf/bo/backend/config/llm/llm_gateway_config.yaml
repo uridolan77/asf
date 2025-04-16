@@ -20,7 +20,7 @@ additional_config:
       provider_type: biomedlm
     openai_gpt4_default:
       connection_params:
-        api_key: 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
+        api_key: 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
         api_key_env_var: OPENAI_API_KEY
         base_url: ''
       display_name: OpenAI GPT-4

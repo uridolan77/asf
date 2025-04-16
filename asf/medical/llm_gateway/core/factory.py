@@ -32,6 +32,14 @@ class ProviderFactory:
     to the actual provider implementation classes.
     """
 
+    def __init__(self):
+        """Initialize the provider factory."""
+        self._provider_registry = {}
+        self._provider_instances = {}
+        self._instance_locks = {}
+        self._allow_overwrite = False
+        self._register_known_providers()
+
     def _register_known_providers(self):
         """Registers the provider classes known to this factory."""
         self.register_provider("openai", OpenAIClient)
