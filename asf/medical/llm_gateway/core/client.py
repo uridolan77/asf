@@ -2,7 +2,7 @@
 import asyncio
 import logging
 import uuid # Import uuid
-from datetime import datetime # Import datetime
+from datetime import datetime, timezone # Import datetime
 from typing import AsyncGenerator, Dict, List, Optional, Union, Any, Tuple
 
 from asf.medical.llm_gateway.core.models import (
@@ -12,6 +12,8 @@ from asf.medical.llm_gateway.core.models import (
 )
 from asf.medical.llm_gateway.core.factory import ProviderFactory, ProviderFactoryError # Import FactoryError
 from asf.medical.llm_gateway.core.manager import InterventionManager
+from asf.medical.llm_gateway.core.config_loader import ConfigLoader
+from sqlalchemy.orm import Session
 # Import common provider errors if needed for specific handling, or rely on mapping
 # from openai._exceptions import APITimeoutError as OpenAITimeout, RateLimitError as OpenAIRateLimit # Example
 # from anthropic._exceptions import APITimeoutError as AnthropicTimeout, RateLimitError as AnthropicRateLimit # Example
@@ -19,14 +21,26 @@ from asf.medical.llm_gateway.core.manager import InterventionManager
 logger = logging.getLogger(__name__)
 
 class LLMGatewayClient:
-    def __init__(self, config: GatewayConfig, provider_factory: Optional[ProviderFactory] = None):
-         self.config = config
+    def __init__(self, config: GatewayConfig = None, provider_factory: Optional[ProviderFactory] = None, db: Session = None):
+         self.db = db
+         self.config_loader = ConfigLoader(db)
+
+         # Load configuration from database if not provided
+         if config is None and db is not None:
+             config_dict = self.config_loader.load_config()
+             self.config = GatewayConfig(**config_dict)
+         else:
+             self.config = config
+
+         if self.config is None:
+             raise ValueError("Gateway configuration is required. Provide either config or db.")
+
          # Use a central factory instance
          self.provider_factory = provider_factory or ProviderFactory()
          # Pass the factory to the manager
          self.intervention_manager = InterventionManager(self.provider_factory, self.config)
          # Configure semaphore from GatewayConfig
-         batch_limit = config.additional_config.get("max_concurrent_batch_requests", 10)
+         batch_limit = self.config.additional_config.get("max_concurrent_batch_requests", 10)
          self._batch_semaphore = asyncio.Semaphore(batch_limit)
          logger.info(f"Initialized LLMGatewayClient with batch concurrency limit: {batch_limit}")
 
@@ -65,7 +79,7 @@ class LLMGatewayClient:
 
     async def process_batch(self, batch_request: BatchLLMRequest) -> BatchLLMResponse:
         """Process a batch of LLM requests."""
-        batch_start_time = datetime.utcnow()
+        batch_start_time = datetime.now(timezone.utc)
         logger.info(f"Processing batch request: {batch_request.batch_id} ({len(batch_request.requests)} requests)")
         async with self._batch_semaphore:
             # Create tasks that store the original request for error handling
@@ -84,7 +98,7 @@ class LLMGatewayClient:
                 else:
                      valid_responses.append(result) # Already an LLMResponse
 
-            total_duration_ms = (datetime.utcnow() - batch_start_time).total_seconds() * 1000
+            total_duration_ms = (datetime.now(timezone.utc) - batch_start_time).total_seconds() * 1000
             logger.info(f"Batch processing complete: {batch_request.batch_id}, Duration: {total_duration_ms:.2f}ms")
             return BatchLLMResponse(
                 batch_id=batch_request.batch_id,
@@ -141,7 +155,7 @@ class LLMGatewayClient:
          )
 
          # Estimate duration if possible
-         duration = (datetime.utcnow() - context.timestamp_start).total_seconds() * 1000 if context else 0
+         duration = (datetime.now(timezone.utc) - context.timestamp_start).total_seconds() * 1000 if context else 0
 
          return LLMResponse(
              request_id=request_id,
