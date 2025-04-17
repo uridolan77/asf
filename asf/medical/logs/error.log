@@ -555,3 +555,9 @@ Traceback (most recent call last):
   File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 117, in get_provider
     raise ProviderFactoryError(f"Failed to get provider '{provider_id}': {e}") from e
 asf.medical.llm_gateway.core.factory.ProviderFactoryError: Failed to get provider 'openai_gpt4_default': Instantiation failed for 'openai_gpt4_default': OpenAI SDK client initialization failed: 'OpenAIClient' object has no attribute '_connection_params'
+2025-04-17 15:31:31,363 - asf.medical.ml.document_processing.gliner_entity_extractor - ERROR - C:\code\asf\asf\medical\ml\document_processing\gliner_entity_extractor.py:136 - GLiNER package not installed. Install with: pip install gliner
+2025-04-17 15:31:40,400 - asf.medical.ml.document_processing.hgt_relation_extractor - ERROR - C:\code\asf\asf\medical\ml\document_processing\hgt_relation_extractor.py:83 - Failed to initialize HGT relation extractor: You need to install sacremoses to use BioGptTokenizer. See https://pypi.org/project/sacremoses/ for installation.
+2025-04-17 15:31:40,692 - asf.medical.ml.document_processing.research_summarizer - ERROR - C:\code\asf\asf\medical\ml\document_processing\research_summarizer.py:59 - Error loading SciFive model: razent/SciFive-large-Pubmed-paper_summary is not a local folder and is not a valid model identifier listed on 'https://huggingface.co/models'
+If this is a private repository, make sure to pass a token having permission to this repo either by logging in with `huggingface-cli login` or by passing `token=<your_token>`
+2025-04-17 15:31:40,700 - asf.medical.ml.document_processing.gliner_entity_extractor - ERROR - C:\code\asf\asf\medical\ml\document_processing\gliner_entity_extractor.py:178 - GLiNER-biomed model not initialized
+2025-04-17 15:31:40,703 - asf.medical.ml.document_processing.research_summarizer - ERROR - C:\code\asf\asf\medical\ml\document_processing\research_summarizer.py:91 - Model not initialized

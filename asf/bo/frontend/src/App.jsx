@@ -24,6 +24,7 @@ const MLServices = lazy(() => import('./pages/MLServices'));
 const ClientsManagementPage = lazy(() => import('./pages/ClientsManagementPage'));
 const NCBIClientPage = lazy(() => import('./pages/NCBIClientPage'));
 const LLMManagement = lazy(() => import('./pages/LLMManagement'));
+const DocumentProcessing = lazy(() => import('./pages/DocumentProcessing'));
 
 // Loading fallback component
 const LoadingFallback = () => {
@@ -128,6 +129,11 @@ const AnimatedRoutes = () => {
             <Route path="/llm-management" element={
               <ProtectedRoute>
                 <LLMManagement />
+              </ProtectedRoute>
+            } />
+            <Route path="/document-processing" element={
+              <ProtectedRoute>
+                <DocumentProcessing />
               </ProtectedRoute>
             } />
 

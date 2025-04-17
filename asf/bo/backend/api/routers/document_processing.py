@@ -1,0 +1,497 @@
+"""
+Document Processing Router for BO backend.
+
+This module provides endpoints for document processing functionality,
+including single document processing, batch processing, and processing history.
+"""
+
+from fastapi import APIRouter, Depends, HTTPException, status, Body, File, UploadFile, Form, BackgroundTasks
+from typing import Dict, Any, List, Optional
+from pydantic import BaseModel
+import logging
+import os
+import json
+import uuid
+from datetime import datetime
+import tempfile
+import shutil
+
+from api.auth import get_current_user, User
+from config.database import get_db
+from sqlalchemy.orm import Session
+
+# Import the document processing module
+from asf.medical.ml.document_processing import MedicalResearchSynthesizer
+
+# Create the router
+router = APIRouter(prefix="/api/document-processing", tags=["document-processing"])
+
+# Configure logging
+logger = logging.getLogger(__name__)
+
+# Define models
+class ProcessingSettings(BaseModel):
+    """Settings for document processing."""
+    prefer_pdfminer: bool = True
+    use_enhanced_section_classifier: bool = True
+    use_gliner: bool = True
+    confidence_threshold: float = 0.6
+    use_hgt: bool = True
+    encoder_model: str = "microsoft/biogpt"
+    use_enhanced_summarizer: bool = True
+    check_factual_consistency: bool = True
+    consistency_method: str = "qafacteval"
+    consistency_threshold: float = 0.6
+    use_cache: bool = True
+    use_parallel: bool = True
+
+class ProcessingResponse(BaseModel):
+    """Response for document processing."""
+    task_id: str
+    status: str
+    message: str
+    created_at: str
+
+class ProcessingTask(BaseModel):
+    """Document processing task."""
+    task_id: str
+    status: str
+    file_name: str
+    created_at: str
+    completed_at: Optional[str] = None
+    result_path: Optional[str] = None
+    error_message: Optional[str] = None
+    processing_time: Optional[float] = None
+    entity_count: Optional[int] = None
+    relation_count: Optional[int] = None
+
+class BatchProcessingRequest(BaseModel):
+    """Request for batch document processing."""
+    settings: Optional[ProcessingSettings] = None
+    batch_size: int = 4
+
+# In-memory storage for processing tasks (in production, use a database)
+processing_tasks = {}
+
+# Directory for storing processed documents
+RESULTS_DIR = os.path.join(tempfile.gettempdir(), "document_processing_results")
+os.makedirs(RESULTS_DIR, exist_ok=True)
+
+# Helper function to get synthesizer with settings
+def get_synthesizer(settings: Optional[ProcessingSettings] = None) -> MedicalResearchSynthesizer:
+    """Get a document synthesizer with the specified settings."""
+    if settings is None:
+        settings = ProcessingSettings()
+
+    return MedicalResearchSynthesizer(
+        document_processor_args={
+            "prefer_pdfminer": settings.prefer_pdfminer,
+            "use_enhanced_section_classifier": settings.use_enhanced_section_classifier
+        },
+        entity_extractor_args={
+            "use_gliner": settings.use_gliner,
+            "confidence_threshold": settings.confidence_threshold
+        },
+        relation_extractor_args={
+            "use_hgt": settings.use_hgt,
+            "encoder_model": settings.encoder_model
+        },
+        summarizer_args={
+            "use_enhanced": settings.use_enhanced_summarizer,
+            "check_factual_consistency": settings.check_factual_consistency,
+            "consistency_method": settings.consistency_method,
+            "consistency_threshold": settings.consistency_threshold
+        },
+        use_cache=settings.use_cache
+    )
+
+# Helper function to process a document in the background
+def process_document_task(file_path: str, task_id: str, is_pdf: bool = True, settings: Optional[ProcessingSettings] = None, use_parallel: bool = False):
+    """Process a document in the background."""
+    try:
+        # Update task status
+        processing_tasks[task_id]["status"] = "processing"
+
+        # Get synthesizer
+        synthesizer = get_synthesizer(settings)
+
+        # Process the document
+        start_time = datetime.now()
+
+        if use_parallel:
+            doc_structure, metrics = synthesizer.process_parallel(file_path, is_pdf=is_pdf)
+        else:
+            doc_structure, metrics = synthesizer.process(file_path, is_pdf=is_pdf)
+
+        # Create result directory
+        result_dir = os.path.join(RESULTS_DIR, task_id)
+        os.makedirs(result_dir, exist_ok=True)
+
+        # Save results
+        synthesizer.save_results(doc_structure, result_dir)
+
+        # Update task status
+        processing_tasks[task_id].update({
+            "status": "completed",
+            "completed_at": datetime.now().isoformat(),
+            "result_path": result_dir,
+            "processing_time": metrics.get("total_processing_time"),
+            "entity_count": metrics.get("entity_count"),
+            "relation_count": metrics.get("relation_count")
+        })
+
+        logger.info(f"Document processing completed for task {task_id}")
+    except Exception as e:
+        logger.error(f"Error processing document for task {task_id}: {str(e)}")
+        processing_tasks[task_id].update({
+            "status": "failed",
+            "completed_at": datetime.now().isoformat(),
+            "error_message": str(e)
+        })
+
+# Endpoints
+@router.get("/")
+async def document_processing_root(current_user: User = Depends(get_current_user)):
+    """
+    Root endpoint for document processing API.
+
+    Returns information about available document processing endpoints.
+    """
+    return {
+        "status": "ok",
+        "endpoints": [
+            {
+                "path": "/process",
+                "method": "POST",
+                "description": "Process a single document"
+            },
+            {
+                "path": "/batch",
+                "method": "POST",
+                "description": "Process multiple documents in batch"
+            },
+            {
+                "path": "/tasks",
+                "method": "GET",
+                "description": "Get all processing tasks"
+            },
+            {
+                "path": "/tasks/{task_id}",
+                "method": "GET",
+                "description": "Get a specific processing task"
+            },
+            {
+                "path": "/settings",
+                "method": "GET",
+                "description": "Get default processing settings"
+            }
+        ]
+    }
+
+@router.post("/process", response_model=ProcessingResponse)
+async def process_document(
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(...),
+    settings_json: Optional[str] = Form(None),
+    use_parallel: bool = Form(False),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Process a single document.
+
+    Args:
+        file: The document file to process
+        settings_json: JSON string with processing settings
+        use_parallel: Whether to use parallel processing
+        current_user: The authenticated user
+
+    Returns:
+        ProcessingResponse: Information about the processing task
+    """
+    # Parse settings if provided
+    settings = None
+    if settings_json:
+        try:
+            settings_dict = json.loads(settings_json)
+            settings = ProcessingSettings(**settings_dict)
+        except Exception as e:
+            logger.error(f"Error parsing settings: {str(e)}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid settings format: {str(e)}"
+            )
+
+    # Check file type
+    file_extension = os.path.splitext(file.filename)[1].lower()
+    is_pdf = file_extension == ".pdf"
+
+    if not is_pdf and file_extension not in [".txt", ".md", ".json"]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Unsupported file type: {file_extension}. Supported types: .pdf, .txt, .md, .json"
+        )
+
+    # Create a temporary file
+    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=file_extension)
+
+    try:
+        # Write the file content
+        with open(temp_file.name, "wb") as f:
+            shutil.copyfileobj(file.file, f)
+
+        # Create a task ID
+        task_id = str(uuid.uuid4())
+
+        # Create a task entry
+        processing_tasks[task_id] = {
+            "task_id": task_id,
+            "status": "queued",
+            "file_name": file.filename,
+            "created_at": datetime.now().isoformat()
+        }
+
+        # Start processing in the background
+        background_tasks.add_task(
+            process_document_task,
+            temp_file.name,
+            task_id,
+            is_pdf,
+            settings,
+            use_parallel
+        )
+
+        return ProcessingResponse(
+            task_id=task_id,
+            status="queued",
+            message="Document processing started",
+            created_at=processing_tasks[task_id]["created_at"]
+        )
+    except Exception as e:
+        logger.error(f"Error processing document: {str(e)}")
+        if os.path.exists(temp_file.name):
+            os.unlink(temp_file.name)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error processing document: {str(e)}"
+        )
+
+@router.post("/batch", response_model=List[ProcessingResponse])
+async def batch_process_documents(
+    background_tasks: BackgroundTasks,
+    files: List[UploadFile] = File(...),
+    settings_json: Optional[str] = Form(None),
+    batch_size: int = Form(4),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Process multiple documents in batch.
+
+    Args:
+        files: The document files to process
+        settings_json: JSON string with processing settings
+        batch_size: Number of documents to process in parallel
+        current_user: The authenticated user
+
+    Returns:
+        List[ProcessingResponse]: Information about the processing tasks
+    """
+    # Parse settings if provided
+    settings = None
+    if settings_json:
+        try:
+            settings_dict = json.loads(settings_json)
+            settings = ProcessingSettings(**settings_dict)
+        except Exception as e:
+            logger.error(f"Error parsing settings: {str(e)}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid settings format: {str(e)}"
+            )
+
+    # Process each file
+    responses = []
+    temp_files = []
+
+    try:
+        for file in files:
+            # Check file type
+            file_extension = os.path.splitext(file.filename)[1].lower()
+            is_pdf = file_extension == ".pdf"
+
+            if not is_pdf and file_extension not in [".txt", ".md", ".json"]:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Unsupported file type: {file_extension}. Supported types: .pdf, .txt, .md, .json"
+                )
+
+            # Create a temporary file
+            temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=file_extension)
+            temp_files.append(temp_file.name)
+
+            # Write the file content
+            with open(temp_file.name, "wb") as f:
+                shutil.copyfileobj(file.file, f)
+
+            # Create a task ID
+            task_id = str(uuid.uuid4())
+
+            # Create a task entry
+            processing_tasks[task_id] = {
+                "task_id": task_id,
+                "status": "queued",
+                "file_name": file.filename,
+                "created_at": datetime.now().isoformat()
+            }
+
+            # Start processing in the background
+            background_tasks.add_task(
+                process_document_task,
+                temp_file.name,
+                task_id,
+                is_pdf,
+                settings,
+                False  # Don't use parallel for individual files in batch
+            )
+
+            responses.append(ProcessingResponse(
+                task_id=task_id,
+                status="queued",
+                message="Document processing started",
+                created_at=processing_tasks[task_id]["created_at"]
+            ))
+
+        return responses
+    except Exception as e:
+        logger.error(f"Error batch processing documents: {str(e)}")
+        # Clean up temporary files
+        for temp_file in temp_files:
+            if os.path.exists(temp_file):
+                os.unlink(temp_file)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error batch processing documents: {str(e)}"
+        )
+
+@router.get("/tasks", response_model=List[ProcessingTask])
+async def get_processing_tasks(
+    status: Optional[str] = None,
+    limit: int = 50,
+    offset: int = 0,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get all processing tasks.
+
+    Args:
+        status: Filter tasks by status (queued, processing, completed, failed)
+        limit: Maximum number of tasks to return
+        offset: Number of tasks to skip
+        current_user: The authenticated user
+
+    Returns:
+        List[ProcessingTask]: List of processing tasks
+    """
+    tasks = list(processing_tasks.values())
+
+    # Filter by status if provided
+    if status:
+        tasks = [task for task in tasks if task["status"] == status]
+
+    # Sort by created_at (newest first)
+    tasks.sort(key=lambda x: x["created_at"], reverse=True)
+
+    # Apply pagination
+    tasks = tasks[offset:offset + limit]
+
+    return [ProcessingTask(**task) for task in tasks]
+
+@router.get("/tasks/{task_id}", response_model=ProcessingTask)
+async def get_processing_task(
+    task_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get a specific processing task.
+
+    Args:
+        task_id: The ID of the task to get
+        current_user: The authenticated user
+
+    Returns:
+        ProcessingTask: The processing task
+    """
+    if task_id not in processing_tasks:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Task with ID {task_id} not found"
+        )
+
+    return ProcessingTask(**processing_tasks[task_id])
+
+@router.get("/settings", response_model=ProcessingSettings)
+async def get_default_settings(current_user: User = Depends(get_current_user)):
+    """
+    Get default processing settings.
+
+    Args:
+        current_user: The authenticated user
+
+    Returns:
+        ProcessingSettings: Default processing settings
+    """
+    return ProcessingSettings()
+
+@router.get("/results/{task_id}")
+async def get_processing_results(
+    task_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get the results of a processing task.
+
+    Args:
+        task_id: The ID of the task to get results for
+        current_user: The authenticated user
+
+    Returns:
+        Dict: The processing results
+    """
+    if task_id not in processing_tasks:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Task with ID {task_id} not found"
+        )
+
+    task = processing_tasks[task_id]
+
+    if task["status"] != "completed":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Task with ID {task_id} is not completed"
+        )
+
+    if not task.get("result_path") or not os.path.exists(task["result_path"]):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Results for task with ID {task_id} not found"
+        )
+
+    # Read the document structure JSON
+    try:
+        with open(os.path.join(task["result_path"], "document_structure.json"), "r") as f:
+            results = json.load(f)
+
+        return {
+            "task_id": task_id,
+            "file_name": task["file_name"],
+            "processing_time": task.get("processing_time"),
+            "entity_count": task.get("entity_count"),
+            "relation_count": task.get("relation_count"),
+            "results": results
+        }
+    except Exception as e:
+        logger.error(f"Error reading results for task {task_id}: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error reading results: {str(e)}"
+        )

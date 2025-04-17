@@ -168,6 +168,35 @@ const apiService = {
     getBiasAssessmentTools: () => apiCall('get', '/api/medical/ml/bias/tools'),
   },
 
+  // Document processing endpoints
+  documentProcessing: {
+    // Process a single document
+    processSingle: (formData) => apiCall('post', '/api/document-processing/process', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    }),
+
+    // Process multiple documents in batch
+    processBatch: (formData) => apiCall('post', '/api/document-processing/batch', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    }),
+
+    // Get all processing tasks
+    getTasks: (status, limit, offset) => apiCall('get', '/api/document-processing/tasks', { status, limit, offset }),
+
+    // Get a specific processing task
+    getTask: (taskId) => apiCall('get', `/api/document-processing/tasks/${taskId}`),
+
+    // Get processing results
+    getResults: (taskId) => apiCall('get', `/api/document-processing/results/${taskId}`),
+
+    // Get default processing settings
+    getSettings: () => apiCall('get', '/api/document-processing/settings'),
+  },
+
   // Medical clients endpoints
   clients: {
     // Get all clients

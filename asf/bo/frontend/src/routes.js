@@ -2,13 +2,22 @@ import React from 'react';
 import { Navigate } from 'react-router-dom';
 
 // Layout components
-import DashboardLayout from './components/layout/DashboardLayout';
-import AuthLayout from './components/layout/AuthLayout';
+import { Outlet } from 'react-router-dom';
+import PageLayout from './components/Layout/PageLayout';
+import AuthLayout from './components/Layout/AuthLayout';
+
+// Use PageLayout as DashboardLayout since it doesn't exist
+const DashboardLayout = () => (
+  <PageLayout>
+    <Outlet />
+  </PageLayout>
+);
 
 // Pages
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
 import NotFound from './pages/NotFound';
+import DocumentProcessing from './pages/DocumentProcessing';
 
 // Medical client pages
 import NCBIPage from './pages/medical/clients/NCBIPage';
@@ -33,7 +42,7 @@ const routes = [
     children: [
       { path: '', element: <Navigate to="/dashboard" /> },
       { path: 'dashboard', element: <Dashboard /> },
-      
+
       // Medical client routes
       { path: 'medical/clients/ncbi', element: <NCBIPage /> },
       { path: 'medical/clients/umls', element: <UMLSPage /> },
@@ -41,15 +50,18 @@ const routes = [
       { path: 'medical/clients/cochrane', element: <CochranePage /> },
       { path: 'medical/clients/crossref', element: <CrossRefPage /> },
       { path: 'medical/clients/snomed', element: <SNOMEDPage /> },
-      
+
       // LLM routes
       { path: 'llm/dashboard', element: <LLMDashboard /> },
       { path: 'llm/cl-peft', element: <CLPEFTDashboard /> },
-      
+
       // Search routes
       { path: 'search/pico', element: <PICOSearch /> },
       { path: 'search/knowledge-base', element: <KnowledgeBase /> },
-      
+
+      // Document processing route
+      { path: 'document-processing', element: <DocumentProcessing /> },
+
       { path: '404', element: <NotFound /> },
       { path: '*', element: <Navigate to="/404" /> }
     ]

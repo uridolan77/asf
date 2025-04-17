@@ -24,7 +24,8 @@ import {
   Notifications as NotificationsIcon,
   MedicalServices as MedicalServicesIcon,
   NavigateNext as NavigateNextIcon,
-  SmartToy as SmartToyIcon
+  SmartToy as SmartToyIcon,
+  Description as DescriptionIcon
 } from '@mui/icons-material';
 
 // Drawer width
@@ -231,6 +232,13 @@ const PageLayout = ({
                   <BiotechIcon />
                 </ListItemIcon>
                 {drawerOpen && <ListItemText primary="ML Services" />}
+              </ListItem>
+
+              <ListItem button onClick={() => navigate('/document-processing')}>
+                <ListItemIcon>
+                  <DescriptionIcon />
+                </ListItemIcon>
+                {drawerOpen && <ListItemText primary="Document Processing" />}
               </ListItem>
 
               <ListItem button onClick={() => navigate('/clients-management')}>
