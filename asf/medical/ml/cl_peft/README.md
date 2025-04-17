@@ -31,6 +31,20 @@ CL-PEFT combines continual learning techniques with parameter-efficient fine-tun
    - `mask_based.py`: Base mask-based continual learning
    - `mask_based_enhanced.py`: Enhanced mask-based CL with visualization
 
+### Advanced PEFT Methods
+
+- `peft_methods/`: Advanced PEFT methods for continual learning:
+  - `peft_adalora.py`: AdaLoRA with adaptive budget allocation
+  - `peft_ia3.py`: IA³ (Infused Adapter by Inhibiting and Amplifying Inner Activations)
+  - `peft_lisa.py`: LISA (Learning with Integrated Soft Prompts and Adapters)
+
+### Evaluation Framework
+
+- `evaluation/`: Comprehensive evaluation framework:
+  - `eval_forgetting.py`: Metrics for measuring catastrophic forgetting
+  - `eval_transfer.py`: Metrics for measuring transfer learning
+  - `eval_visualization.py`: Visualization tools for analysis
+
 ### Optimizations
 
 - `optimizations.py`: Memory and computation optimizations including:
@@ -71,6 +85,22 @@ Mask-based strategies learn binary masks to activate specific parameters for eac
 
 - **MaskBasedCL**: Basic implementation of mask-based continual learning
 - **EnhancedMaskBasedCL**: Extended implementation with improved initialization, visualization, and analysis
+
+### Advanced PEFT Techniques
+
+Advanced parameter-efficient fine-tuning methods for continual learning:
+
+- **AdaLoRA**: Adaptive budget allocation for LoRA parameters based on importance
+- **IA³**: Infused Adapter by Inhibiting and Amplifying Inner Activations
+- **LISA**: Learning with Integrated Soft Prompts and Adapters
+
+### Evaluation Tools
+
+Comprehensive evaluation framework for continual learning:
+
+- **Forgetting Metrics**: Measures catastrophic forgetting and backward/forward transfer
+- **Transfer Metrics**: Measures task similarity and adapter similarity
+- **Visualization Tools**: Provides visualizations for analysis and interpretation
 
 ## Usage Examples
 
@@ -167,6 +197,73 @@ trainer = get_memory_efficient_trainer(
 )
 ```
 
+### Using Advanced PEFT Methods
+
+```python
+from asf.medical.ml.cl_peft.peft_methods import get_adalora_model, get_ia3_model, get_lisa_model
+
+# Use AdaLoRA for adaptive budget allocation
+model = get_adalora_model(
+    model=base_model,
+    target_modules=["q_proj", "v_proj"],
+    r=8,
+    target_r=4,  # Target rank after adaptation
+    total_step=1000
+)
+
+# Use IA³ for efficient adaptation
+model = get_ia3_model(
+    model=base_model,
+    target_modules=["q_proj", "v_proj"],
+    feedforward_modules=["mlp.dense"],
+    attention_modules=["attention.self"]
+)
+
+# Use LISA for combined soft prompts and adapters
+model = get_lisa_model(
+    model=base_model,
+    tokenizer=tokenizer,
+    target_modules=["q_proj", "v_proj"],
+    prompt_length=20,
+    adapter_type="lora"
+)
+```
+
+### Using Evaluation Framework
+
+```python
+from asf.medical.ml.cl_peft.evaluation import (
+    ForgettingMetrics,
+    TransferMetrics,
+    create_visualization_dashboard
+)
+
+# Create forgetting metrics
+forgetting_metrics = ForgettingMetrics(
+    model=model,
+    task_datasets={
+        "task1": {"train": train_dataset1, "eval": eval_dataset1},
+        "task2": {"train": train_dataset2, "eval": eval_dataset2}
+    },
+    metric_fn=compute_metrics
+)
+
+# Compute metrics after each task
+forgetting_metrics.after_task("task1")
+forgetting_metrics.after_task("task2")
+
+# Get forgetting metrics
+metrics = forgetting_metrics.compute_forgetting()
+print(f"Average forgetting: {metrics['avg_forgetting']}")
+
+# Create visualizations
+visualizations = create_visualization_dashboard(
+    model=model,
+    task_order=["task1", "task2"],
+    model_snapshots=forgetting_metrics.model_snapshots
+)
+```
+
 ## References
 
 1. Kirkpatrick, J., et al. (2017). Overcoming catastrophic forgetting in neural networks. PNAS.
@@ -175,3 +272,6 @@ trainer = get_memory_efficient_trainer(
 4. Hu, E. J., et al. (2021). LoRA: Low-Rank Adaptation of Large Language Models.
 5. Serra, J., et al. (2018). Overcoming catastrophic forgetting with hard attention to the task. ICML.
 6. Shin, H., et al. (2017). Continual learning with deep generative replay. NeurIPS.
+7. Zhang, H., et al. (2023). AdaLoRA: Adaptive Budget Allocation for Parameter-Efficient Fine-Tuning.
+8. Liu, H., et al. (2022). Few-Shot Parameter-Efficient Fine-Tuning is Better and Cheaper than In-Context Learning.
+9. Cheng, Z., et al. (2023). LISA: Layerwise Importance Sampling for Memory-Efficient PEFT.
