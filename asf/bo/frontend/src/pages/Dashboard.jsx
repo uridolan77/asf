@@ -87,18 +87,10 @@ const Dashboard = () => {
         const updatesResponse = await api.get('/api/recent-updates');
         setUpdatesData(updatesResponse.data);
 
-        // Use direct import for apiService instead of relying on context
+        // Try ML services status with direct import
         try {
-          // Import apiService directly
-          const apiServiceModule = await import('../services/api').then(module => module.default);
-
-          // Try ML services status with direct import
-          const mlServicesResponse = await apiServiceModule.ml.getServicesStatus();
-          if (mlServicesResponse.success && mlServicesResponse.data?.services) {
-            setMlServicesData(mlServicesResponse.data.services);
-          } else {
-            throw new Error('Invalid response format');
-          }
+          const mlServicesResponse = await api.get('/api/ml/services/status');
+          setMlServicesData(mlServicesResponse.data.services);
         } catch (mlError) {
           console.warn('Using fallback ML services data:', mlError);
           // Use fallback data when the endpoint fails
@@ -113,13 +105,7 @@ const Dashboard = () => {
         // Fetch LLM usage data
         try {
           const llmUsageResponse = await api.get('/api/llm-usage');
-          if (llmUsageResponse.data) {
-            setLlmUsageData(Array.isArray(llmUsageResponse.data) ?
-              llmUsageResponse.data :
-              llmUsageResponse.data.usage || []);
-          } else {
-            throw new Error('Invalid response format');
-          }
+          setLlmUsageData(llmUsageResponse.data.usage || []);
         } catch (llmError) {
           console.warn('Using fallback LLM usage data:', llmError);
           // Use fallback data when the endpoint fails

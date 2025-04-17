@@ -30,8 +30,9 @@ class MLServicesStatusResponse(BaseModel):
     """Response model for ML services status"""
     services: List[MLServiceStatus]
 
-# Create the router
+# Create two routers - one for each path prefix
 router = APIRouter(prefix="/api/ml", tags=["ml-models"])
+medical_router = APIRouter(prefix="/api/medical/ml", tags=["ml-models"])
 
 # Include the claim extractor API blueprint
 router.include_router(claim_api)
@@ -219,3 +220,119 @@ async def get_ml_services_metrics(current_user: User = Depends(get_current_activ
     except Exception as e:
         logger.error(f"Error getting ML services metrics: {str(e)}")
         raise HTTPException(status_code=500, detail="Error retrieving ML services metrics")
+
+# Duplicated endpoints for the medical router
+@medical_router.get("/services/status", response_model=MLServicesStatusResponse)
+async def get_medical_ml_services_status(current_user: User = Depends(get_current_active_user)):
+    """
+    Get the status of all ML services - alternative path for backward compatibility.
+    
+    This endpoint returns the status of all ML services including 
+    claim extraction, contradiction detection, bias assessment, and more.
+    
+    Args:
+        current_user: The authenticated user
+        
+    Returns:
+        MLServicesStatusResponse: Status of all ML services
+    """
+    return await get_ml_services_status(current_user)
+
+@medical_router.get("/services/metrics")
+async def get_medical_ml_services_metrics(current_user: User = Depends(get_current_active_user)):
+    """
+    Get detailed metrics for all ML services - alternative path for backward compatibility.
+    
+    This endpoint returns detailed performance metrics for all ML services.
+    
+    Args:
+        current_user: The authenticated user
+        
+    Returns:
+        Dict: Detailed metrics for all ML services
+    """
+    return await get_ml_services_metrics(current_user)
+
+# Add contradiction detection endpoints
+@medical_router.post("/contradiction")
+async def detect_contradiction(
+    params: dict,
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Detect contradiction between two medical claims.
+    
+    Args:
+        params: Parameters for contradiction detection
+        current_user: The authenticated user
+        
+    Returns:
+        Dict: Contradiction detection results
+    """
+    try:
+        # Mock response for demonstration
+        return {
+            "success": True,
+            "data": {
+                "analysis_id": "cd-2025-04-17-001",
+                "claim1": params.get("claim1", ""),
+                "claim2": params.get("claim2", ""),
+                "contradiction_score": 0.75,
+                "is_contradiction": True,
+                "explanation": "The claims directly contradict each other on the effectiveness of the treatment.",
+                "model_contributions": {
+                    "BioMedLM": 0.65,
+                    "TSMixer": 0.25,
+                    "Lorentz": 0.10
+                },
+                "temporal_analysis": {
+                    "is_temporal_contradiction": False,
+                    "claim1_temporal_context": "2023 study",
+                    "claim2_temporal_context": "2024 review",
+                    "explanation": "The temporal contexts are different but do not explain the contradiction."
+                }
+            }
+        }
+    except Exception as e:
+        logger.error(f"Error detecting contradiction: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error detecting contradiction")
+
+# Add contradiction batch detection
+@medical_router.post("/contradiction/batch")
+async def detect_contradictions_batch(
+    params: dict,
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Detect contradictions in a batch of medical claims.
+    
+    Args:
+        params: Parameters for batch contradiction detection
+        current_user: The authenticated user
+        
+    Returns:
+        Dict: Batch contradiction detection results
+    """
+    try:
+        # Mock response for demonstration
+        return {
+            "success": True,
+            "data": {
+                "batch_id": "batch-2025-04-17-001",
+                "total_processed": 5,
+                "contradictions_found": 2,
+                "results": [
+                    {
+                        "id": "cd-2025-04-17-001",
+                        "claim1": "Example claim 1",
+                        "claim2": "Example claim 2",
+                        "contradiction_score": 0.75,
+                        "is_contradiction": True
+                    },
+                    # More results would be here
+                ]
+            }
+        }
+    except Exception as e:
+        logger.error(f"Error detecting batch contradictions: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error detecting batch contradictions")

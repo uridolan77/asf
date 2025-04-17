@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Tab, Tabs, Paper, Typography } from '@mui/material';
 import { 
@@ -25,12 +25,20 @@ const MLServices = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const [exportParams, setExportParams] = useState({});
+  const [processingInProgress, setProcessingInProgress] = useState(false);
   
   const navigate = useNavigate();
-  
+
   // Handle tab change
   const handleTabChange = (_, newValue) => {
-    setActiveTab(newValue);
+    // Only allow tab change if no processing is in progress or user confirms
+    if (processingInProgress) {
+      if (window.confirm("Processing is in progress. Changing tabs may interrupt your analysis. Continue?")) {
+        setActiveTab(newValue);
+      }
+    } else {
+      setActiveTab(newValue);
+    }
   };
   
   // Handle export
@@ -41,6 +49,32 @@ const MLServices = () => {
     });
     setExportDialogOpen(true);
   };
+
+  // Handle processing state changes
+  const handleProcessingStateChange = (isProcessing) => {
+    setProcessingInProgress(isProcessing);
+    setLoading(isProcessing); // Update page loading state to show indicator
+  };
+
+  // Handle navigation prompt
+  React.useEffect(() => {
+    // Set up a navigation guard
+    const unblock = navigate((nextLocation) => {
+      if (processingInProgress) {
+        if (window.confirm("Processing is in progress. Navigating away will cancel your analysis. Continue?")) {
+          return true; // Allow navigation
+        } else {
+          return false; // Block navigation
+        }
+      }
+      return true; // Allow navigation if no processing
+    });
+
+    // Cleanup
+    return () => {
+      if (unblock) unblock();
+    };
+  }, [processingInProgress, navigate]);
   
   return (
     <PageLayout
@@ -80,19 +114,31 @@ const MLServices = () => {
 
         <Box role="tabpanel" hidden={activeTab !== 0} id="tabpanel-0" aria-labelledby="tab-0" sx={{ p: 3 }}>
           {activeTab === 0 && (
-            <ContradictionDetection onExport={handleExport} api={api} />
+            <ContradictionDetection 
+              onExport={handleExport} 
+              api={api} 
+              onProcessingStateChange={handleProcessingStateChange}
+            />
           )}
         </Box>
 
         <Box role="tabpanel" hidden={activeTab !== 1} id="tabpanel-1" aria-labelledby="tab-1" sx={{ p: 3 }}>
           {activeTab === 1 && (
-            <TemporalAnalysis onExport={handleExport} api={api} />
+            <TemporalAnalysis 
+              onExport={handleExport} 
+              api={api}
+              onProcessingStateChange={handleProcessingStateChange}
+            />
           )}
         </Box>
 
         <Box role="tabpanel" hidden={activeTab !== 2} id="tabpanel-2" aria-labelledby="tab-2" sx={{ p: 3 }}>
           {activeTab === 2 && (
-            <BiasAssessment onExport={handleExport} api={api} />
+            <BiasAssessment 
+              onExport={handleExport} 
+              api={api}
+              onProcessingStateChange={handleProcessingStateChange}
+            />
           )}
         </Box>
       </Paper>

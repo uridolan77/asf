@@ -47,16 +47,18 @@ class ModelCache:
     Cache for model outputs to avoid redundant processing.
     """
 
-    def __init__(self, cache_dir: str, max_size_mb: int = 1000):
+    def __init__(self, cache_dir: str, max_size_mb: int = 1000, max_entry_size_mb: int = 100):
         """
         Initialize the model cache.
 
         Args:
             cache_dir: Directory for cache files
             max_size_mb: Maximum cache size in MB
+            max_entry_size_mb: Maximum size of a single cache entry in MB
         """
         self.cache_dir = cache_dir
         self.max_size_mb = max_size_mb
+        self.max_entry_size_mb = max_entry_size_mb
         os.makedirs(cache_dir, exist_ok=True)
 
         # Initialize cache database
@@ -75,9 +77,13 @@ class ModelCache:
         )
         ''')
         self.conn.commit()
-
-        # Cleanup if needed
-        self._cleanup_if_needed()
+        
+        # Don't cleanup at initialization - only do it on explicit request
+        # or when adding new items that exceed the limit
+        
+        # Create an executor for background operations
+        self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+        self.pending_tasks = []
 
     def _get_hash(self, text: str, component: str) -> str:
         """Get hash for cache key."""
@@ -94,21 +100,43 @@ class ModelCache:
         if total_size > self.max_size_mb * 1024 * 1024:
             logger.info(f"Cache size {total_size/1024/1024:.2f}MB exceeds limit, cleaning up")
 
-            # Get entries to remove
+            # Get entries to remove - remove more entries at once to avoid frequent cleanups
             self.cursor.execute(
-                "SELECT hash, filename FROM cache_entries ORDER BY timestamp ASC LIMIT 100"
+                "SELECT hash, filename FROM cache_entries ORDER BY timestamp ASC LIMIT 200"
             )
             entries_to_remove = self.cursor.fetchall()
 
             # Remove entries
             for hash_val, filename in entries_to_remove:
                 try:
-                    os.remove(os.path.join(self.cache_dir, filename))
+                    file_path = os.path.join(self.cache_dir, filename)
+                    if os.path.exists(file_path):
+                        os.remove(file_path)
                     self.cursor.execute("DELETE FROM cache_entries WHERE hash = ?", (hash_val,))
                 except Exception as e:
                     logger.warning(f"Error removing cache entry: {str(e)}")
 
             self.conn.commit()
+            logger.info(f"Cleaned up {len(entries_to_remove)} cache entries")
+
+    def cleanup(self, force: bool = False):
+        """
+        Explicitly run cache cleanup.
+        
+        Args:
+            force: If True, force cleanup regardless of current cache size
+        """
+        if force:
+            # Force cleanup by setting a temporary max size of 0
+            original_max_size = self.max_size_mb
+            self.max_size_mb = 0
+            self._cleanup_if_needed()
+            self.max_size_mb = original_max_size
+        else:
+            # Normal cleanup based on current cache size
+            self._cleanup_if_needed()
+            
+        return True
 
     def get(self, text: str, component: str) -> Optional[Any]:
         """
@@ -125,32 +153,48 @@ class ModelCache:
 
         hash_val = self._get_hash(text, component)
 
-        self.cursor.execute(
-            "SELECT filename FROM cache_entries WHERE hash = ?",
-            (hash_val,)
-        )
-        result = self.cursor.fetchone()
+        try:
+            self.cursor.execute(
+                "SELECT filename FROM cache_entries WHERE hash = ?",
+                (hash_val,)
+            )
+            result = self.cursor.fetchone()
 
-        if result:
-            filename = result[0]
-            file_path = os.path.join(self.cache_dir, filename)
+            if result:
+                filename = result[0]
+                file_path = os.path.join(self.cache_dir, filename)
 
-            try:
-                with open(file_path, 'rb') as f:
-                    cached_result = pickle.load(f)
+                try:
+                    if os.path.exists(file_path):
+                        with open(file_path, 'rb') as f:
+                            cached_result = pickle.load(f)
 
-                # Update timestamp
-                self.cursor.execute(
-                    "UPDATE cache_entries SET timestamp = ? WHERE hash = ?",
-                    (time.time(), hash_val)
-                )
-                self.conn.commit()
-
-                return cached_result
-            except Exception as e:
-                logger.warning(f"Error reading cache entry: {str(e)}")
-                return None
-
+                        # Update timestamp in background
+                        def update_timestamp():
+                            try:
+                                conn = sqlite3.connect(self.db_path)
+                                cursor = conn.cursor()
+                                cursor.execute(
+                                    "UPDATE cache_entries SET timestamp = ? WHERE hash = ?",
+                                    (time.time(), hash_val)
+                                )
+                                conn.commit()
+                                conn.close()
+                            except Exception as e:
+                                logger.warning(f"Error updating timestamp: {str(e)}")
+                        
+                        self.executor.submit(update_timestamp)
+                        return cached_result
+                    else:
+                        # File doesn't exist, remove the entry
+                        self.cursor.execute("DELETE FROM cache_entries WHERE hash = ?", (hash_val,))
+                        self.conn.commit()
+                except Exception as e:
+                    logger.warning(f"Error reading cache entry: {str(e)}")
+                    return None
+        except Exception as e:
+            logger.warning(f"Error querying cache: {str(e)}")
+            
         return None
 
     def set(self, text: str, component: str, result: Any) -> None:
@@ -162,36 +206,71 @@ class ModelCache:
             component: Component name
             result: Result to cache
         """
+        # Submit caching operation to background executor to avoid blocking UI
+        future = self.executor.submit(self._set_async, text, component, result)
+        self.pending_tasks.append(future)
+        
+        # Clean up completed tasks
+        self.pending_tasks = [task for task in self.pending_tasks if not task.done()]
+
+    def _set_async(self, text: str, component: str, result: Any) -> None:
+        """Asynchronous implementation of cache set operation."""
         import pickle
+        import tempfile
 
         hash_val = self._get_hash(text, component)
         filename = f"{hash_val}.pkl"
         file_path = os.path.join(self.cache_dir, filename)
 
         try:
-            # Save result to file
-            with open(file_path, 'wb') as f:
-                pickle.dump(result, f)
+            # First save to a temporary file to check the size
+            with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+                pickle.dump(result, temp_file)
+                temp_path = temp_file.name
+            
+            # Check file size
+            size_bytes = os.path.getsize(temp_path)
+            max_entry_bytes = self.max_entry_size_mb * 1024 * 1024
+            
+            if size_bytes > max_entry_bytes:
+                logger.warning(f"Cache entry too large ({size_bytes/1024/1024:.2f}MB > {self.max_entry_size_mb}MB), skipping")
+                os.unlink(temp_path)
+                return
+                
+            # If size is acceptable, move to final location
+            import shutil
+            shutil.move(temp_path, file_path)
 
-            # Get file size
-            size_bytes = os.path.getsize(file_path)
-
+            # Run a connection in this thread to avoid locking the main connection
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
             # Update cache database
-            self.cursor.execute(
+            cursor.execute(
                 "INSERT OR REPLACE INTO cache_entries VALUES (?, ?, ?, ?, ?)",
                 (hash_val, component, time.time(), size_bytes, filename)
             )
-            self.conn.commit()
+            conn.commit()
+            conn.close()
 
-            # Cleanup if needed
+            # Cleanup in background if needed
             self._cleanup_if_needed()
         except Exception as e:
             logger.warning(f"Error caching result: {str(e)}")
+            # Clean up temp file if it exists
+            if 'temp_path' in locals() and os.path.exists(temp_path):
+                try:
+                    os.unlink(temp_path)
+                except:
+                    pass
 
     def close(self):
-        """Close database connection."""
+        """Close database connection and executor."""
         if self.conn:
             self.conn.close()
+            
+        # Shutdown executor after completing pending tasks
+        self.executor.shutdown(wait=True)
 
 class MedicalResearchSynthesizer:
     """
@@ -225,64 +304,60 @@ class MedicalResearchSynthesizer:
             cache_dir: Directory for cache files
             cache_size_mb: Maximum cache size in MB
         """
-        self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
-        logger.info(f"Initializing Medical Research Synthesizer on {self.device}")
-
-        # Initialize cache if requested
+        # Set device
+        self.device = device or ('cuda' if torch.cuda.is_available() else 'cpu')
+        logger.info(f"Using device: {self.device}")
+        
+        # Initialize cache if needed
         self.use_cache = use_cache
         if use_cache:
-            try:
-                self.cache = ModelCache(
-                    cache_dir=os.path.join(os.path.dirname(__file__), cache_dir),
-                    max_size_mb=cache_size_mb
-                )
-                logger.info(f"Model cache initialized in {cache_dir} with {cache_size_mb}MB limit")
-            except Exception as e:
-                logger.warning(f"Failed to initialize model cache: {str(e)}")
-                self.use_cache = False
+            self.cache = ModelCache(cache_dir=cache_dir, max_size_mb=cache_size_mb)
+            logger.info(f"Model cache initialized at {cache_dir} with max size {cache_size_mb} MB")
         else:
             self.cache = None
-
+            logger.info("Model caching disabled")
+            
         # Initialize document processor
         doc_args = document_processor_args or {}
-        self.document_processor = BiomedicalDocumentProcessor(
-            device=self.device, **doc_args
-        )
-
+        self.document_processor = BiomedicalDocumentProcessor(**doc_args)
+        logger.info("Document processor initialized")
+        
         # Initialize entity extractor
-        entity_args = entity_extractor_args or {}
-
-        # Use GLiNER-biomed if specified, otherwise use traditional BiomedicalEntityExtractor
-        use_gliner = entity_args.pop('use_gliner', True)
+        ent_args = entity_extractor_args or {}
+        
+        # Use GLiNER if specified, otherwise use traditional BiomedicalEntityExtractor
+        use_gliner = ent_args.pop('use_gliner', True)
         if use_gliner:
             try:
                 self.entity_extractor = GLiNERBiomedExtractor(
-                    device=self.device,
-                    **entity_args
+                    device=self.device, **ent_args
                 )
-                logger.info("Using GLiNER-biomed for entity extraction")
+                logger.info("Using GLiNER biomedical entity extractor")
             except Exception as e:
-                logger.warning(f"Failed to initialize GLiNER-biomed: {str(e)}")
+                logger.warning(f"Failed to initialize GLiNER: {str(e)}")
                 logger.info("Falling back to traditional BiomedicalEntityExtractor")
-                self.entity_extractor = BiomedicalEntityExtractor(**entity_args)
+                self.entity_extractor = BiomedicalEntityExtractor(
+                    device=self.device, **ent_args
+                )
         else:
-            self.entity_extractor = BiomedicalEntityExtractor(**entity_args)
+            self.entity_extractor = BiomedicalEntityExtractor(
+                device=self.device, **ent_args
+            )
             logger.info("Using traditional BiomedicalEntityExtractor")
-
+            
         # Initialize relation extractor
         rel_args = relation_extractor_args or {}
-
-        # Use HGT relation extractor if specified, otherwise use traditional MedicalRelationExtractor
+        
+        # Use HGT if specified, otherwise use traditional MedicalRelationExtractor
         use_hgt = rel_args.pop('use_hgt', True)
         if use_hgt:
             try:
                 self.relation_extractor = HGTRelationExtractor(
-                    device=self.device,
-                    **rel_args
+                    device=self.device, **rel_args
                 )
-                logger.info("Using HGT for relation extraction")
+                logger.info("Using HGT relation extractor")
             except Exception as e:
-                logger.warning(f"Failed to initialize HGT relation extractor: {str(e)}")
+                logger.warning(f"Failed to initialize HGT: {str(e)}")
                 logger.info("Falling back to traditional MedicalRelationExtractor")
                 self.relation_extractor = MedicalRelationExtractor(
                     device=self.device, **rel_args

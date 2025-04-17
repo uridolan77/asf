@@ -54,14 +54,21 @@ api.interceptors.response.use(
 
 /**
  * Wrapper for API calls with consistent error handling
+ * @param {string} method - HTTP method (get, post, put, delete)
+ * @param {string} url - API endpoint URL
+ * @param {object} data - Request data or query parameters
+ * @param {object} options - Additional axios options
+ * @param {AbortSignal} [signal] - AbortController signal for cancellation
+ * @returns {object} - Response object with success flag and data/error
  */
-export const apiCall = async (method, url, data = null, options = {}) => {
+export const apiCall = async (method, url, data = null, options = {}, signal = null) => {
   try {
     const response = await api({
       method,
       url,
       data: method !== 'get' ? data : null,
       params: method === 'get' ? data : null,
+      signal: signal, // Pass the AbortController signal
       ...options,
     });
 
@@ -71,6 +78,17 @@ export const apiCall = async (method, url, data = null, options = {}) => {
       status: response.status,
     };
   } catch (error) {
+    // Check if the request was cancelled
+    if (error.name === 'CanceledError' || error.name === 'AbortError') {
+      console.log('Request was cancelled', { method, url });
+      return {
+        success: false,
+        error: 'Request was cancelled',
+        status: 'cancelled',
+        isCancelled: true,
+      };
+    }
+
     // Check if it's an auth error and handle navigation in the component
     const isAuthError = error.response && (error.response.status === 401 || error.response.status === 403);
 
@@ -129,43 +147,119 @@ const apiService = {
 
   // ML service endpoints
   ml: {
-    // Get ML services status - try both possible endpoints
+    // Get ML services status with better error handling and fallbacks
     getServicesStatus: async () => {
-      // First try the medical API endpoint
-      const medicalResponse = await apiCall('get', '/api/ml/services/status');
-      if (medicalResponse.success) {
-        return medicalResponse;
+      try {
+        // First try the ML API endpoint
+        const mlResponse = await apiCall('get', '/api/ml/services/status');
+        if (mlResponse.success) {
+          return mlResponse;
+        }
+        
+        // If that fails, try the medical ML endpoint
+        const medicalMlResponse = await apiCall('get', '/api/medical/ml/services/status');
+        if (medicalMlResponse.success) {
+          return medicalMlResponse;
+        }
+        
+        // If both fail, return a default response to prevent UI from getting stuck
+        console.warn("Both ML service status endpoints failed, returning default response");
+        return {
+          success: true,
+          data: {
+            services: [
+              {
+                name: "Contradiction Detector",
+                status: "unknown",
+                version: "unknown",
+                description: "Service status could not be determined",
+                last_updated: new Date().toISOString().split('T')[0],
+                health: "unknown"
+              }
+            ]
+          }
+        };
+      } catch (error) {
+        // Return a default response even if everything fails
+        console.error("Error fetching ML services status:", error);
+        return {
+          success: true,
+          data: {
+            services: [
+              {
+                name: "ML Services",
+                status: "error",
+                version: "unknown",
+                description: "Failed to connect to ML services",
+                last_updated: new Date().toISOString().split('T')[0],
+                health: "error"
+              }
+            ]
+          }
+        };
       }
-
-      // If that fails, try the BO backend endpoint
-      const boResponse = await apiCall('get', '/api/medical/ml/services/status');
-      return boResponse;
     },
 
-    // Get ML services metrics
+    // Get ML services metrics with better error handling and fallbacks
     getServicesMetrics: async () => {
-      // First try the medical API endpoint
-      const medicalResponse = await apiCall('get', '/api/ml/services/metrics');
-      if (medicalResponse.success) {
-        return medicalResponse;
+      try {
+        // First try the ML API endpoint
+        const mlResponse = await apiCall('get', '/api/ml/services/metrics');
+        if (mlResponse.success) {
+          return mlResponse;
+        }
+        
+        // If that fails, try the medical ML endpoint
+        const medicalMlResponse = await apiCall('get', '/api/medical/ml/services/metrics');
+        if (medicalMlResponse.success) {
+          return medicalMlResponse;
+        }
+        
+        // If both fail, return a default response to prevent UI from getting stuck
+        console.warn("Both ML service metrics endpoints failed, returning default response");
+        return {
+          success: true,
+          data: {
+            status: "unavailable",
+            period: "current",
+            services: {}
+          }
+        };
+      } catch (error) {
+        // Return a default response even if everything fails
+        console.error("Error fetching ML services metrics:", error);
+        return {
+          success: true,
+          data: {
+            status: "error",
+            period: "unavailable",
+            services: {}
+          }
+        };
       }
-
-      // If that fails, try the BO backend endpoint
-      const boResponse = await apiCall('get', '/api/medical/ml/services/metrics');
-      return boResponse;
     },
 
-    // Contradiction detection
-    detectContradiction: (params) => apiCall('post', '/api/medical/ml/contradiction', params),
-    detectContradictionsBatch: (params) => apiCall('post', '/api/medical/ml/contradiction/batch', params),
+    // Contradiction detection with signal support for cancellation
+    detectContradiction: (params, signal = null) => 
+      apiCall('post', '/api/medical/ml/contradiction', params, {}, signal),
+    
+    // Batch contradiction detection with signal support
+    detectContradictionsBatch: (params, signal = null) => 
+      apiCall('post', '/api/medical/ml/contradiction/batch', params, {}, signal),
 
-    // Temporal analysis
-    calculateTemporalConfidence: (params) => apiCall('post', '/api/medical/ml/temporal/confidence', params),
-    detectTemporalContradiction: (params) => apiCall('post', '/api/medical/ml/temporal/contradiction', params),
+    // Temporal analysis with signal support
+    calculateTemporalConfidence: (params, signal = null) => 
+      apiCall('post', '/api/medical/ml/temporal/confidence', params, {}, signal),
+    
+    detectTemporalContradiction: (params, signal = null) => 
+      apiCall('post', '/api/medical/ml/temporal/contradiction', params, {}, signal),
 
-    // Bias assessment
-    assessBias: (params) => apiCall('post', '/api/medical/ml/bias/assess', params),
-    getBiasAssessmentTools: () => apiCall('get', '/api/medical/ml/bias/tools'),
+    // Bias assessment with signal support
+    assessBias: (params, signal = null) => 
+      apiCall('post', '/api/medical/ml/bias/assess', params, {}, signal),
+    
+    getBiasAssessmentTools: () => 
+      apiCall('get', '/api/medical/ml/bias/tools'),
   },
 
   // Document processing endpoints

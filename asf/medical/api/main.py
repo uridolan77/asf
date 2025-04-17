@@ -340,6 +340,7 @@ app.include_router(static_router)
 
 # Register the ML endpoints and LLM management routers with the app
 app.include_router(ml_endpoints.router)
+app.include_router(ml_endpoints.medical_router)  # Register the new medical ML router
 app.include_router(llm_management_router, tags=["llm-management"])
 
 @app.get("/", tags=["status"])

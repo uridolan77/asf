@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box, Paper, Typography, TextField, Button, Grid, Chip,
   FormControlLabel, Switch, Slider, Divider, CircularProgress,
@@ -27,9 +27,9 @@ import { FadeIn, StaggeredList, HoverAnimation } from '../UI/Animations.js';
  * This component allows users to detect contradictions between two medical claims
  * using various ML models.
  */
-const ContradictionDetection = ({ onExport, apiService }) => {
+const ContradictionDetection = ({ onExport, api, onProcessingStateChange }) => {
   // Use provided apiService or fall back to the default
-  const api = apiService || defaultApiService;
+  const apiService = api || defaultApiService;
   const { showSuccess, showError } = useNotification();
 
   // Form state
@@ -45,8 +45,28 @@ const ContradictionDetection = ({ onExport, apiService }) => {
 
   // UI state
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
+  const [abortController, setAbortController] = useState(null);
+
+  // Mark component as initialized after mount
+  useEffect(() => {
+    setIsInitialized(true);
+    return () => {
+      // Abort any in-progress requests when component unmounts
+      if (abortController) {
+        abortController.abort();
+      }
+    };
+  }, []);
+
+  // Update parent component when processing state changes
+  useEffect(() => {
+    if (onProcessingStateChange) {
+      onProcessingStateChange(isAnalyzing);
+    }
+  }, [isAnalyzing, onProcessingStateChange]);
 
   // Handle form submission
   const handleSubmit = async (e) => {
@@ -61,6 +81,10 @@ const ContradictionDetection = ({ onExport, apiService }) => {
     setIsAnalyzing(true);
     setError('');
 
+    // Create a new AbortController for this request
+    const controller = new AbortController();
+    setAbortController(controller);
+
     try {
       const params = {
         claim1: claim1.trim(),
@@ -74,7 +98,8 @@ const ContradictionDetection = ({ onExport, apiService }) => {
         domain: domain.trim() || null
       };
 
-      const result = await api.ml.detectContradiction(params);
+      // Pass the signal to the API call
+      const result = await apiService.ml.detectContradiction(params, controller.signal);
 
       if (result.success) {
         setResult(result.data);
@@ -84,11 +109,25 @@ const ContradictionDetection = ({ onExport, apiService }) => {
         showError(`Analysis failed: ${result.error}`);
       }
     } catch (error) {
-      console.error('Error detecting contradiction:', error);
-      setError(`Analysis error: ${error.message}`);
-      showError(`Analysis error: ${error.message}`);
+      // Don't show errors for aborted requests
+      if (error.name !== 'AbortError') {
+        console.error('Error detecting contradiction:', error);
+        setError(`Analysis error: ${error.message}`);
+        showError(`Analysis error: ${error.message}`);
+      }
     } finally {
       setIsAnalyzing(false);
+      setAbortController(null);
+    }
+  };
+
+  // Cancel ongoing analysis
+  const handleCancel = () => {
+    if (abortController) {
+      abortController.abort();
+      setIsAnalyzing(false);
+      setAbortController(null);
+      showSuccess('Analysis canceled');
     }
   };
 
@@ -303,6 +342,16 @@ const ContradictionDetection = ({ onExport, apiService }) => {
                 >
                   Clear
                 </Button>
+
+                {isAnalyzing && (
+                  <Button
+                    variant="outlined"
+                    color="secondary"
+                    onClick={handleCancel}
+                  >
+                    Cancel
+                  </Button>
+                )}
               </Box>
             </Grid>
           </Grid>

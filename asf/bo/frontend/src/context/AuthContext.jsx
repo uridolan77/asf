@@ -105,10 +105,7 @@ export const AuthProvider = ({ children }) => {
   const login = useCallback(async (credentials) => {
     try {
       setLoading(true);
-      console.log('Login credentials:', credentials);
-      console.log('API URL:', `${API_URL}/api/login`);
 
-      // Use axios for login
       const response = await axios.post(`${API_URL}/api/login`,
         new URLSearchParams(credentials).toString(),
         {
@@ -119,20 +116,15 @@ export const AuthProvider = ({ children }) => {
         }
       );
 
-      console.log('Login response:', response);
-
       const { access_token } = response.data;
-
       localStorage.setItem('token', access_token);
 
       // Fetch user data
       try {
         const userResponse = await axios.get(`${API_URL}/api/me`, {
           headers: { Authorization: `Bearer ${access_token}` },
-          withCredentials: true, // Enable credentials for CORS
+          withCredentials: true,
         });
-
-        console.log('User data response:', userResponse);
         setUser(userResponse.data);
       } catch (userError) {
         console.warn('Could not fetch user data:', userError);
@@ -141,7 +133,6 @@ export const AuthProvider = ({ children }) => {
 
       setIsAuthenticated(true);
       showSuccess('Successfully logged in');
-
       navigate('/dashboard');
       return true;
     } catch (error) {

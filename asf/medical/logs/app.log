@@ -22999,3 +22999,104 @@ WHERE users.id = %(id_1)s
  LIMIT %(param_1)s
 2025-04-17 15:31:44,808 - sqlalchemy.engine.Engine - INFO - [cached since 619.3s ago] {'id_1': 1, 'param_1': 1}
 2025-04-17 15:31:44,816 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 15:39:12,929 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 15:39:12,930 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 15:39:12,930 - sqlalchemy.engine.Engine - INFO - [cached since 1067s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 15:39:12,941 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 15:39:12,946 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 15:39:12,948 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 15:39:12,950 - sqlalchemy.engine.Engine - INFO - [cached since 1067s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 15:39:12,956 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 15:39:32,679 - root - INFO - Logging configured with level: INFO
+2025-04-17 15:39:33,474 - root - INFO - Logging configured with level: INFO
+2025-04-17 15:39:33,476 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 15:39:33,587 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 15:39:37,144 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 15:39:37,328 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 15:39:37,330 - root - INFO - Using LLM Gateway implementation
+2025-04-17 15:41:39,522 - root - INFO - Logging configured with level: INFO
+2025-04-17 15:41:40,218 - root - INFO - Logging configured with level: INFO
+2025-04-17 15:41:40,219 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 15:41:40,329 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 15:41:43,586 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 15:41:43,766 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 15:41:43,770 - root - INFO - Using LLM Gateway implementation
+2025-04-17 15:41:57,309 - passlib.handlers.bcrypt - WARNING - (trapped) error reading bcrypt version
+Traceback (most recent call last):
+  File "C:\Users\urido\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\passlib\handlers\bcrypt.py", line 620, in _load_backend_mixin
+    version = _bcrypt.__about__.__version__
+              ^^^^^^^^^^^^^^^^^
+AttributeError: module 'bcrypt' has no attribute '__about__'
+2025-04-17 15:42:18,238 - sqlalchemy.engine.Engine - INFO - SELECT DATABASE()
+2025-04-17 15:42:18,238 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-17 15:42:18,239 - sqlalchemy.engine.Engine - INFO - SELECT @@sql_mode
+2025-04-17 15:42:18,239 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-17 15:42:18,240 - sqlalchemy.engine.Engine - INFO - SELECT @@lower_case_table_names
+2025-04-17 15:42:18,240 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-17 15:42:18,240 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 15:42:18,242 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 15:42:18,242 - sqlalchemy.engine.Engine - INFO - [generated in 0.00033s] {'id_1': 1, 'param_1': 1}
+2025-04-17 15:42:18,245 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 15:42:18,251 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 15:42:18,252 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 15:42:18,253 - sqlalchemy.engine.Engine - INFO - [cached since 0.01137s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 15:42:18,264 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 15:57:48,752 - root - INFO - Logging configured with level: INFO
+2025-04-17 15:57:49,472 - root - INFO - Logging configured with level: INFO
+2025-04-17 15:57:49,474 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 15:57:49,585 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 15:57:52,976 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 15:57:53,165 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 15:57:53,168 - root - INFO - Using LLM Gateway implementation
+2025-04-17 15:58:17,360 - passlib.handlers.bcrypt - WARNING - (trapped) error reading bcrypt version
+Traceback (most recent call last):
+  File "C:\Users\urido\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\passlib\handlers\bcrypt.py", line 620, in _load_backend_mixin
+    version = _bcrypt.__about__.__version__
+              ^^^^^^^^^^^^^^^^^
+AttributeError: module 'bcrypt' has no attribute '__about__'
+2025-04-17 16:04:43,027 - sqlalchemy.engine.Engine - INFO - SELECT DATABASE()
+2025-04-17 16:04:43,028 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-17 16:04:43,028 - sqlalchemy.engine.Engine - INFO - SELECT @@sql_mode
+2025-04-17 16:04:43,029 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-17 16:04:43,029 - sqlalchemy.engine.Engine - INFO - SELECT @@lower_case_table_names
+2025-04-17 16:04:43,029 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-17 16:04:43,030 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 16:04:43,031 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 16:04:43,032 - sqlalchemy.engine.Engine - INFO - [generated in 0.00042s] {'id_1': 1, 'param_1': 1}
+2025-04-17 16:04:43,036 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 16:04:43,038 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 16:04:43,039 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 16:04:43,039 - sqlalchemy.engine.Engine - INFO - [cached since 0.007612s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 16:04:43,044 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 16:37:58,864 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 16:37:58,864 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 16:37:58,865 - sqlalchemy.engine.Engine - INFO - [cached since 1996s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 16:37:58,868 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 16:37:58,870 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 16:37:58,870 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 16:37:58,870 - sqlalchemy.engine.Engine - INFO - [cached since 1996s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 16:37:58,873 - sqlalchemy.engine.Engine - INFO - ROLLBACK

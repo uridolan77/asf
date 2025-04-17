@@ -1,5 +1,5 @@
 // frontend/src/App.jsx
-import React, { useState, useEffect, Suspense, lazy } from 'react';
+import React, { useState, useEffect, Suspense, lazy, useRef } from 'react';
 import { BrowserRouter as Router, Route, Routes, useLocation, Navigate } from 'react-router-dom';
 import { ThemeProvider, CssBaseline, CircularProgress } from '@mui/material';
 import { NotificationProvider } from './context/NotificationContext.jsx';
@@ -29,8 +29,16 @@ const DocumentProcessing = lazy(() => import('./pages/DocumentProcessing'));
 // Loading fallback component
 const LoadingFallback = () => {
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-      <CircularProgress />
+    <div style={{ 
+      display: 'flex', 
+      justifyContent: 'center', 
+      alignItems: 'center', 
+      height: '100vh',
+      flexDirection: 'column',
+      backgroundColor: '#f5f5f5' 
+    }}>
+      <CircularProgress size={40} />
+      <div style={{ marginTop: 16 }}>Loading page...</div>
     </div>
   );
 };
@@ -38,37 +46,29 @@ const LoadingFallback = () => {
 // Protected route component
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
-
-  if (loading) {
-    return <LoadingFallback />;
-  }
-
-  return isAuthenticated ? children : <Navigate to="/" />;
-};
-
-// Animated route change component
-const AnimatedRoutes = () => {
-  const location = useLocation();
-  const [isLoading, setIsLoading] = useState(false);
-
-  // Simulate loading on route change
+  const [showLoader, setShowLoader] = useState(true);
+  
+  // Use a delayed loader to prevent flickering
   useEffect(() => {
-    setIsLoading(true);
+    // Only show loader if still loading after 300ms
     const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 500);
-
+      setShowLoader(loading);
+    }, 300);
+    
+    // If not loading anymore, immediately hide loader
+    if (!loading) {
+      setShowLoader(false);
+    }
+    
     return () => clearTimeout(timer);
-  }, [location]);
+  }, [loading]);
 
-  return (
-    <>
-      <TopProgressBar loading={isLoading} />
-      <PageTransition key={location.pathname}>
-        <Suspense fallback={<LoadingFallback />}>
-          <Routes>
-            <Route path="/" element={<Login />} />
-            <Route path="/register" element={<Register />} />
+  // Keep showing children if already authenticated, even while revalidating
+  if (isAuthenticated) {
+    return children;
+  }
+  
+  // Only show loading state if still loading after delay
 
             {/* Protected Routes */}
             <Route path="/dashboard" element={
