@@ -1,9 +1,0 @@
-# OpenAI Complete Documentation
-
-Generated on: 2025-04-17 04:46:02
-
-## Table of Contents
-
-
----
-

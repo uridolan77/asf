@@ -24,6 +24,7 @@ const MLServices = lazy(() => import('./pages/MLServices'));
 const ClientsManagement = lazy(() => import('./pages/ClientsManagement'));
 const NCBIClientPage = lazy(() => import('./pages/NCBIClientPage'));
 const LLMManagement = lazy(() => import('./pages/LLMManagement'));
+const DSPyDashboard = lazy(() => import('./pages/DSPyDashboard'));
 
 // Loading fallback component
 const LoadingFallback: React.FC = () => (
@@ -125,6 +126,11 @@ const AnimatedRoutes: React.FC = () => {
             <Route path="/llm-management" element={
               <ProtectedRoute>
                 <LLMManagement />
+              </ProtectedRoute>
+            } />
+            <Route path="/dspy-dashboard" element={
+              <ProtectedRoute>
+                <DSPyDashboard />
               </ProtectedRoute>
             } />
 

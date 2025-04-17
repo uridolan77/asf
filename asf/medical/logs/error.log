@@ -948,3 +948,87 @@ Traceback (most recent call last):
   File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 117, in get_provider
     raise ProviderFactoryError(f"Failed to get provider '{provider_id}': {e}") from e
 asf.medical.llm_gateway.core.factory.ProviderFactoryError: Failed to get provider 'biomedlm_local': Unknown provider type 'biomedlm' for ID 'biomedlm_local'. Registered: ['openai', 'anthropic', 'mcp', 'mock']
+2025-04-18 00:07:33,870 - asf.medical.llm_gateway.providers.openai_client - ERROR - C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py:189 - Failed to initialize OpenAI SDK client for provider openai_gpt4_default: 'OpenAIClient' object has no attribute '_connection_params'
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py", line 158, in __init__
+    api_key = self._connection_params.get("api_key")
+              ^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'OpenAIClient' object has no attribute '_connection_params'
+2025-04-18 00:07:33,871 - asf.medical.llm_gateway.core.factory - ERROR - C:\code\asf\asf\medical\llm_gateway\core\factory.py:150 - Instantiation error for provider 'openai_gpt4_default': OpenAI SDK client initialization failed: 'OpenAIClient' object has no attribute '_connection_params'
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py", line 158, in __init__
+    api_key = self._connection_params.get("api_key")
+              ^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'OpenAIClient' object has no attribute '_connection_params'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 142, in _create_provider_sync
+    provider_instance = provider_class(
+                        ^^^^^^^^^^^^^^^
+  File "C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py", line 190, in __init__
+    raise ConnectionError(f"OpenAI SDK client initialization failed: {e}") from e
+ConnectionError: OpenAI SDK client initialization failed: 'OpenAIClient' object has no attribute '_connection_params'
+2025-04-18 00:07:33,872 - asf.medical.llm_gateway.core.factory - ERROR - C:\code\asf\asf\medical\llm_gateway\core\factory.py:113 - Failed to create or initialize provider 'openai_gpt4_default': Instantiation failed for 'openai_gpt4_default': OpenAI SDK client initialization failed: 'OpenAIClient' object has no attribute '_connection_params'
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py", line 158, in __init__
+    api_key = self._connection_params.get("api_key")
+              ^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'OpenAIClient' object has no attribute '_connection_params'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 142, in _create_provider_sync
+    provider_instance = provider_class(
+                        ^^^^^^^^^^^^^^^
+  File "C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py", line 190, in __init__
+    raise ConnectionError(f"OpenAI SDK client initialization failed: {e}") from e
+ConnectionError: OpenAI SDK client initialization failed: 'OpenAIClient' object has no attribute '_connection_params'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 99, in get_provider
+    instance = self._create_provider_sync( # Keep instantiation sync
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 151, in _create_provider_sync
+    raise ProviderFactoryError(f"Instantiation failed for '{provider_id}': {e}") from e
+asf.medical.llm_gateway.core.factory.ProviderFactoryError: Instantiation failed for 'openai_gpt4_default': OpenAI SDK client initialization failed: 'OpenAIClient' object has no attribute '_connection_params'
+2025-04-18 00:07:33,874 - asf.medical.llm_gateway.core.manager - ERROR - C:\code\asf\asf\medical\llm_gateway\core\manager.py:141 - Error during intervention manager processing for 59d6ef4a-1c41-4b7a-a113-7029749c12f5: Failed to get provider 'openai_gpt4_default': Instantiation failed for 'openai_gpt4_default': OpenAI SDK client initialization failed: 'OpenAIClient' object has no attribute '_connection_params'
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py", line 158, in __init__
+    api_key = self._connection_params.get("api_key")
+              ^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'OpenAIClient' object has no attribute '_connection_params'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 142, in _create_provider_sync
+    provider_instance = provider_class(
+                        ^^^^^^^^^^^^^^^
+  File "C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py", line 190, in __init__
+    raise ConnectionError(f"OpenAI SDK client initialization failed: {e}") from e
+ConnectionError: OpenAI SDK client initialization failed: 'OpenAIClient' object has no attribute '_connection_params'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 99, in get_provider
+    instance = self._create_provider_sync( # Keep instantiation sync
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 151, in _create_provider_sync
+    raise ProviderFactoryError(f"Instantiation failed for '{provider_id}': {e}") from e
+asf.medical.llm_gateway.core.factory.ProviderFactoryError: Instantiation failed for 'openai_gpt4_default': OpenAI SDK client initialization failed: 'OpenAIClient' object has no attribute '_connection_params'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\core\manager.py", line 121, in process_request
+    provider = await self.provider_factory.get_provider(provider_id, provider_conf, self.gateway_config)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 117, in get_provider
+    raise ProviderFactoryError(f"Failed to get provider '{provider_id}': {e}") from e
+asf.medical.llm_gateway.core.factory.ProviderFactoryError: Failed to get provider 'openai_gpt4_default': Instantiation failed for 'openai_gpt4_default': OpenAI SDK client initialization failed: 'OpenAIClient' object has no attribute '_connection_params'
