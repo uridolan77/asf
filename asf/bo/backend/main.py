@@ -20,6 +20,7 @@ from api.knowledge_base import router as knowledge_base_router
 from api.analysis import router as analysis_router
 from api.export import router as export_router
 from api.ml import router as ml_router
+from api.ml_router import router as ml_services_router
 from api.clients import router as clients_router
 from api.routers.llm import llm_router
 from api.endpoints import router as endpoints_router
@@ -43,6 +44,7 @@ app.include_router(knowledge_base_router)
 app.include_router(analysis_router)
 app.include_router(export_router)
 app.include_router(ml_router)
+app.include_router(ml_services_router)  # Add the new ML services router
 app.include_router(clients_router)
 app.include_router(llm_router)
 app.include_router(endpoints_router, prefix="/api", tags=["Authentication"])

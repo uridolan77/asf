@@ -61,7 +61,7 @@ const MLServices = () => {
     error: userError,
     execute: fetchUser
   } = useApi(apiService.auth.me, {
-    params: { loadOnMount: true },
+    loadOnMount: true, // Moved loadOnMount to top level instead of inside params
     onSuccess: (data) => {
       setUser(data);
       setLoading(false);

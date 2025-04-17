@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Tab, Tabs, Paper, Typography } from '@mui/material';
+import { Box, Tab, Tabs, Paper, Typography, Alert } from '@mui/material';
 import { 
   Compare as CompareIcon,
   AccessTime as AccessTimeIcon,
@@ -26,8 +26,58 @@ const MLServices = () => {
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const [exportParams, setExportParams] = useState({});
   const [processingInProgress, setProcessingInProgress] = useState(false);
+  const [apiServiceError, setApiServiceError] = useState(false);
+  
+  // Track mounted state to prevent state updates after unmount
+  const isMounted = useRef(true);
   
   const navigate = useNavigate();
+
+  // Handle component mount/unmount
+  useEffect(() => {
+    // Component mounted
+    isMounted.current = true;
+    
+    // Create an interceptor to prevent continuous API calls
+    const originalRequest = api?.interceptors?.request?.use || null;
+    let requestInterceptor = null;
+    let mlServicesCalls = 0;
+    
+    if (originalRequest) {
+      requestInterceptor = api.interceptors.request.use(
+        (config) => {
+          // Check if this is an ML services status or metrics call
+          if (config.url?.includes('/ml/services/') || config.url?.includes('/medical/ml/services/')) {
+            mlServicesCalls++;
+            
+            // If we're seeing too many consecutive ML service calls, block them
+            if (mlServicesCalls > 5) {
+              setApiServiceError(true);
+              // Cancel the request
+              const error = new Error('Too many consecutive ML service calls - request cancelled to prevent infinite loop');
+              error.name = 'CanceledError';
+              return Promise.reject(error);
+            }
+          } else {
+            // Reset counter for non-ML service calls
+            mlServicesCalls = 0;
+          }
+          return config;
+        },
+        (error) => {
+          return Promise.reject(error);
+        }
+      );
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      isMounted.current = false;
+      if (requestInterceptor !== null && api?.interceptors?.request) {
+        api.interceptors.request.eject(requestInterceptor);
+      }
+    };
+  }, [api]);
 
   // Handle tab change
   const handleTabChange = (_, newValue) => {
@@ -52,8 +102,10 @@ const MLServices = () => {
 
   // Handle processing state changes
   const handleProcessingStateChange = (isProcessing) => {
-    setProcessingInProgress(isProcessing);
-    setLoading(isProcessing); // Update page loading state to show indicator
+    if (isMounted.current) {
+      setProcessingInProgress(isProcessing);
+      setLoading(isProcessing); // Update page loading state to show indicator
+    }
   };
 
   // Handle navigation prompt
@@ -76,6 +128,38 @@ const MLServices = () => {
     };
   }, [processingInProgress, navigate]);
   
+  // Function to render the active tab content
+  const renderActiveTabContent = () => {
+    switch (activeTab) {
+      case 0:
+        return (
+          <ContradictionDetection 
+            onExport={handleExport} 
+            api={api} 
+            onProcessingStateChange={handleProcessingStateChange}
+          />
+        );
+      case 1:
+        return (
+          <TemporalAnalysis 
+            onExport={handleExport} 
+            api={api}
+            onProcessingStateChange={handleProcessingStateChange}
+          />
+        );
+      case 2:
+        return (
+          <BiasAssessment 
+            onExport={handleExport} 
+            api={api}
+            onProcessingStateChange={handleProcessingStateChange}
+          />
+        );
+      default:
+        return null;
+    }
+  };
+  
   return (
     <PageLayout
       title="Machine Learning Services"
@@ -83,6 +167,17 @@ const MLServices = () => {
       loading={loading}
       user={user}
     >
+      {apiServiceError && (
+        <Alert 
+          severity="warning" 
+          sx={{ mb: 3 }}
+          onClose={() => setApiServiceError(false)}
+        >
+          Detected excessive API calls to the ML services. Some requests were blocked to prevent performance issues.
+          This may indicate a configuration issue with the ML services. Try refreshing the page if functionality is limited.
+        </Alert>
+      )}
+      
       <Paper sx={{ mb: 3 }}>
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
           <Tabs 
@@ -112,34 +207,8 @@ const MLServices = () => {
           </Tabs>
         </Box>
 
-        <Box role="tabpanel" hidden={activeTab !== 0} id="tabpanel-0" aria-labelledby="tab-0" sx={{ p: 3 }}>
-          {activeTab === 0 && (
-            <ContradictionDetection 
-              onExport={handleExport} 
-              api={api} 
-              onProcessingStateChange={handleProcessingStateChange}
-            />
-          )}
-        </Box>
-
-        <Box role="tabpanel" hidden={activeTab !== 1} id="tabpanel-1" aria-labelledby="tab-1" sx={{ p: 3 }}>
-          {activeTab === 1 && (
-            <TemporalAnalysis 
-              onExport={handleExport} 
-              api={api}
-              onProcessingStateChange={handleProcessingStateChange}
-            />
-          )}
-        </Box>
-
-        <Box role="tabpanel" hidden={activeTab !== 2} id="tabpanel-2" aria-labelledby="tab-2" sx={{ p: 3 }}>
-          {activeTab === 2 && (
-            <BiasAssessment 
-              onExport={handleExport} 
-              api={api}
-              onProcessingStateChange={handleProcessingStateChange}
-            />
-          )}
+        <Box role="tabpanel" id={`tabpanel-${activeTab}`} aria-labelledby={`tab-${activeTab}`} sx={{ p: 3 }}>
+          {renderActiveTabContent()}
         </Box>
       </Paper>
 

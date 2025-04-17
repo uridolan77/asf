@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useNotification } from '../context/NotificationContext.jsx';
 
@@ -8,6 +8,7 @@ import { useNotification } from '../context/NotificationContext.jsx';
  * @param {Object} options - Options for the API call
  * @param {boolean} options.skip - Skip the API call
  * @param {Object} options.params - Query parameters
+ * @param {boolean} options.loadOnMount - Execute API call on component mount
  * @param {Object} options.initialData - Initial data
  * @param {boolean} options.cacheEnabled - Enable request caching
  * @param {number} options.cacheDuration - Cache duration in milliseconds
@@ -21,6 +22,7 @@ const useApi = (
   {
     skip = false,
     params = {},
+    loadOnMount = false,
     initialData = null,
     cacheEnabled = false,
     cacheDuration = 5 * 60 * 1000, // 5 minutes default
@@ -108,12 +110,21 @@ const useApi = (
   }, [endpoint, cacheEnabled, cache, isCacheValid, cacheKey, onSuccess, onError, showError]);
 
   // Execute on mount if not skipped and loadOnMount is true
+  // Using a ref to track if we've already executed on mount
+  const hasExecutedOnMount = useRef(false);
+
   useEffect(() => {
-    const loadOnMount = params.loadOnMount;
-    if (!skip && loadOnMount) {
+    // Only execute if loadOnMount is true, not skipped, and we haven't executed yet
+    if (!skip && loadOnMount && !hasExecutedOnMount.current) {
+      hasExecutedOnMount.current = true;
       execute();
     }
-  }, [skip, params, execute]);
+
+    // Reset the ref when skip or loadOnMount changes
+    if (skip || !loadOnMount) {
+      hasExecutedOnMount.current = false;
+    }
+  }, [skip, loadOnMount, execute]);
 
   // Clear cache for this endpoint
   const clearCache = useCallback(() => {

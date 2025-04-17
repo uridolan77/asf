@@ -15,7 +15,8 @@ import {
   WarningAmber as WarningIcon,
   CheckCircle as CheckCircleIcon,
   Error as ErrorIcon,
-  HelpOutline as HelpIcon
+  HelpOutline as HelpIcon,
+  Refresh as RefreshIcon
 } from '@mui/icons-material';
 
 import { useNotification } from '../../context/NotificationContext';
@@ -44,18 +45,15 @@ const BiasAssessment = ({ onExport, apiService }) => {
 
   // UI state
   const [isAssessing, setIsAssessing] = useState(false);
-  const [isLoadingTools, setIsLoadingTools] = useState(true);
+  const [isLoadingTools, setIsLoadingTools] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
   const [biasTools, setBiasTools] = useState([]);
 
-  // Load bias assessment tools on mount
-  useEffect(() => {
-    loadBiasTools();
-  }, []);
-
-  // Load bias assessment tools
+  // Load bias assessment tools - only when explicitly called
   const loadBiasTools = async () => {
+    if (isLoadingTools) return;
+
     setIsLoadingTools(true);
 
     try {
@@ -63,6 +61,7 @@ const BiasAssessment = ({ onExport, apiService }) => {
 
       if (result.success) {
         setBiasTools(result.data.tools);
+        showSuccess('Bias assessment tools loaded successfully');
       } else {
         showError(`Failed to load bias assessment tools: ${result.error}`);
       }
@@ -164,10 +163,6 @@ const BiasAssessment = ({ onExport, apiService }) => {
     return 1;
   };
 
-  if (isLoadingTools) {
-    return <ContentLoader height={200} message="Loading bias assessment tools..." />;
-  }
-
   return (
     <Box sx={{ width: '100%' }}>
       <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
@@ -186,6 +181,18 @@ const BiasAssessment = ({ onExport, apiService }) => {
             {error}
           </Alert>
         )}
+
+        <Box sx={{ mb: 3, display: 'flex', justifyContent: 'flex-end' }}>
+          <Button
+            variant="outlined"
+            startIcon={isLoadingTools ? <ButtonLoader size={20} /> : <RefreshIcon />}
+            onClick={loadBiasTools}
+            disabled={isLoadingTools}
+            sx={{ mb: 2 }}
+          >
+            {isLoadingTools ? 'Loading...' : 'Load Assessment Tools'}
+          </Button>
+        </Box>
 
         <form onSubmit={handleSubmit}>
           <Grid container spacing={3}>

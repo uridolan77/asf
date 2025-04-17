@@ -69,6 +69,41 @@ const ProtectedRoute = ({ children }) => {
   }
   
   // Only show loading state if still loading after delay
+  if (loading && showLoader) {
+    return <LoadingFallback />;
+  }
+  
+  // If not authenticated and not loading, redirect to login
+  return <Navigate to="/login" replace />;
+};
+
+// Animated routes component with route transition effects
+const AnimatedRoutes = () => {
+  const location = useLocation();
+  const progressBarRef = useRef(null);
+  
+  // Trigger progress bar on route change
+  useEffect(() => {
+    if (progressBarRef.current) {
+      progressBarRef.current.start();
+      
+      const timer = setTimeout(() => {
+        progressBarRef.current.complete();
+      }, 500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [location]);
+
+  return (
+    <>
+      <TopProgressBar ref={progressBarRef} />
+      <PageTransition location={location}>
+        <Suspense fallback={<LoadingFallback />}>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
 
             {/* Protected Routes */}
             <Route path="/dashboard" element={
