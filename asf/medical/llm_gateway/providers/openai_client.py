@@ -155,7 +155,7 @@ class OpenAIClient(BaseProvider):
             else:
                 # --- Standard OpenAI Configuration ---
                 # IMMEDIATE SOLUTION: Use a valid API key directly to ensure it works
-                api_key = "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"
+                api_key = "***"
                 
                 # Log the API key (masked) for debugging
                 if api_key:
