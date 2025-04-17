@@ -20,7 +20,9 @@ import {
   List,
   ListItem,
   ListItemText,
-  ListItemIcon
+  ListItemIcon,
+  LinearProgress,
+  Tooltip
 } from '@mui/material';
 import {
   Upload as UploadIcon,
@@ -28,10 +30,13 @@ import {
   Science as ScienceIcon,
   LocalHospital as LocalHospitalIcon,
   Biotech as BiotechIcon,
-  MedicalInformation as MedicalInformationIcon
+  MedicalInformation as MedicalInformationIcon,
+  Speed as SpeedIcon,
+  Settings as SettingsIcon
 } from '@mui/icons-material';
 import { useDropzone } from 'react-dropzone';
 import apiService from '../../services/api';
+import KnowledgeGraphViewer from './KnowledgeGraphViewer';
 
 /**
  * Component for processing a single document
@@ -39,12 +44,16 @@ import apiService from '../../services/api';
 const SingleDocumentProcessor = () => {
   const [file, setFile] = useState(null);
   const [useParallel, setUseParallel] = useState(true);
+  const [useEnhanced, setUseEnhanced] = useState(true);
+  const [useStreaming, setUseStreaming] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [taskId, setTaskId] = useState(null);
   const [taskStatus, setTaskStatus] = useState(null);
   const [processingResults, setProcessingResults] = useState(null);
   const [pollingInterval, setPollingInterval] = useState(null);
+  const [progress, setProgress] = useState(0);
+  const [currentStage, setCurrentStage] = useState('');
 
   // Dropzone configuration
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -72,35 +81,42 @@ const SingleDocumentProcessor = () => {
     };
   }, [pollingInterval]);
 
-  // Poll for task status when taskId is set
+  // Poll for task status and progress when taskId is set
   useEffect(() => {
     if (taskId) {
-      const interval = setInterval(async () => {
-        try {
-          const response = await apiService.documentProcessing.getTask(taskId);
-          setTaskStatus(response.data);
+      // Use the new polling function for progress updates
+      apiService.documentProcessing.pollProgress(taskId, (progressData) => {
+        // Update progress state
+        setProgress(progressData.progress * 100);
+        setCurrentStage(progressData.current_stage);
 
-          if (response.data.status === 'completed') {
-            clearInterval(interval);
-            fetchResults(taskId);
-          } else if (response.data.status === 'failed') {
-            clearInterval(interval);
-            setError(`Processing failed: ${response.data.error_message || 'Unknown error'}`);
-            setLoading(false);
-          }
-        } catch (err) {
-          console.error('Error polling task status:', err);
-          setError('Error checking task status. Please try again.');
-          clearInterval(interval);
+        // Update task status
+        setTaskStatus({
+          task_id: progressData.task_id,
+          status: progressData.status,
+          file_name: file?.name || 'Unknown file',
+          created_at: new Date().toISOString(),
+          entity_count: progressData.entity_count,
+          relation_count: progressData.relation_count,
+          current_stage: progressData.current_stage,
+          progress: progressData.progress
+        });
+
+        // If processing is complete, fetch the full results
+        if (progressData.status === 'completed') {
+          fetchResults(taskId);
+          setLoading(false);
+        } else if (progressData.status === 'failed') {
+          setError(`Processing failed: ${progressData.error_message || 'Unknown error'}`);
           setLoading(false);
         }
-      }, 2000);
+      }, 1000);
 
-      setPollingInterval(interval);
-
-      return () => clearInterval(interval);
+      return () => {
+        // No need to clear interval as the pollProgress function handles cleanup
+      };
     }
-  }, [taskId]);
+  }, [taskId, file]);
 
   // Fetch processing results
   const fetchResults = async (id) => {
@@ -131,9 +147,26 @@ const SingleDocumentProcessor = () => {
     setProcessingResults(null);
 
     try {
+      // Get default settings first
+      const settingsResponse = await apiService.documentProcessing.getSettings();
+
+      if (!settingsResponse.success) {
+        throw new Error('Failed to get processing settings');
+      }
+
+      // Create settings object with our preferences
+      const settings = {
+        ...settingsResponse.data,
+        use_enhanced_synthesizer: useEnhanced,
+        use_streaming: useStreaming,
+        use_parallel: useParallel
+      };
+
+      // Create form data with file and settings
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('use_parallel', useParallel);
+      formData.append('use_parallel', useParallel.toString());
+      formData.append('settings_json', JSON.stringify(settings));
 
       const response = await apiService.documentProcessing.processSingle(formData);
 
@@ -301,7 +334,44 @@ const SingleDocumentProcessor = () => {
           </Grid>
 
           <Grid item xs={12}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 2 }}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={useEnhanced}
+                    onChange={(e) => setUseEnhanced(e.target.checked)}
+                    color="primary"
+                  />
+                }
+                label={
+                  <Tooltip title="Use the enhanced document processor with improved performance and features">
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <SettingsIcon fontSize="small" sx={{ mr: 0.5 }} />
+                      <span>Use enhanced processor</span>
+                    </Box>
+                  </Tooltip>
+                }
+              />
+
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={useStreaming}
+                    onChange={(e) => setUseStreaming(e.target.checked)}
+                    disabled={!useEnhanced}
+                    color="primary"
+                  />
+                }
+                label={
+                  <Tooltip title="Stream results as they become available">
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <SpeedIcon fontSize="small" sx={{ mr: 0.5 }} />
+                      <span>Use streaming</span>
+                    </Box>
+                  </Tooltip>
+                }
+              />
+
               <FormControlLabel
                 control={
                   <Switch
@@ -312,6 +382,9 @@ const SingleDocumentProcessor = () => {
                 }
                 label="Use parallel processing"
               />
+            </Box>
+
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
               <Button
                 type="submit"
                 variant="contained"
@@ -376,8 +449,16 @@ const SingleDocumentProcessor = () => {
           </Grid>
 
           {taskStatus.status === 'processing' && (
-            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
-              <CircularProgress />
+            <Box sx={{ mt: 2 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                <Typography variant="body2" color="textSecondary">
+                  {currentStage ? currentStage.charAt(0).toUpperCase() + currentStage.slice(1) : 'Processing'}
+                </Typography>
+                <Typography variant="body2" color="textSecondary">
+                  {progress.toFixed(0)}%
+                </Typography>
+              </Box>
+              <LinearProgress variant="determinate" value={progress} sx={{ height: 8, borderRadius: 4 }} />
             </Box>
           )}
         </Paper>
@@ -467,6 +548,33 @@ const SingleDocumentProcessor = () => {
               </AccordionSummary>
               <AccordionDetails>
                 {renderRelations()}
+              </AccordionDetails>
+            </Accordion>
+
+            <Accordion>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <Typography variant="subtitle1">Knowledge Graph</Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <Box sx={{ height: 600 }}>
+                  <KnowledgeGraphViewer
+                    graphData={{
+                      nodes: processingResults.results?.entities?.map(entity => ({
+                        id: entity.id || entity.text,
+                        type: entity.label,
+                        confidence: entity.confidence || 1.0
+                      })) || [],
+                      links: processingResults.results?.relations?.map(relation => ({
+                        source: relation.head_id || relation.head,
+                        target: relation.tail_id || relation.tail,
+                        type: relation.relation,
+                        confidence: relation.confidence || 0.8
+                      })) || []
+                    }}
+                    isLoading={false}
+                    error={null}
+                  />
+                </Box>
               </AccordionDetails>
             </Accordion>
 

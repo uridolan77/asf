@@ -155,13 +155,13 @@ const apiService = {
         if (mlResponse.success) {
           return mlResponse;
         }
-        
+
         // If that fails, try the medical ML endpoint
         const medicalMlResponse = await apiCall('get', '/api/medical/ml/services/status');
         if (medicalMlResponse.success) {
           return medicalMlResponse;
         }
-        
+
         // If both fail, return a default response to prevent UI from getting stuck
         console.warn("Both ML service status endpoints failed, returning default response");
         return {
@@ -208,13 +208,13 @@ const apiService = {
         if (mlResponse.success) {
           return mlResponse;
         }
-        
+
         // If that fails, try the medical ML endpoint
         const medicalMlResponse = await apiCall('get', '/api/medical/ml/services/metrics');
         if (medicalMlResponse.success) {
           return medicalMlResponse;
         }
-        
+
         // If both fail, return a default response to prevent UI from getting stuck
         console.warn("Both ML service metrics endpoints failed, returning default response");
         return {
@@ -240,25 +240,25 @@ const apiService = {
     },
 
     // Contradiction detection with signal support for cancellation
-    detectContradiction: (params, signal = null) => 
+    detectContradiction: (params, signal = null) =>
       apiCall('post', '/api/medical/ml/contradiction', params, {}, signal),
-    
+
     // Batch contradiction detection with signal support
-    detectContradictionsBatch: (params, signal = null) => 
+    detectContradictionsBatch: (params, signal = null) =>
       apiCall('post', '/api/medical/ml/contradiction/batch', params, {}, signal),
 
     // Temporal analysis with signal support
-    calculateTemporalConfidence: (params, signal = null) => 
+    calculateTemporalConfidence: (params, signal = null) =>
       apiCall('post', '/api/medical/ml/temporal/confidence', params, {}, signal),
-    
-    detectTemporalContradiction: (params, signal = null) => 
+
+    detectTemporalContradiction: (params, signal = null) =>
       apiCall('post', '/api/medical/ml/temporal/contradiction', params, {}, signal),
 
     // Bias assessment with signal support
-    assessBias: (params, signal = null) => 
+    assessBias: (params, signal = null) =>
       apiCall('post', '/api/medical/ml/bias/assess', params, {}, signal),
-    
-    getBiasAssessmentTools: () => 
+
+    getBiasAssessmentTools: () =>
       apiCall('get', '/api/medical/ml/bias/tools'),
   },
 
@@ -287,8 +287,46 @@ const apiService = {
     // Get processing results
     getResults: (taskId) => apiCall('get', `/api/document-processing/results/${taskId}`),
 
+    // Get processing progress
+    getProgress: (taskId) => apiCall('get', `/api/document-processing/tasks/${taskId}/progress`),
+
     // Get default processing settings
     getSettings: () => apiCall('get', '/api/document-processing/settings'),
+
+    // Poll for processing progress
+    pollProgress: async (taskId, callback, interval = 1000, maxAttempts = 300) => {
+      let attempts = 0;
+      const poll = async () => {
+        attempts++;
+        try {
+          const response = await apiService.documentProcessing.getProgress(taskId);
+
+          if (response.success) {
+            // Call the callback with the progress data
+            callback(response.data);
+
+            // If processing is complete or failed, stop polling
+            if (['completed', 'failed'].includes(response.data.status)) {
+              return response.data;
+            }
+
+            // Continue polling if we haven't reached max attempts
+            if (attempts < maxAttempts) {
+              setTimeout(poll, interval);
+            }
+          } else {
+            console.error('Error polling progress:', response.error);
+            return null;
+          }
+        } catch (error) {
+          console.error('Error polling progress:', error);
+          return null;
+        }
+      };
+
+      // Start polling
+      return poll();
+    },
   },
 
   // Medical clients endpoints

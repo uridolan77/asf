@@ -16,6 +16,7 @@ from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from .document_structure import DocumentStructure, SectionInfo
 from .pdf_parser import PDFParser, ParsedPDF
 from .section_classifier import IMRADSectionClassifier
+from .reference_parser import ReferenceParser
 
 # Configure logging
 logging.basicConfig(
@@ -38,6 +39,9 @@ class BiomedicalDocumentProcessor:
         use_umls: bool = True,
         prefer_pdfminer: bool = False,
         use_enhanced_section_classifier: bool = True,
+        use_advanced_reference_parser: bool = True,
+        use_anystyle: bool = False,
+        use_grobid: bool = False,
         device: Optional[str] = None
     ):
         """
@@ -56,6 +60,13 @@ class BiomedicalDocumentProcessor:
 
         # Initialize PDF parser
         self.pdf_parser = PDFParser(prefer_pdfminer=prefer_pdfminer)
+
+        # Initialize reference parser
+        self.reference_parser = ReferenceParser(
+            use_anystyle=use_anystyle,
+            use_grobid=use_grobid
+        )
+        self.use_advanced_reference_parser = use_advanced_reference_parser
         logger.info(f"PDF parser initialized with prefer_pdfminer={prefer_pdfminer}")
 
         # Initialize enhanced section classifier if requested
@@ -299,13 +310,180 @@ class BiomedicalDocumentProcessor:
 
     def identify_subsections(self, sections: List[SectionInfo]) -> None:
         """
-        Identify subsections within main sections.
+        Identify subsections within main sections based on hierarchical numbering patterns,
+        indentation, and semantic relationships.
 
         Args:
             sections: List of section info objects
+
+        This function modifies the sections list in-place, reorganizing it into a hierarchical structure.
         """
-        # TODO: Implement subsection detection based on hierarchical numbering
-        pass
+        # Skip if there are no sections or only one section
+        if len(sections) <= 1:
+            return
+
+        # First pass: Identify hierarchical numbering patterns
+        i = 0
+        while i < len(sections) - 1:
+            current = sections[i]
+
+            # Look ahead to find potential subsections
+            j = i + 1
+            subsections_added = False
+
+            while j < len(sections):
+                next_section = sections[j]
+
+                # Check different numbering patterns
+                # Pattern 1: Decimal numbering (1.1, 1.2, etc.)
+                if self._is_decimal_subsection(current.heading, next_section.heading):
+                    # Add as subsection and remove from main list
+                    current.subsections.append(next_section)
+                    sections.pop(j)
+                    subsections_added = True
+                    continue  # Don't increment j as we removed an element
+
+                # Pattern 2: Outline numbering (I.A, I.B, etc.)
+                elif self._is_outline_subsection(current.heading, next_section.heading):
+                    current.subsections.append(next_section)
+                    sections.pop(j)
+                    subsections_added = True
+                    continue
+
+                # Pattern 3: Indentation or font size (detected from PDF layout if available)
+                elif hasattr(next_section, 'metadata') and 'indentation' in next_section.metadata:
+                    if next_section.metadata['indentation'] > current.metadata.get('indentation', 0):
+                        current.subsections.append(next_section)
+                        sections.pop(j)
+                        subsections_added = True
+                        continue
+
+                # If we reach a section that's clearly not a subsection, break
+                if self._is_same_level_or_higher(current.heading, next_section.heading):
+                    break
+
+                j += 1
+
+            # If we added subsections, process them recursively
+            if subsections_added and current.subsections:
+                self.identify_subsections(current.subsections)
+
+            i += 1
+
+        # Second pass: Semantic grouping for sections without clear numbering
+        self._group_related_sections(sections)
+
+    def _is_decimal_subsection(self, parent_heading: str, child_heading: str) -> bool:
+        """
+        Check if child_heading is a decimal subsection of parent_heading.
+        Examples: "1. Introduction" -> "1.1 Background"
+        """
+        parent_match = re.match(r'^(\d+)(?:[.)]\s*)', parent_heading)
+        child_match = re.match(r'^(\d+)\.(\d+)(?:[.)]\s*)', child_heading)
+
+        if parent_match and child_match:
+            return parent_match.group(1) == child_match.group(1)
+        return False
+
+    def _is_outline_subsection(self, parent_heading: str, child_heading: str) -> bool:
+        """
+        Check if child_heading is an outline subsection of parent_heading.
+        Examples: "I. Methods" -> "I.A. Study Design"
+        """
+        parent_match = re.match(r'^([IVX]+)(?:[.)]\s*)', parent_heading)
+        child_match = re.match(r'^([IVX]+)\.([A-Z])(?:[.)]\s*)', child_heading)
+
+        if parent_match and child_match:
+            return parent_match.group(1) == child_match.group(1)
+        return False
+
+    def _is_same_level_or_higher(self, current_heading: str, next_heading: str) -> bool:
+        """
+        Check if next_heading is at the same level or higher than current_heading.
+        """
+        # Check decimal numbering
+        current_decimal = re.match(r'^(\d+)(?:\.(\d+))?(?:[.)]\s*)', current_heading)
+        next_decimal = re.match(r'^(\d+)(?:\.(\d+))?(?:[.)]\s*)', next_heading)
+
+        if current_decimal and next_decimal:
+            # If current is "1.1" and next is "1.2", they're same level
+            if current_decimal.group(2) and next_decimal.group(2):
+                return current_decimal.group(1) == next_decimal.group(1)
+            # If current is "1" and next is "2", next is same level
+            elif not current_decimal.group(2) and not next_decimal.group(2):
+                return True
+            # If current is "1.1" and next is "2", next is higher level
+            elif current_decimal.group(2) and not next_decimal.group(2):
+                return True
+            return False
+
+        # Check outline numbering
+        current_outline = re.match(r'^([IVX]+)(?:\.([A-Z]))?(?:[.)]\s*)', current_heading)
+        next_outline = re.match(r'^([IVX]+)(?:\.([A-Z]))?(?:[.)]\s*)', next_heading)
+
+        if current_outline and next_outline:
+            # Similar logic as above for outline numbering
+            if current_outline.group(2) and next_outline.group(2):
+                return current_outline.group(1) == next_outline.group(1)
+            elif not current_outline.group(2) and not next_outline.group(2):
+                return True
+            elif current_outline.group(2) and not next_outline.group(2):
+                return True
+            return False
+
+        # If numbering patterns don't match, use heuristics
+        # Headings with similar length are likely at the same level
+        return len(current_heading.split()) <= len(next_heading.split())
+
+    def _group_related_sections(self, sections: List[SectionInfo]) -> None:
+        """
+        Group semantically related sections without clear hierarchical numbering.
+        """
+        # Common section groupings in scientific papers
+        section_groups = {
+            "methods": ["study design", "participants", "data collection", "statistical analysis"],
+            "results": ["primary outcomes", "secondary outcomes", "adverse events"],
+            "discussion": ["limitations", "implications", "future directions"]
+        }
+
+        i = 0
+        while i < len(sections):
+            current = sections[i]
+            current_type = current.section_type.lower()
+
+            # Check if this section is a potential parent section
+            if current_type in section_groups:
+                related_terms = section_groups[current_type]
+
+                # Look ahead for related sections
+                j = i + 1
+                subsections_added = False
+
+                while j < len(sections):
+                    next_section = sections[j]
+                    next_heading_lower = next_section.heading.lower()
+
+                    # Check if next section is related to current section
+                    is_related = False
+                    for term in related_terms:
+                        if term in next_heading_lower:
+                            is_related = True
+                            break
+
+                    # If related and not a major section itself, add as subsection
+                    if is_related and next_section.section_type.lower() not in section_groups:
+                        current.subsections.append(next_section)
+                        sections.pop(j)
+                        subsections_added = True
+                        continue
+
+                    # If we hit another major section, stop looking
+                    if next_section.section_type.lower() in section_groups:
+                        break
+
+                    j += 1
+
+            i += 1
 
     def extract_title(self, text: str) -> str:
         """
@@ -368,17 +546,15 @@ class BiomedicalDocumentProcessor:
 
     def extract_references(self, text: str, sections: List[SectionInfo]) -> List[Dict[str, Any]]:
         """
-        Extract references from the document.
+        Extract references from the document using advanced reference parsing techniques.
 
         Args:
             text: Document text
             sections: Document sections
 
         Returns:
-            List of reference dictionaries
+            List of reference dictionaries with detailed metadata
         """
-        references = []
-
         # Find references section
         ref_section = None
         for section in sections:
@@ -386,8 +562,50 @@ class BiomedicalDocumentProcessor:
                 ref_section = section
                 break
 
+        # If no dedicated references section found, try to find references at the end of the document
         if not ref_section:
-            return references
+            # Look for common reference section headings
+            ref_headings = ["references", "bibliography", "literature cited"]
+            ref_text = ""
+
+            # Check the last 20% of the document for references
+            last_part = text[int(len(text) * 0.8):]
+            for heading in ref_headings:
+                match = re.search(f"(?i)\\b{heading}\\b", last_part)
+                if match:
+                    ref_text = last_part[match.start():]
+                    break
+
+            if not ref_text:
+                # If still no references found, use the last section as a fallback
+                if sections:
+                    ref_text = sections[-1].text
+                else:
+                    return []
+        else:
+            ref_text = ref_section.text
+
+        # Use advanced reference parser if enabled
+        if self.use_advanced_reference_parser:
+            try:
+                return self.reference_parser.extract_structured_references(ref_text)
+            except Exception as e:
+                logger.warning(f"Advanced reference parsing failed: {str(e)}. Falling back to basic parsing.")
+                return self._basic_reference_extraction(ref_text)
+        else:
+            return self._basic_reference_extraction(ref_text)
+
+    def _basic_reference_extraction(self, ref_text: str) -> List[Dict[str, Any]]:
+        """
+        Basic reference extraction using regex patterns (fallback method).
+
+        Args:
+            ref_text: Text containing references
+
+        Returns:
+            List of reference dictionaries
+        """
+        references = []
 
         # Extract individual references
         ref_patterns = [
@@ -402,7 +620,7 @@ class BiomedicalDocumentProcessor:
         ]
 
         for pattern in ref_patterns:
-            matches = re.finditer(pattern, ref_section.text, re.DOTALL)
+            matches = re.finditer(pattern, ref_text, re.DOTALL)
             if matches:
                 for match in matches:
                     if len(match.groups()) >= 1:
@@ -411,18 +629,28 @@ class BiomedicalDocumentProcessor:
 
                         # Parse reference components (basic)
                         ref_dict = {
-                            "id": ref_id,
-                            "text": ref_text,
+                            "ref_id": f"ref_{ref_id}",
+                            "raw_text": ref_text,
                             "authors": [],
-                            "title": "",
-                            "year": "",
-                            "journal": ""
+                            "title": None,
+                            "year": None,
+                            "journal": None,
+                            "volume": None,
+                            "issue": None,
+                            "pages": None,
+                            "doi": None,
+                            "url": None
                         }
 
                         # Try to extract year
                         year_match = re.search(r'\((\d{4})\)', ref_text)
                         if year_match:
-                            ref_dict["year"] = year_match.group(1)
+                            ref_dict["year"] = int(year_match.group(1))
+
+                        # Try to extract DOI
+                        doi_match = re.search(r'(?:doi:|https?://doi.org/|DOI:?\s*)(10\.\d{4,}(?:\.\d+)*\/\S+)', ref_text)
+                        if doi_match:
+                            ref_dict["doi"] = doi_match.group(1)
 
                         references.append(ref_dict)
 

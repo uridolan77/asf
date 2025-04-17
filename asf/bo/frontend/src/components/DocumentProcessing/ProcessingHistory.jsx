@@ -49,14 +49,40 @@ import {
   Science as ScienceIcon,
   LocalHospital as LocalHospitalIcon,
   Biotech as BiotechIcon,
-  MedicalInformation as MedicalInformationIcon
+  MedicalInformation as MedicalInformationIcon,
+  Share as ShareIcon
 } from '@mui/icons-material';
 import apiService from '../../services/api';
+import KnowledgeGraphViewer from './KnowledgeGraphViewer';
 
 /**
  * Component for viewing document processing history
  */
 const ProcessingHistory = () => {
+  // Helper function to prepare graph data for visualization
+  const prepareGraphData = (results) => {
+    if (!results || !results.entities || !results.relations) {
+      return { nodes: [], links: [] };
+    }
+
+    // Create nodes from entities
+    const nodes = results.entities.map(entity => ({
+      id: entity.text,
+      type: entity.label,
+      cui: entity.cui || null
+    }));
+
+    // Create links from relations
+    const links = results.relations.map(relation => ({
+      source: relation.head_entity || relation.head,
+      target: relation.tail_entity || relation.tail,
+      type: relation.relation_type || relation.relation,
+      confidence: relation.confidence || 0.5,
+      context: relation.context || ''
+    }));
+
+    return { nodes, links };
+  };
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -471,7 +497,8 @@ const ProcessingHistory = () => {
                   <Tab label="Summary" id="tab-0" aria-controls="tabpanel-0" />
                   <Tab label="Entities" id="tab-1" aria-controls="tabpanel-1" />
                   <Tab label="Relations" id="tab-2" aria-controls="tabpanel-2" />
-                  <Tab label="Raw JSON" id="tab-3" aria-controls="tabpanel-3" />
+                  <Tab label="Knowledge Graph" id="tab-3" aria-controls="tabpanel-3" icon={<ShareIcon fontSize="small" />} iconPosition="end" />
+                  <Tab label="Raw JSON" id="tab-4" aria-controls="tabpanel-4" />
                 </Tabs>
               </Box>
 
@@ -489,6 +516,18 @@ const ProcessingHistory = () => {
 
               <Box role="tabpanel" hidden={dialogTab !== 3} id="tabpanel-3" aria-labelledby="tab-3">
                 {dialogTab === 3 && (
+                  <Box sx={{ height: '600px' }}>
+                    <KnowledgeGraphViewer
+                      graphData={prepareGraphData(taskResults.results)}
+                      isLoading={false}
+                      error={null}
+                    />
+                  </Box>
+                )}
+              </Box>
+
+              <Box role="tabpanel" hidden={dialogTab !== 4} id="tabpanel-4" aria-labelledby="tab-4">
+                {dialogTab === 4 && (
                   <Box sx={{ maxHeight: '400px', overflow: 'auto' }}>
                     <pre>{JSON.stringify(taskResults.results, null, 2)}</pre>
                   </Box>

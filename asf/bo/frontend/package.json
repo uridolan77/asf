@@ -28,9 +28,12 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-dropzone": "^14.3.8",
+    "react-force-graph-2d": "^1.25.3",
+    "react-force-graph-3d": "^1.24.1",
     "react-hook-form": "^7.43.9",
     "react-router-dom": "^7.5.0",
     "recharts": "^2.6.2",
+    "file-saver": "^2.0.5",
     "yup": "^1.1.1",
     "zustand": "^4.5.0"
   },

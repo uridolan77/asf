@@ -21,7 +21,7 @@ from config.database import get_db
 from sqlalchemy.orm import Session
 
 # Import the document processing module
-from asf.medical.ml.document_processing import MedicalResearchSynthesizer
+from asf.medical.ml.document_processing import MedicalResearchSynthesizer, EnhancedMedicalResearchSynthesizer
 
 # Create the router
 router = APIRouter(prefix="/api/document-processing", tags=["document-processing"])
@@ -44,6 +44,11 @@ class ProcessingSettings(BaseModel):
     consistency_threshold: float = 0.6
     use_cache: bool = True
     use_parallel: bool = True
+    use_enhanced_synthesizer: bool = True
+    use_streaming: bool = False
+    use_sentence_segmentation: bool = True
+    cache_dir: str = "cache"
+    model_dir: Optional[str] = None
 
 class ProcessingResponse(BaseModel):
     """Response for document processing."""
@@ -51,6 +56,7 @@ class ProcessingResponse(BaseModel):
     status: str
     message: str
     created_at: str
+    streaming_url: Optional[str] = None
 
 class ProcessingTask(BaseModel):
     """Document processing task."""
@@ -64,6 +70,8 @@ class ProcessingTask(BaseModel):
     processing_time: Optional[float] = None
     entity_count: Optional[int] = None
     relation_count: Optional[int] = None
+    progress: Optional[float] = None
+    current_stage: Optional[str] = None
 
 class BatchProcessingRequest(BaseModel):
     """Request for batch document processing."""
@@ -83,27 +91,58 @@ def get_synthesizer(settings: Optional[ProcessingSettings] = None) -> MedicalRes
     if settings is None:
         settings = ProcessingSettings()
 
-    return MedicalResearchSynthesizer(
-        document_processor_args={
-            "prefer_pdfminer": settings.prefer_pdfminer,
-            "use_enhanced_section_classifier": settings.use_enhanced_section_classifier
-        },
-        entity_extractor_args={
-            "use_gliner": settings.use_gliner,
-            "confidence_threshold": settings.confidence_threshold
-        },
-        relation_extractor_args={
-            "use_hgt": settings.use_hgt,
-            "encoder_model": settings.encoder_model
-        },
-        summarizer_args={
-            "use_enhanced": settings.use_enhanced_summarizer,
-            "check_factual_consistency": settings.check_factual_consistency,
-            "consistency_method": settings.consistency_method,
-            "consistency_threshold": settings.consistency_threshold
-        },
-        use_cache=settings.use_cache
-    )
+    # Use the appropriate synthesizer based on settings
+    if settings.use_enhanced_synthesizer:
+        return EnhancedMedicalResearchSynthesizer(
+            document_processor_args={
+                "prefer_pdfminer": settings.prefer_pdfminer,
+                "use_enhanced_section_classifier": settings.use_enhanced_section_classifier,
+                "use_advanced_reference_parser": True,
+                "use_anystyle": False,  # Could be a setting
+                "use_grobid": False     # Could be a setting
+            },
+            entity_extractor_args={
+                "use_gliner": settings.use_gliner,
+                "confidence_threshold": settings.confidence_threshold
+            },
+            relation_extractor_args={
+                "use_hgt": settings.use_hgt,
+                "encoder_model": settings.encoder_model,
+                "use_sentence_segmentation": settings.use_sentence_segmentation
+            },
+            summarizer_args={
+                "use_enhanced": settings.use_enhanced_summarizer,
+                "check_factual_consistency": settings.check_factual_consistency,
+                "consistency_method": settings.consistency_method,
+                "consistency_threshold": settings.consistency_threshold
+            },
+            use_cache=settings.use_cache,
+            cache_dir=settings.cache_dir,
+            model_dir=settings.model_dir
+        )
+    else:
+        # Use original synthesizer if specifically requested
+        return MedicalResearchSynthesizer(
+            document_processor_args={
+                "prefer_pdfminer": settings.prefer_pdfminer,
+                "use_enhanced_section_classifier": settings.use_enhanced_section_classifier
+            },
+            entity_extractor_args={
+                "use_gliner": settings.use_gliner,
+                "confidence_threshold": settings.confidence_threshold
+            },
+            relation_extractor_args={
+                "use_hgt": settings.use_hgt,
+                "encoder_model": settings.encoder_model
+            },
+            summarizer_args={
+                "use_enhanced": settings.use_enhanced_summarizer,
+                "check_factual_consistency": settings.check_factual_consistency,
+                "consistency_method": settings.consistency_method,
+                "consistency_threshold": settings.consistency_threshold
+            },
+            use_cache=settings.use_cache
+        )
 
 # Helper function to process a document in the background
 def process_document_task(file_path: str, task_id: str, is_pdf: bool = True, settings: Optional[ProcessingSettings] = None, use_parallel: bool = False):
@@ -111,23 +150,65 @@ def process_document_task(file_path: str, task_id: str, is_pdf: bool = True, set
     try:
         # Update task status
         processing_tasks[task_id]["status"] = "processing"
+        processing_tasks[task_id]["progress"] = 0.0
+        processing_tasks[task_id]["current_stage"] = "initializing"
 
         # Get synthesizer
         synthesizer = get_synthesizer(settings)
-
-        # Process the document
-        start_time = datetime.now()
-
-        if use_parallel:
-            doc_structure, metrics = synthesizer.process_parallel(file_path, is_pdf=is_pdf)
-        else:
-            doc_structure, metrics = synthesizer.process(file_path, is_pdf=is_pdf)
 
         # Create result directory
         result_dir = os.path.join(RESULTS_DIR, task_id)
         os.makedirs(result_dir, exist_ok=True)
 
-        # Save results
+        # Define progress callback
+        def progress_callback(stage: str, progress: float):
+            processing_tasks[task_id]["progress"] = progress
+            processing_tasks[task_id]["current_stage"] = stage
+            logger.debug(f"Task {task_id}: {stage} - {progress * 100:.1f}%")
+
+        # Define streaming callback
+        def streaming_callback(stage: str, result: Any):
+            # Save intermediate results if needed
+            if settings and settings.use_streaming:
+                try:
+                    stage_path = os.path.join(result_dir, f"{stage}.json")
+                    with open(stage_path, 'w') as f:
+                        if hasattr(result, 'to_dict'):
+                            json.dump(result.to_dict(), f, indent=2)
+                        elif hasattr(result, '__dict__'):
+                            json.dump(result.__dict__, f, indent=2)
+                        else:
+                            json.dump(str(result), f, indent=2)
+                except Exception as e:
+                    logger.warning(f"Failed to save intermediate result: {str(e)}")
+
+        # Process the document based on settings
+        start_time = datetime.now()
+
+        # Check if we should use the enhanced synthesizer with streaming
+        if settings and settings.use_enhanced_synthesizer and settings.use_streaming:
+            # Use streaming processing
+            doc_structure, metrics = synthesizer.process_streaming(
+                file_path,
+                is_pdf=is_pdf,
+                streaming_callback=streaming_callback,
+                progress_callback=progress_callback
+            )
+        elif settings and settings.use_enhanced_synthesizer:
+            # Use enhanced synthesizer with progress tracking
+            doc_structure, metrics = synthesizer.process_with_progress(
+                file_path,
+                is_pdf=is_pdf,
+                progress_callback=progress_callback
+            )
+        elif use_parallel:
+            # Use parallel processing with original synthesizer
+            doc_structure, metrics = synthesizer.process_parallel(file_path, is_pdf=is_pdf)
+        else:
+            # Use standard processing with original synthesizer
+            doc_structure, metrics = synthesizer.process(file_path, is_pdf=is_pdf)
+
+        # Save final results
         synthesizer.save_results(doc_structure, result_dir)
 
         # Update task status
@@ -136,9 +217,15 @@ def process_document_task(file_path: str, task_id: str, is_pdf: bool = True, set
             "completed_at": datetime.now().isoformat(),
             "result_path": result_dir,
             "processing_time": metrics.get("total_processing_time"),
-            "entity_count": metrics.get("entity_count"),
-            "relation_count": metrics.get("relation_count")
+            "entity_count": len(doc_structure.entities) if hasattr(doc_structure, 'entities') else 0,
+            "relation_count": len(doc_structure.relations) if hasattr(doc_structure, 'relations') else 0,
+            "progress": 1.0,
+            "current_stage": "completed"
         })
+
+        # Close synthesizer to release resources
+        if hasattr(synthesizer, 'close'):
+            synthesizer.close()
 
         logger.info(f"Document processing completed for task {task_id}")
     except Exception as e:
@@ -146,8 +233,17 @@ def process_document_task(file_path: str, task_id: str, is_pdf: bool = True, set
         processing_tasks[task_id].update({
             "status": "failed",
             "completed_at": datetime.now().isoformat(),
-            "error_message": str(e)
+            "error_message": str(e),
+            "progress": 0.0,
+            "current_stage": "failed"
         })
+
+        # Try to close synthesizer if it exists
+        try:
+            if 'synthesizer' in locals() and hasattr(synthesizer, 'close'):
+                synthesizer.close()
+        except Exception as close_error:
+            logger.warning(f"Error closing synthesizer: {str(close_error)}")
 
 # Endpoints
 @router.get("/")
@@ -184,6 +280,11 @@ async def document_processing_root(current_user: User = Depends(get_current_user
                 "path": "/settings",
                 "method": "GET",
                 "description": "Get default processing settings"
+            },
+            {
+                "path": "/tasks/{task_id}/progress",
+                "method": "GET",
+                "description": "Get progress of a processing task"
             }
         ]
     }
@@ -440,6 +541,34 @@ async def get_default_settings(current_user: User = Depends(get_current_user)):
         ProcessingSettings: Default processing settings
     """
     return ProcessingSettings()
+
+@router.get("/tasks/{task_id}/progress")
+async def get_processing_progress(task_id: str):
+    """
+    Get the progress of a processing task.
+
+    Args:
+        task_id: The ID of the task to get progress for
+
+    Returns:
+        Dict: The processing progress
+    """
+    if task_id not in processing_tasks:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Task with ID {task_id} not found"
+        )
+
+    task = processing_tasks[task_id]
+
+    return {
+        "task_id": task_id,
+        "status": task["status"],
+        "progress": task.get("progress", 0.0),
+        "current_stage": task.get("current_stage", "unknown"),
+        "entity_count": task.get("entity_count", 0),
+        "relation_count": task.get("relation_count", 0)
+    }
 
 @router.get("/results/{task_id}")
 async def get_processing_results(
