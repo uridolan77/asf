@@ -32,9 +32,11 @@ try:
     from medical.ml.dspy.modules.medical_summarization import MedicalSummarizationModule
     from medical.ml.dspy.modules.clinical_qa import ClinicalQAModule
     DSPY_AVAILABLE = True
+    print("Successfully imported DSPy modules!")
 except ImportError as e:
     DSPY_AVAILABLE = False
     logging.warning(f"DSPy is not available. Some functionality will be limited. Error: {str(e)}")
+    print(f"Failed to import DSPy modules: {str(e)}")
 
 logger = logging.getLogger(__name__)
 

@@ -26979,3 +26979,33 @@ WHERE users.id = %(id_1)s
  LIMIT %(param_1)s
 2025-04-18 02:16:38,141 - sqlalchemy.engine.Engine - INFO - [cached since 0.009087s ago] {'id_1': 1, 'param_1': 1}
 2025-04-18 02:16:38,144 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 02:21:23,138 - root - INFO - Logging configured with level: INFO
+2025-04-18 02:21:23,833 - root - INFO - Logging configured with level: INFO
+2025-04-18 02:21:23,835 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-18 02:21:23,944 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-18 02:21:27,344 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-18 02:21:27,409 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-18 02:21:27,412 - root - INFO - Using LLM Gateway implementation
+2025-04-18 02:21:27,446 - root - WARNING - DSPy is not available. Some functionality will be limited. Error: No module named 'ml.dspy.dspy_client'
+2025-04-18 02:21:27,447 - root - WARNING - BiomedLM is not available. Some functionality will be limited.
+2025-04-18 02:21:27,490 - datasets - INFO - PyTorch version 2.6.0 available.
+2025-04-18 02:26:23,154 - root - INFO - Logging configured with level: INFO
+2025-04-18 02:26:23,857 - root - INFO - Logging configured with level: INFO
+2025-04-18 02:26:23,859 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-18 02:26:23,966 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-18 02:26:27,396 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-18 02:26:27,460 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-18 02:26:27,463 - root - INFO - Using LLM Gateway implementation
+2025-04-18 02:26:27,511 - root - WARNING - DSPy is not available. Some functionality will be limited. Error: No module named 'medical.ml.dspy.dspy_client'
+2025-04-18 02:26:27,513 - root - WARNING - BiomedLM is not available. Some functionality will be limited.
+2025-04-18 02:26:27,553 - datasets - INFO - PyTorch version 2.6.0 available.
+2025-04-18 02:29:02,425 - root - INFO - Logging configured with level: INFO
+2025-04-18 02:29:03,121 - root - INFO - Logging configured with level: INFO
+2025-04-18 02:29:03,126 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-18 02:29:03,248 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-18 02:29:06,673 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-18 02:29:06,738 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-18 02:29:06,741 - root - INFO - Using LLM Gateway implementation
+2025-04-18 02:29:06,795 - root - WARNING - DSPy is not available. Some functionality will be limited. Error: No module named 'medical.ml.dspy.dspy_client'
+2025-04-18 02:29:06,801 - root - WARNING - BiomedLM is not available. Some functionality will be limited.
+2025-04-18 02:29:06,843 - datasets - INFO - PyTorch version 2.6.0 available.
