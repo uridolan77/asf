@@ -1,24 +1,25 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Box, 
-  Tab, 
-  Tabs, 
-  Paper, 
-  Typography, 
-  Alert, 
+import {
+  Box,
+  Tab,
+  Tabs,
+  Paper,
+  Typography,
+  Alert,
   Button,
   CircularProgress
 } from '@mui/material';
-import { 
-    
+import {
+
   SmartToy as SmartToyIcon,
   Psychology as PsychologyIcon,
   Biotech as BiotechIcon,
   BarChart as BarChartIcon,
   Refresh as RefreshIcon,
   Cloud as CloudIcon,
-  Memory as MemoryIcon
+  Memory as MemoryIcon,
+  AutoFixHigh as AutoFixHighIcon
 } from '@mui/icons-material';
 
 import PageLayout from '../components/Layout/PageLayout.js';
@@ -31,6 +32,7 @@ import useApi from '../hooks/useApi';
 const GatewayDashboard = lazy(() => import('./LLMManagement/GatewayDashboard'));
 const DSPyDashboard = lazy(() => import('./LLMManagement/DSPyDashboard'));
 const BiomedLMDashboard = lazy(() => import('./LLMManagement/BiomedLMDashboard'));
+const CLPEFTDashboard = lazy(() => import('./LLMManagement/CLPEFTDashboard'));
 const UsageDashboard = lazy(() => import('./LLMManagement/UsageDashboard'));
 const ProviderManagement = lazy(() => import('../components/LLM/Providers/ProviderManagement'));
 const ModelManagement = lazy(() => import('../components/LLM/Models/ModelManagement'));
@@ -48,19 +50,20 @@ const LLMManagement = () => {
     components: {
       gateway: { status: 'unknown', details: {} },
       dspy: { status: 'unknown', modules: [], modules_count: 0 },
-      biomedlm: { status: 'unknown', models: [], models_count: 0 }
+      biomedlm: { status: 'unknown', models: [], models_count: 0 },
+      cl_peft: { status: 'unknown', adapters: [], adapters_count: 0 }
     }
   });
-  
+
   const navigate = useNavigate();
   const { showSuccess, showError } = useNotification();
-  
+
   // Use API hook for fetching user data
-  const { 
-    data: userData, 
-    loading: userLoading, 
+  const {
+    data: userData,
+    loading: userLoading,
     error: userError,
-    execute: fetchUser 
+    execute: fetchUser
   } = useApi(apiService.auth.me, {
     loadOnMount: true,
     onSuccess: (data) => {
@@ -77,34 +80,34 @@ const LLMManagement = () => {
       }
     }
   });
-  
+
   // Load LLM status on mount - separate from user loading
   useEffect(() => {
     loadLlmStatus();
   }, []);
-  
+
   // Handle logout
   const handleLogout = () => {
     localStorage.removeItem('token');
     navigate('/');
   };
-  
+
   // Handle tab change
   const handleTabChange = (_, newValue) => {
     setActiveTab(newValue);
   };
-  
+
   // Load LLM status
   const loadLlmStatus = async () => {
     setRefreshing(true);
-    
+
     try {
       // We'll simulate a successful response for development
       // Once backend is ready, uncomment the actual API call
-      
-      /* 
+
+      /*
       const result = await apiService.llm.getStatus();
-      
+
       if (result.success) {
         setLlmStatus(result.data);
         showSuccess('LLM status loaded successfully');
@@ -119,14 +122,14 @@ const LLMManagement = () => {
         showError(`Failed to load LLM status: ${result.error}`);
       }
       */
-      
+
       // Simulated response for development
       setTimeout(() => {
         setLlmStatus({
           overall_status: 'operational',
           components: {
-            gateway: { 
-              status: 'available', 
+            gateway: {
+              status: 'available',
               details: {
                 providers: [
                   { id: 'openai', name: 'OpenAI', type: 'API', is_active: true, requires_api_key: true, models_count: 5 },
@@ -140,8 +143,8 @@ const LLMManagement = () => {
                 ]
               }
             },
-            dspy: { 
-              status: 'available', 
+            dspy: {
+              status: 'available',
               modules: [
                 { name: 'MedicalSummarizer', module_type: 'Summarization', optimized: true, description: 'Summarizes medical text', tags: ['medical', 'nlp'] },
                 { name: 'EvidenceExtractor', module_type: 'Extraction', optimized: false, description: 'Extracts evidences from medical literature', tags: ['evidence', 'medical'] },
@@ -149,13 +152,21 @@ const LLMManagement = () => {
               ],
               modules_count: 3
             },
-            biomedlm: { 
-              status: 'available', 
+            biomedlm: {
+              status: 'available',
               models: [
                 { id: 'biomedlm-base', name: 'BioMedLM Base', status: 'active', size: '7B', description: 'Base biomedical language model', tags: ['medical', 'base'] },
                 { id: 'biomedlm-clinical', name: 'BioMedLM Clinical', status: 'active', size: '13B', description: 'Clinical-focused biomedical model', tags: ['clinical', 'medical'] }
               ],
               models_count: 2
+            },
+            cl_peft: {
+              status: 'available',
+              adapters: [
+                { adapter_id: 'adapter_12345678', adapter_name: 'Medical QA Adapter', base_model_name: 'meta-llama/Llama-2-7b-hf', cl_strategy: 'generative_replay', peft_method: 'lora' },
+                { adapter_id: 'adapter_87654321', adapter_name: 'Clinical Notes Adapter', base_model_name: 'mistralai/Mistral-7B-v0.1', cl_strategy: 'ewc', peft_method: 'qlora' }
+              ],
+              adapters_count: 2
             }
           }
         });
@@ -194,7 +205,7 @@ const LLMManagement = () => {
   const fetchBiomedLMStatus = async () => {
     console.log('Fetching BiomedLM status');
   };
-  
+
   if (loading) {
     return (
       <PageLayout
@@ -204,7 +215,7 @@ const LLMManagement = () => {
       />
     );
   }
-  
+
   return (
     <PageLayout
       title="LLM Management"
@@ -226,25 +237,25 @@ const LLMManagement = () => {
         <Paper sx={{ mb: 3, p: 2 }}>
           <Typography variant="h6" gutterBottom>
             LLM System Status: {' '}
-            <Box component="span" sx={{ 
-              color: 
-                llmStatus.overall_status === 'operational' ? 'success.main' : 
-                llmStatus.overall_status === 'degraded' ? 'warning.main' : 
-                'error.main' 
+            <Box component="span" sx={{
+              color:
+                llmStatus.overall_status === 'operational' ? 'success.main' :
+                llmStatus.overall_status === 'degraded' ? 'warning.main' :
+                'error.main'
             }}>
               {llmStatus.overall_status.toUpperCase()}
             </Box>
           </Typography>
-          
+
           <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
             {Object.entries(llmStatus.components).map(([component, status]) => (
-              <Paper 
+              <Paper
                 key={component}
-                sx={{ 
-                  p: 1.5, 
+                sx={{
+                  p: 1.5,
                   minWidth: 200,
-                  bgcolor: 
-                    status.status === 'available' ? 'success.light' : 
+                  bgcolor:
+                    status.status === 'available' ? 'success.light' :
                     'error.light',
                   color: 'common.white'
                 }}
@@ -270,57 +281,68 @@ const LLMManagement = () => {
                     Models: {status.models_count || 0}
                   </Typography>
                 )}
+                {status.status === 'available' && component === 'cl_peft' && (
+                  <Typography variant="body2">
+                    Adapters: {status.adapters_count || 0}
+                  </Typography>
+                )}
               </Paper>
             ))}
           </Box>
         </Paper>
       )}
-      
+
       {/* Main tabs */}
       <Paper sx={{ mb: 3 }}>
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-          <Tabs 
-            value={activeTab} 
-            onChange={handleTabChange} 
+          <Tabs
+            value={activeTab}
+            onChange={handleTabChange}
             aria-label="LLM management tabs"
             variant="scrollable"
             scrollButtons="auto"
           >
-            <Tab 
-              icon={<CloudIcon />} 
-              label="Providers" 
-              id="tab-0" 
-              aria-controls="tabpanel-0" 
+            <Tab
+              icon={<CloudIcon />}
+              label="Providers"
+              id="tab-0"
+              aria-controls="tabpanel-0"
             />
-            <Tab 
-              icon={<MemoryIcon />} 
-              label="Models" 
-              id="tab-1" 
-              aria-controls="tabpanel-1" 
+            <Tab
+              icon={<MemoryIcon />}
+              label="Models"
+              id="tab-1"
+              aria-controls="tabpanel-1"
             />
-            <Tab 
-              icon={<SmartToyIcon />} 
-              label="Gateway" 
-              id="tab-2" 
-              aria-controls="tabpanel-2" 
+            <Tab
+              icon={<SmartToyIcon />}
+              label="Gateway"
+              id="tab-2"
+              aria-controls="tabpanel-2"
             />
-            <Tab 
-              icon={<PsychologyIcon />} 
-              label="DSPy" 
-              id="tab-3" 
-              aria-controls="tabpanel-3" 
+            <Tab
+              icon={<PsychologyIcon />}
+              label="DSPy"
+              id="tab-3"
+              aria-controls="tabpanel-3"
             />
-            <Tab 
-              icon={<BiotechIcon />} 
-              label="BiomedLM" 
-              id="tab-4" 
-              aria-controls="tabpanel-4" 
+            <Tab
+              icon={<BiotechIcon />}
+              label="BiomedLM"
+              id="tab-4"
+              aria-controls="tabpanel-4"
             />
-            <Tab 
-              icon={<BarChartIcon />} 
-              label="Usage" 
-              id="tab-5" 
-              aria-controls="tabpanel-5" 
+            <Tab
+              icon={<AutoFixHighIcon />}
+              label="CL-PEFT"
+              id="tab-5"
+              aria-controls="tabpanel-5"
+            />
+            <Tab
+              icon={<BarChartIcon />}
+              label="Usage"
+              id="tab-6"
+              aria-controls="tabpanel-6"
             />
           </Tabs>
         </Box>
@@ -349,8 +371,8 @@ const LLMManagement = () => {
           {activeTab === 2 && (
             <Suspense fallback={<ContentLoader />}>
               <ErrorBoundary fallback={<Alert severity="error">Failed to load Gateway Dashboard component</Alert>}>
-                <GatewayDashboard 
-                  status={llmStatus?.components?.gateway} 
+                <GatewayDashboard
+                  status={llmStatus?.components?.gateway}
                   onRefresh={loadLlmStatus}
                 />
               </ErrorBoundary>
@@ -362,7 +384,7 @@ const LLMManagement = () => {
           {activeTab === 3 && (
             <Suspense fallback={<ContentLoader />}>
               <ErrorBoundary fallback={<Alert severity="error">Failed to load DSPy Dashboard component</Alert>}>
-                <DSPyDashboard 
+                <DSPyDashboard
                   status={llmStatus?.components?.dspy}
                   onRefresh={loadLlmStatus}
                 />
@@ -375,7 +397,7 @@ const LLMManagement = () => {
           {activeTab === 4 && (
             <Suspense fallback={<ContentLoader />}>
               <ErrorBoundary fallback={<Alert severity="error">Failed to load BiomedLM Dashboard component</Alert>}>
-                <BiomedLMDashboard 
+                <BiomedLMDashboard
                   status={llmStatus?.components?.biomedlm}
                   onRefresh={loadLlmStatus}
                 />
@@ -383,12 +405,25 @@ const LLMManagement = () => {
             </Suspense>
           )}
         </Box>
-        
+
         <Box role="tabpanel" hidden={activeTab !== 5} id="tabpanel-5" aria-labelledby="tab-5" sx={{ p: 3 }}>
           {activeTab === 5 && (
             <Suspense fallback={<ContentLoader />}>
+              <ErrorBoundary fallback={<Alert severity="error">Failed to load CL-PEFT Dashboard component</Alert>}>
+                <CLPEFTDashboard
+                  status={llmStatus?.components?.cl_peft}
+                  onRefresh={loadLlmStatus}
+                />
+              </ErrorBoundary>
+            </Suspense>
+          )}
+        </Box>
+
+        <Box role="tabpanel" hidden={activeTab !== 6} id="tabpanel-6" aria-labelledby="tab-6" sx={{ p: 3 }}>
+          {activeTab === 6 && (
+            <Suspense fallback={<ContentLoader />}>
               <ErrorBoundary fallback={<Alert severity="error">Failed to load Usage Dashboard component</Alert>}>
-                <UsageDashboard 
+                <UsageDashboard
                   status={llmStatus}
                   onRefresh={loadLlmStatus}
                 />
@@ -420,6 +455,12 @@ const LLMManagement = () => {
           LLM capabilities. BiomedLM is a specialized language model for biomedical text, with
           adapters for specific medical tasks.
         </Typography>
+        <Typography component="div" sx={{ mb: 2 }}>
+          <strong>CL-PEFT</strong> - Manage Continual Learning with Parameter-Efficient Fine-Tuning
+          adapters. CL-PEFT combines continual learning strategies with efficient fine-tuning
+          techniques like LoRA and QLoRA to adapt language models to new tasks while mitigating
+          catastrophic forgetting.
+        </Typography>
         <Typography component="div">
           <strong>Usage</strong> - Monitor usage statistics for all LLM components, including
           token usage, request counts, and latency metrics.
@@ -435,20 +476,20 @@ class ErrorBoundary extends React.Component {
     super(props);
     this.state = { hasError: false };
   }
-  
+
   static getDerivedStateFromError() {
     return { hasError: true };
   }
-  
+
   componentDidCatch(error, errorInfo) {
     console.error("Component error:", error, errorInfo);
   }
-  
+
   render() {
     if (this.state.hasError) {
       return this.props.fallback || <Alert severity="error">Something went wrong</Alert>;
     }
-    
+
     return this.props.children;
   }
 }

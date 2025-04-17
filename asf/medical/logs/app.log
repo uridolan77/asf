@@ -24862,3 +24862,34 @@ WHERE users.id = %(id_1)s
  LIMIT %(param_1)s
 2025-04-17 21:54:35,099 - sqlalchemy.engine.Engine - INFO - [cached since 0.01474s ago] {'id_1': 1, 'param_1': 1}
 2025-04-17 21:54:35,105 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 22:02:45,999 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 22:02:46,000 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 22:02:46,001 - sqlalchemy.engine.Engine - INFO - [cached since 490.9s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 22:02:48,150 - httpx - INFO - HTTP Request: GET https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?tool=MedicalResearchSynthesizer&email=your.email%40example.com&db=pubmed&term=covid-19&retmax=1 "HTTP/1.1 200 OK"
+2025-04-17 22:02:48,154 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 22:02:48,196 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 22:02:48,196 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 22:02:48,197 - sqlalchemy.engine.Engine - INFO - [cached since 493.1s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 22:02:49,023 - httpx - INFO - HTTP Request: GET https://eutils.ncbi.nlm.nih.gov/entrez/eutils/einfo.fcgi?tool=MedicalResearchSynthesizer&email=your.email%40example.com "HTTP/1.1 200 OK"
+2025-04-17 22:02:49,029 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 22:02:49,038 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 22:02:49,039 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 22:02:49,039 - sqlalchemy.engine.Engine - INFO - [cached since 494s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 22:02:49,858 - httpx - INFO - HTTP Request: GET https://eutils.ncbi.nlm.nih.gov/entrez/eutils/einfo.fcgi?tool=MedicalResearchSynthesizer&email=your.email%40example.com "HTTP/1.1 200 OK"
+2025-04-17 22:02:49,866 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 22:13:49,075 - root - INFO - Logging configured with level: INFO
+2025-04-17 22:13:49,791 - root - INFO - Logging configured with level: INFO
+2025-04-17 22:13:49,793 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 22:13:49,908 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 22:13:53,499 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 22:13:53,567 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 22:13:53,570 - root - INFO - Using LLM Gateway implementation

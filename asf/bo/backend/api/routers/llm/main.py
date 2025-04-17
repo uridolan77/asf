@@ -16,6 +16,7 @@ from .gateway import router as gateway_router
 from .dspy import router as dspy_router
 from .biomedlm import router as biomedlm_router
 from .debug import router as debug_router
+from .cl_peft import router as cl_peft_router
 
 # Create the main LLM router
 router = APIRouter(prefix="/api/llm", tags=["llm"])
@@ -25,6 +26,7 @@ router.include_router(gateway_router)
 router.include_router(dspy_router)
 router.include_router(biomedlm_router)
 router.include_router(debug_router)
+router.include_router(cl_peft_router)
 
 logger = logging.getLogger(__name__)
 
@@ -74,6 +76,21 @@ async def llm_root(current_user: User = Depends(get_current_user)):
                     "/api/llm/debug/test-openai",
                     "/api/llm/debug/diagnostics",
                     "/api/llm/debug/logs"
+                ]
+            },
+            {
+                "name": "cl-peft",
+                "description": "CL-PEFT for continual learning with parameter-efficient fine-tuning",
+                "endpoints": [
+                    "/api/llm/cl-peft/adapters",
+                    "/api/llm/cl-peft/adapters/{adapter_id}",
+                    "/api/llm/cl-peft/adapters/{adapter_id}/train",
+                    "/api/llm/cl-peft/adapters/{adapter_id}/evaluate",
+                    "/api/llm/cl-peft/adapters/{adapter_id}/forgetting",
+                    "/api/llm/cl-peft/adapters/{adapter_id}/generate",
+                    "/api/llm/cl-peft/strategies",
+                    "/api/llm/cl-peft/peft-methods",
+                    "/api/llm/cl-peft/base-models"
                 ]
             }
         ]

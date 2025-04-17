@@ -7,10 +7,174 @@ import {
   generateMockForgettingResults
 } from '../components/llm/cl_peft/mockData';
 
-// Set to true to use mock data instead of API calls
-const USE_MOCK_DATA = true;
+// Set to false to use real API calls instead of mock data
+const USE_MOCK_DATA = false;
 
 const API_URL = `${API_BASE_URL}/llm/cl-peft`;
+
+/**
+ * Fetch all adapters, optionally filtered
+ * @param {Object} filters - Optional filters
+ * @returns {Promise<Array>} - List of adapters
+ */
+/**
+ * Get available CL strategies
+ * @returns {Promise<Array>} - List of available CL strategies
+ */
+export const fetchClStrategies = async () => {
+  try {
+    if (USE_MOCK_DATA) {
+      // Generate mock data
+      console.log('Using mock data for fetchClStrategies');
+
+      const mockStrategies = [
+        {
+          id: 'naive',
+          name: 'Naive Sequential Fine-Tuning',
+          description: 'Simple sequential fine-tuning without any CL mechanisms.'
+        },
+        {
+          id: 'ewc',
+          name: 'Elastic Weight Consolidation (EWC)',
+          description: 'Prevents forgetting by adding a penalty for changing parameters important for previous tasks.'
+        },
+        {
+          id: 'replay',
+          name: 'Experience Replay',
+          description: 'Prevents forgetting by replaying examples from previous tasks during training.'
+        },
+        {
+          id: 'generative_replay',
+          name: 'Generative Replay',
+          description: 'Uses a generative model to create synthetic examples from previous tasks.'
+        },
+        {
+          id: 'orthogonal_lora',
+          name: 'Orthogonal LoRA (O-LoRA)',
+          description: 'Enforces orthogonality between LoRA updates for different tasks.'
+        },
+        {
+          id: 'adaptive_svd',
+          name: 'Adaptive SVD',
+          description: 'Projects gradient updates onto orthogonal subspaces using Singular Value Decomposition.'
+        },
+        {
+          id: 'mask_based',
+          name: 'Mask-Based CL',
+          description: 'Uses binary masks to protect parameters important for previous tasks.'
+        }
+      ];
+
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      return mockStrategies;
+    }
+
+    // Real API call
+    const response = await axios.get(`${API_URL}/strategies`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching CL strategies:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get available PEFT methods
+ * @returns {Promise<Array>} - List of available PEFT methods
+ */
+export const fetchPeftMethods = async () => {
+  try {
+    if (USE_MOCK_DATA) {
+      // Generate mock data
+      console.log('Using mock data for fetchPeftMethods');
+
+      const mockMethods = [
+        {
+          id: 'lora',
+          name: 'LoRA',
+          description: 'Low-Rank Adaptation for efficient fine-tuning.'
+        },
+        {
+          id: 'qlora',
+          name: 'QLoRA',
+          description: 'Quantized Low-Rank Adaptation for memory-efficient fine-tuning.'
+        }
+      ];
+
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      return mockMethods;
+    }
+
+    // Real API call
+    const response = await axios.get(`${API_URL}/peft-methods`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching PEFT methods:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get available base models
+ * @returns {Promise<Array>} - List of available base models
+ */
+export const fetchBaseModels = async () => {
+  try {
+    if (USE_MOCK_DATA) {
+      // Generate mock data
+      console.log('Using mock data for fetchBaseModels');
+
+      const mockModels = [
+        {
+          id: 'meta-llama/Llama-2-7b-hf',
+          name: 'Llama 2 (7B)',
+          description: 'Meta\'s Llama 2 model with 7 billion parameters.'
+        },
+        {
+          id: 'meta-llama/Llama-2-13b-hf',
+          name: 'Llama 2 (13B)',
+          description: 'Meta\'s Llama 2 model with 13 billion parameters.'
+        },
+        {
+          id: 'mistralai/Mistral-7B-v0.1',
+          name: 'Mistral (7B)',
+          description: 'Mistral AI\'s 7 billion parameter model.'
+        },
+        {
+          id: 'google/gemma-2b',
+          name: 'Gemma (2B)',
+          description: 'Google\'s Gemma model with 2 billion parameters.'
+        },
+        {
+          id: 'google/gemma-7b',
+          name: 'Gemma (7B)',
+          description: 'Google\'s Gemma model with 7 billion parameters.'
+        },
+        {
+          id: 'tiiuae/falcon-7b',
+          name: 'Falcon (7B)',
+          description: 'TII\'s Falcon model with 7 billion parameters.'
+        }
+      ];
+
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      return mockModels;
+    }
+
+    // Real API call
+    const response = await axios.get(`${API_URL}/base-models`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching base models:', error);
+    throw error;
+  }
+};
 
 /**
  * Fetch all adapters, optionally filtered

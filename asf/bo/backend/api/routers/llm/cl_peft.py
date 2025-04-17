@@ -28,7 +28,7 @@ from asf.medical.ml.services.cl_peft_service import get_cl_peft_service, CLPEFTS
 from asf.bo.backend.api.dependencies import get_current_user
 
 router = APIRouter(
-    prefix="/llm/cl-peft",
+    prefix="/cl-peft",
     tags=["llm", "cl-peft"],
     responses={404: {"description": "Not found"}},
 )
@@ -130,6 +130,26 @@ class GenerateTextResponse(BaseModel):
     adapter_id: str
     prompt: str
     generated_text: str
+
+# Additional models for API requests and responses
+
+class CLStrategyResponse(BaseModel):
+    """Response model for CL strategies."""
+    id: str
+    name: str
+    description: str
+
+class PEFTMethodResponse(BaseModel):
+    """Response model for PEFT methods."""
+    id: str
+    name: str
+    description: str
+
+class BaseModelResponse(BaseModel):
+    """Response model for base models."""
+    id: str
+    name: str
+    description: str
 
 # API endpoints
 
@@ -414,3 +434,36 @@ async def generate_text(
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generating text: {str(e)}")
+
+@router.get("/strategies", response_model=List[CLStrategyResponse])
+async def get_cl_strategies(
+    cl_peft_service: CLPEFTService = Depends(get_cl_peft_service),
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    """
+    Get available CL strategies.
+    """
+    strategies = cl_peft_service.get_available_cl_strategies()
+    return strategies
+
+@router.get("/peft-methods", response_model=List[PEFTMethodResponse])
+async def get_peft_methods(
+    cl_peft_service: CLPEFTService = Depends(get_cl_peft_service),
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    """
+    Get available PEFT methods.
+    """
+    methods = cl_peft_service.get_available_peft_methods()
+    return methods
+
+@router.get("/base-models", response_model=List[BaseModelResponse])
+async def get_base_models(
+    cl_peft_service: CLPEFTService = Depends(get_cl_peft_service),
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    """
+    Get available base models.
+    """
+    models = cl_peft_service.get_available_base_models()
+    return models

@@ -17,7 +17,8 @@ import {
   BarChart as BarChartIcon,
   Refresh as RefreshIcon,
   Cloud as CloudIcon,
-  Memory as MemoryIcon
+  Memory as MemoryIcon,
+  AutoFixHigh as AutoFixHighIcon
 } from '@mui/icons-material';
 
 import PageLayout from '../../components/Layout/PageLayout';
@@ -30,6 +31,7 @@ import useApi from '../../hooks/useApi';
 const GatewayDashboard = lazy(() => import('./GatewayDashboard'));
 const DSPyDashboard = lazy(() => import('./DSPyDashboard'));
 const BiomedLMDashboard = lazy(() => import('./BiomedLMDashboard'));
+const CLPEFTDashboard = lazy(() => import('./CLPEFTDashboard'));
 const UsageDashboard = lazy(() => import('./UsageDashboard'));
 const ProviderManagement = lazy(() => import('../../components/LLM/Providers/ProviderManagement'));
 const ModelManagement = lazy(() => import('../../components/LLM/Models/ModelManagement'));
@@ -47,7 +49,8 @@ const LLMManagement = () => {
     components: {
       gateway: { status: 'unknown', details: {} },
       dspy: { status: 'unknown', modules: [], modules_count: 0 },
-      biomedlm: { status: 'unknown', models: [], models_count: 0 }
+      biomedlm: { status: 'unknown', models: [], models_count: 0 },
+      cl_peft: { status: 'unknown', adapters: [], adapters_count: 0 }
     }
   });
 
@@ -155,6 +158,14 @@ const LLMManagement = () => {
                 { id: 'biomedlm-clinical', name: 'BioMedLM Clinical', status: 'active', size: '13B', description: 'Clinical-focused biomedical model', tags: ['clinical', 'medical'] }
               ],
               models_count: 2
+            },
+            cl_peft: {
+              status: 'available',
+              adapters: [
+                { adapter_id: 'adapter_12345678', adapter_name: 'Medical QA Adapter', base_model_name: 'meta-llama/Llama-2-7b-hf', cl_strategy: 'generative_replay', peft_method: 'lora' },
+                { adapter_id: 'adapter_87654321', adapter_name: 'Clinical Notes Adapter', base_model_name: 'mistralai/Mistral-7B-v0.1', cl_strategy: 'ewc', peft_method: 'qlora' }
+              ],
+              adapters_count: 2
             }
           }
         });
@@ -260,6 +271,11 @@ const LLMManagement = () => {
                     Models: {status.models_count || 0}
                   </Typography>
                 )}
+                {status.status === 'available' && component === 'cl_peft' && (
+                  <Typography variant="body2">
+                    Adapters: {status.adapters_count || 0}
+                  </Typography>
+                )}
               </Paper>
             ))}
           </Box>
@@ -307,10 +323,16 @@ const LLMManagement = () => {
               aria-controls="tabpanel-4"
             />
             <Tab
-              icon={<BarChartIcon />}
-              label="Usage"
+              icon={<AutoFixHighIcon />}
+              label="CL-PEFT"
               id="tab-5"
               aria-controls="tabpanel-5"
+            />
+            <Tab
+              icon={<BarChartIcon />}
+              label="Usage"
+              id="tab-6"
+              aria-controls="tabpanel-6"
             />
           </Tabs>
         </Box>
@@ -367,6 +389,17 @@ const LLMManagement = () => {
         <Box role="tabpanel" hidden={activeTab !== 5} id="tabpanel-5" aria-labelledby="tab-5" sx={{ p: 3 }}>
           {activeTab === 5 && (
             <Suspense fallback={<ContentLoader />}>
+              <CLPEFTDashboard
+                status={llmStatus?.components?.cl_peft}
+                onRefresh={loadLlmStatus}
+              />
+            </Suspense>
+          )}
+        </Box>
+
+        <Box role="tabpanel" hidden={activeTab !== 6} id="tabpanel-6" aria-labelledby="tab-6" sx={{ p: 3 }}>
+          {activeTab === 6 && (
+            <Suspense fallback={<ContentLoader />}>
               <UsageDashboard
                 status={llmStatus}
                 onRefresh={loadLlmStatus}
@@ -397,6 +430,12 @@ const LLMManagement = () => {
           <strong>BiomedLM</strong> - Manage BiomedLM models and adapters for medical-specific
           LLM capabilities. BiomedLM is a specialized language model for biomedical text, with
           adapters for specific medical tasks.
+        </Typography>
+        <Typography component="div" sx={{ mb: 2 }}>
+          <strong>CL-PEFT</strong> - Manage Continual Learning with Parameter-Efficient Fine-Tuning
+          adapters. CL-PEFT combines continual learning strategies with efficient fine-tuning
+          techniques like LoRA and QLoRA to adapt language models to new tasks while mitigating
+          catastrophic forgetting.
         </Typography>
         <Typography component="div">
           <strong>Usage</strong> - Monitor usage statistics for all LLM components, including
