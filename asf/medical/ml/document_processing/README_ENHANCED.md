@@ -170,7 +170,10 @@ synthesizer = MedicalResearchSynthesizer(
         "check_factual_consistency": True,
         "consistency_method": "qafacteval",
         "consistency_threshold": 0.6
-    }
+    },
+    use_cache=True,
+    cache_dir="cache",
+    cache_size_mb=1000
 )
 
 # Process a medical research paper
@@ -180,6 +183,7 @@ doc_structure, performance_metrics = synthesizer.process("paper.pdf", is_pdf=Tru
 print(f"Processing time: {performance_metrics['total_processing_time']:.2f} seconds")
 print(f"Entities extracted: {performance_metrics['entity_count']}")
 print(f"Relations extracted: {performance_metrics['relation_count']}")
+print(f"Cache hits: {performance_metrics.get('cache_hits', 0)}")
 
 # Access extracted information
 print(f"Title: {doc_structure.title}")
@@ -188,6 +192,19 @@ print(f"Key findings: {doc_structure.summary['key_findings']}")
 
 # Save results
 synthesizer.save_results(doc_structure, "output_folder")
+
+# Process a batch of papers
+papers = ["paper1.pdf", "paper2.pdf", "paper3.pdf"]
+batch_metrics = synthesizer.process_batch(
+    file_list=papers,
+    output_dir="batch_output",
+    batch_size=2,
+    all_pdfs=True
+)
+
+# Print batch metrics
+print(f"Batch processing time: {batch_metrics['total_processing_time']:.2f} seconds")
+print(f"Documents processed: {batch_metrics['successful']}/{batch_metrics['total_documents']}")
 ```
 
 ## Installation
@@ -196,6 +213,114 @@ To install the enhanced Medical Research Synthesizer, you need to install the re
 
 ```bash
 pip install -r requirements.txt
+```
+
+## Performance Enhancements
+
+In addition to the quality improvements, we've implemented several performance optimizations:
+
+### 1. Parallel Processing
+
+The enhanced synthesizer now supports parallel execution of entity extraction and relation extraction steps, significantly reducing processing time for large documents.
+
+```python
+# Example usage
+from asf.medical.ml.document_processing import MedicalResearchSynthesizer
+
+# Initialize synthesizer
+synthesizer = MedicalResearchSynthesizer()
+
+# Process a medical research paper with parallel execution
+doc_structure, performance_metrics = synthesizer.process_parallel("paper.pdf", is_pdf=True)
+
+# Print performance metrics
+print(f"Parallel processing time: {performance_metrics['total_processing_time']:.2f} seconds")
+```
+
+### 2. Batch Processing
+
+The enhanced synthesizer now supports batch processing of multiple documents with configurable parallelism.
+
+```python
+# Example usage
+from asf.medical.ml.document_processing import MedicalResearchSynthesizer
+
+# Initialize synthesizer
+synthesizer = MedicalResearchSynthesizer()
+
+# Define list of papers to process
+papers = ["paper1.pdf", "paper2.pdf", "paper3.pdf", "paper4.pdf"]
+
+# Process batch with 2 papers in parallel
+batch_metrics = synthesizer.process_batch(
+    file_list=papers,
+    output_dir="batch_output",
+    batch_size=2,
+    all_pdfs=True
+)
+
+# Print batch metrics
+print(f"Total processing time: {batch_metrics['total_processing_time']:.2f} seconds")
+print(f"Average document time: {batch_metrics['avg_document_time']:.2f} seconds")
+print(f"Total entities extracted: {batch_metrics['entities_total']}")
+```
+
+### 3. Advanced Caching
+
+The enhanced synthesizer now supports component-level and full-document caching for significant speedup when processing similar documents.
+
+```python
+# Example usage
+from asf.medical.ml.document_processing import MedicalResearchSynthesizer
+
+# Initialize with caching enabled
+synthesizer = MedicalResearchSynthesizer(
+    use_cache=True,
+    cache_dir="cache",
+    cache_size_mb=1000
+)
+
+# Process a medical research paper
+doc_structure, performance_metrics = synthesizer.process("paper.pdf", is_pdf=True)
+
+# Print performance metrics
+print(f"Processing time: {performance_metrics['total_processing_time']:.2f} seconds")
+print(f"Cache hits: {performance_metrics.get('cache_hits', 0)}")
+```
+
+### 4. Online Learning
+
+The enhanced synthesizer now supports updating models with new labeled data without full retraining.
+
+```python
+# Example usage
+from asf.medical.ml.document_processing import MedicalResearchSynthesizer
+
+# Initialize synthesizer
+synthesizer = MedicalResearchSynthesizer()
+
+# Define labeled data for model updates
+labeled_data = {
+    "entities": [
+        {"text": "COVID-19", "label": "DISEASE", "start": 50, "end": 58,
+         "context": "This study evaluates the efficacy of a novel antiviral treatment for COVID-19."}
+    ],
+    "relations": [
+        {"head": "novel antiviral", "tail": "COVID-19", "relation": "TREATS",
+         "context": "This study evaluates the efficacy of a novel antiviral treatment for COVID-19."}
+    ]
+}
+
+# Update models with labeled data
+update_metrics = synthesizer.update_models(
+    labeled_data=labeled_data,
+    learning_rate=2e-5,
+    batch_size=2,
+    epochs=3
+)
+
+# Print update metrics
+print(f"Entity extractor update: {update_metrics.get('entity_extractor', {})}")
 ```
 
 ## Future Work
@@ -209,3 +334,5 @@ Beyond the scope of this immediate enhancement plan, several avenues warrant fut
 3. **Advanced Multi-Task Learning**: Explore more sophisticated multi-task learning frameworks, potentially training the encoder jointly on NER, RE, and section classification tasks to improve shared representations.
 
 4. **Continuous Monitoring and Updates**: Establish a process for continuously monitoring new model releases, techniques, and benchmarks relevant to biomedical text processing and plan for periodic updates to the pipeline components.
+
+5. **Distributed Processing**: Extend the parallel and batch processing capabilities to support distributed processing across multiple machines for handling very large document collections.

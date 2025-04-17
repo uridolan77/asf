@@ -57,10 +57,12 @@ class BiomedicalEntityExtractor:
             # Add abbreviation detector to the pipeline if available
             try:
                 from scispacy.abbreviation import AbbreviationDetector
+            except ImportError:
+                AbbreviationDetector = None
+                logger.warning("Could not load AbbreviationDetector from scispacy")
+            if AbbreviationDetector is not None:
                 self.nlp.add_pipe("abbreviation_detector")
                 logger.info("Added abbreviation detector to pipeline")
-            except (ImportError, ModuleNotFoundError):
-                logger.warning("Could not load AbbreviationDetector from scispacy")
             
             # Add UMLS entity linker if requested
             if use_umls:

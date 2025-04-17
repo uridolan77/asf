@@ -15,7 +15,12 @@ The synthesizer orchestrates the following components:
 import logging
 import time
 import torch
-from typing import Dict, List, Optional, Any, Tuple
+import os
+import json
+import hashlib
+import sqlite3
+import concurrent.futures
+from typing import Dict, List, Optional, Any, Tuple, Set, Union
 
 # Local imports
 from .document_structure import DocumentStructure
@@ -36,6 +41,158 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
+class ModelCache:
+    """
+    Cache for model outputs to avoid redundant processing.
+    """
+
+    def __init__(self, cache_dir: str, max_size_mb: int = 1000):
+        """
+        Initialize the model cache.
+
+        Args:
+            cache_dir: Directory for cache files
+            max_size_mb: Maximum cache size in MB
+        """
+        self.cache_dir = cache_dir
+        self.max_size_mb = max_size_mb
+        os.makedirs(cache_dir, exist_ok=True)
+
+        # Initialize cache database
+        self.db_path = os.path.join(cache_dir, "cache.db")
+        self.conn = sqlite3.connect(self.db_path)
+        self.cursor = self.conn.cursor()
+
+        # Create cache tables if they don't exist
+        self.cursor.execute('''
+        CREATE TABLE IF NOT EXISTS cache_entries (
+            hash TEXT PRIMARY KEY,
+            component TEXT,
+            timestamp REAL,
+            size_bytes INTEGER,
+            filename TEXT
+        )
+        ''')
+        self.conn.commit()
+
+        # Cleanup if needed
+        self._cleanup_if_needed()
+
+    def _get_hash(self, text: str, component: str) -> str:
+        """Get hash for cache key."""
+        return hashlib.md5(f"{component}:{text}".encode()).hexdigest()
+
+    def _cleanup_if_needed(self):
+        """Cleanup old cache entries if cache is too large."""
+        # Get total cache size
+        self.cursor.execute("SELECT SUM(size_bytes) FROM cache_entries")
+        result = self.cursor.fetchone()
+        total_size = result[0] if result[0] else 0
+
+        # If cache is too large, remove oldest entries
+        if total_size > self.max_size_mb * 1024 * 1024:
+            logger.info(f"Cache size {total_size/1024/1024:.2f}MB exceeds limit, cleaning up")
+
+            # Get entries to remove
+            self.cursor.execute(
+                "SELECT hash, filename FROM cache_entries ORDER BY timestamp ASC LIMIT 100"
+            )
+            entries_to_remove = self.cursor.fetchall()
+
+            # Remove entries
+            for hash_val, filename in entries_to_remove:
+                try:
+                    os.remove(os.path.join(self.cache_dir, filename))
+                    self.cursor.execute("DELETE FROM cache_entries WHERE hash = ?", (hash_val,))
+                except Exception as e:
+                    logger.warning(f"Error removing cache entry: {str(e)}")
+
+            self.conn.commit()
+
+    def get(self, text: str, component: str) -> Optional[Any]:
+        """
+        Get cached result for text and component.
+
+        Args:
+            text: Input text
+            component: Component name
+
+        Returns:
+            Cached result or None if not in cache
+        """
+        import pickle
+
+        hash_val = self._get_hash(text, component)
+
+        self.cursor.execute(
+            "SELECT filename FROM cache_entries WHERE hash = ?",
+            (hash_val,)
+        )
+        result = self.cursor.fetchone()
+
+        if result:
+            filename = result[0]
+            file_path = os.path.join(self.cache_dir, filename)
+
+            try:
+                with open(file_path, 'rb') as f:
+                    cached_result = pickle.load(f)
+
+                # Update timestamp
+                self.cursor.execute(
+                    "UPDATE cache_entries SET timestamp = ? WHERE hash = ?",
+                    (time.time(), hash_val)
+                )
+                self.conn.commit()
+
+                return cached_result
+            except Exception as e:
+                logger.warning(f"Error reading cache entry: {str(e)}")
+                return None
+
+        return None
+
+    def set(self, text: str, component: str, result: Any) -> None:
+        """
+        Cache result for text and component.
+
+        Args:
+            text: Input text
+            component: Component name
+            result: Result to cache
+        """
+        import pickle
+
+        hash_val = self._get_hash(text, component)
+        filename = f"{hash_val}.pkl"
+        file_path = os.path.join(self.cache_dir, filename)
+
+        try:
+            # Save result to file
+            with open(file_path, 'wb') as f:
+                pickle.dump(result, f)
+
+            # Get file size
+            size_bytes = os.path.getsize(file_path)
+
+            # Update cache database
+            self.cursor.execute(
+                "INSERT OR REPLACE INTO cache_entries VALUES (?, ?, ?, ?, ?)",
+                (hash_val, component, time.time(), size_bytes, filename)
+            )
+            self.conn.commit()
+
+            # Cleanup if needed
+            self._cleanup_if_needed()
+        except Exception as e:
+            logger.warning(f"Error caching result: {str(e)}")
+
+    def close(self):
+        """Close database connection."""
+        if self.conn:
+            self.conn.close()
+
 class MedicalResearchSynthesizer:
     """
     Complete pipeline for processing and synthesizing medical research papers.
@@ -50,7 +207,10 @@ class MedicalResearchSynthesizer:
         entity_extractor_args: Dict = None,
         relation_extractor_args: Dict = None,
         summarizer_args: Dict = None,
-        device: Optional[str] = None
+        device: Optional[str] = None,
+        use_cache: bool = True,
+        cache_dir: str = "cache",
+        cache_size_mb: int = 1000
     ):
         """
         Initialize the medical research synthesizer.
@@ -61,9 +221,27 @@ class MedicalResearchSynthesizer:
             relation_extractor_args: Arguments for relation extractor
             summarizer_args: Arguments for summarizer
             device: Device for PyTorch models
+            use_cache: Whether to use caching for model outputs
+            cache_dir: Directory for cache files
+            cache_size_mb: Maximum cache size in MB
         """
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
         logger.info(f"Initializing Medical Research Synthesizer on {self.device}")
+
+        # Initialize cache if requested
+        self.use_cache = use_cache
+        if use_cache:
+            try:
+                self.cache = ModelCache(
+                    cache_dir=os.path.join(os.path.dirname(__file__), cache_dir),
+                    max_size_mb=cache_size_mb
+                )
+                logger.info(f"Model cache initialized in {cache_dir} with {cache_size_mb}MB limit")
+            except Exception as e:
+                logger.warning(f"Failed to initialize model cache: {str(e)}")
+                self.use_cache = False
+        else:
+            self.cache = None
 
         # Initialize document processor
         doc_args = document_processor_args or {}
@@ -155,6 +333,20 @@ class MedicalResearchSynthesizer:
         """
         start_time = time.time()
         performance_metrics = {}
+        cache_hits = 0
+
+        # Check if we have a cached result for the entire document
+        if self.use_cache and not is_pdf:
+            # Only cache text inputs, not PDF paths
+            cached_result = self.cache.get(text_or_path, "full_document")
+            if cached_result:
+                logger.info("Using cached result for full document")
+                doc_structure, cached_metrics = cached_result
+                # Update metrics with cache information
+                performance_metrics = cached_metrics.copy()
+                performance_metrics["cache_hit"] = True
+                performance_metrics["retrieval_time"] = time.time() - start_time
+                return doc_structure, performance_metrics
 
         # Step 1: Document processing
         logger.info("Step 1: Document processing")
@@ -165,26 +357,82 @@ class MedicalResearchSynthesizer:
         # Step 2: Entity extraction
         logger.info("Step 2: Biomedical entity extraction")
         step_start = time.time()
-        doc_structure = self.entity_extractor.process_document(doc_structure)
+
+        # Check cache for entity extraction
+        if self.use_cache and hasattr(doc_structure, 'title'):
+            cache_key = f"entity_extraction:{doc_structure.title}"
+            cached_entities = self.cache.get(cache_key, "entity_extraction")
+            if cached_entities:
+                logger.info("Using cached entities")
+                doc_structure.entities = cached_entities
+                cache_hits += 1
+            else:
+                # Process and cache
+                doc_structure = self.entity_extractor.process_document(doc_structure)
+                if doc_structure.entities:
+                    self.cache.set(cache_key, "entity_extraction", doc_structure.entities)
+        else:
+            # Process without caching
+            doc_structure = self.entity_extractor.process_document(doc_structure)
+
         performance_metrics["entity_extraction_time"] = time.time() - step_start
         performance_metrics["entity_count"] = len(doc_structure.entities)
 
         # Step 3: Relation extraction
         logger.info("Step 3: Relation extraction")
         step_start = time.time()
-        doc_structure = self.relation_extractor.process_document(doc_structure)
+
+        # Check cache for relation extraction
+        if self.use_cache and hasattr(doc_structure, 'title') and doc_structure.entities:
+            cache_key = f"relation_extraction:{doc_structure.title}:{len(doc_structure.entities)}"
+            cached_relations = self.cache.get(cache_key, "relation_extraction")
+            if cached_relations:
+                logger.info("Using cached relations")
+                doc_structure.relations = cached_relations
+                cache_hits += 1
+            else:
+                # Process and cache
+                doc_structure = self.relation_extractor.process_document(doc_structure)
+                if doc_structure.relations:
+                    self.cache.set(cache_key, "relation_extraction", doc_structure.relations)
+        else:
+            # Process without caching
+            doc_structure = self.relation_extractor.process_document(doc_structure)
+
         performance_metrics["relation_extraction_time"] = time.time() - step_start
         performance_metrics["relation_count"] = len(doc_structure.relations)
 
         # Step 4: Research summarization
         logger.info("Step 4: Research summarization")
         step_start = time.time()
-        doc_structure = self.summarizer.process_document(doc_structure)
+
+        # Check cache for summarization
+        if self.use_cache and hasattr(doc_structure, 'title'):
+            cache_key = f"summarization:{doc_structure.title}:{len(doc_structure.entities)}:{len(doc_structure.relations)}"
+            cached_summary = self.cache.get(cache_key, "summarization")
+            if cached_summary:
+                logger.info("Using cached summary")
+                doc_structure.summary = cached_summary
+                cache_hits += 1
+            else:
+                # Process and cache
+                doc_structure = self.summarizer.process_document(doc_structure)
+                if doc_structure.summary:
+                    self.cache.set(cache_key, "summarization", doc_structure.summary)
+        else:
+            # Process without caching
+            doc_structure = self.summarizer.process_document(doc_structure)
+
         performance_metrics["summarization_time"] = time.time() - step_start
 
         # Calculate total processing time
         total_time = time.time() - start_time
         performance_metrics["total_processing_time"] = total_time
+        performance_metrics["cache_hits"] = cache_hits
+
+        # Cache the full result if appropriate
+        if self.use_cache and not is_pdf and hasattr(doc_structure, 'title'):
+            self.cache.set(text_or_path, "full_document", (doc_structure, performance_metrics))
 
         # Log performance if requested
         if track_performance and hasattr(doc_structure, 'title'):
@@ -197,8 +445,172 @@ class MedicalResearchSynthesizer:
                 additional_metrics=performance_metrics
             )
 
-        logger.info(f"Processing complete in {total_time:.2f} seconds")
+        logger.info(f"Processing complete in {total_time:.2f} seconds with {cache_hits} cache hits")
         return doc_structure, performance_metrics
+
+    def process_parallel(self, text_or_path: str, is_pdf: bool = False, track_performance: bool = True) -> Tuple[DocumentStructure, Dict[str, Any]]:
+        """
+        Process a medical research paper with parallel execution of components.
+
+        Args:
+            text_or_path: Text or path to PDF
+            is_pdf: Whether the input is a PDF path
+            track_performance: Whether to track performance metrics
+
+        Returns:
+            Tuple of (processed document structure, performance metrics)
+        """
+        start_time = time.time()
+        performance_metrics = {}
+
+        # Step 1: Document processing (must be done first)
+        logger.info("Step 1: Document processing")
+        step_start = time.time()
+        doc_structure = self.document_processor.process_document(text_or_path, is_pdf)
+        performance_metrics["document_processing_time"] = time.time() - step_start
+
+        # Steps 2 and 3 can be run in parallel
+        logger.info("Steps 2 & 3: Running entity extraction and relation extraction in parallel")
+        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+            # Submit entity extraction task
+            entity_start = time.time()
+            entity_future = executor.submit(
+                self.entity_extractor.process_document,
+                doc_structure
+            )
+
+            # Wait for entity extraction to finish
+            doc_structure_with_entities = entity_future.result()
+            performance_metrics["entity_extraction_time"] = time.time() - entity_start
+            performance_metrics["entity_count"] = len(doc_structure_with_entities.entities)
+
+            # Submit relation extraction task with the updated document structure
+            relation_start = time.time()
+            relation_future = executor.submit(
+                self.relation_extractor.process_document,
+                doc_structure_with_entities
+            )
+
+            # Wait for relation extraction to finish
+            doc_structure_with_relations = relation_future.result()
+            performance_metrics["relation_extraction_time"] = time.time() - relation_start
+            performance_metrics["relation_count"] = len(doc_structure_with_relations.relations)
+
+        # Step 4: Research summarization
+        logger.info("Step 4: Research summarization")
+        step_start = time.time()
+        final_doc_structure = self.summarizer.process_document(doc_structure_with_relations)
+        performance_metrics["summarization_time"] = time.time() - step_start
+
+        # Calculate total processing time
+        total_time = time.time() - start_time
+        performance_metrics["total_processing_time"] = total_time
+
+        # Log performance if requested
+        if track_performance and hasattr(final_doc_structure, 'title'):
+            document_id = final_doc_structure.title.replace(" ", "_")[:50]
+            LifecycleManager.log_performance(
+                document_id=document_id,
+                entity_count=len(final_doc_structure.entities),
+                relation_count=len(final_doc_structure.relations),
+                processing_time=total_time,
+                additional_metrics=performance_metrics
+            )
+
+        logger.info(f"Parallel processing complete in {total_time:.2f} seconds")
+        return final_doc_structure, performance_metrics
+
+    def process_batch(self, file_list: List[str], output_dir: str, batch_size: int = 4, all_pdfs: bool = True) -> Dict[str, Any]:
+        """
+        Process a batch of documents with configurable parallelism.
+
+        Args:
+            file_list: List of file paths
+            output_dir: Base output directory
+            batch_size: Number of documents to process in parallel
+            all_pdfs: Whether all files are PDFs
+
+        Returns:
+            Dictionary with aggregate performance metrics
+        """
+        overall_start = time.time()
+        aggregate_metrics = {
+            "total_documents": len(file_list),
+            "successful": 0,
+            "failed": 0,
+            "entities_total": 0,
+            "relations_total": 0,
+            "processing_times": []
+        }
+
+        # Create output directory if it doesn't exist
+        os.makedirs(output_dir, exist_ok=True)
+
+        def process_single_file(file_path):
+            try:
+                doc_name = os.path.basename(file_path).split('.')[0]
+                doc_output_dir = os.path.join(output_dir, doc_name)
+
+                # Process document
+                doc_structure, metrics = self.process(file_path, is_pdf=all_pdfs)
+
+                # Save results
+                self.save_results(doc_structure, doc_output_dir)
+
+                return {
+                    "file": file_path,
+                    "status": "success",
+                    "metrics": metrics,
+                    "entity_count": len(doc_structure.entities),
+                    "relation_count": len(doc_structure.relations)
+                }
+            except Exception as e:
+                logger.error(f"Error processing {file_path}: {str(e)}")
+                return {
+                    "file": file_path,
+                    "status": "failed",
+                    "error": str(e)
+                }
+
+        # Process files in batches
+        results = []
+        with concurrent.futures.ProcessPoolExecutor(max_workers=batch_size) as executor:
+            # Submit all processing tasks
+            future_to_file = {executor.submit(process_single_file, file_path): file_path
+                             for file_path in file_list}
+
+            # Process results as they complete
+            for future in concurrent.futures.as_completed(future_to_file):
+                file_path = future_to_file[future]
+                try:
+                    result = future.result()
+                    results.append(result)
+
+                    if result["status"] == "success":
+                        aggregate_metrics["successful"] += 1
+                        aggregate_metrics["entities_total"] += result["entity_count"]
+                        aggregate_metrics["relations_total"] += result["relation_count"]
+                        aggregate_metrics["processing_times"].append(result["metrics"]["total_processing_time"])
+                    else:
+                        aggregate_metrics["failed"] += 1
+
+                    logger.info(f"Processed {len(results)}/{len(file_list)}: {file_path}")
+                except Exception as e:
+                    logger.error(f"Error handling result for {file_path}: {str(e)}")
+                    aggregate_metrics["failed"] += 1
+
+        # Calculate aggregate metrics
+        aggregate_metrics["total_processing_time"] = time.time() - overall_start
+        if aggregate_metrics["processing_times"]:
+            aggregate_metrics["avg_document_time"] = sum(aggregate_metrics["processing_times"]) / len(aggregate_metrics["processing_times"])
+            aggregate_metrics["min_document_time"] = min(aggregate_metrics["processing_times"])
+            aggregate_metrics["max_document_time"] = max(aggregate_metrics["processing_times"])
+
+        # Save aggregate metrics
+        with open(os.path.join(output_dir, "batch_metrics.json"), "w") as f:
+            json.dump(aggregate_metrics, f, indent=2)
+
+        return aggregate_metrics
 
     def save_results(self, doc_structure: DocumentStructure, output_dir: str) -> None:
         """
@@ -209,6 +621,87 @@ class MedicalResearchSynthesizer:
             output_dir: Output directory
         """
         ResultExporter.save_results(doc_structure, output_dir)
+
+    def update_models(
+        self,
+        labeled_data: Dict[str, List[Dict]],
+        learning_rate: float = 1e-5,
+        batch_size: int = 4,
+        epochs: int = 1
+    ) -> Dict[str, Any]:
+        """
+        Update models with new labeled data using online learning.
+
+        Args:
+            labeled_data: Dictionary with labeled data for different components
+            learning_rate: Learning rate for updates
+            batch_size: Batch size for updates
+            epochs: Number of epochs for updates
+
+        Returns:
+            Dictionary with update metrics
+        """
+        update_metrics = {}
+
+        # Update entity extractor if data provided
+        if "entities" in labeled_data and hasattr(self.entity_extractor, "update_model"):
+            try:
+                logger.info(f"Updating entity extractor with {len(labeled_data['entities'])} examples")
+                entity_metrics = self.entity_extractor.update_model(
+                    labeled_data["entities"],
+                    learning_rate=learning_rate,
+                    batch_size=batch_size,
+                    epochs=epochs
+                )
+                update_metrics["entity_extractor"] = entity_metrics
+            except Exception as e:
+                logger.error(f"Error updating entity extractor: {str(e)}")
+
+        # Update relation extractor if data provided
+        if "relations" in labeled_data and hasattr(self.relation_extractor, "update_model"):
+            try:
+                logger.info(f"Updating relation extractor with {len(labeled_data['relations'])} examples")
+                relation_metrics = self.relation_extractor.update_model(
+                    labeled_data["relations"],
+                    learning_rate=learning_rate,
+                    batch_size=batch_size,
+                    epochs=epochs
+                )
+                update_metrics["relation_extractor"] = relation_metrics
+            except Exception as e:
+                logger.error(f"Error updating relation extractor: {str(e)}")
+
+        # Update summarizer if data provided
+        if "summaries" in labeled_data and hasattr(self.summarizer, "update_model"):
+            try:
+                logger.info(f"Updating summarizer with {len(labeled_data['summaries'])} examples")
+                summary_metrics = self.summarizer.update_model(
+                    labeled_data["summaries"],
+                    learning_rate=learning_rate,
+                    batch_size=batch_size,
+                    epochs=epochs
+                )
+                update_metrics["summarizer"] = summary_metrics
+            except Exception as e:
+                logger.error(f"Error updating summarizer: {str(e)}")
+
+        # Register updated model with lifecycle manager
+        if update_metrics:
+            self.register_with_lifecycle_manager(version="1.0.0-updated")
+
+            # Clear cache if we have one
+            if self.use_cache and self.cache:
+                try:
+                    # Close and reinitialize cache to clear it
+                    cache_dir = self.cache.cache_dir
+                    max_size = self.cache.max_size_mb
+                    self.cache.close()
+                    self.cache = ModelCache(cache_dir=cache_dir, max_size_mb=max_size)
+                    logger.info("Cache cleared after model update")
+                except Exception as e:
+                    logger.error(f"Error clearing cache: {str(e)}")
+
+        return update_metrics
 
     def register_with_lifecycle_manager(self, version: str = "1.0.0") -> bool:
         """
