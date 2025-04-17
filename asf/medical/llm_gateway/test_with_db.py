@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 # Uncomment to override the API key for testing
-os.environ["OPENAI_API_KEY"] = "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"
+# os.environ["OPENAI_API_KEY"] = "PLACEHOLDER_API_KEY"  # Set your API key here for testing
 
 # Configure logging
 logging.basicConfig(

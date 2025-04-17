@@ -154,9 +154,24 @@ class OpenAIClient(BaseProvider):
 
             else:
                 # --- Standard OpenAI Configuration ---
-                # IMMEDIATE SOLUTION: Use a valid API key directly to ensure it works
-                api_key = "***"
-                
+                # Get API key from connection parameters
+                api_key = self._connection_params.get("api_key")
+
+                # Try environment variable if direct key not provided
+                if not api_key:
+                    env_var = self._connection_params.get("api_key_env_var")
+                    if env_var:
+                        api_key = os.environ.get(env_var)
+
+                # Try secret reference if still no key
+                if not api_key:
+                    secret_ref = self._connection_params.get("api_key_secret")
+                    if secret_ref and self._secret_manager:
+                        try:
+                            api_key = self._secret_manager.get_secret(secret_ref)
+                        except Exception as e:
+                            logger.warning(f"Failed to get API key from secret reference '{secret_ref}': {e}")
+
                 # Log the API key (masked) for debugging
                 if api_key:
                     masked_key = f"{api_key[:5]}...{api_key[-4:]}" if len(api_key) > 10 else "***MASKED***"

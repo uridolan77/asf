@@ -27,7 +27,7 @@ additional_config:
         api_key_secret: llm:openai_api_key
 
         # Option 2: Direct API key (less secure but works for development)
-        api_key: xxxx
+        # api_key: PLACEHOLDER_API_KEY  # Commented out for security
 
         # Option 3: Environment variable (for flexibility)
         api_key_env_var: OPENAI_API_KEY

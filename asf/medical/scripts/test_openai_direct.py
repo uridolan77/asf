@@ -8,7 +8,7 @@ import openai
 import os
 
 # Set your API key here
-API_KEY = "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"
+API_KEY = os.environ.get("OPENAI_API_KEY", "PLACEHOLDER_API_KEY")  # Get from environment or use placeholder
 
 # Set the API key directly in the OpenAI client
 client = openai.OpenAI(api_key=API_KEY)
@@ -24,11 +24,11 @@ try:
         ],
         max_tokens=100
     )
-    
+
     print("\nAPI call successful!")
     print(f"Response: {response.choices[0].message.content}")
     print(f"Tokens used: {response.usage.total_tokens}")
-    
+
 except Exception as e:
     print(f"\nAPI call failed with error: {e}")
 
