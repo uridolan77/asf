@@ -1,9 +1,9 @@
 from typing import List, Optional, Dict, Any
 from sqlalchemy.orm import Session
 import logging
-from ..repositories.configuration_repository import ConfigurationRepository
-from ..repositories.audit_repository import AuditRepository
-from ..models.configuration import Configuration, UserSetting
+from asf.bo.backend.repositories.configuration_repository import ConfigurationRepository
+from asf.bo.backend.repositories.audit_repository import AuditRepository
+from asf.bo.backend.models.configuration import Configuration, UserSetting
 
 logger = logging.getLogger(__name__)
 

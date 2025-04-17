@@ -14,8 +14,8 @@
   "umls": {
     "name": "UMLS",
     "config": {
-      "api_key": "",
-      "base_url": "https://uts-ws.nlm.nih.gov/rest",
+      "api_key": "test-key",
+      "base_url": "https://uts-ws.nlm.nih.gov/api",
       "timeout": 30.0,
       "max_retries": 3,
       "cache_ttl": 86400,

@@ -1,10 +1,8 @@
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql import func
-import datetime
-
-Base = declarative_base()
+from .base import Base
+from .association import users_providers  # Import the association table
 
 class Role(Base):
     __tablename__ = 'roles'
@@ -26,9 +24,11 @@ class User(Base):
     # Relationships
     role = relationship('Role', back_populates='users')
 
-    # New relationships for API keys and configuration
-    created_providers = relationship("Provider", foreign_keys="Provider.created_by_user_id", back_populates="created_by")
-    api_keys = relationship("ApiKey", foreign_keys="ApiKey.created_by_user_id", back_populates="created_by")
-    configurations = relationship("Configuration", foreign_keys="Configuration.created_by_user_id", back_populates="created_by")
-    settings = relationship("UserSetting", back_populates="user")
-    audit_logs = relationship("AuditLog", foreign_keys="AuditLog.changed_by_user_id", back_populates="changed_by")
+    # Many-to-many relationship with providers
+    providers = relationship("Provider", secondary=users_providers, back_populates="users")
+
+    # Other relationships
+    api_keys = relationship("ApiKey", foreign_keys="[ApiKey.created_by_user_id]", back_populates="created_by", lazy="dynamic")
+    configurations = relationship("Configuration", foreign_keys="[Configuration.created_by_user_id]", back_populates="created_by", lazy="dynamic")
+    settings = relationship("UserSetting", back_populates="user", lazy="dynamic")
+    audit_logs = relationship("AuditLog", foreign_keys="[AuditLog.changed_by_user_id]", back_populates="changed_by", lazy="dynamic")

@@ -19971,3 +19971,1753 @@ WHERE users.id = %(id_1)s
 2025-04-17 01:41:23,918 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
 2025-04-17 01:41:23,980 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
 2025-04-17 01:41:23,986 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:15:32,821 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:15:33,545 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:15:33,547 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:15:33,657 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:15:36,984 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:15:37,049 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:15:37,053 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:20:34,938 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:20:35,638 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:20:35,640 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:20:35,747 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:20:38,973 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:20:39,038 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:20:39,041 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:23:21,958 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:23:22,709 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:23:22,712 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:23:22,832 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:23:26,347 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:23:26,420 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:23:26,423 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:23:47,612 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:23:48,335 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:23:48,337 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:23:48,451 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:23:51,769 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:23:51,833 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:23:51,836 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:23:57,357 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:23:58,056 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:23:58,059 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:23:58,166 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:24:01,373 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:24:01,437 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:24:01,440 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:24:07,465 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:24:08,179 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:24:08,181 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:24:08,286 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:24:11,517 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:24:11,578 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:24:11,581 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:24:22,567 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:24:23,320 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:24:23,322 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:24:23,431 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:24:26,702 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:24:26,769 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:24:26,773 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:24:47,850 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:24:48,559 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:24:48,561 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:24:48,668 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:24:52,036 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:24:52,100 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:24:52,102 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:26:11,673 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:26:11,739 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:26:12,441 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:26:12,443 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:26:12,497 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:26:12,499 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:26:12,551 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:26:12,605 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:26:15,939 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:26:15,962 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:26:16,006 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:26:16,009 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:26:16,027 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:26:16,030 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:26:30,305 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:26:30,306 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:26:31,117 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:26:31,117 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:26:31,119 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:26:31,119 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:26:31,232 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:26:31,233 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:26:34,612 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:26:34,613 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:26:34,675 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:26:34,675 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:26:34,679 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:26:34,679 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:26:38,703 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:26:38,715 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:26:39,493 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:26:39,493 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:26:39,495 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:26:39,495 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:26:39,605 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:26:39,605 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:26:43,070 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:26:43,070 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:26:43,137 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:26:43,141 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:26:43,150 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:26:43,150 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:27:01,111 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:27:01,112 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:27:01,934 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:27:01,934 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:27:01,936 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:27:01,936 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:27:02,067 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:27:05,827 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:27:05,835 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:27:05,896 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:27:05,900 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:27:05,904 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:27:05,907 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:30:47,525 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:30:48,223 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:30:48,225 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:30:48,333 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:30:51,572 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:30:51,636 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:30:51,638 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:33:33,863 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:33:34,521 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:33:34,523 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:33:34,644 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:33:34,646 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:33:34,761 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:33:35,331 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:33:35,331 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:33:35,333 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:33:35,333 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:33:35,450 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:33:38,217 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:33:38,280 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:33:38,283 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:33:39,012 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:33:39,018 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:33:39,077 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:33:39,080 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:33:39,084 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:33:39,087 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:33:44,335 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:33:44,920 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:33:44,921 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:33:45,059 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:33:45,061 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:33:45,177 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:33:45,712 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:33:45,712 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:33:45,714 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:33:45,714 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:33:45,824 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:33:45,826 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:33:48,550 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:33:48,612 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:33:48,616 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:33:49,278 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:33:49,278 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:33:49,342 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:33:49,343 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:33:49,346 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:33:49,346 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:33:55,055 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:33:55,254 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:33:55,276 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:33:55,779 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:33:55,781 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:33:55,893 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:33:56,032 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:33:56,034 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:33:56,049 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:33:56,051 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:33:56,148 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:33:56,166 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:33:59,603 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:33:59,672 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:33:59,675 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:33:59,874 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:33:59,888 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:33:59,939 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:33:59,942 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:33:59,952 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:33:59,956 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:34:07,744 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:34:07,744 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:34:07,744 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:34:08,602 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:34:08,602 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:34:08,604 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:34:08,604 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:34:08,605 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:34:08,733 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:34:08,733 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:34:08,733 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:34:12,435 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:34:12,435 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:34:12,435 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:34:12,510 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:34:12,511 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:34:12,511 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:34:12,513 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:34:12,514 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:34:12,514 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:34:17,692 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:34:18,505 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:34:18,507 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:34:18,630 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:34:18,761 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:34:18,762 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:34:19,722 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:34:19,722 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:34:19,724 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:34:19,725 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:34:19,843 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:34:19,844 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:34:22,524 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:34:22,594 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:34:22,597 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:34:23,661 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:34:23,661 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:34:23,729 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:34:23,729 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:34:23,732 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:34:23,732 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:34:28,430 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:34:29,182 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:34:29,184 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:34:29,311 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:34:29,964 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:34:29,967 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:34:30,886 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:34:30,888 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:34:30,889 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:34:31,019 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:34:33,284 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:34:33,361 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:34:33,364 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:34:35,064 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:34:35,065 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:34:35,128 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:34:35,131 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:34:35,131 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:34:52,986 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:34:53,716 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:34:53,718 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:34:53,826 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:34:57,211 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:34:57,276 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:34:57,279 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:35:19,991 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:35:20,213 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:35:20,737 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:35:20,739 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:35:20,852 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:35:20,948 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:35:20,950 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:35:21,062 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:35:21,232 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:35:21,239 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:35:22,049 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:35:22,050 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:35:22,051 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:35:22,052 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:35:22,170 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:35:22,171 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:35:24,658 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:35:24,734 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:35:24,738 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:35:24,856 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:35:24,931 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:35:24,934 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:35:26,267 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:35:26,267 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:35:26,341 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:35:26,341 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:35:26,344 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:35:26,345 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:35:30,882 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:35:30,882 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:35:30,894 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:35:31,326 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:35:31,880 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:35:31,880 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:35:31,882 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:35:31,882 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:35:31,886 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:35:31,889 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:35:32,010 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:35:32,011 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:35:32,017 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:35:32,159 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:35:32,161 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:35:32,289 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:35:36,314 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:35:36,315 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:35:36,315 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:35:36,400 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:35:36,401 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:35:36,404 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:35:36,404 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:35:36,404 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:35:36,408 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:35:36,493 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:35:36,585 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:35:36,589 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:35:42,278 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:35:43,103 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:35:43,104 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:35:43,170 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:35:43,172 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:35:43,251 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:35:43,303 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:35:44,089 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:35:44,091 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:35:44,097 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:35:44,100 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:35:44,200 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:35:44,202 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:35:44,228 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:35:44,237 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:35:44,328 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:35:47,447 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:35:47,525 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:35:47,528 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:35:48,335 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:35:48,348 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:35:48,413 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:35:48,414 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:35:48,416 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:35:48,425 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:35:48,428 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:35:48,492 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:35:48,495 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:35:52,133 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:35:52,946 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:35:52,949 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:35:53,092 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:35:53,583 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:35:53,589 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:35:53,659 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:35:54,574 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:35:54,575 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:35:54,576 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:35:54,577 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:35:54,617 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:35:54,619 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:35:54,700 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:35:54,700 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:35:54,737 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:35:57,225 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:35:57,309 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:35:57,313 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:35:58,917 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:35:58,918 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:35:58,918 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:35:58,988 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:35:58,988 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:35:58,988 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:35:58,991 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:35:58,991 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:35:58,992 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:36:04,912 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:36:05,673 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:36:05,675 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:36:05,810 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:36:09,398 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:36:09,467 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:36:09,471 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:39:43,763 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:39:44,500 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:39:44,502 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:39:44,614 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:39:47,932 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:39:47,995 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:39:47,998 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:40:14,581 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:40:14,727 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:40:14,729 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:40:14,949 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:40:15,801 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:40:15,804 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:40:15,953 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:40:15,982 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:40:15,985 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:40:16,002 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:40:16,004 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:40:16,126 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:40:16,135 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:40:16,138 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:40:16,144 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:40:16,276 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:40:20,677 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:40:20,756 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:40:20,759 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:40:20,786 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:40:20,819 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:40:20,862 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:40:20,865 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:40:20,888 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:40:20,894 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:40:20,897 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:40:20,960 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:40:20,963 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:40:23,717 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:40:23,797 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:40:24,131 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:40:24,655 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:40:24,658 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:40:24,731 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:40:24,733 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:40:24,802 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:40:24,877 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:40:25,039 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:40:25,043 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:40:25,175 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:40:25,525 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:40:26,430 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:40:26,433 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:40:26,557 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:40:29,025 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:40:29,088 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:40:29,105 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:40:29,108 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:40:29,171 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:40:29,174 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:40:29,333 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:40:29,408 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:40:29,412 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:40:30,624 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:40:30,690 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:40:30,693 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:40:47,196 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:40:47,580 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:40:47,804 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:40:47,984 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:40:47,987 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:40:48,025 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:40:48,128 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:40:48,455 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:40:48,458 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:40:48,589 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:40:48,817 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:40:48,819 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:40:48,946 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:40:48,968 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:40:48,970 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:40:49,091 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:40:52,181 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:40:52,269 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:40:52,272 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:40:52,589 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:40:52,665 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:40:52,668 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:40:52,934 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:40:53,017 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:40:53,020 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:40:53,116 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:40:53,192 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:40:53,195 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:41:01,617 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:41:01,776 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:41:02,239 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:41:03,158 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:41:03,163 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:41:03,303 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:41:03,307 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:41:03,356 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:41:03,499 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:41:03,718 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:41:03,723 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:41:03,727 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:41:03,869 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:41:04,849 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:41:04,853 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:41:05,034 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:41:08,169 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:41:08,213 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:41:08,250 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:41:08,253 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:41:08,295 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:41:08,298 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:41:08,516 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:41:08,596 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:41:08,601 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:41:09,420 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:41:09,489 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:41:09,492 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:41:14,058 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:41:14,935 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:41:14,938 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:41:15,074 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:41:15,113 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:41:15,577 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:41:15,632 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:41:15,994 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:41:15,996 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:41:16,121 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:41:16,510 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:41:16,513 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:41:16,580 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:41:16,582 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:41:16,646 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:41:16,708 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:41:19,271 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:41:19,353 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:41:19,357 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:41:20,437 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:41:20,514 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:41:20,517 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:41:20,838 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:41:20,918 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:41:20,919 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:41:20,923 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:41:21,004 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:41:21,007 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:41:22,547 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:41:23,268 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:41:23,269 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:41:23,376 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:41:27,003 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:41:27,112 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:41:27,116 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:41:59,137 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:41:59,315 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:41:59,378 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:41:59,699 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:42:00,566 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:42:00,569 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:42:00,689 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:42:00,691 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:42:00,709 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:42:00,785 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:42:00,788 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:42:00,832 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:42:00,921 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:42:00,943 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:42:00,944 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:42:01,082 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:42:06,087 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:42:06,088 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:42:06,142 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:42:06,178 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:42:06,180 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:42:06,183 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:42:06,183 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:42:06,246 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:42:06,252 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:42:06,268 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:42:06,391 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:42:06,397 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:42:09,142 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:42:09,243 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:42:09,429 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:42:10,127 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:42:10,130 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:42:10,222 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:42:10,224 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:42:10,261 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:42:10,351 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:42:10,399 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:42:10,401 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:42:10,437 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:42:10,533 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:42:11,353 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:42:11,356 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:42:11,490 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:42:14,716 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:42:14,791 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:42:14,804 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:42:14,807 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:42:14,876 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:42:14,880 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:42:14,965 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:42:15,042 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:42:15,046 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:42:15,898 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:42:15,972 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:42:15,975 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:42:19,000 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:42:20,079 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:42:20,082 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:42:20,220 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:42:20,254 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:42:20,465 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:42:20,753 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:42:21,300 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:42:21,303 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:42:21,444 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:42:21,510 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:42:21,512 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:42:21,657 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:42:21,754 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:42:21,764 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:42:21,906 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:42:24,939 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:42:25,019 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:42:25,022 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:42:25,985 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:42:26,068 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:42:26,071 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:42:26,215 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:42:26,293 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:42:26,296 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:42:26,387 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:42:26,460 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:42:26,463 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:42:54,049 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:42:54,961 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:42:54,964 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:42:54,986 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:42:54,987 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:42:55,100 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:42:55,518 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:42:56,077 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:42:56,079 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:42:56,080 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:42:56,083 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:42:56,231 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:42:56,237 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:42:56,575 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:42:56,577 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:42:56,715 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:42:59,866 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:42:59,945 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:42:59,949 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:43:00,858 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:43:00,870 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:43:00,943 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:43:00,947 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:43:00,955 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:43:00,958 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:43:01,212 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:43:01,343 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:43:01,349 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:43:42,444 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:43:42,697 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:43:43,275 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:43:43,278 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:43:43,414 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:43:43,547 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:43:43,549 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:43:43,651 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:43:43,654 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:43:43,791 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:43:44,541 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:43:44,542 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:43:44,543 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:43:44,544 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:43:44,667 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:43:44,672 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:43:47,961 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:43:48,041 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:43:48,044 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:43:48,155 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:43:48,229 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:43:48,232 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:43:49,176 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:43:49,177 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:43:49,252 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:43:49,252 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:43:49,255 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:43:49,255 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:43:55,014 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:43:55,021 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:43:55,411 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:43:55,660 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:43:56,263 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:43:56,267 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:43:56,279 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:43:56,283 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:43:56,421 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:43:56,422 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:43:56,607 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:43:56,611 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:43:56,786 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:43:56,806 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:43:56,809 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:43:56,955 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:44:01,116 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:44:01,191 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:44:01,194 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:44:01,238 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:44:01,310 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:44:01,312 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:44:01,353 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:44:01,425 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:44:01,428 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:44:01,481 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:44:01,553 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:44:01,556 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:44:35,195 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:44:36,150 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:44:36,155 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:44:36,211 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:44:36,355 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:44:36,747 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:44:36,752 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:44:37,457 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:44:37,461 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:44:37,622 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:44:38,076 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:44:38,079 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:44:38,091 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:44:38,095 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:44:38,237 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:44:38,247 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:44:41,463 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:44:41,566 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:44:41,569 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:44:42,305 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:44:42,381 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:44:42,385 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:44:42,808 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:44:42,819 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:44:42,883 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:44:42,887 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:44:42,894 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:44:42,897 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:44:55,787 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:44:56,794 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:44:56,798 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:44:56,940 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:44:56,946 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:44:57,286 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:44:57,480 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:44:57,838 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:44:57,841 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:44:57,967 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:44:58,183 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:44:58,185 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:44:58,310 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:44:58,378 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:44:58,380 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:44:58,510 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:45:01,135 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:45:01,223 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:45:01,227 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:45:02,215 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:45:02,295 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:45:02,298 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:45:02,540 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:45:02,614 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:45:02,617 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:45:02,709 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:45:02,782 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:45:02,785 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:45:06,665 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:45:07,646 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:45:07,652 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:45:07,769 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:45:07,801 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:45:08,021 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:45:08,318 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:45:08,690 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:45:08,693 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:45:08,835 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:45:08,940 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:45:08,943 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:45:09,083 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:45:09,264 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:45:09,267 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:45:09,412 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:45:12,474 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:45:12,570 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:45:12,574 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:45:13,484 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:45:13,565 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:45:13,568 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:45:13,667 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:45:13,747 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:45:13,750 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:45:13,988 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:45:14,064 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:45:14,067 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:45:17,216 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:45:18,101 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:45:18,105 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:45:18,245 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:45:18,405 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:45:18,482 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:45:18,822 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:45:19,334 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:45:19,338 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:45:19,409 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:45:19,412 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:45:19,478 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:45:19,549 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:45:19,715 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:45:19,718 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:45:19,854 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:45:22,697 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:45:22,796 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:45:22,801 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:45:24,117 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:45:24,135 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:45:24,207 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:45:24,213 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:45:24,222 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:45:24,225 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:45:24,412 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:45:24,494 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:45:24,497 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:45:28,073 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:45:28,074 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:45:28,193 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:45:28,381 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:45:29,314 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:45:29,317 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:45:29,347 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:45:29,350 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:45:29,413 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:45:29,417 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:45:29,460 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:45:29,500 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:45:29,551 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:45:29,555 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:45:29,565 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:45:29,708 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:45:34,246 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:45:34,315 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:45:34,319 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:45:34,325 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:45:34,328 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:45:34,393 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:45:34,396 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:45:34,396 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:45:34,399 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:45:34,406 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:45:34,494 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:45:34,500 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:45:37,485 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:45:38,308 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:45:38,311 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:45:38,433 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:45:42,334 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:45:42,413 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:45:42,417 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:46:10,904 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:46:10,934 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:46:11,151 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:46:11,158 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:46:11,396 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:46:12,312 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:46:12,317 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:46:12,332 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:46:12,335 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:46:12,527 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:46:12,532 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:46:12,567 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:46:12,570 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:46:12,646 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:46:12,649 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:46:12,767 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:46:12,771 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:46:12,783 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:46:12,880 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:46:13,056 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:46:18,960 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:46:19,019 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:46:19,085 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:46:19,090 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:46:19,135 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:46:19,141 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:46:19,266 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:46:19,296 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:46:19,407 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:46:19,413 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:46:19,419 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:46:19,425 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:46:19,552 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:46:19,682 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:46:19,709 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:46:39,054 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:46:39,068 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:46:39,788 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:46:40,128 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:46:40,131 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:46:40,163 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:46:40,165 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:46:40,172 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:46:40,175 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:46:40,304 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:46:40,313 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:46:40,811 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:46:40,813 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:46:40,961 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:46:41,244 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:46:41,247 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:46:41,249 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:46:41,251 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:46:41,387 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:46:41,391 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:46:45,288 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:46:45,305 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:46:45,377 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:46:45,381 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:46:45,392 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:46:45,396 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:46:45,947 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:46:46,062 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:46:46,068 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:46:46,409 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:46:46,448 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:46:46,517 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:46:46,522 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:46:46,562 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:46:46,567 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:47:08,051 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:47:08,064 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:47:08,207 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:47:08,912 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:47:08,913 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:47:09,276 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:47:09,279 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:47:09,285 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:47:09,288 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:47:09,389 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:47:09,391 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:47:09,419 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:47:09,432 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:47:09,529 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:47:10,039 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:47:10,043 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:47:10,067 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:47:10,071 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:47:10,184 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:47:10,226 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:47:14,525 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:47:14,534 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:47:14,543 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:47:14,616 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:47:14,622 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:47:14,639 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:47:14,641 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:47:14,643 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:47:14,644 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:47:15,142 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:47:15,209 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:47:15,236 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:47:15,241 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:47:15,294 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:47:15,300 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:47:17,800 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:47:17,803 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:47:18,301 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:47:18,350 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:47:18,563 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:47:18,928 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:47:18,932 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:47:18,949 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:47:18,952 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:47:19,072 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:47:19,090 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:47:19,389 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:47:19,393 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:47:19,462 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:47:19,465 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:47:19,541 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:47:19,598 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:47:19,671 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:47:19,674 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:47:19,819 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:47:24,352 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:47:24,358 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:47:24,440 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:47:24,445 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:47:24,449 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:47:24,455 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:47:24,809 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:47:24,863 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:47:24,933 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:47:24,939 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:47:25,002 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:47:25,009 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:47:25,155 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:47:25,267 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:47:25,273 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:47:36,642 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:47:37,576 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:47:37,580 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:47:37,740 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:47:42,718 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:47:42,800 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:47:42,802 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:48:02,899 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:48:02,900 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:48:03,200 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:48:03,743 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:48:04,108 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:48:04,111 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:48:04,121 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:48:04,124 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:48:04,262 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:48:04,275 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:48:04,327 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:48:04,329 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:48:04,480 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:48:04,556 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:48:04,820 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:48:04,822 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:48:04,994 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:48:05,182 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:48:05,625 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:48:05,627 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:48:05,782 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:48:06,245 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:48:06,248 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:48:06,396 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:48:09,361 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:48:09,402 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:48:09,455 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:48:09,459 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:48:09,493 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:48:09,496 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:48:09,565 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:48:09,655 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:48:09,660 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:48:09,947 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:48:10,035 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:48:10,039 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:48:10,747 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:48:10,826 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:48:10,830 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:48:11,331 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:48:11,412 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:48:11,416 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:48:20,669 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:48:21,462 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:48:21,464 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:48:21,579 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:48:25,203 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:48:25,274 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:48:25,277 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:51:42,533 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:51:43,218 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:51:43,252 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:51:43,254 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:51:43,430 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:51:43,905 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:51:43,908 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:51:43,933 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:51:43,940 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:51:44,072 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:51:44,492 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:51:44,495 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:51:44,531 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:51:44,534 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:51:44,534 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:51:44,537 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:51:44,645 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:51:44,660 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:51:44,663 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:51:44,679 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:51:44,683 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:51:44,811 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:51:45,166 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:51:45,171 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:51:45,183 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:51:45,188 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:51:45,371 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:51:45,379 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:51:50,139 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:51:50,347 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:51:50,356 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:51:51,094 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:51:51,232 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:51:51,291 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:51:51,299 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:51:51,305 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:51:51,344 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:51:51,423 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:51:51,430 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:51:51,490 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:51:51,500 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:51:51,533 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:51:51,542 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:51:51,906 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:51:51,985 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:51:52,060 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:51:52,069 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:51:52,158 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:51:52,166 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:51:58,676 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:51:59,535 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:51:59,537 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:51:59,661 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:52:03,528 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:52:03,596 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:52:03,599 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:52:26,614 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:52:26,672 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:52:27,928 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:52:27,930 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:52:27,979 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:52:27,982 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:52:28,021 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:52:28,024 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:52:28,037 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:52:28,042 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:52:28,094 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:52:28,096 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:52:28,146 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:52:28,289 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:52:29,471 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:52:29,476 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:52:29,480 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:52:29,481 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:52:29,484 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:52:29,485 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:52:29,509 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:52:29,516 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:52:29,593 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:52:29,597 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:52:29,689 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:52:29,693 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:52:29,694 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:52:29,711 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:52:29,715 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:52:29,716 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:52:29,777 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:52:29,879 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:52:35,037 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:52:35,073 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:52:35,244 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:52:35,256 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:52:35,292 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:52:35,302 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:52:37,620 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:52:37,706 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:52:37,725 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:52:37,773 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:52:37,781 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:52:37,824 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:52:37,837 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:52:37,848 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:52:37,912 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:52:37,922 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:52:37,928 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:52:37,939 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:52:37,987 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:52:37,989 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:52:37,997 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:52:37,999 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:52:38,043 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:52:38,053 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:52:47,783 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:52:48,691 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:52:48,694 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:52:48,828 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:52:52,702 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:52:52,766 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:52:52,769 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:53:17,434 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:53:17,435 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:53:17,974 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:53:18,075 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:53:18,105 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:53:18,153 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:53:18,755 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:53:18,757 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:53:18,767 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:53:18,769 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:53:18,940 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:53:18,954 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:53:19,252 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:53:19,256 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:53:19,417 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:53:19,698 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:53:19,701 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:53:19,706 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:53:19,769 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:53:19,772 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:53:19,773 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:53:19,796 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:53:19,799 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:53:19,892 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:53:19,964 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:53:19,980 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:53:20,124 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:53:21,161 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:53:21,165 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:53:21,218 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:53:21,222 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:53:21,351 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:53:21,408 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:53:21,506 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:53:21,509 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:53:21,679 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:53:26,299 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:53:26,435 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:53:26,442 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:53:26,814 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:53:26,827 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:53:26,854 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:53:26,930 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:53:26,938 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:53:26,939 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:53:26,946 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:53:26,984 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:53:26,989 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:53:27,480 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:53:27,610 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:53:27,694 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:53:27,708 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:53:27,850 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:53:27,863 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:53:28,175 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:53:28,264 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:53:28,273 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:53:28,366 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:53:28,451 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:53:28,457 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:53:28,526 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:53:28,622 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:53:28,626 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:53:38,769 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:53:39,585 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:53:39,587 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:53:39,708 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:53:43,647 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:53:43,767 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:53:43,770 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:54:39,007 - passlib.handlers.bcrypt - WARNING - (trapped) error reading bcrypt version
+Traceback (most recent call last):
+  File "C:\Users\urido\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\passlib\handlers\bcrypt.py", line 620, in _load_backend_mixin
+    version = _bcrypt.__about__.__version__
+              ^^^^^^^^^^^^^^^^^
+AttributeError: module 'bcrypt' has no attribute '__about__'
+2025-04-17 02:55:03,540 - sqlalchemy.engine.Engine - INFO - SELECT DATABASE()
+2025-04-17 02:55:03,541 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-17 02:55:03,542 - sqlalchemy.engine.Engine - INFO - SELECT @@sql_mode
+2025-04-17 02:55:03,543 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-17 02:55:03,544 - sqlalchemy.engine.Engine - INFO - SELECT @@lower_case_table_names
+2025-04-17 02:55:03,544 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-17 02:55:03,546 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 02:55:03,548 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 02:55:03,549 - sqlalchemy.engine.Engine - INFO - [generated in 0.00077s] {'id_1': 1, 'param_1': 1}
+2025-04-17 02:55:03,585 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 02:56:28,318 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 02:56:28,319 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 02:56:28,319 - sqlalchemy.engine.Engine - INFO - [cached since 84.77s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 02:56:29,376 - httpx - INFO - HTTP Request: GET https://eutils.ncbi.nlm.nih.gov/entrez/eutils/einfo.fcgi?tool=MedicalResearchSynthesizer&email=your.email%40example.com "HTTP/1.1 200 OK"
+2025-04-17 02:56:29,378 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 02:56:38,401 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 02:56:38,402 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 02:56:38,404 - sqlalchemy.engine.Engine - INFO - [cached since 94.86s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 02:56:38,407 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 02:56:47,992 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 02:56:47,993 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 02:56:47,994 - sqlalchemy.engine.Engine - INFO - [cached since 104.4s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 02:56:47,996 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 02:56:57,809 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 02:56:57,812 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 02:56:57,813 - sqlalchemy.engine.Engine - INFO - [cached since 114.3s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 02:56:59,007 - httpx - INFO - HTTP Request: POST https://utslogin.nlm.nih.gov/cas/v1/api-key "HTTP/1.1 401 Unauthorized"
+2025-04-17 02:56:59,009 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 02:57:08,265 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 02:57:08,267 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 02:57:08,268 - sqlalchemy.engine.Engine - INFO - [cached since 124.7s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 02:57:09,173 - httpx - INFO - HTTP Request: POST https://utslogin.nlm.nih.gov/cas/v1/api-key "HTTP/1.1 401 Unauthorized"
+2025-04-17 02:57:09,178 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 02:58:39,532 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:58:40,552 - root - INFO - Logging configured with level: INFO
+2025-04-17 02:58:40,555 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 02:58:40,729 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 02:58:45,726 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 02:58:45,825 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 02:58:45,829 - root - INFO - Using LLM Gateway implementation
+2025-04-17 02:59:36,851 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 02:59:36,852 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 02:59:36,853 - sqlalchemy.engine.Engine - INFO - [cached since 273.3s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 02:59:36,858 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 02:59:36,862 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 02:59:36,863 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 02:59:36,864 - sqlalchemy.engine.Engine - INFO - [cached since 273.3s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 02:59:36,870 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 02:59:44,515 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 02:59:44,518 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 02:59:44,519 - sqlalchemy.engine.Engine - INFO - [cached since 281s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 02:59:44,527 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 02:59:44,536 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 02:59:44,540 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 02:59:44,542 - sqlalchemy.engine.Engine - INFO - [cached since 281s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 02:59:44,551 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 02:59:44,560 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 02:59:44,563 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 02:59:44,567 - sqlalchemy.engine.Engine - INFO - [cached since 281s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 02:59:44,577 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 02:59:44,583 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 02:59:44,586 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 02:59:44,589 - sqlalchemy.engine.Engine - INFO - [cached since 281s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 02:59:44,599 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 02:59:50,662 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 02:59:50,663 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 02:59:50,663 - sqlalchemy.engine.Engine - INFO - [cached since 287.1s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 02:59:50,670 - asf.medical.llm_gateway.interventions.factory - INFO - Loading intervention definitions (0 found)...
+2025-04-17 02:59:50,671 - asf.medical.llm_gateway.interventions.factory - INFO - Registered 0 intervention types.
+2025-04-17 02:59:50,671 - asf.medical.llm_gateway.core.manager - INFO - Loading interventions...
+2025-04-17 02:59:50,672 - asf.medical.llm_gateway.core.client - INFO - Initialized LLMGatewayClient with batch concurrency limit: 8
+2025-04-17 02:59:50,673 - api.routers.llm_gateway - INFO - LLM Gateway client initialized with gateway ID: bo_gateway
+2025-04-17 02:59:50,673 - asf.medical.llm_gateway.core.client - INFO - Processing generate request: 09841500-1d95-48db-b77c-52d39cfd1531
+2025-04-17 02:59:50,674 - asf.medical.llm_gateway.core.factory - INFO - Creating new provider instance for ID: openai_gpt4_default
+2025-04-17 02:59:50,674 - asf.medical.llm_gateway.core.factory - INFO - Instantiating provider ID 'openai_gpt4_default' (Type: 'openai')
+2025-04-17 02:59:50,675 - asf.medical.llm_gateway.providers.base - INFO - Initializing OpenAIClient provider with ID: openai_gpt4_default
+2025-04-17 02:59:50,676 - asf.medical.llm_gateway.providers.openai_client - ERROR - No API key found for provider 'openai_gpt4_default'. Checked direct config, secrets, and env var.
+2025-04-17 02:59:50,677 - asf.medical.llm_gateway.providers.openai_client - ERROR - Failed to initialize OpenAI SDK client for provider openai_gpt4_default: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py", line 183, in __init__
+    raise ValueError(
+ValueError: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+2025-04-17 02:59:50,680 - asf.medical.llm_gateway.core.factory - ERROR - Instantiation error for provider 'openai_gpt4_default': OpenAI SDK client initialization failed: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py", line 183, in __init__
+    raise ValueError(
+ValueError: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 142, in _create_provider_sync
+    provider_instance = provider_class(
+                        ^^^^^^^^^^^^^^^
+  File "C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py", line 203, in __init__
+    raise ConnectionError(f"OpenAI SDK client initialization failed: {e}") from e
+ConnectionError: OpenAI SDK client initialization failed: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+2025-04-17 02:59:50,681 - asf.medical.llm_gateway.core.factory - ERROR - Failed to create or initialize provider 'openai_gpt4_default': Instantiation failed for 'openai_gpt4_default': OpenAI SDK client initialization failed: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py", line 183, in __init__
+    raise ValueError(
+ValueError: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 142, in _create_provider_sync
+    provider_instance = provider_class(
+                        ^^^^^^^^^^^^^^^
+  File "C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py", line 203, in __init__
+    raise ConnectionError(f"OpenAI SDK client initialization failed: {e}") from e
+ConnectionError: OpenAI SDK client initialization failed: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 99, in get_provider
+    instance = self._create_provider_sync( # Keep instantiation sync
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 151, in _create_provider_sync
+    raise ProviderFactoryError(f"Instantiation failed for '{provider_id}': {e}") from e
+asf.medical.llm_gateway.core.factory.ProviderFactoryError: Instantiation failed for 'openai_gpt4_default': OpenAI SDK client initialization failed: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+2025-04-17 02:59:50,684 - asf.medical.llm_gateway.core.manager - ERROR - Error during intervention manager processing for 09841500-1d95-48db-b77c-52d39cfd1531: Failed to get provider 'openai_gpt4_default': Instantiation failed for 'openai_gpt4_default': OpenAI SDK client initialization failed: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py", line 183, in __init__
+    raise ValueError(
+ValueError: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 142, in _create_provider_sync
+    provider_instance = provider_class(
+                        ^^^^^^^^^^^^^^^
+  File "C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py", line 203, in __init__
+    raise ConnectionError(f"OpenAI SDK client initialization failed: {e}") from e
+ConnectionError: OpenAI SDK client initialization failed: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 99, in get_provider
+    instance = self._create_provider_sync( # Keep instantiation sync
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 151, in _create_provider_sync
+    raise ProviderFactoryError(f"Instantiation failed for '{provider_id}': {e}") from e
+asf.medical.llm_gateway.core.factory.ProviderFactoryError: Instantiation failed for 'openai_gpt4_default': OpenAI SDK client initialization failed: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\core\manager.py", line 121, in process_request
+    provider = await self.provider_factory.get_provider(provider_id, provider_conf, self.gateway_config)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 117, in get_provider
+    raise ProviderFactoryError(f"Failed to get provider '{provider_id}': {e}") from e
+asf.medical.llm_gateway.core.factory.ProviderFactoryError: Failed to get provider 'openai_gpt4_default': Instantiation failed for 'openai_gpt4_default': OpenAI SDK client initialization failed: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+2025-04-17 02:59:50,686 - asf.medical.llm_gateway.core.client - INFO - Request successful: 09841500-1d95-48db-b77c-52d39cfd1531
+2025-04-17 02:59:50,687 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 03:03:10,790 - root - INFO - Logging configured with level: INFO
+2025-04-17 03:03:11,518 - root - INFO - Logging configured with level: INFO
+2025-04-17 03:03:11,520 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 03:03:11,626 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 03:03:14,924 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 03:03:14,988 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 03:03:14,990 - root - INFO - Using LLM Gateway implementation
+2025-04-17 03:03:49,527 - root - INFO - Logging configured with level: INFO
+2025-04-17 03:03:50,250 - root - INFO - Logging configured with level: INFO
+2025-04-17 03:03:50,252 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 03:03:50,362 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 03:03:53,591 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 03:03:53,654 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 03:03:53,657 - root - INFO - Using LLM Gateway implementation
+2025-04-17 03:04:03,288 - root - INFO - Logging configured with level: INFO
+2025-04-17 03:04:04,024 - root - INFO - Logging configured with level: INFO
+2025-04-17 03:04:04,026 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 03:04:04,136 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 03:04:07,445 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 03:04:07,508 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 03:04:07,511 - root - INFO - Using LLM Gateway implementation
+2025-04-17 03:04:25,184 - root - INFO - Logging configured with level: INFO
+2025-04-17 03:04:25,903 - root - INFO - Logging configured with level: INFO
+2025-04-17 03:04:25,905 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 03:04:26,016 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 03:04:29,387 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 03:04:29,452 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 03:04:29,455 - root - INFO - Using LLM Gateway implementation
+2025-04-17 03:04:38,855 - root - INFO - Logging configured with level: INFO
+2025-04-17 03:04:39,562 - root - INFO - Logging configured with level: INFO
+2025-04-17 03:04:39,563 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 03:04:39,674 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 03:04:43,013 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 03:04:43,078 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 03:04:43,081 - root - INFO - Using LLM Gateway implementation
+2025-04-17 03:04:52,481 - root - INFO - Logging configured with level: INFO
+2025-04-17 03:04:53,190 - root - INFO - Logging configured with level: INFO
+2025-04-17 03:04:53,192 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 03:04:53,301 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 03:04:56,655 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 03:04:56,720 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 03:04:56,723 - root - INFO - Using LLM Gateway implementation
+2025-04-17 03:05:04,514 - root - INFO - Logging configured with level: INFO
+2025-04-17 03:05:05,230 - root - INFO - Logging configured with level: INFO
+2025-04-17 03:05:05,232 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 03:05:05,348 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 03:05:08,712 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 03:05:08,777 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 03:05:08,779 - root - INFO - Using LLM Gateway implementation
+2025-04-17 03:05:23,218 - root - INFO - Logging configured with level: INFO
+2025-04-17 03:05:23,935 - root - INFO - Logging configured with level: INFO
+2025-04-17 03:05:23,937 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 03:05:24,047 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 03:05:27,302 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 03:05:27,367 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 03:05:27,370 - root - INFO - Using LLM Gateway implementation
+2025-04-17 03:05:31,544 - root - INFO - Logging configured with level: INFO
+2025-04-17 03:05:32,332 - root - INFO - Logging configured with level: INFO
+2025-04-17 03:05:32,334 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 03:05:32,446 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 03:05:35,879 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 03:05:35,947 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 03:05:35,950 - root - INFO - Using LLM Gateway implementation
+2025-04-17 03:06:13,059 - root - INFO - Logging configured with level: INFO
+2025-04-17 03:06:13,749 - root - INFO - Logging configured with level: INFO
+2025-04-17 03:06:13,752 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 03:06:13,861 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 03:06:17,062 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 03:06:17,127 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 03:06:17,130 - root - INFO - Using LLM Gateway implementation
+2025-04-17 03:07:50,936 - root - INFO - Logging configured with level: INFO
+2025-04-17 03:07:51,647 - root - INFO - Logging configured with level: INFO
+2025-04-17 03:07:51,649 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 03:07:51,760 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 03:07:54,984 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 03:07:55,049 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 03:07:55,051 - root - INFO - Using LLM Gateway implementation
+2025-04-17 03:07:58,460 - root - INFO - Logging configured with level: INFO
+2025-04-17 03:07:59,155 - root - INFO - Logging configured with level: INFO
+2025-04-17 03:07:59,157 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 03:07:59,264 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 03:08:02,492 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 03:08:02,581 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 03:08:02,585 - root - INFO - Using LLM Gateway implementation
+2025-04-17 03:08:08,644 - root - INFO - Logging configured with level: INFO
+2025-04-17 03:08:09,337 - root - INFO - Logging configured with level: INFO
+2025-04-17 03:08:09,339 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 03:08:09,449 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 03:08:12,695 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 03:08:12,757 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 03:08:12,760 - root - INFO - Using LLM Gateway implementation
+2025-04-17 03:08:24,564 - root - INFO - Logging configured with level: INFO
+2025-04-17 03:08:25,269 - root - INFO - Logging configured with level: INFO
+2025-04-17 03:08:25,270 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 03:08:25,379 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 03:08:28,667 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 03:08:28,732 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 03:08:28,735 - root - INFO - Using LLM Gateway implementation
+2025-04-17 03:08:46,518 - root - INFO - Logging configured with level: INFO
+2025-04-17 03:08:47,222 - root - INFO - Logging configured with level: INFO
+2025-04-17 03:08:47,224 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 03:08:47,330 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 03:08:50,571 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 03:08:50,637 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 03:08:50,640 - root - INFO - Using LLM Gateway implementation
+2025-04-17 03:09:11,914 - root - INFO - Logging configured with level: INFO
+2025-04-17 03:09:12,606 - root - INFO - Logging configured with level: INFO
+2025-04-17 03:09:12,608 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 03:09:12,717 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 03:09:15,923 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 03:09:15,985 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 03:09:15,988 - root - INFO - Using LLM Gateway implementation
+2025-04-17 03:12:15,774 - root - INFO - Logging configured with level: INFO
+2025-04-17 03:12:16,485 - root - INFO - Logging configured with level: INFO
+2025-04-17 03:12:16,487 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 03:12:16,595 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 03:12:19,817 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 03:12:19,880 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 03:12:19,883 - root - INFO - Using LLM Gateway implementation
+2025-04-17 03:12:46,408 - passlib.handlers.bcrypt - WARNING - (trapped) error reading bcrypt version
+Traceback (most recent call last):
+  File "C:\Users\urido\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\passlib\handlers\bcrypt.py", line 620, in _load_backend_mixin
+    version = _bcrypt.__about__.__version__
+              ^^^^^^^^^^^^^^^^^
+AttributeError: module 'bcrypt' has no attribute '__about__'
+2025-04-17 03:12:56,447 - sqlalchemy.engine.Engine - INFO - SELECT DATABASE()
+2025-04-17 03:12:56,447 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-17 03:12:56,449 - sqlalchemy.engine.Engine - INFO - SELECT @@sql_mode
+2025-04-17 03:12:56,449 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-17 03:12:56,450 - sqlalchemy.engine.Engine - INFO - SELECT @@lower_case_table_names
+2025-04-17 03:12:56,450 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-17 03:12:56,451 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 03:12:56,454 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 03:12:56,455 - sqlalchemy.engine.Engine - INFO - [generated in 0.00063s] {'id_1': 1, 'param_1': 1}
+2025-04-17 03:12:56,460 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 03:12:56,463 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 03:12:56,464 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 03:12:56,464 - sqlalchemy.engine.Engine - INFO - [cached since 0.01048s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 03:12:56,469 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 03:13:05,502 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 03:13:05,503 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 03:13:05,503 - sqlalchemy.engine.Engine - INFO - [cached since 9.049s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 03:13:05,508 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 03:13:05,511 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 03:13:05,512 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 03:13:05,512 - sqlalchemy.engine.Engine - INFO - [cached since 9.058s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 03:13:05,517 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 03:13:05,523 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 03:13:05,523 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 03:13:05,524 - sqlalchemy.engine.Engine - INFO - [cached since 9.07s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 03:13:05,529 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 03:13:05,540 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 03:13:05,541 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 03:13:05,541 - sqlalchemy.engine.Engine - INFO - [cached since 9.087s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 03:13:05,546 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 03:13:51,919 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 03:13:51,920 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 03:13:51,922 - sqlalchemy.engine.Engine - INFO - [cached since 55.47s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 03:13:51,945 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 03:13:51,954 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 03:13:51,956 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 03:13:51,958 - sqlalchemy.engine.Engine - INFO - [cached since 55.5s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 03:13:51,967 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 03:13:51,974 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 03:13:51,975 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 03:13:51,976 - sqlalchemy.engine.Engine - INFO - [cached since 55.52s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 03:13:51,982 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 03:13:51,985 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 03:13:51,986 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 03:13:51,987 - sqlalchemy.engine.Engine - INFO - [cached since 55.53s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 03:13:51,991 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 03:13:52,573 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 03:13:52,574 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 03:13:52,575 - sqlalchemy.engine.Engine - INFO - [cached since 56.12s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 03:13:52,583 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 03:13:52,587 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 03:13:52,588 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 03:13:52,589 - sqlalchemy.engine.Engine - INFO - [cached since 56.14s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 03:13:52,594 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 03:13:52,617 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 03:13:52,618 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 03:13:52,618 - sqlalchemy.engine.Engine - INFO - [cached since 56.16s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 03:13:52,625 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 03:13:52,626 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 03:13:52,626 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 03:13:52,627 - sqlalchemy.engine.Engine - INFO - [cached since 56.17s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 03:13:52,631 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 03:13:56,854 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 03:13:56,855 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 03:13:56,855 - sqlalchemy.engine.Engine - INFO - [cached since 60.4s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 03:13:56,861 - asf.medical.llm_gateway.interventions.factory - INFO - Loading intervention definitions (0 found)...
+2025-04-17 03:13:56,861 - asf.medical.llm_gateway.interventions.factory - INFO - Registered 0 intervention types.
+2025-04-17 03:13:56,861 - asf.medical.llm_gateway.core.manager - INFO - Loading interventions...
+2025-04-17 03:13:56,862 - asf.medical.llm_gateway.core.client - INFO - Initialized LLMGatewayClient with batch concurrency limit: 8
+2025-04-17 03:13:56,862 - api.routers.llm_gateway - INFO - LLM Gateway client initialized with gateway ID: bo_gateway
+2025-04-17 03:13:56,863 - asf.medical.llm_gateway.core.client - INFO - Processing generate request: 665f3252-8a8b-48d2-a8a7-5339ff36b3ea
+2025-04-17 03:13:56,863 - asf.medical.llm_gateway.core.factory - INFO - Creating new provider instance for ID: openai_gpt4_default
+2025-04-17 03:13:56,864 - asf.medical.llm_gateway.core.factory - INFO - Instantiating provider ID 'openai_gpt4_default' (Type: 'openai')
+2025-04-17 03:13:56,864 - asf.medical.llm_gateway.providers.base - INFO - Initializing OpenAIClient provider with ID: openai_gpt4_default
+2025-04-17 03:13:56,864 - asf.medical.llm_gateway.providers.openai_client - ERROR - No API key found for provider 'openai_gpt4_default'. Checked direct config, secrets, and env var.
+2025-04-17 03:13:56,865 - asf.medical.llm_gateway.providers.openai_client - ERROR - Failed to initialize OpenAI SDK client for provider openai_gpt4_default: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py", line 183, in __init__
+    raise ValueError(
+ValueError: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+2025-04-17 03:13:56,866 - asf.medical.llm_gateway.core.factory - ERROR - Instantiation error for provider 'openai_gpt4_default': OpenAI SDK client initialization failed: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py", line 183, in __init__
+    raise ValueError(
+ValueError: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 142, in _create_provider_sync
+    provider_instance = provider_class(
+                        ^^^^^^^^^^^^^^^
+  File "C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py", line 203, in __init__
+    raise ConnectionError(f"OpenAI SDK client initialization failed: {e}") from e
+ConnectionError: OpenAI SDK client initialization failed: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+2025-04-17 03:13:56,868 - asf.medical.llm_gateway.core.factory - ERROR - Failed to create or initialize provider 'openai_gpt4_default': Instantiation failed for 'openai_gpt4_default': OpenAI SDK client initialization failed: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py", line 183, in __init__
+    raise ValueError(
+ValueError: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 142, in _create_provider_sync
+    provider_instance = provider_class(
+                        ^^^^^^^^^^^^^^^
+  File "C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py", line 203, in __init__
+    raise ConnectionError(f"OpenAI SDK client initialization failed: {e}") from e
+ConnectionError: OpenAI SDK client initialization failed: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 99, in get_provider
+    instance = self._create_provider_sync( # Keep instantiation sync
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 151, in _create_provider_sync
+    raise ProviderFactoryError(f"Instantiation failed for '{provider_id}': {e}") from e
+asf.medical.llm_gateway.core.factory.ProviderFactoryError: Instantiation failed for 'openai_gpt4_default': OpenAI SDK client initialization failed: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+2025-04-17 03:13:56,869 - asf.medical.llm_gateway.core.manager - ERROR - Error during intervention manager processing for 665f3252-8a8b-48d2-a8a7-5339ff36b3ea: Failed to get provider 'openai_gpt4_default': Instantiation failed for 'openai_gpt4_default': OpenAI SDK client initialization failed: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py", line 183, in __init__
+    raise ValueError(
+ValueError: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 142, in _create_provider_sync
+    provider_instance = provider_class(
+                        ^^^^^^^^^^^^^^^
+  File "C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py", line 203, in __init__
+    raise ConnectionError(f"OpenAI SDK client initialization failed: {e}") from e
+ConnectionError: OpenAI SDK client initialization failed: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 99, in get_provider
+    instance = self._create_provider_sync( # Keep instantiation sync
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 151, in _create_provider_sync
+    raise ProviderFactoryError(f"Instantiation failed for '{provider_id}': {e}") from e
+asf.medical.llm_gateway.core.factory.ProviderFactoryError: Instantiation failed for 'openai_gpt4_default': OpenAI SDK client initialization failed: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\core\manager.py", line 121, in process_request
+    provider = await self.provider_factory.get_provider(provider_id, provider_conf, self.gateway_config)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 117, in get_provider
+    raise ProviderFactoryError(f"Failed to get provider '{provider_id}': {e}") from e
+asf.medical.llm_gateway.core.factory.ProviderFactoryError: Failed to get provider 'openai_gpt4_default': Instantiation failed for 'openai_gpt4_default': OpenAI SDK client initialization failed: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+2025-04-17 03:13:56,871 - asf.medical.llm_gateway.core.client - INFO - Request successful: 665f3252-8a8b-48d2-a8a7-5339ff36b3ea
+2025-04-17 03:13:56,872 - sqlalchemy.engine.Engine - INFO - ROLLBACK

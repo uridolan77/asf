@@ -12,6 +12,9 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+# Set OpenAI API key for testing
+os.environ["OPENAI_API_KEY"] = "sk-your-openai-api-key"
+
 # Configure logging
 logging.basicConfig(
     level=logging.DEBUG,
@@ -37,17 +40,17 @@ from asf.medical.llm_gateway.db_utils import get_db_session
 
 async def test_with_db():
     """Test OpenAI connection using the database configuration."""
-    
+
     try:
         # Get database session
         db = get_db_session()
-        
+
         # Create gateway client with database session
         client = LLMGatewayClient(db=db)
-        
+
         # Create request
         request_id = f"test_{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}"
-        
+
         # Create intervention context
         context = InterventionContext(
             request_id=request_id,
@@ -62,7 +65,7 @@ async def test_with_db():
             ),
             intervention_data={}
         )
-        
+
         # Create LLM config
         llm_config = LLMConfig(
             model_identifier="gpt-3.5-turbo",
@@ -70,7 +73,7 @@ async def test_with_db():
             max_tokens=100,
             system_prompt="You are a helpful assistant."
         )
-        
+
         # Create the request
         request = LLMRequest(
             version="1.0",
@@ -79,45 +82,45 @@ async def test_with_db():
             prompt_content="Hello, can you tell me what time it is?",
             tools=[]
         )
-        
+
         # Send request
         logger.info(f"Sending test request with request ID: {request_id}")
         response = await client.generate(request)
-        
+
         # Check response
         if response.error_details:
             logger.error(f"Error in response: {response.error_details.code} - {response.error_details.message}")
             logger.error(f"Provider details: {response.error_details.provider_error_details}")
             return False
-        
+
         logger.info(f"Response received successfully!")
         logger.info(f"Generated content: {response.generated_content}")
         logger.info(f"Finish reason: {response.finish_reason}")
-        
+
         if response.usage:
             logger.info(f"Usage: {response.usage.prompt_tokens} prompt tokens, "
                        f"{response.usage.completion_tokens} completion tokens, "
                        f"{response.usage.total_tokens} total tokens")
-        
+
         if response.performance_metrics:
             logger.info(f"LLM latency: {response.performance_metrics.llm_latency_ms:.2f}ms")
             logger.info(f"Total duration: {response.performance_metrics.total_duration_ms:.2f}ms")
-        
+
         # Clean up
         await client.close()
-        
+
         return True
-    
+
     except Exception as e:
         logger.exception(f"Error testing OpenAI connection: {e}")
         return False
 
 if __name__ == "__main__":
     logger.info("Starting OpenAI connection test with database configuration...")
-    
+
     # Run the async test
     success = asyncio.run(test_with_db())
-    
+
     if success:
         logger.info("✅ OpenAI connection test with database configuration PASSED!")
         sys.exit(0)

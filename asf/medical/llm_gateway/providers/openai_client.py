@@ -225,70 +225,70 @@ class OpenAIClient(BaseProvider):
         llm_latency_ms: Optional[float] = None
         response_obj: Optional[ChatCompletion] = None
         error_details: Optional[ErrorDetails] = None
+        request_id = request.initial_context.request_id
+        model_id = request.config.model_identifier
+
+        # Enhanced logging for request tracing
+        logger.info(f"[OPENAI_REQUEST_START] ID: {request_id} | Model: {model_id} | Provider: {self.provider_id}")
+        logger.debug(f"[OPENAI_REQUEST_PARAMS] ID: {request_id} | Temperature: {request.config.temperature} | MaxTokens: {request.config.max_tokens} | Top_p: {request.config.top_p}")
+        
+        # Track calling stack for debugging
+        import traceback
+        call_stack = traceback.format_stack()
+        logger.debug(f"[OPENAI_CALL_STACK] ID: {request_id} | Stack:\n{''.join(call_stack[-5:-1])}")  # Show the last 4 frames
 
         if not self._client:
+             logger.error(f"[OPENAI_ERROR] ID: {request_id} | OpenAI client not initialized")
              raise ConnectionError("OpenAI client is not initialized.")
 
         try:
             # 1. Map Gateway Request to OpenAI API format
             # Azure requires deployment_id which is often the model name in the request
-            model_id = request.config.model_identifier
+            logger.debug(f"[OPENAI_REQUEST_MAPPING] ID: {request_id} | Mapping request to OpenAI format")
             openai_params = self._map_request(request, model_id)
 
+            # Log prompt content length for debugging (not the actual content for privacy)
+            msg_count = len(openai_params.get("messages", []))
+            prompt_len = sum(len(str(msg.get("content", ""))) for msg in openai_params.get("messages", []))
+            tool_count = len(openai_params.get("tools", []))
+            logger.info(f"[OPENAI_REQUEST_STATS] ID: {request_id} | MessageCount: {msg_count} | PromptLength: {prompt_len} | ToolCount: {tool_count}")
+
             # 2. Call OpenAI API
-            logger.debug(f"Sending request to OpenAI model '{model_id}': {openai_params}")
+            logger.info(f"[OPENAI_API_CALL] ID: {request_id} | Sending request to {self.is_azure and 'Azure ' or ''}OpenAI model '{model_id}'")
             llm_call_start = datetime.now(timezone.utc)
 
             response_obj = await self._client.chat.completions.create(**openai_params)
 
             llm_latency_ms = (datetime.now(timezone.utc) - llm_call_start).total_seconds() * 1000
-            logger.debug(f"Received response from OpenAI model '{model_id}'. ID: {response_obj.id}")
+            logger.info(f"[OPENAI_API_RESPONSE] ID: {request_id} | Received response in {llm_latency_ms:.2f}ms | ResponseID: {response_obj.id}")
+            
+            # Log response stats
+            choice_count = len(response_obj.choices) if response_obj and response_obj.choices else 0
+            first_choice = response_obj.choices[0] if choice_count > 0 else None
+            content_len = len(first_choice.message.content or "") if first_choice and first_choice.message else 0
+            tool_call_count = len(first_choice.message.tool_calls or []) if first_choice and first_choice.message else 0
+            finish_reason = first_choice.finish_reason if first_choice else "unknown"
+            
+            # Log token usage
+            token_info = ""
+            if response_obj and response_obj.usage:
+                token_info = f"PromptTokens: {response_obj.usage.prompt_tokens} | CompletionTokens: {response_obj.usage.completion_tokens} | TotalTokens: {response_obj.usage.total_tokens}"
+                
+            logger.info(f"[OPENAI_RESPONSE_STATS] ID: {request_id} | ContentLength: {content_len} | ToolCalls: {tool_call_count} | FinishReason: {finish_reason} | {token_info}")
 
         except (APITimeoutError, asyncio.TimeoutError) as e:
-            logger.error(f"OpenAI request timed out for provider {self.provider_id}: {e}", exc_info=True)
+            logger.error(f"[OPENAI_TIMEOUT] ID: {request_id} | Request timed out after {self._timeout}s: {e}", exc_info=True)
             error_details = self._map_error(e, retryable=True)
         except RateLimitError as e:
-            logger.error(f"OpenAI rate limit exceeded for provider {self.provider_id}: {e}", exc_info=True)
+            logger.error(f"[OPENAI_RATE_LIMIT] ID: {request_id} | Rate limit exceeded: {e}", exc_info=True)
             retry_after = self._get_retry_after(e)
             error_details = self._map_error(e, retryable=True, retry_after=retry_after)
+            if retry_after:
+                logger.info(f"[OPENAI_RETRY_AFTER] ID: {request_id} | Retry suggested after {retry_after} seconds")
         except AuthenticationError as e:
-            logger.error(f"OpenAI authentication error for provider {self.provider_id}: {e}", exc_info=True)
+            logger.error(f"[OPENAI_AUTH_ERROR] ID: {request_id} | Authentication failed: {e}", exc_info=True)
             error_details = self._map_error(e, retryable=False) # Not retryable
         except PermissionDeniedError as e:
-             logger.error(f"OpenAI permission denied for provider {self.provider_id}: {e}", exc_info=True)
-             error_details = self._map_error(e, retryable=False)
-        except BadRequestError as e: # Catches 400 errors like invalid params, content policy violation
-             logger.error(f"OpenAI bad request error for provider {self.provider_id}: {e.code} - {e.message}", exc_info=True)
-             error_details = self._map_error(e, retryable=False) # Usually not retryable
-             # Check for content filter specifically
-             if e.code == 'content_filter':
-                  error_details.code = "PROVIDER_CONTENT_FILTER" # More specific code
-        except APIStatusError as e: # Other HTTP status errors
-             logger.error(f"OpenAI API error for provider {self.provider_id}: Status={e.status_code}, Response={e.response.text}", exc_info=True)
-             # Retry based on status code
-             retryable = e.status_code in [429, 500, 502, 503, 504]
-             error_details = self._map_error(e, retryable=retryable)
-        except APIError as e: # Catch-all for other OpenAI API errors
-            logger.error(f"OpenAI API error for provider {self.provider_id}: {e}", exc_info=True)
-            error_details = self._map_error(e, retryable=False) # Assume non-retryable unless specific
-        except Exception as e:
-            logger.error(f"Unexpected error during OpenAI generate for provider {self.provider_id}: {e}", exc_info=True)
-            error_details = self._map_error(e, retryable=False)
-
-        # 3. Map OpenAI Response back to Gateway LLMResponse
-        total_duration_ms = (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
-
-        final_response = self._map_response(
-            openai_response=response_obj,
-            original_request=request,
-            error_details=error_details,
-            llm_latency_ms=llm_latency_ms,
-            total_duration_ms=total_duration_ms,
-        )
-
-        return final_response
-
-    async def generate_stream(self, request: LLMRequest) -> AsyncGenerator[StreamChunk, None]:
         """
         Generate a streaming response from OpenAI using the Chat Completions API.
         Yields gateway StreamChunk objects.

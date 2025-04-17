@@ -30,6 +30,11 @@ from api.routers.enhanced_medical_contradiction import router as enhanced_medica
 from api.routers.medical_clinical_data import router as medical_clinical_data_router
 from api.routers.llm_gateway import router as llm_gateway_router
 
+# Import config routers
+from api.routers.config.provider_router import router as provider_router
+from api.routers.config.configuration_router import router as configuration_router
+from api.routers.config.user_provider_router import router as user_provider_router
+
 # Import clients router
 from api.clients import router as clients_router
 
@@ -64,6 +69,11 @@ app.include_router(enhanced_medical_contradiction_router)
 app.include_router(medical_clinical_data_router)
 app.include_router(clients_router)
 app.include_router(llm_gateway_router)
+
+# Include config routers
+app.include_router(provider_router)
+app.include_router(configuration_router)
+app.include_router(user_provider_router)
 
 # Dependency to get DB session
 def get_db():
@@ -352,7 +362,7 @@ def get_dashboard_stats(current_user: User = Depends(oauth2_scheme), db: Session
     user_count = 15  # In a real app, this would come from the database
     active_sessions = 8
     system_status = "Operational"
-    
+
     # Generate mock monthly data
     monthly_data = [
         {"month": "Jan", "searches": 45, "analyses": 18},
@@ -361,7 +371,7 @@ def get_dashboard_stats(current_user: User = Depends(oauth2_scheme), db: Session
         {"month": "Apr", "searches": 63, "analyses": 30},
         {"month": "May", "searches": 55, "analyses": 24}
     ]
-    
+
     return {
         "user_count": user_count,
         "active_sessions": active_sessions,
@@ -417,7 +427,7 @@ def get_dashboard_test_data():
     user_count = 15
     active_sessions = 8
     system_status = "Operational"
-    
+
     # Generate mock monthly data
     monthly_data = [
         {"month": "Jan", "searches": 45, "analyses": 18},
@@ -426,7 +436,7 @@ def get_dashboard_test_data():
         {"month": "Apr", "searches": 63, "analyses": 30},
         {"month": "May", "searches": 55, "analyses": 24}
     ]
-    
+
     return {
         "user_count": user_count,
         "active_sessions": active_sessions,
@@ -445,7 +455,7 @@ def get_research_metrics(current_user: User = Depends(oauth2_scheme), db: Sessio
         {"category": "Cohort Studies", "count": 123},
         {"category": "Case Reports", "count": 86}
     ]
-    
+
     return metrics
 
 @app.get("/api/recent-updates")
@@ -482,7 +492,7 @@ def get_recent_updates(current_user: User = Depends(oauth2_scheme), db: Session 
             }
         ]
     }
-    
+
     return updates
 
 @app.get("/api/public/stats")
@@ -492,7 +502,7 @@ def get_public_dashboard_stats():
     user_count = 15
     active_sessions = 8
     system_status = "Operational"
-    
+
     # Generate mock monthly data
     monthly_data = [
         {"month": "Jan", "searches": 45, "analyses": 18},
@@ -501,7 +511,7 @@ def get_public_dashboard_stats():
         {"month": "Apr", "searches": 63, "analyses": 30},
         {"month": "May", "searches": 55, "analyses": 24}
     ]
-    
+
     return {
         "user_count": user_count,
         "active_sessions": active_sessions,
@@ -520,7 +530,7 @@ def get_public_research_metrics():
         {"category": "Cohort Studies", "count": 123},
         {"category": "Case Reports", "count": 86}
     ]
-    
+
     return metrics
 
 @app.get("/api/public/recent-updates")
@@ -557,7 +567,7 @@ def get_public_recent_updates():
             }
         ]
     }
-    
+
     return updates
 
 # Models for Medical Research API
@@ -613,17 +623,17 @@ def search_medical(
     try:
         # Import the NCBI client to perform real searches
         from medical.clients.ncbi import NCBIClient
-        
+
         # Create a client instance
         ncbi_client = NCBIClient()
-        
+
         # Perform the actual search using the client
         # This assumes there's a search method in the NCBIClient class
         search_results = ncbi_client.search(query, max_results=max_results)
-        
+
         # Process and format the results
         articles = []
-        
+
         for result in search_results:
             article = {
                 "id": result.get("id", f"ncbi_{len(articles)}"),
@@ -636,7 +646,7 @@ def search_medical(
                 "source": "NCBI"
             }
             articles.append(article)
-        
+
         return {
             "success": True,
             "message": f"Found {len(articles)} results for query: {query}",
@@ -662,7 +672,7 @@ def search_medical(
             }
             for i in range(1, min(max_results + 1, 21))
         ]
-        
+
         return {
             "success": True,
             "message": f"Found {len(articles)} results for query: {query} (using mock data due to import error: {str(e)})",
@@ -675,7 +685,7 @@ def search_medical(
     except Exception as e:
         print(f"Search error: {str(e)}")
         raise HTTPException(
-            status_code=500, 
+            status_code=500,
             detail=f"Error performing medical search: {str(e)}"
         )
 
@@ -1241,9 +1251,9 @@ def get_medical_clients(current_user: User = Depends(oauth2_scheme), db: Session
         from medical.clients.cochrane import CochraneClient
         from medical.clients.crossref import CrossrefClient
         from medical.clients.snomed import SnomedClient
-        
+
         clients = []
-        
+
         # NCBI client
         try:
             ncbi_client = NCBIClient()
@@ -1254,7 +1264,7 @@ def get_medical_clients(current_user: User = Depends(oauth2_scheme), db: Session
             status = "error"
             error_message = str(e)
             response_time = None
-            
+
         clients.append({
             "client_id": "ncbi",
             "name": "NCBI",
@@ -1265,7 +1275,7 @@ def get_medical_clients(current_user: User = Depends(oauth2_scheme), db: Session
             "response_time": response_time,
             "error_message": error_message
         })
-        
+
         # UMLS client
         try:
             umls_client = UMLSClient()
@@ -1276,7 +1286,7 @@ def get_medical_clients(current_user: User = Depends(oauth2_scheme), db: Session
             status = "error"
             error_message = str(e)
             response_time = None
-            
+
         clients.append({
             "client_id": "umls",
             "name": "UMLS",
@@ -1287,10 +1297,10 @@ def get_medical_clients(current_user: User = Depends(oauth2_scheme), db: Session
             "response_time": response_time,
             "error_message": error_message
         })
-        
+
         # Add similar implementations for other clients
         # ClinicalTrials.gov, Cochrane, Crossref, SNOMED CT
-        
+
         return clients
     except ImportError as e:
         print(f"Import error: {str(e)}")
@@ -1310,7 +1320,7 @@ def get_medical_clients(current_user: User = Depends(oauth2_scheme), db: Session
     except Exception as e:
         print(f"Error getting clients: {str(e)}")
         raise HTTPException(
-            status_code=500, 
+            status_code=500,
             detail=f"Error retrieving medical clients: {str(e)}"
         )
 
@@ -1408,24 +1418,24 @@ def get_medical_client(client_id: str, current_user: User = Depends(oauth2_schem
             "retry_count": 3
         }
     }
-    
+
     if client_id not in client_data:
         raise HTTPException(status_code=404, detail=f"Medical client not found: {client_id}")
-    
+
     return client_data[client_id]
 
 @app.put("/api/medical/clients/{client_id}")
 def update_medical_client(
-    client_id: str, 
+    client_id: str,
     client_config: dict = Body(...),
-    current_user: User = Depends(oauth2_scheme), 
+    current_user: User = Depends(oauth2_scheme),
     db: Session = Depends(get_db)
 ):
     """Update a medical client configuration."""
     # Check if client exists
     if client_id not in ["ncbi", "umls", "clinical_trials", "cochrane", "crossref", "snomed"]:
         raise HTTPException(status_code=404, detail=f"Medical client not found: {client_id}")
-    
+
     # In a real app, this would update the client configuration in the database
     # Here we'll just return a mock updated client
     updated_client = {
@@ -1438,33 +1448,33 @@ def update_medical_client(
         "response_time": random.uniform(0.5, 2.0),
         **client_config
     }
-    
+
     return updated_client
 
 @app.post("/api/medical/clients/{client_id}/test")
 def test_medical_client_connection(
     client_id: str,
-    current_user: User = Depends(oauth2_scheme), 
+    current_user: User = Depends(oauth2_scheme),
     db: Session = Depends(get_db)
 ):
     """Test connection to a medical client."""
     # Check if client exists
     if client_id not in ["ncbi", "umls", "clinical_trials", "cochrane", "crossref", "snomed"]:
         raise HTTPException(status_code=404, detail=f"Medical client not found: {client_id}")
-    
+
     # In a real app, this would actually test the connection to the client
     # For now, we'll return mock results with some randomized outcomes
-    
+
     # Randomly determine success/failure (weighted towards success)
     success = random.random() > 0.2
-    
+
     result = {
         "success": success,
         "message": f"Successfully connected to {client_id}" if success else f"Connection to {client_id} failed",
         "status": "connected" if success else "error",
         "response_time": round(random.uniform(0.5, 3.0), 2)
     }
-    
+
     if success:
         result["api_version"] = f"{random.randint(1, 3)}.{random.randint(0, 9)}.{random.randint(0, 9)}"
     else:
@@ -1476,5 +1486,5 @@ def test_medical_client_connection(
             "Network error"
         ]
         result["error_message"] = random.choice(error_messages)
-    
+
     return result

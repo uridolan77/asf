@@ -2,12 +2,19 @@ from fastapi import APIRouter, Depends, HTTPException, status, Request
 from typing import List, Optional, Dict, Any
 from sqlalchemy.orm import Session
 import logging
-from ....db.database import get_db
-from ....services.provider_service import ProviderService
-from ....utils.crypto import generate_key
-from ....auth.auth import get_current_user
-from ....models.user import User
-from ....schemas.provider import (
+import sys
+import os
+
+# Add the backend directory to sys.path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
+
+# Use absolute imports
+from config.database import get_db
+from services.provider_service import ProviderService
+from utils.crypto import generate_key
+from api.auth import get_current_user
+from models.user import User
+from schemas.provider import (
     ProviderCreate,
     ProviderUpdate,
     ProviderResponse,

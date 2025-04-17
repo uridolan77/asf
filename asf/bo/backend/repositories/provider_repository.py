@@ -2,8 +2,9 @@ from typing import List, Optional, Dict, Any
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 import logging
-from ..models.provider import Provider, ProviderModel, ApiKey, ConnectionParameter
-from ..utils.crypto import encrypt_value, decrypt_value
+# Use absolute imports instead of relative imports
+from models.provider import Provider, ProviderModel, ApiKey, ConnectionParameter
+from utils.crypto import encrypt_value, decrypt_value
 
 logger = logging.getLogger(__name__)
 
@@ -11,15 +12,15 @@ class ProviderRepository:
     def __init__(self, db: Session, encryption_key: bytes = None):
         self.db = db
         self.encryption_key = encryption_key
-    
+
     def get_all_providers(self) -> List[Provider]:
         """Get all providers."""
         return self.db.query(Provider).all()
-    
+
     def get_provider_by_id(self, provider_id: str) -> Optional[Provider]:
         """Get a provider by ID."""
         return self.db.query(Provider).filter(Provider.provider_id == provider_id).first()
-    
+
     def create_provider(self, provider_data: Dict[str, Any]) -> Provider:
         """Create a new provider."""
         try:
@@ -39,18 +40,18 @@ class ProviderRepository:
             self.db.rollback()
             logger.error(f"Error creating provider: {e}")
             raise
-    
+
     def update_provider(self, provider_id: str, provider_data: Dict[str, Any]) -> Optional[Provider]:
         """Update a provider."""
         try:
             provider = self.get_provider_by_id(provider_id)
             if not provider:
                 return None
-            
+
             for key, value in provider_data.items():
                 if hasattr(provider, key):
                     setattr(provider, key, value)
-            
+
             self.db.commit()
             self.db.refresh(provider)
             return provider
@@ -58,14 +59,14 @@ class ProviderRepository:
             self.db.rollback()
             logger.error(f"Error updating provider: {e}")
             raise
-    
+
     def delete_provider(self, provider_id: str) -> bool:
         """Delete a provider."""
         try:
             provider = self.get_provider_by_id(provider_id)
             if not provider:
                 return False
-            
+
             self.db.delete(provider)
             self.db.commit()
             return True
@@ -73,17 +74,17 @@ class ProviderRepository:
             self.db.rollback()
             logger.error(f"Error deleting provider: {e}")
             raise
-    
+
     # Provider Model methods
-    
+
     def get_models_by_provider_id(self, provider_id: str) -> List[ProviderModel]:
         """Get all models for a provider."""
         return self.db.query(ProviderModel).filter(ProviderModel.provider_id == provider_id).all()
-    
+
     def get_model_by_id(self, model_id: str) -> Optional[ProviderModel]:
         """Get a model by ID."""
         return self.db.query(ProviderModel).filter(ProviderModel.model_id == model_id).first()
-    
+
     def create_model(self, model_data: Dict[str, Any]) -> ProviderModel:
         """Create a new model."""
         try:
@@ -104,17 +105,17 @@ class ProviderRepository:
             self.db.rollback()
             logger.error(f"Error creating model: {e}")
             raise
-    
+
     # API Key methods
-    
+
     def get_api_keys_by_provider_id(self, provider_id: str) -> List[ApiKey]:
         """Get all API keys for a provider."""
         return self.db.query(ApiKey).filter(ApiKey.provider_id == provider_id).all()
-    
+
     def get_api_key_by_id(self, key_id: int) -> Optional[ApiKey]:
         """Get an API key by ID."""
         return self.db.query(ApiKey).filter(ApiKey.key_id == key_id).first()
-    
+
     def create_api_key(self, api_key_data: Dict[str, Any]) -> ApiKey:
         """Create a new API key."""
         try:
@@ -122,7 +123,7 @@ class ProviderRepository:
             key_value = api_key_data["key_value"]
             if self.encryption_key and api_key_data.get("is_encrypted", True):
                 key_value = encrypt_value(key_value, self.encryption_key)
-            
+
             api_key = ApiKey(
                 provider_id=api_key_data["provider_id"],
                 key_value=key_value,
@@ -139,31 +140,31 @@ class ProviderRepository:
             self.db.rollback()
             logger.error(f"Error creating API key: {e}")
             raise
-    
+
     def get_decrypted_api_key(self, key_id: int) -> Optional[str]:
         """Get a decrypted API key."""
         api_key = self.get_api_key_by_id(key_id)
         if not api_key:
             return None
-        
+
         if api_key.is_encrypted and self.encryption_key:
             try:
                 return decrypt_value(api_key.key_value, self.encryption_key)
             except Exception as e:
                 logger.error(f"Error decrypting API key: {e}")
                 return None
-        
+
         return api_key.key_value
-    
+
     # Connection Parameter methods
-    
+
     def get_connection_parameters_by_provider_id(self, provider_id: str, environment: str = "development") -> List[ConnectionParameter]:
         """Get all connection parameters for a provider."""
         return self.db.query(ConnectionParameter).filter(
             ConnectionParameter.provider_id == provider_id,
             ConnectionParameter.environment == environment
         ).all()
-    
+
     def get_connection_parameter(self, provider_id: str, param_name: str, environment: str = "development") -> Optional[ConnectionParameter]:
         """Get a connection parameter."""
         return self.db.query(ConnectionParameter).filter(
@@ -171,7 +172,7 @@ class ProviderRepository:
             ConnectionParameter.param_name == param_name,
             ConnectionParameter.environment == environment
         ).first()
-    
+
     def set_connection_parameter(self, param_data: Dict[str, Any]) -> ConnectionParameter:
         """Set a connection parameter (create or update)."""
         try:
@@ -181,7 +182,7 @@ class ProviderRepository:
                 param_data["param_name"],
                 param_data.get("environment", "development")
             )
-            
+
             if param:
                 # Update existing parameter
                 param.param_value = param_data["param_value"]
@@ -196,7 +197,7 @@ class ProviderRepository:
                     environment=param_data.get("environment", "development")
                 )
                 self.db.add(param)
-            
+
             self.db.commit()
             self.db.refresh(param)
             return param

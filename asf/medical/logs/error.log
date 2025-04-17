@@ -146,3 +146,165 @@ Traceback (most recent call last):
   File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 117, in get_provider
     raise ProviderFactoryError(f"Failed to get provider '{provider_id}': {e}") from e
 asf.medical.llm_gateway.core.factory.ProviderFactoryError: Failed to get provider 'openai_gpt4_default': Instantiation failed for 'openai_gpt4_default': OpenAI SDK client initialization failed: Standard OpenAI API key environment variable 'OPENAI_API_KEY' not found for provider 'openai_gpt4_default'.
+2025-04-17 02:59:50,676 - asf.medical.llm_gateway.providers.openai_client - ERROR - C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py:182 - No API key found for provider 'openai_gpt4_default'. Checked direct config, secrets, and env var.
+2025-04-17 02:59:50,677 - asf.medical.llm_gateway.providers.openai_client - ERROR - C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py:202 - Failed to initialize OpenAI SDK client for provider openai_gpt4_default: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py", line 183, in __init__
+    raise ValueError(
+ValueError: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+2025-04-17 02:59:50,680 - asf.medical.llm_gateway.core.factory - ERROR - C:\code\asf\asf\medical\llm_gateway\core\factory.py:150 - Instantiation error for provider 'openai_gpt4_default': OpenAI SDK client initialization failed: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py", line 183, in __init__
+    raise ValueError(
+ValueError: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 142, in _create_provider_sync
+    provider_instance = provider_class(
+                        ^^^^^^^^^^^^^^^
+  File "C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py", line 203, in __init__
+    raise ConnectionError(f"OpenAI SDK client initialization failed: {e}") from e
+ConnectionError: OpenAI SDK client initialization failed: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+2025-04-17 02:59:50,681 - asf.medical.llm_gateway.core.factory - ERROR - C:\code\asf\asf\medical\llm_gateway\core\factory.py:113 - Failed to create or initialize provider 'openai_gpt4_default': Instantiation failed for 'openai_gpt4_default': OpenAI SDK client initialization failed: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py", line 183, in __init__
+    raise ValueError(
+ValueError: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 142, in _create_provider_sync
+    provider_instance = provider_class(
+                        ^^^^^^^^^^^^^^^
+  File "C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py", line 203, in __init__
+    raise ConnectionError(f"OpenAI SDK client initialization failed: {e}") from e
+ConnectionError: OpenAI SDK client initialization failed: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 99, in get_provider
+    instance = self._create_provider_sync( # Keep instantiation sync
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 151, in _create_provider_sync
+    raise ProviderFactoryError(f"Instantiation failed for '{provider_id}': {e}") from e
+asf.medical.llm_gateway.core.factory.ProviderFactoryError: Instantiation failed for 'openai_gpt4_default': OpenAI SDK client initialization failed: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+2025-04-17 02:59:50,684 - asf.medical.llm_gateway.core.manager - ERROR - C:\code\asf\asf\medical\llm_gateway\core\manager.py:141 - Error during intervention manager processing for 09841500-1d95-48db-b77c-52d39cfd1531: Failed to get provider 'openai_gpt4_default': Instantiation failed for 'openai_gpt4_default': OpenAI SDK client initialization failed: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py", line 183, in __init__
+    raise ValueError(
+ValueError: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 142, in _create_provider_sync
+    provider_instance = provider_class(
+                        ^^^^^^^^^^^^^^^
+  File "C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py", line 203, in __init__
+    raise ConnectionError(f"OpenAI SDK client initialization failed: {e}") from e
+ConnectionError: OpenAI SDK client initialization failed: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 99, in get_provider
+    instance = self._create_provider_sync( # Keep instantiation sync
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 151, in _create_provider_sync
+    raise ProviderFactoryError(f"Instantiation failed for '{provider_id}': {e}") from e
+asf.medical.llm_gateway.core.factory.ProviderFactoryError: Instantiation failed for 'openai_gpt4_default': OpenAI SDK client initialization failed: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\core\manager.py", line 121, in process_request
+    provider = await self.provider_factory.get_provider(provider_id, provider_conf, self.gateway_config)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 117, in get_provider
+    raise ProviderFactoryError(f"Failed to get provider '{provider_id}': {e}") from e
+asf.medical.llm_gateway.core.factory.ProviderFactoryError: Failed to get provider 'openai_gpt4_default': Instantiation failed for 'openai_gpt4_default': OpenAI SDK client initialization failed: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+2025-04-17 03:13:56,864 - asf.medical.llm_gateway.providers.openai_client - ERROR - C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py:182 - No API key found for provider 'openai_gpt4_default'. Checked direct config, secrets, and env var.
+2025-04-17 03:13:56,865 - asf.medical.llm_gateway.providers.openai_client - ERROR - C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py:202 - Failed to initialize OpenAI SDK client for provider openai_gpt4_default: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py", line 183, in __init__
+    raise ValueError(
+ValueError: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+2025-04-17 03:13:56,866 - asf.medical.llm_gateway.core.factory - ERROR - C:\code\asf\asf\medical\llm_gateway\core\factory.py:150 - Instantiation error for provider 'openai_gpt4_default': OpenAI SDK client initialization failed: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py", line 183, in __init__
+    raise ValueError(
+ValueError: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 142, in _create_provider_sync
+    provider_instance = provider_class(
+                        ^^^^^^^^^^^^^^^
+  File "C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py", line 203, in __init__
+    raise ConnectionError(f"OpenAI SDK client initialization failed: {e}") from e
+ConnectionError: OpenAI SDK client initialization failed: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+2025-04-17 03:13:56,868 - asf.medical.llm_gateway.core.factory - ERROR - C:\code\asf\asf\medical\llm_gateway\core\factory.py:113 - Failed to create or initialize provider 'openai_gpt4_default': Instantiation failed for 'openai_gpt4_default': OpenAI SDK client initialization failed: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py", line 183, in __init__
+    raise ValueError(
+ValueError: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 142, in _create_provider_sync
+    provider_instance = provider_class(
+                        ^^^^^^^^^^^^^^^
+  File "C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py", line 203, in __init__
+    raise ConnectionError(f"OpenAI SDK client initialization failed: {e}") from e
+ConnectionError: OpenAI SDK client initialization failed: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 99, in get_provider
+    instance = self._create_provider_sync( # Keep instantiation sync
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 151, in _create_provider_sync
+    raise ProviderFactoryError(f"Instantiation failed for '{provider_id}': {e}") from e
+asf.medical.llm_gateway.core.factory.ProviderFactoryError: Instantiation failed for 'openai_gpt4_default': OpenAI SDK client initialization failed: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+2025-04-17 03:13:56,869 - asf.medical.llm_gateway.core.manager - ERROR - C:\code\asf\asf\medical\llm_gateway\core\manager.py:141 - Error during intervention manager processing for 665f3252-8a8b-48d2-a8a7-5339ff36b3ea: Failed to get provider 'openai_gpt4_default': Instantiation failed for 'openai_gpt4_default': OpenAI SDK client initialization failed: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py", line 183, in __init__
+    raise ValueError(
+ValueError: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 142, in _create_provider_sync
+    provider_instance = provider_class(
+                        ^^^^^^^^^^^^^^^
+  File "C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py", line 203, in __init__
+    raise ConnectionError(f"OpenAI SDK client initialization failed: {e}") from e
+ConnectionError: OpenAI SDK client initialization failed: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 99, in get_provider
+    instance = self._create_provider_sync( # Keep instantiation sync
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 151, in _create_provider_sync
+    raise ProviderFactoryError(f"Instantiation failed for '{provider_id}': {e}") from e
+asf.medical.llm_gateway.core.factory.ProviderFactoryError: Instantiation failed for 'openai_gpt4_default': OpenAI SDK client initialization failed: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\core\manager.py", line 121, in process_request
+    provider = await self.provider_factory.get_provider(provider_id, provider_conf, self.gateway_config)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 117, in get_provider
+    raise ProviderFactoryError(f"Failed to get provider '{provider_id}': {e}") from e
+asf.medical.llm_gateway.core.factory.ProviderFactoryError: Failed to get provider 'openai_gpt4_default': Instantiation failed for 'openai_gpt4_default': OpenAI SDK client initialization failed: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.

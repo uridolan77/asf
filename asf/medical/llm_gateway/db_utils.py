@@ -14,7 +14,7 @@ from sqlalchemy.ext.declarative import declarative_base
 logger = logging.getLogger(__name__)
 
 # Get database URL from environment variable or use default
-DATABASE_URL = os.environ.get("DATABASE_URL", "mysql+pymysql://root:password@localhost/asf")
+DATABASE_URL = os.environ.get("DATABASE_URL", "mysql+pymysql://root:Dt%g_9W3z0*!I@localhost/bo_admin")
 
 # Create engine and session factory
 engine = create_engine(DATABASE_URL)
@@ -23,7 +23,7 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 def get_db() -> Generator[Session, None, None]:
     """
     Get a database session.
-    
+
     Yields:
         SQLAlchemy database session
     """
@@ -36,7 +36,7 @@ def get_db() -> Generator[Session, None, None]:
 def get_db_session() -> Session:
     """
     Get a database session (non-generator version).
-    
+
     Returns:
         SQLAlchemy database session
     """

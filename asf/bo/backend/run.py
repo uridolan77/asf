@@ -17,6 +17,12 @@ if parent_dir not in sys.path:
     sys.path.insert(0, parent_dir)
     print(f"Added {parent_dir} to Python path")
 
+# Add bo directory to Python path for absolute imports
+bo_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if bo_dir not in sys.path:
+    sys.path.insert(0, bo_dir)
+    print(f"Added {bo_dir} to Python path")
+
 # Try to create a .pth file for more permanent solution
 try:
     site_packages_dir = site.getsitepackages()[0]
@@ -33,7 +39,7 @@ def ensure_package_structure(start_dir):
         # Skip directories that start with . (hidden directories)
         # and directories that are likely not meant to be Python packages
         dirs[:] = [d for d in dirs if not d.startswith('.') and d not in ('__pycache__', 'node_modules', 'venv', '.git')]
-        
+
         # Create __init__.py if not exists
         init_file = os.path.join(root, '__init__.py')
         if not os.path.exists(init_file):
@@ -57,8 +63,26 @@ if __name__ == '__main__':
     # Create database tables
     print('Initializing database...')
     try:
-        # Try to create all tables
-        Base.metadata.create_all(bind=engine)
+        # Import all models to ensure they're registered with Base.metadata
+        from models import User, Role, Provider, ProviderModel, Configuration, UserSetting, AuditLog
+
+        # Check if tables exist before creating them
+        from sqlalchemy import inspect
+        inspector = inspect(engine)
+        existing_tables = inspector.get_table_names()
+
+        # Only create tables that don't exist yet
+        tables_to_create = []
+        for table in Base.metadata.sorted_tables:
+            if table.name not in existing_tables:
+                tables_to_create.append(table)
+
+        if tables_to_create:
+            print(f"Creating tables: {', '.join(t.name for t in tables_to_create)}")
+            # Create only the tables that don't exist yet
+            Base.metadata.create_all(bind=engine, tables=tables_to_create)
+        else:
+            print("All tables already exist")
 
         # Check if roles exist, if not create default roles
         from sqlalchemy.orm import Session
