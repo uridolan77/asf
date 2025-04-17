@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document Processing Dependencies</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #2980b9;
+            margin-top: 30px;
+        }
+        .card {
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .warning {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        code {
+            font-family: Consolas, Monaco, 'Andale Mono', monospace;
+            background-color: #f5f5f5;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-size: 0.9em;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-size: 0.9em;
+        }
+        .copy-btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+        .copy-btn:hover {
+            background-color: #2980b9;
+        }
+        .dependency-section {
+            margin-bottom: 40px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Document Processing Dependencies</h1>
+
+    <div class="warning">
+        <h3>⚠️ Dependency Conflicts</h3>
+        <p>The document processing system requires several Python packages that may conflict with other packages in your environment. It's recommended to create a separate virtual environment for document processing.</p>
+        <p><strong>Known conflicts:</strong></p>
+        <ul>
+            <li><code>pydantic</code>: Several packages (dspy, langchain, litellm, mcp) require pydantic 2.x, but document processing uses pydantic 1.10.21</li>
+            <li><code>spacy</code>: scispacy requires spacy 3.7.0+, but document processing uses spacy 3.4.4</li>
+            <li><code>openai</code>: dspy requires openai ≤1.61.0, but you may have openai 1.75.0</li>
+        </ul>
+    </div>
+
+    <div class="card">
+        <h2>Creating a Virtual Environment</h2>
+        <pre><code>python -m venv document_processing_env
+cd document_processing_env/Scripts
+activate.bat
+cd ../../</code></pre>
+        <button class="copy-btn" onclick="copyToClipboard('python -m venv document_processing_env\ncd document_processing_env/Scripts\nactivate.bat\ncd ../../')">Copy Commands</button>
+
+        <h3>Option 1: Using a Separate Environment (Recommended)</h3>
+        <p>This is the safest approach to avoid dependency conflicts with your main environment.</p>
+
+        <h3>Option 2: Using --no-dependencies Flag</h3>
+        <p>If you can't use a separate environment, you can try installing packages with the <code>--no-dependencies</code> flag:</p>
+        <pre><code>pip install pymupdf pdfminer.six --no-dependencies</code></pre>
+        <button class="copy-btn" onclick="copyToClipboard('pip install pymupdf pdfminer.six --no-dependencies')">Copy Command</button>
+        <p><strong>Note:</strong> This approach may still cause issues with some packages.</p>
+
+        <h3>Option 3: Using conda Environment</h3>
+        <p>Conda can sometimes handle dependency conflicts better than pip:</p>
+        <pre><code>conda create -n document_processing python=3.9
+conda activate document_processing</code></pre>
+        <button class="copy-btn" onclick="copyToClipboard('conda create -n document_processing python=3.9\nconda activate document_processing')">Copy Commands</button>
+    </div>
+
+    <div class="dependency-section">
+        <h2>1. PDF Parsing</h2>
+        <div class="info">
+            <p>These libraries are required for extracting text from PDF documents.</p>
+        </div>
+        <div class="card">
+            <h3>Required Packages</h3>
+            <pre><code>pip install pymupdf pdfminer.six</code></pre>
+            <button class="copy-btn" onclick="copyToClipboard('pip install pymupdf pdfminer.six')">Copy Command</button>
+        </div>
+    </div>
+
+    <div class="dependency-section">
+        <h2>2. Entity Extraction</h2>
+        <div class="info">
+            <p>These libraries are required for extracting biomedical entities from text.</p>
+        </div>
+        <div class="card">
+            <h3>Required Packages</h3>
+            <pre><code>pip install scispacy==0.5.3 spacy==3.5.4 gliner==0.2.17
+pip install https://s3-us-west-2.amazonaws.com/ai2-s2-scispacy/releases/v0.5.1/en_core_sci_md-0.5.1.tar.gz</code></pre>
+            <button class="copy-btn" onclick="copyToClipboard('pip install scispacy==0.5.3 spacy==3.5.4 gliner==0.2.17\npip install https://s3-us-west-2.amazonaws.com/ai2-s2-scispacy/releases/v0.5.1/en_core_sci_md-0.5.1.tar.gz')">Copy Commands</button>
+        </div>
+    </div>
+
+    <div class="dependency-section">
+        <h2>3. Relation Extraction</h2>
+        <div class="info">
+            <p>These libraries are required for extracting relationships between biomedical entities.</p>
+        </div>
+        <div class="card">
+            <h3>Required Packages</h3>
+            <pre><code>pip install sacremoses</code></pre>
+            <button class="copy-btn" onclick="copyToClipboard('pip install sacremoses')">Copy Command</button>
+        </div>
+    </div>
+
+    <div class="dependency-section">
+        <h2>4. Summarization</h2>
+        <div class="info">
+            <p>These libraries are required for generating summaries of medical documents.</p>
+        </div>
+        <div class="card">
+            <h3>Required Packages</h3>
+            <pre><code>pip install transformers==4.30.2 torch==2.0.1</code></pre>
+            <button class="copy-btn" onclick="copyToClipboard('pip install transformers==4.30.2 torch==2.0.1')">Copy Command</button>
+        </div>
+    </div>
+
+    <div class="dependency-section">
+        <h2>5. All Dependencies (Complete Installation)</h2>
+        <div class="warning">
+            <p>Installing all dependencies at once may cause conflicts. It's recommended to install them one by one and test after each installation.</p>
+        </div>
+        <div class="card">
+            <h3>All Required Packages</h3>
+            <pre><code>pip install pymupdf pdfminer.six
+pip install scispacy==0.5.3 spacy==3.5.4 gliner==0.2.17
+pip install https://s3-us-west-2.amazonaws.com/ai2-s2-scispacy/releases/v0.5.1/en_core_sci_md-0.5.1.tar.gz
+pip install sacremoses
+pip install transformers==4.30.2 torch==2.0.1</code></pre>
+            <button class="copy-btn" onclick="copyToClipboard('pip install pymupdf pdfminer.six\npip install scispacy==0.5.3 spacy==3.5.4 gliner==0.2.17\npip install https://s3-us-west-2.amazonaws.com/ai2-s2-scispacy/releases/v0.5.1/en_core_sci_md-0.5.1.tar.gz\npip install sacremoses\npip install transformers==4.30.2 torch==2.0.1')">Copy All Commands</button>
+        </div>
+    </div>
+
+    <div class="dependency-section">
+        <h2>6. Troubleshooting Dependency Conflicts</h2>
+        <div class="info">
+            <p>If you encounter dependency conflicts, here are some strategies to resolve them.</p>
+        </div>
+        <div class="card">
+            <h3>Common Error Messages</h3>
+            <pre><code>ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
+dspy 2.6.17 requires openai<=1.61.0,>=0.28.1, but you have openai 1.75.0 which is incompatible.
+dspy 2.6.17 requires pydantic>=2.0, but you have pydantic 1.10.21 which is incompatible.
+langchain 0.3.23 requires pydantic<3.0.0,>=2.7.4, but you have pydantic 1.10.21 which is incompatible.
+...</code></pre>
+
+            <h3>Solution 1: Downgrade Conflicting Packages</h3>
+            <pre><code>pip install openai==1.61.0</code></pre>
+            <button class="copy-btn" onclick="copyToClipboard('pip install openai==1.61.0')">Copy Command</button>
+
+            <h3>Solution 2: Use a Requirements File</h3>
+            <p>Create a requirements.txt file with exact versions:</p>
+            <pre><code>pymupdf==1.23.3
+pdfminer.six==20221105
+scispacy==0.5.3
+spacy==3.5.4
+gliner==0.2.17
+sacremoses==0.0.53
+transformers==4.30.2
+torch==2.0.1
+pydantic==1.10.21</code></pre>
+            <button class="copy-btn" onclick="copyToClipboard('pymupdf==1.23.3\npdfminer.six==20221105\nscispacy==0.5.3\nspacy==3.5.4\ngliner==0.2.17\nsacremoses==0.0.53\ntransformers==4.30.2\ntorch==2.0.1\npydantic==1.10.21')">Copy Requirements</button>
+
+            <p>Then install with:</p>
+            <pre><code>pip install -r requirements.txt</code></pre>
+            <button class="copy-btn" onclick="copyToClipboard('pip install -r requirements.txt')">Copy Command</button>
+
+            <h3>Solution 3: Minimal Installation</h3>
+            <p>If you only need PDF parsing functionality, you can install just the PDF libraries:</p>
+            <pre><code>pip install pymupdf pdfminer.six</code></pre>
+            <button class="copy-btn" onclick="copyToClipboard('pip install pymupdf pdfminer.six')">Copy Command</button>
+        </div>
+    </div>
+
+    <script>
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Copied to clipboard!');
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+            });
+        }
+    </script>
+</body>
+</html>

@@ -101,7 +101,25 @@ const useDocumentProcessing = (taskId) => {
 
     const failedHandler = (message) => {
       setStatus('failed');
-      setError(message.error || 'Processing failed');
+
+      // Store detailed error information
+      const errorMessage = message.error || 'Processing failed';
+      const errorDetails = message.details || {};
+
+      // Create a more detailed error message if details are available
+      let detailedError = errorMessage;
+      if (errorDetails && Object.keys(errorDetails).length > 0) {
+        detailedError = `${errorMessage} (${errorDetails.error_type || 'Unknown error type'})`;
+      }
+
+      setError(detailedError);
+
+      // Store error details in the task object for display in logs
+      setTask(prev => ({
+        ...prev,
+        error_message: detailedError,
+        error_details: errorDetails
+      }));
     };
 
     const intermediateResultHandler = (message) => {

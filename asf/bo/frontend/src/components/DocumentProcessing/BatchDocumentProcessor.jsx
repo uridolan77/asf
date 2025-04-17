@@ -27,7 +27,11 @@ import {
   LinearProgress,
   Switch,
   FormControlLabel,
-  Stack
+  Stack,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions
 } from '@mui/material';
 import {
   Upload as UploadIcon,
@@ -38,11 +42,13 @@ import {
   Error as ErrorIcon,
   HourglassEmpty as HourglassEmptyIcon,
   Speed as SpeedIcon,
-  Settings as SettingsIcon
+  Settings as SettingsIcon,
+  Info as InfoIcon
 } from '@mui/icons-material';
 import { useDropzone } from 'react-dropzone';
 import apiService from '../../services/api';
 import useWebSocket from '../../hooks/useWebSocket';
+import ProcessingLog from './ProcessingLog';
 
 /**
  * Component for batch processing multiple documents
@@ -59,6 +65,9 @@ const BatchDocumentProcessor = () => {
   const [pollingInterval, setPollingInterval] = useState(null);
   const [overallProgress, setOverallProgress] = useState(0);
   const [taskProgress, setTaskProgress] = useState({});
+  const [processingLogs, setProcessingLogs] = useState({});
+  const [selectedTaskLogs, setSelectedTaskLogs] = useState(null);
+  const [logDialogOpen, setLogDialogOpen] = useState(false);
 
   // WebSocket hook
   const {
@@ -67,7 +76,8 @@ const BatchDocumentProcessor = () => {
     unsubscribeFromTask,
     onProgress,
     onCompleted,
-    onFailed
+    onFailed,
+    onIntermediateResult
   } = useWebSocket();
 
   // Dropzone configuration
@@ -127,6 +137,23 @@ const BatchDocumentProcessor = () => {
             }
           }));
 
+          // Add log entry
+          setProcessingLogs(prev => ({
+            ...prev,
+            [taskId]: [
+              ...(prev[taskId] || []),
+              {
+                timestamp: new Date().toISOString(),
+                level: 'info',
+                message: `Progress: ${Math.round(message.progress * 100)}% - Stage: ${message.stage}`,
+                details: `File: ${taskStatuses[taskId]?.file_name || 'Unknown'}
+Task ID: ${taskId}
+Metrics: ${JSON.stringify(message.metrics || {}).substring(0, 100)}`,
+                stage: message.stage
+              }
+            ]
+          }));
+
           // Update overall progress
           updateOverallProgress();
         };
@@ -153,6 +180,24 @@ const BatchDocumentProcessor = () => {
             }
           }));
 
+          // Add log entry
+          setProcessingLogs(prev => ({
+            ...prev,
+            [taskId]: [
+              ...(prev[taskId] || []),
+              {
+                timestamp: new Date().toISOString(),
+                level: 'success',
+                message: `Processing completed successfully. Entities: ${message.result?.entity_count || 0}, Relations: ${message.result?.relation_count || 0}`,
+                details: `File: ${taskStatuses[taskId]?.file_name || 'Unknown'}
+Task ID: ${taskId}
+Processing time: ${message.result?.processing_time ? `${message.result.processing_time.toFixed(2)}s` : 'N/A'}
+Result path: ${message.result?.result_path || 'Unknown'}`,
+                stage: 'completed'
+              }
+            ]
+          }));
+
           // Update overall progress
           updateOverallProgress();
         };
@@ -169,14 +214,55 @@ const BatchDocumentProcessor = () => {
             }
           }));
 
+          // Add log entry
+          setProcessingLogs(prev => ({
+            ...prev,
+            [taskId]: [
+              ...(prev[taskId] || []),
+              {
+                timestamp: new Date().toISOString(),
+                level: 'error',
+                message: `Processing failed: ${message.error || 'Unknown error'}`,
+                details: `File: ${taskStatuses[taskId]?.file_name || 'Unknown'}
+Task ID: ${taskId}
+Status: ${taskStatuses[taskId]?.status || 'Unknown'}
+Error details: ${message.error || 'No additional details available'}`,
+                stage: 'failed'
+              }
+            ]
+          }));
+
           // Update overall progress
           updateOverallProgress();
+        };
+
+        // Intermediate result handler
+        const intermediateResultHandler = (message) => {
+          // Add log entry
+          setProcessingLogs(prev => ({
+            ...prev,
+            [taskId]: [
+              ...(prev[taskId] || []),
+              {
+                timestamp: new Date().toISOString(),
+                level: 'info',
+                message: `Intermediate result from ${message.stage}`,
+                details: `File: ${taskStatuses[taskId]?.file_name || 'Unknown'}
+Task ID: ${taskId}
+Timestamp: ${message.timestamp || new Date().toISOString()}
+Result type: ${typeof message.result}
+Preview: ${JSON.stringify(message.result).substring(0, 150)}...`,
+                stage: message.stage
+              }
+            ]
+          }));
         };
 
         // Register handlers
         onProgress(taskId, progressHandlers[taskId]);
         onCompleted(taskId, completedHandlers[taskId]);
         onFailed(taskId, failedHandlers[taskId]);
+        onIntermediateResult(taskId, intermediateResultHandler);
       }
 
       // Cleanup function
@@ -375,8 +461,9 @@ const BatchDocumentProcessor = () => {
   };
 
   return (
-    <Box>
-      <form onSubmit={handleSubmit}>
+    <>
+      <Box>
+        <form onSubmit={handleSubmit}>
         <Grid container spacing={3}>
           <Grid item xs={12}>
             <Paper
@@ -572,6 +659,7 @@ const BatchDocumentProcessor = () => {
                   <TableCell>Entities</TableCell>
                   <TableCell>Relations</TableCell>
                   <TableCell>Progress</TableCell>
+                  <TableCell align="right">Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -617,6 +705,21 @@ const BatchDocumentProcessor = () => {
                           </Box>
                         )}
                       </TableCell>
+                      <TableCell align="right">
+                        <Tooltip title="View Logs">
+                          <IconButton
+                            color="info"
+                            onClick={() => {
+                              setSelectedTaskLogs(taskId);
+                              setLogDialogOpen(true);
+                            }}
+                            size="small"
+                            sx={{ mr: 1 }}
+                          >
+                            <InfoIcon />
+                          </IconButton>
+                        </Tooltip>
+                      </TableCell>
                     </TableRow>
                   );
                 })}
@@ -625,7 +728,40 @@ const BatchDocumentProcessor = () => {
           </TableContainer>
         </Paper>
       )}
-    </Box>
+      </Box>
+
+      {/* Processing Logs Dialog */}
+    <Dialog
+      open={logDialogOpen}
+      onClose={() => setLogDialogOpen(false)}
+      maxWidth="md"
+      fullWidth
+    >
+      <DialogTitle>
+        Processing Logs
+        {selectedTaskLogs && taskStatuses[selectedTaskLogs] && (
+          <Typography variant="subtitle2" color="textSecondary">
+            {taskStatuses[selectedTaskLogs].file_name}
+          </Typography>
+        )}
+      </DialogTitle>
+      <DialogContent dividers sx={{ height: '70vh' }}>
+        {selectedTaskLogs ? (
+          <ProcessingLog
+            logs={processingLogs[selectedTaskLogs] || []}
+            isLoading={false}
+            error={null}
+            title={`Task ID: ${selectedTaskLogs}`}
+          />
+        ) : (
+          <Typography>No logs available</Typography>
+        )}
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={() => setLogDialogOpen(false)}>Close</Button>
+      </DialogActions>
+    </Dialog>
+    </>
   );
 };
 

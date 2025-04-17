@@ -21,6 +21,24 @@ from threading import Thread
 from api.auth import get_current_user, User
 from api.websockets.connection_manager import connection_manager
 
+# Import DocumentStructure for error handling
+try:
+    from asf.medical.ml.document_processing.document_structure import DocumentStructure
+except ImportError:
+    # Define a minimal DocumentStructure class for error handling
+    class DocumentStructure:
+        def __init__(self, title="", abstract="", sections=None, references=None, entities=None, relations=None, metadata=None):
+            self.title = title
+            self.abstract = abstract
+            self.sections = sections or []
+            self.references = references or []
+            self.entities = entities or []
+            self.relations = relations or []
+            self.metadata = metadata or {}
+
+# Import custom JSON encoder
+from api.utils.json_encoder import CustomJSONEncoder
+
 # Import the document processing module
 from asf.medical.ml.document_processing import MedicalResearchSynthesizer, EnhancedMedicalResearchSynthesizer
 
@@ -165,7 +183,7 @@ def process_document_task(file_path: str, task_id: str, is_pdf: bool = True, set
         def progress_callback(stage: str, progress: float):
             processing_tasks[task_id]["progress"] = progress
             processing_tasks[task_id]["current_stage"] = stage
-            logger.debug(f"Task {task_id}: {stage} - {progress * 100:.1f}%")
+            logger.info(f"Task {task_id}: {stage} - {progress * 100:.1f}% - File: {os.path.basename(file_path)}")
 
             # Broadcast progress via WebSocket
             asyncio.run(connection_manager.broadcast_task_progress(
@@ -180,6 +198,10 @@ def process_document_task(file_path: str, task_id: str, is_pdf: bool = True, set
 
         # Define streaming callback
         def streaming_callback(stage: str, result: Any):
+            # Log the stage and result type
+            result_type = type(result).__name__
+            logger.info(f"Task {task_id}: Streaming callback for stage '{stage}' with result type '{result_type}'")
+
             # Save intermediate results if needed
             if settings and settings.use_streaming:
                 try:
@@ -215,40 +237,185 @@ def process_document_task(file_path: str, task_id: str, is_pdf: bool = True, set
         # Process the document based on settings
         start_time = datetime.now()
 
-        # Check if we should use the enhanced synthesizer with streaming
-        if settings and settings.use_enhanced_synthesizer and settings.use_streaming:
-            # Use streaming processing
-            doc_structure, metrics = synthesizer.process_streaming(
-                file_path,
-                is_pdf=is_pdf,
-                streaming_callback=streaming_callback,
-                progress_callback=progress_callback
+        # Add more detailed logging
+        logger.info(f"Task {task_id}: Processing document {os.path.basename(file_path)} with settings: enhanced={settings.use_enhanced_synthesizer if settings else False}, streaming={settings.use_streaming if settings else False}, parallel={use_parallel}")
+
+        # Check if file exists and is readable
+        if not os.path.exists(file_path):
+            error_msg = f"File not found: {file_path}"
+            logger.error(f"Task {task_id}: {error_msg}")
+            raise FileNotFoundError(error_msg)
+
+        # Check file size
+        file_size = os.path.getsize(file_path)
+        logger.info(f"Task {task_id}: File size: {file_size / 1024:.2f} KB")
+
+        # Process the document with appropriate method
+        try:
+            # Check which processing method to use
+            if settings and settings.use_enhanced_synthesizer and settings.use_streaming:
+                # Use streaming processing
+                logger.info(f"Task {task_id}: Using enhanced synthesizer with streaming for {os.path.basename(file_path)}")
+                doc_structure, metrics = synthesizer.process_streaming(
+                    file_path,
+                    is_pdf=is_pdf,
+                    streaming_callback=streaming_callback,
+                    progress_callback=progress_callback
+                )
+                logger.info(f"Task {task_id}: Streaming processing completed successfully")
+            elif settings and settings.use_enhanced_synthesizer:
+                # Use enhanced synthesizer with progress tracking
+                logger.info(f"Task {task_id}: Using enhanced synthesizer with progress tracking for {os.path.basename(file_path)}")
+                doc_structure, metrics = synthesizer.process_with_progress(
+                    file_path,
+                    is_pdf=is_pdf,
+                    progress_callback=progress_callback
+                )
+                logger.info(f"Task {task_id}: Progress tracking processing completed successfully")
+            elif use_parallel:
+                # Use parallel processing with original synthesizer
+                logger.info(f"Task {task_id}: Using parallel processing with original synthesizer for {os.path.basename(file_path)}")
+                doc_structure, metrics = synthesizer.process_parallel(file_path, is_pdf=is_pdf)
+                logger.info(f"Task {task_id}: Parallel processing completed successfully")
+            else:
+                # Use standard processing with original synthesizer
+                logger.info(f"Task {task_id}: Using standard processing with original synthesizer for {os.path.basename(file_path)}")
+                doc_structure, metrics = synthesizer.process(file_path, is_pdf=is_pdf)
+                logger.info(f"Task {task_id}: Standard processing completed successfully")
+
+            # Log the results
+            entity_count = len(doc_structure.entities) if hasattr(doc_structure, 'entities') else 0
+            relation_count = len(doc_structure.relations) if hasattr(doc_structure, 'relations') else 0
+            logger.info(f"Task {task_id}: Processing results - Entities: {entity_count}, Relations: {relation_count}")
+
+            # Check if we have any entities or relations
+            if entity_count == 0:
+                logger.warning(f"Task {task_id}: No entities were extracted from the document. This may be due to missing dependencies.")
+                logger.warning(f"Task {task_id}: To enable entity extraction, install the following packages:")
+                logger.warning(f"Task {task_id}: pip install scispacy==0.5.3 spacy==3.5.4 gliner==0.2.17")
+                logger.warning(f"Task {task_id}: pip install https://s3-us-west-2.amazonaws.com/ai2-s2-scispacy/releases/v0.5.1/en_core_sci_md-0.5.1.tar.gz")
+                logger.warning(f"Task {task_id}: Note: There may be dependency conflicts. Consider creating a separate environment.")
+                logger.warning(f"Task {task_id}: For detailed instructions on resolving dependency conflicts, visit: /document_processing_dependencies.html")
+
+                # Add warning to the document structure
+                if hasattr(doc_structure, 'metadata'):
+                    doc_structure.metadata['warnings'] = [
+                        "No entities were extracted. Install required dependencies for entity extraction.",
+                        "Required packages with specific versions: scispacy==0.5.3, spacy==3.5.4, gliner==0.2.17, en_core_sci_md",
+                        "Note: There may be dependency conflicts with other packages in your environment.",
+                        "For detailed instructions, click the 'Dependencies' button in the UI."
+                    ]
+
+                    # Add known conflicts to metadata
+                    doc_structure.metadata['dependency_conflicts'] = [
+                        "pydantic: Several packages (dspy, langchain, litellm, mcp) require pydantic 2.x, but document processing uses pydantic 1.10.21",
+                        "spacy: scispacy requires spacy 3.7.0+, but document processing uses spacy 3.4.4",
+                        "openai: dspy requires openai ≤1.61.0, but you may have openai 1.75.0"
+                    ]
+
+            if relation_count == 0 and entity_count > 0:
+                logger.warning(f"Task {task_id}: No relations were extracted despite having entities. This may be due to missing dependencies.")
+                logger.warning(f"Task {task_id}: To enable relation extraction, install the following packages:")
+                logger.warning(f"Task {task_id}: pip install sacremoses")
+
+                # Add warning to the document structure
+                if hasattr(doc_structure, 'metadata') and 'warnings' in doc_structure.metadata:
+                    doc_structure.metadata['warnings'].append("No relations were extracted. Install required dependencies for relation extraction.")
+                    doc_structure.metadata['warnings'].append("Required packages: sacremoses")
+                elif hasattr(doc_structure, 'metadata'):
+                    doc_structure.metadata['warnings'] = [
+                        "No relations were extracted. Install required dependencies for relation extraction.",
+                        "Required packages: sacremoses"
+                    ]
+
+        except Exception as e:
+            logger.error(f"Task {task_id}: Error in document processing: {str(e)}")
+            # Create a minimal document structure with error information
+            doc_structure = DocumentStructure(
+                title=f"Processing Error: {os.path.basename(file_path)}",
+                abstract=f"An error occurred during document processing: {str(e)}",
+                sections=[],
+                references=[],
+                entities=[],
+                relations=[],
+                metadata={
+                    "error": str(e),
+                    "processing_status": "failed",
+                    "processing_method": "unknown"
+                }
             )
-        elif settings and settings.use_enhanced_synthesizer:
-            # Use enhanced synthesizer with progress tracking
-            doc_structure, metrics = synthesizer.process_with_progress(
-                file_path,
-                is_pdf=is_pdf,
-                progress_callback=progress_callback
-            )
-        elif use_parallel:
-            # Use parallel processing with original synthesizer
-            doc_structure, metrics = synthesizer.process_parallel(file_path, is_pdf=is_pdf)
-        else:
-            # Use standard processing with original synthesizer
-            doc_structure, metrics = synthesizer.process(file_path, is_pdf=is_pdf)
+            metrics = {"error": str(e), "total_processing_time": 0.0}
+
+            # Update task status and return
+            processing_tasks[task_id].update({
+                "status": "failed",
+                "completed_at": datetime.now().isoformat(),
+                "error_message": str(e),
+                "progress": 0.0,
+                "current_stage": "failed"
+            })
+
+            # Broadcast failure via WebSocket
+            asyncio.run(connection_manager.broadcast_task_failed(
+                task_id=task_id,
+                error=str(e)
+            ))
+
+            # Save error results
+            try:
+                synthesizer.save_results(doc_structure, result_dir)
+            except Exception as save_error:
+                logger.error(f"Task {task_id}: Error saving error results: {str(save_error)}")
+
+            return
+
+        # Check if document structure has content
+        if not hasattr(doc_structure, 'entities') or len(doc_structure.entities) == 0:
+            logger.warning(f"Task {task_id}: No entities were extracted from the document. This may indicate a problem with text extraction or entity recognition.")
+
+            # Add warning to metadata
+            if hasattr(doc_structure, 'metadata'):
+                doc_structure.metadata['warning'] = "No entities were extracted from the document."
+                doc_structure.metadata['possible_causes'] = [
+                    "PDF text extraction failed",
+                    "Document does not contain medical entities",
+                    "Entity recognition model failed"
+                ]
 
         # Save final results
+        logger.info(f"Task {task_id}: Saving results to {result_dir}")
         synthesizer.save_results(doc_structure, result_dir)
 
+        # Save document structure manually with custom encoder
+        try:
+            result_file_path = os.path.join(result_dir, "document_structure.json")
+            with open(result_file_path, "w") as f:
+                # Convert document structure to dict if possible
+                if hasattr(doc_structure, 'to_dict') and callable(getattr(doc_structure, 'to_dict')):
+                    json.dump(doc_structure.to_dict(), f, indent=2, cls=CustomJSONEncoder)
+                else:
+                    # Use custom encoder to handle complex objects
+                    json.dump(doc_structure, f, indent=2, cls=CustomJSONEncoder)
+
+            logger.info(f"Task {task_id}: Successfully saved results to {result_file_path}")
+        except Exception as e:
+            logger.error(f"Task {task_id}: Failed to save results to {result_file_path}: {str(e)}")
+            # Don't raise an exception here, continue with the task
+
         # Update task status
+        entity_count = len(doc_structure.entities) if hasattr(doc_structure, 'entities') else 0
+        relation_count = len(doc_structure.relations) if hasattr(doc_structure, 'relations') else 0
+        processing_time = metrics.get("total_processing_time")
+
+        logger.info(f"Task {task_id}: Processing completed. Entities: {entity_count}, Relations: {relation_count}, Time: {processing_time:.2f}s")
+
         processing_tasks[task_id].update({
             "status": "completed",
             "completed_at": datetime.now().isoformat(),
             "result_path": result_dir,
-            "processing_time": metrics.get("total_processing_time"),
-            "entity_count": len(doc_structure.entities) if hasattr(doc_structure, 'entities') else 0,
-            "relation_count": len(doc_structure.relations) if hasattr(doc_structure, 'relations') else 0,
+            "processing_time": processing_time,
+            "entity_count": entity_count,
+            "relation_count": relation_count,
             "progress": 1.0,
             "current_stage": "completed"
         })
@@ -285,10 +452,25 @@ def process_document_task(file_path: str, task_id: str, is_pdf: bool = True, set
             "current_stage": "failed"
         })
 
-        # Broadcast failure via WebSocket
+        # Broadcast failure via WebSocket with detailed error information
+        error_details = {
+            "error_type": type(e).__name__,
+            "file_name": os.path.basename(file_path),
+            "file_size": os.path.getsize(file_path) if os.path.exists(file_path) else 0,
+            "is_pdf": is_pdf,
+            "settings": {
+                "use_enhanced_synthesizer": settings.use_enhanced_synthesizer if settings else False,
+                "use_streaming": settings.use_streaming if settings else False
+            } if settings else {},
+            "use_parallel": use_parallel,
+            "stage": processing_tasks[task_id].get("current_stage", "unknown"),
+            "traceback": str(e.__traceback__) if hasattr(e, "__traceback__") else "Not available"
+        }
+
         asyncio.run(connection_manager.broadcast_task_failed(
             task_id=task_id,
-            error=str(e)
+            error=str(e),
+            details=error_details
         ))
 
         # Try to close synthesizer if it exists
@@ -660,8 +842,55 @@ async def get_processing_results(
 
     # Read the document structure JSON
     try:
-        with open(os.path.join(task["result_path"], "document_structure.json"), "r") as f:
+        result_file_path = os.path.join(task["result_path"], "document_structure.json")
+        logger.info(f"Reading results for task {task_id} from {result_file_path}")
+
+        if not os.path.exists(result_file_path):
+            logger.error(f"Result file not found: {result_file_path}")
+
+            # Check if the directory exists
+            if not os.path.exists(task["result_path"]):
+                logger.error(f"Result directory not found: {task['result_path']}")
+                raise FileNotFoundError(f"Result directory not found: {task['result_path']}")
+
+            # Check what files are in the directory
+            dir_contents = os.listdir(task["result_path"])
+            logger.error(f"Directory contents: {dir_contents}")
+
+            # Create a minimal result if no file exists
+            minimal_result = {
+                "title": f"Processing Failed: {task.get('file_name', 'Unknown')}",
+                "abstract": "No results were generated. This may be due to PDF parsing issues or entity extraction failure.",
+                "entities": [],
+                "relations": [],
+                "sections": [],
+                "references": [],
+                "metadata": {
+                    "error": "Result file not found",
+                    "possible_causes": [
+                        "PDF text extraction failed",
+                        "Document does not contain medical entities",
+                        "Entity recognition model failed"
+                    ]
+                }
+            }
+
+            # Return minimal result instead of raising an exception
+            return {
+                "task_id": task_id,
+                "file_name": task.get("file_name", "Unknown"),
+                "processing_time": task.get("processing_time", 0),
+                "entity_count": 0,
+                "relation_count": 0,
+                "results": minimal_result,
+                "error": "Result file not found"
+            }
+
+        with open(result_file_path, "r") as f:
             results = json.load(f)
+
+        # Log the structure of the results
+        logger.info(f"Results structure: {', '.join(results.keys()) if isinstance(results, dict) else 'Not a dictionary'}")
 
         return {
             "task_id": task_id,

@@ -5,6 +5,7 @@ import {
   Card,
   CardContent,
   Typography,
+  Link,
   TextField,
   Grid,
   Paper,
@@ -22,7 +23,9 @@ import {
   ListItemText,
   ListItemIcon,
   LinearProgress,
-  Tooltip
+  Tooltip,
+  Tab,
+  Tabs
 } from '@mui/material';
 import {
   Upload as UploadIcon,
@@ -32,11 +35,13 @@ import {
   Biotech as BiotechIcon,
   MedicalInformation as MedicalInformationIcon,
   Speed as SpeedIcon,
-  Settings as SettingsIcon
+  Settings as SettingsIcon,
+  Info as InfoIcon
 } from '@mui/icons-material';
 import { useDropzone } from 'react-dropzone';
 import apiService from '../../services/api';
 import KnowledgeGraphViewer from './KnowledgeGraphViewer';
+import ProcessingLog from './ProcessingLog';
 import useDocumentProcessing from '../../hooks/useDocumentProcessing';
 
 /**
@@ -55,6 +60,8 @@ const SingleDocumentProcessor = () => {
   const [pollingInterval, setPollingInterval] = useState(null);
   const [progress, setProgress] = useState(0);
   const [currentStage, setCurrentStage] = useState('');
+  const [activeTab, setActiveTab] = useState(0);
+  const [processingLogs, setProcessingLogs] = useState([]);
 
   // Dropzone configuration
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -90,8 +97,74 @@ const SingleDocumentProcessor = () => {
     result: wsResult,
     error: wsError,
     loading: wsLoading,
-    task: wsTask
+    task: wsTask,
+    intermediateResults: wsIntermediateResults
   } = useDocumentProcessing(taskId);
+
+  // Add error to logs when it occurs
+  useEffect(() => {
+    if (wsError) {
+      // Get detailed error information if available
+      const errorDetails = wsTask?.error_details || {};
+
+      // Create a detailed error message for the logs
+      let detailedErrorInfo = `Task ID: ${taskId}\nStatus: ${wsStatus}\nStage: ${wsStage || 'Unknown'}`;
+
+      // Add detailed error information if available
+      if (Object.keys(errorDetails).length > 0) {
+        detailedErrorInfo += `\n\nError Type: ${errorDetails.error_type || 'Unknown'}\n`;
+
+        if (errorDetails.file_name) {
+          detailedErrorInfo += `File: ${errorDetails.file_name}\n`;
+        }
+
+        if (errorDetails.file_size) {
+          detailedErrorInfo += `File Size: ${(errorDetails.file_size / 1024).toFixed(2)} KB\n`;
+        }
+
+        if (errorDetails.is_pdf !== undefined) {
+          detailedErrorInfo += `Is PDF: ${errorDetails.is_pdf}\n`;
+        }
+
+        if (errorDetails.settings) {
+          detailedErrorInfo += `Settings: ${JSON.stringify(errorDetails.settings, null, 2)}\n`;
+        }
+
+        if (errorDetails.stage) {
+          detailedErrorInfo += `Failed Stage: ${errorDetails.stage}\n`;
+        }
+
+        if (errorDetails.traceback) {
+          detailedErrorInfo += `\nTraceback: ${errorDetails.traceback}`;
+        }
+      }
+
+      // Add installation instructions for common errors
+      if (wsError.includes("No PDF parser is available")) {
+        detailedErrorInfo += `\n\nInstallation Instructions:\nTo fix this error, install PDF parsing libraries:\n\npip install pymupdf pdfminer.six`;
+      } else if (wsError.includes("GLiNER-biomed model not initialized") || wsError.includes("GLiNER package not installed")) {
+        detailedErrorInfo += `\n\nInstallation Instructions:\nTo fix this error, install entity extraction libraries:\n\npip install scispacy==0.5.3 spacy==3.5.4 gliner==0.2.17\npip install https://s3-us-west-2.amazonaws.com/ai2-s2-scispacy/releases/v0.5.1/en_core_sci_md-0.5.1.tar.gz`;
+      } else if (wsError.includes("sacremoses")) {
+        detailedErrorInfo += `\n\nInstallation Instructions:\nTo fix this error, install relation extraction libraries:\n\npip install sacremoses`;
+      } else if (wsError.includes("SciFive model") || wsError.includes("Model not initialized")) {
+        detailedErrorInfo += `\n\nInstallation Instructions:\nTo fix this error, install summarization libraries:\n\npip install transformers==4.30.2 torch==2.0.1`;
+      }
+
+      // Add dependency conflict warning
+      detailedErrorInfo += `\n\nNote: There may be dependency conflicts in your Python environment. Consider creating a separate environment for document processing.`;
+
+      setProcessingLogs(prev => [
+        ...prev,
+        {
+          timestamp: new Date().toISOString(),
+          level: 'error',
+          message: `Processing Error: ${wsError}`,
+          details: detailedErrorInfo,
+          stage: 'error'
+        }
+      ]);
+    }
+  }, [wsError, taskId, wsStatus, wsStage, wsTask]);
 
   // Update local state when WebSocket updates are received
   useEffect(() => {
@@ -112,26 +185,201 @@ const SingleDocumentProcessor = () => {
         progress: wsProgress / 100
       });
 
+      // Add log entry for stage change
+      if (wsStage && wsStage !== currentStage) {
+        setProcessingLogs(prev => [
+          ...prev,
+          {
+            timestamp: new Date().toISOString(),
+            level: 'info',
+            message: `Processing stage: ${wsStage}`,
+            details: `File: ${file?.name || 'Unknown'}
+Task ID: ${taskId}
+Status: ${wsStatus}`,
+            stage: wsStage
+          }
+        ]);
+      }
+
+      // Add log entry for progress update (but not too frequently)
+      if (wsProgress % 10 === 0 && wsProgress !== 0) {
+        setProcessingLogs(prev => [
+          ...prev,
+          {
+            timestamp: new Date().toISOString(),
+            level: 'info',
+            message: `Progress: ${Math.round(wsProgress)}%`,
+            details: `Stage: ${wsStage}
+File: ${file?.name || 'Unknown'}
+Task ID: ${taskId}`,
+            stage: wsStage
+          }
+        ]);
+      }
+
       // If processing is complete, fetch the full results
       if (wsStatus === 'completed' && !processingResults) {
+        setProcessingLogs(prev => [
+          ...prev,
+          {
+            timestamp: new Date().toISOString(),
+            level: 'success',
+            message: `Processing completed successfully. Entities: ${wsTask.entity_count || 0}, Relations: ${wsTask.relation_count || 0}`,
+            details: `File: ${file?.name || 'Unknown'}
+Task ID: ${taskId}
+Processing time: ${wsTask.processing_time ? `${wsTask.processing_time.toFixed(2)}s` : 'N/A'}
+Status: ${wsStatus}`,
+            stage: 'completed'
+          }
+        ]);
         fetchResults(taskId);
         setLoading(false);
       } else if (wsStatus === 'failed') {
+        setProcessingLogs(prev => [
+          ...prev,
+          {
+            timestamp: new Date().toISOString(),
+            level: 'error',
+            message: `Processing failed: ${wsError || 'Unknown error'}`,
+            details: `File: ${file?.name || 'Unknown'}
+Task ID: ${taskId}
+Status: ${wsStatus}
+Stage: ${wsStage || 'Unknown'}`,
+            stage: 'failed'
+          }
+        ]);
         setError(wsError || 'Unknown error');
         setLoading(false);
       }
     }
   }, [taskId, file, wsProgress, wsStage, wsStatus, wsResult, wsError, wsTask]);
 
+  // Handle intermediate results
+  useEffect(() => {
+    if (wsIntermediateResults && Object.keys(wsIntermediateResults).length > 0) {
+      // Log intermediate results
+      Object.entries(wsIntermediateResults).forEach(([stage, result]) => {
+        setProcessingLogs(prev => [
+          ...prev,
+          {
+            timestamp: new Date().toISOString(),
+            level: 'info',
+            message: `Intermediate result from ${stage}`,
+            details: `Result type: ${typeof result}
+Task ID: ${taskId}
+File: ${file?.name || 'Unknown'}
+Preview: ${JSON.stringify(result).substring(0, 150)}...`,
+            stage: stage
+          }
+        ]);
+      });
+    }
+  }, [wsIntermediateResults]);
+
   // Fetch processing results
   const fetchResults = async (id) => {
     try {
+      setProcessingLogs(prev => [
+        ...prev,
+        {
+          timestamp: new Date().toISOString(),
+          level: 'info',
+          message: `Fetching processing results for task ${id}...`,
+          details: `File: ${file?.name || 'Unknown'}
+Endpoint: /api/document-processing/results/${id}`,
+          stage: 'fetching_results'
+        }
+      ]);
+
       const response = await apiService.documentProcessing.getResults(id);
-      setProcessingResults(response.data);
+      if (response.success) {
+        setProcessingResults(response.data);
+
+        // Log some information about the results
+        const results = response.data.results;
+        setProcessingLogs(prev => [
+          ...prev,
+          {
+            timestamp: new Date().toISOString(),
+            level: 'success',
+            message: `Results fetched successfully. Title: "${results.title || 'Untitled'}", Entities: ${results.entities?.length || 0}, Relations: ${results.relations?.length || 0}`,
+            details: `File: ${file?.name || 'Unknown'}
+Task ID: ${id}
+Document sections: ${results.sections?.length || 0}
+References: ${results.references?.length || 0}`,
+            stage: 'results_fetched'
+          }
+        ]);
+
+        // Log entity types if available
+        if (results.entities && results.entities.length > 0) {
+          const entityTypes = {};
+          results.entities.forEach(entity => {
+            entityTypes[entity.label] = (entityTypes[entity.label] || 0) + 1;
+          });
+
+          setProcessingLogs(prev => [
+            ...prev,
+            {
+              timestamp: new Date().toISOString(),
+              level: 'info',
+              message: `Entity types: ${Object.entries(entityTypes).map(([type, count]) => `${type}=${count}`).join(', ')}`,
+              details: `File: ${file?.name || 'Unknown'}
+Task ID: ${id}
+Total entities: ${results.entities.length}
+Entity extraction method: ${results.metadata?.entity_extraction_method || 'Unknown'}`,
+              stage: 'results_analysis'
+            }
+          ]);
+        } else {
+          setProcessingLogs(prev => [
+            ...prev,
+            {
+              timestamp: new Date().toISOString(),
+              level: 'warning',
+              message: 'No entities were extracted from the document.',
+              details: `File: ${file?.name || 'Unknown'}
+Task ID: ${id}
+Document type: ${results.metadata?.document_type || 'Unknown'}
+Possible reasons: Document may not contain medical entities, text extraction issues, or entity recognition model limitations.`,
+              stage: 'results_analysis'
+            }
+          ]);
+        }
+      } else {
+        setError(response.error || 'Failed to fetch results');
+        setProcessingLogs(prev => [
+          ...prev,
+          {
+            timestamp: new Date().toISOString(),
+            level: 'error',
+            message: `Failed to fetch results: ${response.error || 'Unknown error'}`,
+            details: `File: ${file?.name || 'Unknown'}
+Task ID: ${id}
+Endpoint: /api/document-processing/results/${id}
+Status code: ${response.status || 'Unknown'}`,
+            stage: 'error'
+          }
+        ]);
+      }
       setLoading(false);
     } catch (err) {
       console.error('Error fetching results:', err);
       setError('Error fetching processing results. Please try again.');
+      setProcessingLogs(prev => [
+        ...prev,
+        {
+          timestamp: new Date().toISOString(),
+          level: 'error',
+          message: `Error fetching results: ${err.message || 'Unknown error'}`,
+          details: `File: ${file?.name || 'Unknown'}
+Task ID: ${id}
+Endpoint: /api/document-processing/results/${id}
+Error type: ${err.name || 'Unknown'}
+Stack trace: ${err.stack?.split('\n')[0] || 'Not available'}`,
+          stage: 'error'
+        }
+      ]);
       setLoading(false);
     }
   };
@@ -150,6 +398,16 @@ const SingleDocumentProcessor = () => {
     setTaskId(null);
     setTaskStatus(null);
     setProcessingResults(null);
+    setActiveTab(0);
+    setProcessingLogs([{
+      timestamp: new Date().toISOString(),
+      level: 'info',
+      message: `Starting document processing for ${file.name}`,
+      details: `File type: ${file.type || file.name.split('.').pop() || 'Unknown'}
+File size: ${(file.size / 1024).toFixed(2)} KB
+Settings: Enhanced=${useEnhanced}, Streaming=${useStreaming}, Parallel=${useParallel}`,
+      stage: 'initializing'
+    }]);
 
     try {
       // Get default settings first
@@ -173,12 +431,85 @@ const SingleDocumentProcessor = () => {
       formData.append('use_parallel', useParallel.toString());
       formData.append('settings_json', JSON.stringify(settings));
 
+      // Log settings
+      setProcessingLogs(prev => [
+        ...prev,
+        {
+          timestamp: new Date().toISOString(),
+          level: 'info',
+          message: `Processing settings configured`,
+          details: `Enhanced processor: ${useEnhanced ? 'Enabled' : 'Disabled'}
+Streaming: ${useStreaming ? 'Enabled' : 'Disabled'}
+Parallel processing: ${useParallel ? 'Enabled' : 'Disabled'}
+File: ${file.name}
+Size: ${(file.size / 1024).toFixed(2)} KB`,
+          stage: 'initializing'
+        }
+      ]);
+
       const response = await apiService.documentProcessing.processSingle(formData);
 
-      setTaskId(response.data.task_id);
+      if (response.success) {
+        setTaskId(response.data.task_id);
+        setTaskStatus({
+          task_id: response.data.task_id,
+          status: response.data.status,
+          file_name: file.name,
+          created_at: response.data.created_at,
+          current_stage: 'queued',
+          progress: 0
+        });
+
+        setProcessingLogs(prev => [
+          ...prev,
+          {
+            timestamp: new Date().toISOString(),
+            level: 'info',
+            message: `Document queued for processing. Task ID: ${response.data.task_id}`,
+            details: `File: ${file.name}
+Size: ${(file.size / 1024).toFixed(2)} KB
+Created at: ${response.data.created_at}
+Status: ${response.data.status}
+Endpoint: /api/document-processing/process`,
+            stage: 'queued'
+          }
+        ]);
+      } else {
+        setError(response.error || 'Failed to start processing');
+        setProcessingLogs(prev => [
+          ...prev,
+          {
+            timestamp: new Date().toISOString(),
+            level: 'error',
+            message: `Failed to start processing: ${response.error || 'Unknown error'}`,
+            details: `File: ${file.name}
+Size: ${(file.size / 1024).toFixed(2)} KB
+Settings: Enhanced=${useEnhanced}, Streaming=${useStreaming}, Parallel=${useParallel}
+Status code: ${response.status || 'Unknown'}
+Endpoint: /api/document-processing/process`,
+            stage: 'error'
+          }
+        ]);
+        setLoading(false);
+      }
     } catch (err) {
       console.error('Error processing document:', err);
       setError('Error processing document. Please try again.');
+      setProcessingLogs(prev => [
+        ...prev,
+        {
+          timestamp: new Date().toISOString(),
+          level: 'error',
+          message: `Error processing document: ${err.message || 'Unknown error'}`,
+          details: `File: ${file.name}
+Size: ${(file.size / 1024).toFixed(2)} KB
+Settings: Enhanced=${useEnhanced}, Streaming=${useStreaming}, Parallel=${useParallel}
+Error type: ${err.name || 'Unknown'}
+Stack trace: ${err.stack?.split('\n')[0] || 'Not available'}
+Endpoint: /api/document-processing/process`,
+          stage: 'error'
+        }
+      ]);
       setLoading(false);
     }
   };
@@ -299,6 +630,18 @@ const SingleDocumentProcessor = () => {
 
   return (
     <Box>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Typography variant="h5">Document Processing</Typography>
+        <Button
+          variant="outlined"
+          color="info"
+          startIcon={<InfoIcon />}
+          onClick={() => window.open('/document_processing_dependencies.html', '_blank')}
+        >
+          Dependencies
+        </Button>
+      </Box>
+
       <form onSubmit={handleSubmit}>
         <Grid container spacing={3}>
           <Grid item xs={12}>
@@ -466,6 +809,21 @@ const SingleDocumentProcessor = () => {
               <LinearProgress variant="determinate" value={progress} sx={{ height: 8, borderRadius: 4 }} />
             </Box>
           )}
+
+          {/* Show processing logs */}
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="subtitle2" gutterBottom>
+              Processing Log
+            </Typography>
+            <Paper variant="outlined" sx={{ height: 350, overflow: 'auto', p: 1 }}>
+              <ProcessingLog
+                logs={processingLogs}
+                isLoading={loading && processingLogs.length === 0}
+                error={null}
+                title=""
+              />
+            </Paper>
+          </Box>
         </Paper>
       )}
 
@@ -578,6 +936,22 @@ const SingleDocumentProcessor = () => {
                     }}
                     isLoading={false}
                     error={null}
+                  />
+                </Box>
+              </AccordionDetails>
+            </Accordion>
+
+            <Accordion>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <Typography variant="subtitle1">Processing Log</Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <Box sx={{ height: 600 }}>
+                  <ProcessingLog
+                    logs={processingLogs}
+                    isLoading={loading && processingLogs.length === 0}
+                    error={error}
+                    title={`Processing Log: ${file?.name || 'Document'}`}
                   />
                 </Box>
               </AccordionDetails>
