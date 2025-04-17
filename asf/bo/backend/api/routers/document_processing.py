@@ -5,20 +5,21 @@ This module provides endpoints for document processing functionality,
 including single document processing, batch processing, and processing history.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status, Body, File, UploadFile, Form, BackgroundTasks
-from typing import Dict, Any, List, Optional
+from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile, Form, BackgroundTasks
+from typing import Any, List, Optional
 from pydantic import BaseModel
 import logging
 import os
 import json
 import uuid
+import asyncio
 from datetime import datetime
 import tempfile
 import shutil
+from threading import Thread
 
 from api.auth import get_current_user, User
-from config.database import get_db
-from sqlalchemy.orm import Session
+from api.websockets.connection_manager import connection_manager
 
 # Import the document processing module
 from asf.medical.ml.document_processing import MedicalResearchSynthesizer, EnhancedMedicalResearchSynthesizer
@@ -166,6 +167,17 @@ def process_document_task(file_path: str, task_id: str, is_pdf: bool = True, set
             processing_tasks[task_id]["current_stage"] = stage
             logger.debug(f"Task {task_id}: {stage} - {progress * 100:.1f}%")
 
+            # Broadcast progress via WebSocket
+            asyncio.run(connection_manager.broadcast_task_progress(
+                task_id=task_id,
+                progress=progress,
+                stage=stage,
+                metrics={
+                    "file_name": os.path.basename(file_path),
+                    "is_pdf": is_pdf
+                }
+            ))
+
         # Define streaming callback
         def streaming_callback(stage: str, result: Any):
             # Save intermediate results if needed
@@ -179,6 +191,24 @@ def process_document_task(file_path: str, task_id: str, is_pdf: bool = True, set
                             json.dump(result.__dict__, f, indent=2)
                         else:
                             json.dump(str(result), f, indent=2)
+
+                    # Broadcast intermediate result via WebSocket
+                    result_data = {}
+                    if hasattr(result, 'to_dict'):
+                        result_data = result.to_dict()
+                    elif hasattr(result, '__dict__'):
+                        result_data = result.__dict__
+
+                    asyncio.run(connection_manager.broadcast_to_task_subscribers(
+                        task_id=task_id,
+                        message={
+                            "type": "intermediate_result",
+                            "task_id": task_id,
+                            "stage": stage,
+                            "result": result_data,
+                            "timestamp": datetime.now().isoformat()
+                        }
+                    ))
                 except Exception as e:
                     logger.warning(f"Failed to save intermediate result: {str(e)}")
 
@@ -223,6 +253,23 @@ def process_document_task(file_path: str, task_id: str, is_pdf: bool = True, set
             "current_stage": "completed"
         })
 
+        # Broadcast completion via WebSocket
+        result_data = {}
+        if hasattr(doc_structure, 'to_dict'):
+            result_data = doc_structure.to_dict()
+        elif hasattr(doc_structure, '__dict__'):
+            result_data = doc_structure.__dict__
+
+        asyncio.run(connection_manager.broadcast_task_completed(
+            task_id=task_id,
+            result={
+                "entity_count": len(doc_structure.entities) if hasattr(doc_structure, 'entities') else 0,
+                "relation_count": len(doc_structure.relations) if hasattr(doc_structure, 'relations') else 0,
+                "processing_time": metrics.get("total_processing_time"),
+                "result_path": result_dir
+            }
+        ))
+
         # Close synthesizer to release resources
         if hasattr(synthesizer, 'close'):
             synthesizer.close()
@@ -237,6 +284,12 @@ def process_document_task(file_path: str, task_id: str, is_pdf: bool = True, set
             "progress": 0.0,
             "current_stage": "failed"
         })
+
+        # Broadcast failure via WebSocket
+        asyncio.run(connection_manager.broadcast_task_failed(
+            task_id=task_id,
+            error=str(e)
+        ))
 
         # Try to close synthesizer if it exists
         try:

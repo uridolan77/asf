@@ -24,6 +24,7 @@ from api.ml_router import router as ml_services_router
 from api.clients import router as clients_router
 from api.routers.llm import llm_router
 from api.endpoints import router as endpoints_router
+from api.websockets import router as websocket_router
 
 app = FastAPI(title="BO Medical Research Backend")
 
@@ -48,6 +49,7 @@ app.include_router(ml_services_router)  # Add the new ML services router
 app.include_router(clients_router)
 app.include_router(llm_router)
 app.include_router(endpoints_router, prefix="/api", tags=["Authentication"])
+app.include_router(websocket_router)  # Add the WebSocket router
 
 # Root endpoint
 @app.get("/")

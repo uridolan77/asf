@@ -24,7 +24,10 @@ import {
   Chip,
   IconButton,
   Tooltip,
-  LinearProgress
+  LinearProgress,
+  Switch,
+  FormControlLabel,
+  Stack
 } from '@mui/material';
 import {
   Upload as UploadIcon,
@@ -33,10 +36,13 @@ import {
   Refresh as RefreshIcon,
   CheckCircle as CheckCircleIcon,
   Error as ErrorIcon,
-  HourglassEmpty as HourglassEmptyIcon
+  HourglassEmpty as HourglassEmptyIcon,
+  Speed as SpeedIcon,
+  Settings as SettingsIcon
 } from '@mui/icons-material';
 import { useDropzone } from 'react-dropzone';
 import apiService from '../../services/api';
+import useWebSocket from '../../hooks/useWebSocket';
 
 /**
  * Component for batch processing multiple documents
@@ -44,12 +50,25 @@ import apiService from '../../services/api';
 const BatchDocumentProcessor = () => {
   const [files, setFiles] = useState([]);
   const [batchSize, setBatchSize] = useState(4);
+  const [useEnhanced, setUseEnhanced] = useState(true);
+  const [useStreaming, setUseStreaming] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [taskIds, setTaskIds] = useState([]);
   const [taskStatuses, setTaskStatuses] = useState({});
   const [pollingInterval, setPollingInterval] = useState(null);
   const [overallProgress, setOverallProgress] = useState(0);
+  const [taskProgress, setTaskProgress] = useState({});
+
+  // WebSocket hook
+  const {
+    connected: wsConnected,
+    subscribeToTask,
+    unsubscribeFromTask,
+    onProgress,
+    onCompleted,
+    onFailed
+  } = useWebSocket();
 
   // Dropzone configuration
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -76,9 +95,135 @@ const BatchDocumentProcessor = () => {
     };
   }, [pollingInterval]);
 
-  // Poll for task statuses when taskIds is set
+  // Subscribe to WebSocket updates for tasks
   useEffect(() => {
-    if (taskIds.length > 0) {
+    if (taskIds.length > 0 && wsConnected) {
+      // Subscribe to all tasks
+      const subscribeToTasks = async () => {
+        for (const taskId of taskIds) {
+          try {
+            await subscribeToTask(taskId);
+          } catch (err) {
+            console.error(`Error subscribing to task ${taskId}:`, err);
+          }
+        }
+      };
+
+      subscribeToTasks();
+
+      // Set up handlers for each task
+      const progressHandlers = {};
+      const completedHandlers = {};
+      const failedHandlers = {};
+
+      for (const taskId of taskIds) {
+        // Progress handler
+        progressHandlers[taskId] = (message) => {
+          setTaskProgress(prev => ({
+            ...prev,
+            [taskId]: {
+              progress: message.progress * 100,
+              stage: message.stage
+            }
+          }));
+
+          // Update overall progress
+          updateOverallProgress();
+        };
+
+        // Completed handler
+        completedHandlers[taskId] = (message) => {
+          setTaskStatuses(prev => ({
+            ...prev,
+            [taskId]: {
+              ...prev[taskId],
+              status: 'completed',
+              completed_at: new Date().toISOString(),
+              entity_count: message.result?.entity_count || 0,
+              relation_count: message.result?.relation_count || 0,
+              processing_time: message.result?.processing_time || 0
+            }
+          }));
+
+          setTaskProgress(prev => ({
+            ...prev,
+            [taskId]: {
+              progress: 100,
+              stage: 'completed'
+            }
+          }));
+
+          // Update overall progress
+          updateOverallProgress();
+        };
+
+        // Failed handler
+        failedHandlers[taskId] = (message) => {
+          setTaskStatuses(prev => ({
+            ...prev,
+            [taskId]: {
+              ...prev[taskId],
+              status: 'failed',
+              completed_at: new Date().toISOString(),
+              error_message: message.error
+            }
+          }));
+
+          // Update overall progress
+          updateOverallProgress();
+        };
+
+        // Register handlers
+        onProgress(taskId, progressHandlers[taskId]);
+        onCompleted(taskId, completedHandlers[taskId]);
+        onFailed(taskId, failedHandlers[taskId]);
+      }
+
+      // Cleanup function
+      return () => {
+        // Unsubscribe from all tasks
+        for (const taskId of taskIds) {
+          try {
+            unsubscribeFromTask(taskId);
+          } catch (err) {
+            console.error(`Error unsubscribing from task ${taskId}:`, err);
+          }
+        }
+      };
+    }
+  }, [taskIds, wsConnected, subscribeToTask, unsubscribeFromTask, onProgress, onCompleted, onFailed]);
+
+  // Update overall progress based on individual task progress
+  const updateOverallProgress = () => {
+    if (taskIds.length === 0) return;
+
+    let totalProgress = 0;
+    let completedCount = 0;
+
+    for (const taskId of taskIds) {
+      const status = taskStatuses[taskId]?.status;
+      const progress = taskProgress[taskId]?.progress || 0;
+
+      if (status === 'completed' || status === 'failed') {
+        totalProgress += 100;
+        completedCount++;
+      } else {
+        totalProgress += progress;
+      }
+    }
+
+    const avgProgress = totalProgress / taskIds.length;
+    setOverallProgress(avgProgress);
+
+    // If all tasks are completed or failed, set loading to false
+    if (completedCount === taskIds.length) {
+      setLoading(false);
+    }
+  };
+
+  // Fallback to polling if WebSocket is not connected
+  useEffect(() => {
+    if (taskIds.length > 0 && !wsConnected) {
       const interval = setInterval(async () => {
         let allCompleted = true;
         let completedCount = 0;
@@ -114,7 +259,7 @@ const BatchDocumentProcessor = () => {
 
       return () => clearInterval(interval);
     }
-  }, [taskIds]);
+  }, [taskIds, wsConnected]);
 
   // Handle form submission
   const handleSubmit = async (e) => {
@@ -132,11 +277,27 @@ const BatchDocumentProcessor = () => {
     setOverallProgress(0);
 
     try {
+      // Get default settings first
+      const settingsResponse = await apiService.documentProcessing.getSettings();
+
+      if (!settingsResponse.success) {
+        throw new Error('Failed to get processing settings');
+      }
+
+      // Create settings object with our preferences
+      const settings = {
+        ...settingsResponse.data,
+        use_enhanced_synthesizer: useEnhanced,
+        use_streaming: useStreaming
+      };
+
+      // Create form data with files and settings
       const formData = new FormData();
       files.forEach(file => {
         formData.append('files', file);
       });
-      formData.append('batch_size', batchSize);
+      formData.append('batch_size', batchSize.toString());
+      formData.append('settings_json', JSON.stringify(settings));
 
       const response = await apiService.documentProcessing.processBatch(formData);
 
@@ -297,7 +458,7 @@ const BatchDocumentProcessor = () => {
           )}
 
           <Grid item xs={12}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 2 }}>
               <FormControl sx={{ minWidth: 120 }}>
                 <InputLabel id="batch-size-label">Batch Size</InputLabel>
                 <Select
@@ -314,6 +475,47 @@ const BatchDocumentProcessor = () => {
                   <MenuItem value={8}>8</MenuItem>
                 </Select>
               </FormControl>
+
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={useEnhanced}
+                    onChange={(e) => setUseEnhanced(e.target.checked)}
+                    color="primary"
+                    disabled={loading}
+                  />
+                }
+                label={
+                  <Tooltip title="Use the enhanced document processor with improved performance and features">
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <SettingsIcon fontSize="small" sx={{ mr: 0.5 }} />
+                      <span>Use enhanced processor</span>
+                    </Box>
+                  </Tooltip>
+                }
+              />
+
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={useStreaming}
+                    onChange={(e) => setUseStreaming(e.target.checked)}
+                    disabled={!useEnhanced || loading}
+                    color="primary"
+                  />
+                }
+                label={
+                  <Tooltip title="Stream results as they become available">
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <SpeedIcon fontSize="small" sx={{ mr: 0.5 }} />
+                      <span>Use streaming</span>
+                    </Box>
+                  </Tooltip>
+                }
+              />
+            </Box>
+
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
               <Button
                 type="submit"
                 variant="contained"
@@ -369,6 +571,7 @@ const BatchDocumentProcessor = () => {
                   <TableCell>Processing Time</TableCell>
                   <TableCell>Entities</TableCell>
                   <TableCell>Relations</TableCell>
+                  <TableCell>Progress</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -399,6 +602,20 @@ const BatchDocumentProcessor = () => {
                       </TableCell>
                       <TableCell>
                         {task.relation_count !== undefined ? task.relation_count : 'N/A'}
+                      </TableCell>
+                      <TableCell>
+                        {task.status === 'processing' && (
+                          <Box sx={{ width: '100%' }}>
+                            <Typography variant="caption" color="textSecondary" gutterBottom>
+                              {taskProgress[taskId]?.stage || 'Processing'} - {Math.round(taskProgress[taskId]?.progress || 0)}%
+                            </Typography>
+                            <LinearProgress
+                              variant="determinate"
+                              value={taskProgress[taskId]?.progress || 0}
+                              sx={{ height: 4, borderRadius: 2 }}
+                            />
+                          </Box>
+                        )}
                       </TableCell>
                     </TableRow>
                   );

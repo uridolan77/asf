@@ -37,6 +37,7 @@ import {
 import { useDropzone } from 'react-dropzone';
 import apiService from '../../services/api';
 import KnowledgeGraphViewer from './KnowledgeGraphViewer';
+import useDocumentProcessing from '../../hooks/useDocumentProcessing';
 
 /**
  * Component for processing a single document
@@ -81,42 +82,46 @@ const SingleDocumentProcessor = () => {
     };
   }, [pollingInterval]);
 
-  // Poll for task status and progress when taskId is set
+  // Use the document processing hook for real-time updates
+  const {
+    progress: wsProgress,
+    stage: wsStage,
+    status: wsStatus,
+    result: wsResult,
+    error: wsError,
+    loading: wsLoading,
+    task: wsTask
+  } = useDocumentProcessing(taskId);
+
+  // Update local state when WebSocket updates are received
   useEffect(() => {
-    if (taskId) {
-      // Use the new polling function for progress updates
-      apiService.documentProcessing.pollProgress(taskId, (progressData) => {
-        // Update progress state
-        setProgress(progressData.progress * 100);
-        setCurrentStage(progressData.current_stage);
+    if (taskId && wsTask) {
+      // Update progress state
+      setProgress(wsProgress);
+      setCurrentStage(wsStage);
 
-        // Update task status
-        setTaskStatus({
-          task_id: progressData.task_id,
-          status: progressData.status,
-          file_name: file?.name || 'Unknown file',
-          created_at: new Date().toISOString(),
-          entity_count: progressData.entity_count,
-          relation_count: progressData.relation_count,
-          current_stage: progressData.current_stage,
-          progress: progressData.progress
-        });
+      // Update task status
+      setTaskStatus({
+        task_id: taskId,
+        status: wsStatus,
+        file_name: file?.name || 'Unknown file',
+        created_at: wsTask.created_at || new Date().toISOString(),
+        entity_count: wsTask.entity_count || 0,
+        relation_count: wsTask.relation_count || 0,
+        current_stage: wsStage,
+        progress: wsProgress / 100
+      });
 
-        // If processing is complete, fetch the full results
-        if (progressData.status === 'completed') {
-          fetchResults(taskId);
-          setLoading(false);
-        } else if (progressData.status === 'failed') {
-          setError(`Processing failed: ${progressData.error_message || 'Unknown error'}`);
-          setLoading(false);
-        }
-      }, 1000);
-
-      return () => {
-        // No need to clear interval as the pollProgress function handles cleanup
-      };
+      // If processing is complete, fetch the full results
+      if (wsStatus === 'completed' && !processingResults) {
+        fetchResults(taskId);
+        setLoading(false);
+      } else if (wsStatus === 'failed') {
+        setError(wsError || 'Unknown error');
+        setLoading(false);
+      }
     }
-  }, [taskId, file]);
+  }, [taskId, file, wsProgress, wsStage, wsStatus, wsResult, wsError, wsTask]);
 
   // Fetch processing results
   const fetchResults = async (id) => {
