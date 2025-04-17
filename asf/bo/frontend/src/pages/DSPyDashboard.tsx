@@ -6,7 +6,7 @@ import DSPyClientList from '../components/dspy/DSPyClientList';
 import DSPyClientDetails from '../components/dspy/DSPyClientDetails';
 import DSPyModuleList from '../components/dspy/DSPyModuleList';
 import DSPyModuleDetails from '../components/dspy/DSPyModuleDetails';
-import DSPyAuditLogs from '../components/dspy/DSPyAuditLogs';
+import DSPyAuditLogViewer from '../components/dspy/DSPyAuditLogViewer';
 import DSPyCircuitBreakers from '../components/dspy/DSPyCircuitBreakers';
 import { TabPanel, a11yProps } from '../components/common/TabPanel';
 
@@ -173,7 +173,7 @@ const DSPyDashboard: React.FC = () => {
                   <Typography variant="h6" gutterBottom>
                     Audit Logs
                   </Typography>
-                  <DSPyAuditLogs clientId={selectedClient.client_id} />
+                  <DSPyAuditLogViewer clientId={selectedClient.client_id} />
                 </Paper>
               </Grid>
             </Grid>

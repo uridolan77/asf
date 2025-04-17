@@ -26052,3 +26052,930 @@ asf.medical.llm_gateway.core.factory.ProviderFactoryError: Failed to get provide
 2025-04-18 00:14:17,657 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
 2025-04-18 00:14:17,961 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
 2025-04-18 00:14:18,003 - root - INFO - Using LLM Gateway implementation
+2025-04-18 00:36:07,679 - root - INFO - Logging configured with level: INFO
+2025-04-18 00:36:08,446 - root - INFO - Logging configured with level: INFO
+2025-04-18 00:36:08,448 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-18 00:36:08,556 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-18 00:36:12,136 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-18 00:36:12,200 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-18 00:36:12,204 - root - INFO - Using LLM Gateway implementation
+2025-04-18 00:36:23,045 - passlib.handlers.bcrypt - WARNING - (trapped) error reading bcrypt version
+Traceback (most recent call last):
+  File "C:\Users\urido\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\passlib\handlers\bcrypt.py", line 620, in _load_backend_mixin
+    version = _bcrypt.__about__.__version__
+              ^^^^^^^^^^^^^^^^^
+AttributeError: module 'bcrypt' has no attribute '__about__'
+2025-04-18 00:36:27,204 - sqlalchemy.engine.Engine - INFO - SELECT DATABASE()
+2025-04-18 00:36:27,205 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-18 00:36:27,206 - sqlalchemy.engine.Engine - INFO - SELECT @@sql_mode
+2025-04-18 00:36:27,207 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-18 00:36:27,208 - sqlalchemy.engine.Engine - INFO - SELECT @@lower_case_table_names
+2025-04-18 00:36:27,209 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-18 00:36:27,210 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 00:36:27,214 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 00:36:27,215 - sqlalchemy.engine.Engine - INFO - [generated in 0.00080s] {'id_1': 1, 'param_1': 1}
+2025-04-18 00:36:27,221 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 00:36:27,224 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 00:36:27,225 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 00:36:27,226 - sqlalchemy.engine.Engine - INFO - [cached since 0.01175s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 00:36:27,230 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 00:37:02,011 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 00:37:02,012 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 00:37:02,013 - sqlalchemy.engine.Engine - INFO - [cached since 34.8s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 00:37:02,018 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 00:37:02,022 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 00:37:02,023 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 00:37:02,024 - sqlalchemy.engine.Engine - INFO - [cached since 34.81s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 00:37:02,032 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 00:41:08,173 - root - INFO - Logging configured with level: INFO
+2025-04-18 00:41:08,880 - root - INFO - Logging configured with level: INFO
+2025-04-18 00:41:08,882 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-18 00:41:08,993 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-18 00:41:12,462 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-18 00:41:12,530 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-18 00:41:12,533 - root - INFO - Using LLM Gateway implementation
+2025-04-18 00:42:43,753 - root - INFO - Logging configured with level: INFO
+2025-04-18 00:42:44,460 - root - INFO - Logging configured with level: INFO
+2025-04-18 00:42:44,462 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-18 00:42:44,569 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-18 00:42:47,973 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-18 00:42:48,041 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-18 00:42:48,044 - root - INFO - Using LLM Gateway implementation
+2025-04-18 00:42:50,475 - sqlalchemy.engine.Engine - INFO - SELECT DATABASE()
+2025-04-18 00:42:50,476 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-18 00:42:50,477 - sqlalchemy.engine.Engine - INFO - SELECT @@sql_mode
+2025-04-18 00:42:50,477 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-18 00:42:50,478 - sqlalchemy.engine.Engine - INFO - SELECT @@lower_case_table_names
+2025-04-18 00:42:50,478 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-18 00:42:50,478 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 00:42:50,480 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 00:42:50,480 - sqlalchemy.engine.Engine - INFO - [generated in 0.00041s] {'id_1': 1, 'param_1': 1}
+2025-04-18 00:42:50,484 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 00:42:50,487 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 00:42:50,487 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 00:42:50,487 - sqlalchemy.engine.Engine - INFO - [cached since 0.00745s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 00:42:50,491 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 00:42:55,014 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 00:42:55,015 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 00:42:55,015 - sqlalchemy.engine.Engine - INFO - [cached since 4.536s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 00:42:55,019 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 00:42:55,021 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 00:42:55,022 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 00:42:55,022 - sqlalchemy.engine.Engine - INFO - [cached since 4.542s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 00:42:55,025 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 00:43:18,245 - root - INFO - Logging configured with level: INFO
+2025-04-18 00:43:18,947 - root - INFO - Logging configured with level: INFO
+2025-04-18 00:43:18,949 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-18 00:43:19,057 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-18 00:43:22,460 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-18 00:43:22,522 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-18 00:43:22,525 - root - INFO - Using LLM Gateway implementation
+2025-04-18 00:45:20,861 - root - INFO - Logging configured with level: INFO
+2025-04-18 00:45:21,556 - root - INFO - Logging configured with level: INFO
+2025-04-18 00:45:21,558 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-18 00:45:21,666 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-18 00:45:25,109 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-18 00:45:25,171 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-18 00:45:25,174 - root - INFO - Using LLM Gateway implementation
+2025-04-18 00:45:50,049 - root - INFO - Logging configured with level: INFO
+2025-04-18 00:45:50,788 - root - INFO - Logging configured with level: INFO
+2025-04-18 00:45:50,790 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-18 00:45:50,897 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-18 00:45:54,555 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-18 00:45:54,622 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-18 00:45:54,624 - root - INFO - Using LLM Gateway implementation
+2025-04-18 00:45:55,566 - sqlalchemy.engine.Engine - INFO - SELECT DATABASE()
+2025-04-18 00:45:55,567 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-18 00:45:55,568 - sqlalchemy.engine.Engine - INFO - SELECT @@sql_mode
+2025-04-18 00:45:55,568 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-18 00:45:55,569 - sqlalchemy.engine.Engine - INFO - SELECT @@lower_case_table_names
+2025-04-18 00:45:55,569 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-18 00:45:55,570 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 00:45:55,571 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 00:45:55,572 - sqlalchemy.engine.Engine - INFO - [generated in 0.00048s] {'id_1': 1, 'param_1': 1}
+2025-04-18 00:45:55,575 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 00:45:55,578 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 00:45:55,578 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 00:45:55,579 - sqlalchemy.engine.Engine - INFO - [cached since 0.007526s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 00:45:55,582 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 00:45:55,588 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 00:45:55,589 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 00:45:55,590 - sqlalchemy.engine.Engine - INFO - [cached since 0.0185s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 00:45:55,593 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 00:45:55,596 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 00:45:55,596 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 00:45:55,597 - sqlalchemy.engine.Engine - INFO - [cached since 0.02538s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 00:45:55,600 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 00:45:57,076 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 00:45:57,077 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 00:45:57,078 - sqlalchemy.engine.Engine - INFO - [cached since 1.506s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 00:45:57,085 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 00:45:57,090 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 00:45:57,091 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 00:45:57,091 - sqlalchemy.engine.Engine - INFO - [cached since 1.519s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 00:45:57,094 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 00:51:16,933 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 00:51:16,933 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 00:51:16,934 - sqlalchemy.engine.Engine - INFO - [cached since 321.4s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 00:51:16,937 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 00:51:16,940 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 00:51:16,941 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 00:51:16,941 - sqlalchemy.engine.Engine - INFO - [cached since 321.4s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 00:51:16,944 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 00:51:33,788 - root - INFO - Logging configured with level: INFO
+2025-04-18 00:51:34,505 - root - INFO - Logging configured with level: INFO
+2025-04-18 00:51:34,506 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-18 00:51:34,610 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-18 00:51:38,106 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-18 00:51:38,169 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-18 00:51:38,172 - root - INFO - Using LLM Gateway implementation
+2025-04-18 00:51:40,392 - sqlalchemy.engine.Engine - INFO - SELECT DATABASE()
+2025-04-18 00:51:40,392 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-18 00:51:40,393 - sqlalchemy.engine.Engine - INFO - SELECT @@sql_mode
+2025-04-18 00:51:40,393 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-18 00:51:40,394 - sqlalchemy.engine.Engine - INFO - SELECT @@lower_case_table_names
+2025-04-18 00:51:40,394 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-18 00:51:40,395 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 00:51:40,396 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 00:51:40,397 - sqlalchemy.engine.Engine - INFO - [generated in 0.00034s] {'id_1': 1, 'param_1': 1}
+2025-04-18 00:51:40,399 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 00:51:40,402 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 00:51:40,402 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 00:51:40,403 - sqlalchemy.engine.Engine - INFO - [cached since 0.006464s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 00:51:40,405 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 00:56:34,389 - root - INFO - Logging configured with level: INFO
+2025-04-18 00:56:35,076 - root - INFO - Logging configured with level: INFO
+2025-04-18 00:56:35,078 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-18 00:56:35,185 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-18 00:56:38,541 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-18 00:56:38,612 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-18 00:56:38,615 - root - INFO - Using LLM Gateway implementation
+2025-04-18 01:00:03,437 - root - INFO - Logging configured with level: INFO
+2025-04-18 01:00:04,147 - root - INFO - Logging configured with level: INFO
+2025-04-18 01:00:04,149 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-18 01:00:04,254 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-18 01:00:07,708 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-18 01:00:07,771 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-18 01:00:07,774 - root - INFO - Using LLM Gateway implementation
+2025-04-18 01:00:10,084 - sqlalchemy.engine.Engine - INFO - SELECT DATABASE()
+2025-04-18 01:00:10,085 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-18 01:00:10,086 - sqlalchemy.engine.Engine - INFO - SELECT @@sql_mode
+2025-04-18 01:00:10,086 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-18 01:00:10,087 - sqlalchemy.engine.Engine - INFO - SELECT @@lower_case_table_names
+2025-04-18 01:00:10,087 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-18 01:00:10,088 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 01:00:10,090 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 01:00:10,090 - sqlalchemy.engine.Engine - INFO - [generated in 0.00051s] {'id_1': 1, 'param_1': 1}
+2025-04-18 01:00:10,095 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 01:00:10,099 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 01:00:10,100 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 01:00:10,100 - sqlalchemy.engine.Engine - INFO - [cached since 0.01079s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 01:00:10,104 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 01:00:13,421 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 01:00:13,422 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 01:00:13,422 - sqlalchemy.engine.Engine - INFO - [cached since 3.333s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 01:00:13,426 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 01:00:13,427 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 01:00:13,428 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 01:00:13,428 - sqlalchemy.engine.Engine - INFO - [cached since 3.339s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 01:00:13,431 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 01:02:21,566 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 01:02:21,567 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 01:02:21,568 - sqlalchemy.engine.Engine - INFO - [cached since 131.5s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 01:02:21,571 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 01:02:24,248 - root - INFO - Logging configured with level: INFO
+2025-04-18 01:02:24,977 - root - INFO - Logging configured with level: INFO
+2025-04-18 01:02:24,979 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-18 01:02:25,095 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-18 01:02:28,585 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-18 01:02:28,647 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-18 01:02:28,650 - root - INFO - Using LLM Gateway implementation
+2025-04-18 01:02:28,788 - sqlalchemy.engine.Engine - INFO - SELECT DATABASE()
+2025-04-18 01:02:28,788 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-18 01:02:28,788 - sqlalchemy.engine.Engine - INFO - SELECT @@sql_mode
+2025-04-18 01:02:28,789 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-18 01:02:28,789 - sqlalchemy.engine.Engine - INFO - SELECT @@lower_case_table_names
+2025-04-18 01:02:28,789 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-18 01:02:28,790 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 01:02:28,791 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 01:02:28,792 - sqlalchemy.engine.Engine - INFO - [generated in 0.00045s] {'id_1': 1, 'param_1': 1}
+2025-04-18 01:02:28,793 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 01:02:28,797 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 01:02:28,797 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 01:02:28,797 - sqlalchemy.engine.Engine - INFO - [cached since 0.005333s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 01:02:28,799 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 01:02:33,089 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 01:02:33,090 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 01:02:33,091 - sqlalchemy.engine.Engine - INFO - [cached since 4.299s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 01:02:33,094 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 01:02:33,099 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 01:02:33,100 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 01:02:33,100 - sqlalchemy.engine.Engine - INFO - [cached since 4.309s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 01:02:33,102 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 01:03:15,221 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 01:03:15,221 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 01:03:15,222 - sqlalchemy.engine.Engine - INFO - [cached since 46.43s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 01:03:15,225 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 01:03:15,229 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 01:03:15,229 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 01:03:15,230 - sqlalchemy.engine.Engine - INFO - [cached since 46.44s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 01:03:15,233 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 01:03:23,568 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 01:03:23,570 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 01:03:23,571 - sqlalchemy.engine.Engine - INFO - [cached since 54.78s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 01:03:23,579 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 01:03:23,585 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 01:03:23,587 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 01:03:23,588 - sqlalchemy.engine.Engine - INFO - [cached since 54.8s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 01:03:23,594 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 01:03:23,599 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 01:03:23,600 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 01:03:23,601 - sqlalchemy.engine.Engine - INFO - [cached since 54.81s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 01:03:23,607 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 01:03:23,613 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 01:03:23,614 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 01:03:23,615 - sqlalchemy.engine.Engine - INFO - [cached since 54.82s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 01:03:23,623 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 01:20:19,498 - root - INFO - Logging configured with level: INFO
+2025-04-18 01:20:20,182 - root - INFO - Logging configured with level: INFO
+2025-04-18 01:20:20,184 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-18 01:20:20,291 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-18 01:20:23,654 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-18 01:20:23,729 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-18 01:20:23,732 - root - INFO - Using LLM Gateway implementation
+2025-04-18 01:20:27,403 - root - INFO - Logging configured with level: INFO
+2025-04-18 01:20:28,099 - root - INFO - Logging configured with level: INFO
+2025-04-18 01:20:28,101 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-18 01:20:28,206 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-18 01:20:31,634 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-18 01:20:31,697 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-18 01:20:31,700 - root - INFO - Using LLM Gateway implementation
+2025-04-18 01:20:39,342 - sqlalchemy.engine.Engine - INFO - SELECT DATABASE()
+2025-04-18 01:20:39,343 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-18 01:20:39,343 - sqlalchemy.engine.Engine - INFO - SELECT @@sql_mode
+2025-04-18 01:20:39,344 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-18 01:20:39,344 - sqlalchemy.engine.Engine - INFO - SELECT @@lower_case_table_names
+2025-04-18 01:20:39,345 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-18 01:20:39,345 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 01:20:39,347 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 01:20:39,348 - sqlalchemy.engine.Engine - INFO - [generated in 0.00046s] {'id_1': 1, 'param_1': 1}
+2025-04-18 01:20:39,351 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 01:20:39,354 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 01:20:39,354 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 01:20:39,354 - sqlalchemy.engine.Engine - INFO - [cached since 0.007073s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 01:20:39,357 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 01:20:39,360 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 01:20:39,360 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 01:20:39,360 - sqlalchemy.engine.Engine - INFO - [cached since 0.01297s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 01:20:39,363 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 01:20:39,366 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 01:20:39,366 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 01:20:39,367 - sqlalchemy.engine.Engine - INFO - [cached since 0.01942s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 01:20:39,370 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 01:20:43,586 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 01:20:43,587 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 01:20:43,588 - sqlalchemy.engine.Engine - INFO - [cached since 4.24s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 01:20:43,592 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 01:20:43,595 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 01:20:43,595 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 01:20:43,595 - sqlalchemy.engine.Engine - INFO - [cached since 4.248s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 01:20:43,598 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 01:23:04,747 - root - INFO - Logging configured with level: INFO
+2025-04-18 01:23:05,450 - root - INFO - Logging configured with level: INFO
+2025-04-18 01:23:05,452 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-18 01:23:05,564 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-18 01:23:09,088 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-18 01:23:09,153 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-18 01:23:09,156 - root - INFO - Using LLM Gateway implementation
+2025-04-18 01:23:39,342 - root - INFO - Logging configured with level: INFO
+2025-04-18 01:23:40,061 - root - INFO - Logging configured with level: INFO
+2025-04-18 01:23:40,063 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-18 01:23:40,174 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-18 01:23:43,693 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-18 01:23:43,759 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-18 01:23:43,761 - root - INFO - Using LLM Gateway implementation
+2025-04-18 01:27:38,117 - root - INFO - Logging configured with level: INFO
+2025-04-18 01:27:38,819 - root - INFO - Logging configured with level: INFO
+2025-04-18 01:27:38,821 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-18 01:27:38,928 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-18 01:27:42,425 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-18 01:27:42,492 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-18 01:27:42,495 - root - INFO - Using LLM Gateway implementation
+2025-04-18 01:32:39,145 - root - INFO - Logging configured with level: INFO
+2025-04-18 01:32:39,878 - root - INFO - Logging configured with level: INFO
+2025-04-18 01:32:39,880 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-18 01:32:39,989 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-18 01:32:43,603 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-18 01:32:43,668 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-18 01:32:43,671 - root - INFO - Using LLM Gateway implementation
+2025-04-18 01:32:45,304 - sqlalchemy.engine.Engine - INFO - SELECT DATABASE()
+2025-04-18 01:32:45,304 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-18 01:32:45,305 - sqlalchemy.engine.Engine - INFO - SELECT @@sql_mode
+2025-04-18 01:32:45,305 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-18 01:32:45,306 - sqlalchemy.engine.Engine - INFO - SELECT @@lower_case_table_names
+2025-04-18 01:32:45,306 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-18 01:32:45,306 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 01:32:45,308 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 01:32:45,308 - sqlalchemy.engine.Engine - INFO - [generated in 0.00028s] {'id_1': 1, 'param_1': 1}
+2025-04-18 01:32:45,311 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 01:32:45,316 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 01:32:45,316 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 01:32:45,317 - sqlalchemy.engine.Engine - INFO - [cached since 0.008541s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 01:32:45,319 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 01:32:49,080 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 01:32:49,081 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 01:32:49,081 - sqlalchemy.engine.Engine - INFO - [cached since 3.774s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 01:32:49,084 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 01:32:49,086 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 01:32:49,086 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 01:32:49,087 - sqlalchemy.engine.Engine - INFO - [cached since 3.779s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 01:32:49,090 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 01:32:49,133 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 01:32:49,133 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 01:32:49,134 - sqlalchemy.engine.Engine - INFO - [cached since 3.826s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 01:32:49,136 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 01:32:49,139 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 01:32:49,139 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 01:32:49,140 - sqlalchemy.engine.Engine - INFO - [cached since 3.832s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 01:32:49,142 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 01:32:49,193 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 01:32:49,193 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 01:32:49,194 - sqlalchemy.engine.Engine - INFO - [cached since 3.886s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 01:32:49,196 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 01:32:49,198 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 01:32:49,199 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 01:32:49,199 - sqlalchemy.engine.Engine - INFO - [cached since 3.892s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 01:32:49,202 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 01:32:58,992 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 01:32:58,993 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 01:32:58,994 - sqlalchemy.engine.Engine - INFO - [cached since 13.69s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 01:32:59,001 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 01:32:59,006 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 01:32:59,007 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 01:32:59,007 - sqlalchemy.engine.Engine - INFO - [cached since 13.7s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 01:32:59,014 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 01:33:03,848 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 01:33:03,851 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 01:33:03,852 - sqlalchemy.engine.Engine - INFO - [cached since 18.54s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 01:33:03,855 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 01:33:03,865 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 01:33:03,867 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 01:33:03,870 - sqlalchemy.engine.Engine - INFO - [cached since 18.56s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 01:33:03,889 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 01:33:03,900 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 01:33:03,903 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 01:33:03,905 - sqlalchemy.engine.Engine - INFO - [cached since 18.6s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 01:33:03,912 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 01:33:03,937 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 01:33:03,939 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 01:33:03,942 - sqlalchemy.engine.Engine - INFO - [cached since 18.63s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 01:33:03,965 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 01:33:05,085 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 01:33:05,086 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 01:33:05,087 - sqlalchemy.engine.Engine - INFO - [cached since 19.78s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 01:33:05,099 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 01:33:05,107 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 01:33:05,110 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 01:33:05,113 - sqlalchemy.engine.Engine - INFO - [cached since 19.81s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 01:33:05,127 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 01:33:05,129 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 01:33:05,132 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 01:33:05,134 - sqlalchemy.engine.Engine - INFO - [cached since 19.83s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 01:33:05,152 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 01:33:05,160 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 01:33:05,162 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 01:33:05,163 - sqlalchemy.engine.Engine - INFO - [cached since 19.86s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 01:33:05,172 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 01:33:06,032 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 01:33:06,034 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 01:33:06,035 - sqlalchemy.engine.Engine - INFO - [cached since 20.73s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 01:33:06,044 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 01:33:06,052 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 01:33:06,056 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 01:33:06,058 - sqlalchemy.engine.Engine - INFO - [cached since 20.75s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 01:33:06,076 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 01:36:45,808 - passlib.handlers.bcrypt - WARNING - (trapped) error reading bcrypt version
+Traceback (most recent call last):
+  File "C:\Users\urido\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\passlib\handlers\bcrypt.py", line 620, in _load_backend_mixin
+    version = _bcrypt.__about__.__version__
+              ^^^^^^^^^^^^^^^^^
+AttributeError: module 'bcrypt' has no attribute '__about__'
+2025-04-18 01:36:48,548 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 01:36:48,549 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 01:36:48,550 - sqlalchemy.engine.Engine - INFO - [cached since 243.2s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 01:36:48,567 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 01:36:48,573 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 01:36:48,574 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 01:36:48,575 - sqlalchemy.engine.Engine - INFO - [cached since 243.3s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 01:36:48,582 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 01:37:03,719 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 01:37:03,720 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 01:37:03,721 - sqlalchemy.engine.Engine - INFO - [cached since 258.4s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 01:37:03,728 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 01:37:03,736 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 01:37:03,738 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 01:37:03,738 - sqlalchemy.engine.Engine - INFO - [cached since 258.4s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 01:37:03,745 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 01:37:03,748 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 01:37:03,749 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 01:37:03,750 - sqlalchemy.engine.Engine - INFO - [cached since 258.4s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 01:37:03,761 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 01:37:03,762 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 01:37:03,764 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 01:37:03,765 - sqlalchemy.engine.Engine - INFO - [cached since 258.5s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 01:37:03,779 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 01:40:31,048 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 01:40:31,048 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 01:40:31,049 - sqlalchemy.engine.Engine - INFO - [cached since 465.7s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 01:40:31,052 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 01:40:31,054 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 01:40:31,054 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 01:40:31,055 - sqlalchemy.engine.Engine - INFO - [cached since 465.7s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 01:40:31,057 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 01:45:00,708 - root - INFO - Logging configured with level: INFO
+2025-04-18 01:45:01,475 - root - INFO - Logging configured with level: INFO
+2025-04-18 01:45:01,477 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-18 01:45:01,607 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-18 01:45:05,242 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-18 01:45:05,308 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-18 01:45:05,311 - root - INFO - Using LLM Gateway implementation
+2025-04-18 01:47:47,250 - root - INFO - Logging configured with level: INFO
+2025-04-18 01:47:47,984 - root - INFO - Logging configured with level: INFO
+2025-04-18 01:47:47,986 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-18 01:47:48,094 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-18 01:47:51,676 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-18 01:47:51,744 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-18 01:47:51,747 - root - INFO - Using LLM Gateway implementation
+2025-04-18 01:47:57,151 - sqlalchemy.engine.Engine - INFO - SELECT DATABASE()
+2025-04-18 01:47:57,152 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-18 01:47:57,153 - sqlalchemy.engine.Engine - INFO - SELECT @@sql_mode
+2025-04-18 01:47:57,154 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-18 01:47:57,154 - sqlalchemy.engine.Engine - INFO - SELECT @@lower_case_table_names
+2025-04-18 01:47:57,155 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-18 01:47:57,156 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 01:47:57,159 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 01:47:57,159 - sqlalchemy.engine.Engine - INFO - [generated in 0.00059s] {'id_1': 1, 'param_1': 1}
+2025-04-18 01:47:57,164 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 01:47:57,168 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 01:47:57,169 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 01:47:57,169 - sqlalchemy.engine.Engine - INFO - [cached since 0.01068s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 01:47:57,172 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 01:48:00,766 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 01:48:00,767 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 01:48:00,767 - sqlalchemy.engine.Engine - INFO - [cached since 3.609s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 01:48:00,772 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 01:48:00,775 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 01:48:00,776 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 01:48:00,777 - sqlalchemy.engine.Engine - INFO - [cached since 3.618s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 01:48:00,780 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 01:50:15,442 - root - INFO - Logging configured with level: INFO
+2025-04-18 01:50:16,149 - root - INFO - Logging configured with level: INFO
+2025-04-18 01:50:16,151 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-18 01:50:16,263 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-18 01:50:19,839 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-18 01:50:19,905 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-18 01:50:19,908 - root - INFO - Using LLM Gateway implementation
+2025-04-18 01:51:52,633 - root - INFO - Logging configured with level: INFO
+2025-04-18 01:51:53,350 - root - INFO - Logging configured with level: INFO
+2025-04-18 01:51:53,351 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-18 01:51:53,456 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-18 01:51:56,926 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-18 01:51:56,992 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-18 01:51:56,995 - root - INFO - Using LLM Gateway implementation
+2025-04-18 01:52:12,559 - sqlalchemy.engine.Engine - INFO - SELECT DATABASE()
+2025-04-18 01:52:12,559 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-18 01:52:12,560 - sqlalchemy.engine.Engine - INFO - SELECT @@sql_mode
+2025-04-18 01:52:12,560 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-18 01:52:12,561 - sqlalchemy.engine.Engine - INFO - SELECT @@lower_case_table_names
+2025-04-18 01:52:12,562 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-18 01:52:12,562 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 01:52:12,564 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 01:52:12,564 - sqlalchemy.engine.Engine - INFO - [generated in 0.00034s] {'id_1': 1, 'param_1': 1}
+2025-04-18 01:52:12,568 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 01:52:12,572 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 01:52:12,573 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 01:52:12,573 - sqlalchemy.engine.Engine - INFO - [cached since 0.008988s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 01:52:12,576 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 01:52:12,579 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 01:52:12,580 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 01:52:12,580 - sqlalchemy.engine.Engine - INFO - [cached since 0.01612s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 01:52:12,584 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 01:52:12,595 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 01:52:12,595 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 01:52:12,595 - sqlalchemy.engine.Engine - INFO - [cached since 0.03146s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 01:52:12,598 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 01:53:29,677 - root - INFO - Logging configured with level: INFO
+2025-04-18 01:53:30,381 - root - INFO - Logging configured with level: INFO
+2025-04-18 01:53:30,383 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-18 01:53:30,488 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-18 01:53:33,917 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-18 01:53:33,980 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-18 01:53:33,983 - root - INFO - Using LLM Gateway implementation
+2025-04-18 01:58:10,462 - root - INFO - Logging configured with level: INFO
+2025-04-18 01:58:11,159 - root - INFO - Logging configured with level: INFO
+2025-04-18 01:58:11,161 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-18 01:58:11,269 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-18 01:58:14,678 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-18 01:58:14,741 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-18 01:58:14,743 - root - INFO - Using LLM Gateway implementation
+2025-04-18 02:04:27,152 - root - INFO - Logging configured with level: INFO
+2025-04-18 02:04:27,838 - root - INFO - Logging configured with level: INFO
+2025-04-18 02:04:27,841 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-18 02:04:27,950 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-18 02:04:31,333 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-18 02:04:31,401 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-18 02:04:31,404 - root - INFO - Using LLM Gateway implementation
+2025-04-18 02:04:31,450 - root - WARNING - DSPy is not available. Some functionality will be limited.
+2025-04-18 02:04:31,462 - root - WARNING - BiomedLM is not available. Some functionality will be limited.
+2025-04-18 02:04:31,658 - datasets - INFO - PyTorch version 2.6.0 available.
+2025-04-18 02:05:37,004 - sqlalchemy.engine.Engine - INFO - SELECT DATABASE()
+2025-04-18 02:05:37,004 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-18 02:05:37,005 - sqlalchemy.engine.Engine - INFO - SELECT @@sql_mode
+2025-04-18 02:05:37,005 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-18 02:05:37,006 - sqlalchemy.engine.Engine - INFO - SELECT @@lower_case_table_names
+2025-04-18 02:05:37,006 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-18 02:05:37,007 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 02:05:37,009 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 02:05:37,009 - sqlalchemy.engine.Engine - INFO - [generated in 0.00032s] {'id_1': 1, 'param_1': 1}
+2025-04-18 02:05:37,012 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 02:05:37,019 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 02:05:37,020 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 02:05:37,021 - sqlalchemy.engine.Engine - INFO - [cached since 0.01214s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 02:05:37,035 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 02:11:32,244 - root - INFO - Logging configured with level: INFO
+2025-04-18 02:11:32,955 - root - INFO - Logging configured with level: INFO
+2025-04-18 02:11:32,957 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-18 02:11:33,067 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-18 02:11:36,507 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-18 02:11:36,571 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-18 02:11:36,574 - root - INFO - Using LLM Gateway implementation
+2025-04-18 02:11:36,673 - root - WARNING - DSPy is not available. Some functionality will be limited. Error: No module named 'medical.ml.dspy.dspy_client'
+2025-04-18 02:11:36,685 - root - WARNING - BiomedLM is not available. Some functionality will be limited.
+2025-04-18 02:11:36,872 - datasets - INFO - PyTorch version 2.6.0 available.
+2025-04-18 02:11:37,207 - sqlalchemy.engine.Engine - INFO - SELECT DATABASE()
+2025-04-18 02:11:37,208 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-18 02:11:37,209 - sqlalchemy.engine.Engine - INFO - SELECT @@sql_mode
+2025-04-18 02:11:37,210 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-18 02:11:37,210 - sqlalchemy.engine.Engine - INFO - SELECT @@lower_case_table_names
+2025-04-18 02:11:37,211 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-18 02:11:37,211 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 02:11:37,214 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 02:11:37,214 - sqlalchemy.engine.Engine - INFO - [generated in 0.00043s] {'id_1': 1, 'param_1': 1}
+2025-04-18 02:11:37,217 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 02:11:37,221 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 02:11:37,221 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 02:11:37,221 - sqlalchemy.engine.Engine - INFO - [cached since 0.008s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 02:11:37,224 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 02:11:38,171 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 02:11:38,171 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 02:11:38,172 - sqlalchemy.engine.Engine - INFO - [cached since 0.9586s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 02:11:38,175 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 02:11:38,177 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 02:11:38,177 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 02:11:38,178 - sqlalchemy.engine.Engine - INFO - [cached since 0.9645s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 02:11:38,181 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 02:11:38,182 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 02:11:38,183 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 02:11:38,183 - sqlalchemy.engine.Engine - INFO - [cached since 0.97s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 02:11:38,186 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 02:11:38,188 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 02:11:38,189 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 02:11:38,189 - sqlalchemy.engine.Engine - INFO - [cached since 0.9758s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 02:11:38,192 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 02:11:39,465 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 02:11:39,466 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 02:11:39,466 - sqlalchemy.engine.Engine - INFO - [cached since 2.252s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 02:11:39,469 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 02:11:39,471 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 02:11:39,471 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 02:11:39,471 - sqlalchemy.engine.Engine - INFO - [cached since 2.258s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 02:11:39,474 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 02:11:39,485 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 02:11:39,486 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 02:11:39,486 - sqlalchemy.engine.Engine - INFO - [cached since 2.273s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 02:11:39,490 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 02:11:39,502 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 02:11:39,503 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 02:11:39,503 - sqlalchemy.engine.Engine - INFO - [cached since 2.29s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 02:11:39,506 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 02:15:27,203 - root - INFO - Logging configured with level: INFO
+2025-04-18 02:15:27,899 - root - INFO - Logging configured with level: INFO
+2025-04-18 02:15:27,901 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-18 02:15:28,017 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-18 02:15:31,485 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-18 02:15:31,551 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-18 02:15:31,554 - root - INFO - Using LLM Gateway implementation
+2025-04-18 02:15:31,602 - root - WARNING - DSPy is not available. Some functionality will be limited. Error: No module named 'medical.ml.dspy.dspy_client'
+2025-04-18 02:15:31,604 - root - WARNING - BiomedLM is not available. Some functionality will be limited.
+2025-04-18 02:15:31,643 - datasets - INFO - PyTorch version 2.6.0 available.
+2025-04-18 02:15:35,594 - sqlalchemy.engine.Engine - INFO - SELECT DATABASE()
+2025-04-18 02:15:35,594 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-18 02:15:35,595 - sqlalchemy.engine.Engine - INFO - SELECT @@sql_mode
+2025-04-18 02:15:35,596 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-18 02:15:35,596 - sqlalchemy.engine.Engine - INFO - SELECT @@lower_case_table_names
+2025-04-18 02:15:35,597 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-18 02:15:35,598 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 02:15:35,600 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 02:15:35,600 - sqlalchemy.engine.Engine - INFO - [generated in 0.00052s] {'id_1': 1, 'param_1': 1}
+2025-04-18 02:15:35,605 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 02:15:35,608 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 02:15:35,609 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 02:15:35,609 - sqlalchemy.engine.Engine - INFO - [cached since 0.009111s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 02:15:35,612 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 02:16:22,483 - root - INFO - Logging configured with level: INFO
+2025-04-18 02:16:23,179 - root - INFO - Logging configured with level: INFO
+2025-04-18 02:16:23,181 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-18 02:16:23,287 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-18 02:16:26,742 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-18 02:16:26,805 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-18 02:16:26,808 - root - INFO - Using LLM Gateway implementation
+2025-04-18 02:16:26,846 - root - WARNING - DSPy is not available. Some functionality will be limited. Error: No module named 'medical.ml.dspy.dspy_client'
+2025-04-18 02:16:26,847 - root - WARNING - BiomedLM is not available. Some functionality will be limited.
+2025-04-18 02:16:26,884 - datasets - INFO - PyTorch version 2.6.0 available.
+2025-04-18 02:16:38,128 - sqlalchemy.engine.Engine - INFO - SELECT DATABASE()
+2025-04-18 02:16:38,128 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-18 02:16:38,129 - sqlalchemy.engine.Engine - INFO - SELECT @@sql_mode
+2025-04-18 02:16:38,129 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-18 02:16:38,129 - sqlalchemy.engine.Engine - INFO - SELECT @@lower_case_table_names
+2025-04-18 02:16:38,130 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-18 02:16:38,130 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 02:16:38,132 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 02:16:38,132 - sqlalchemy.engine.Engine - INFO - [generated in 0.00041s] {'id_1': 1, 'param_1': 1}
+2025-04-18 02:16:38,135 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 02:16:38,140 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 02:16:38,140 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 02:16:38,141 - sqlalchemy.engine.Engine - INFO - [cached since 0.009087s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 02:16:38,144 - sqlalchemy.engine.Engine - INFO - ROLLBACK

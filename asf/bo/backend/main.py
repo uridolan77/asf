@@ -23,6 +23,7 @@ from api.ml import router as ml_router
 from api.ml_router import router as ml_services_router
 from api.clients import router as clients_router
 from api.routers.llm import llm_router
+from api.routers.dspy import router as dspy_router  # Import the DSPy router
 from api.endpoints import router as endpoints_router
 from api.websockets import router as websocket_router
 
@@ -48,6 +49,7 @@ app.include_router(ml_router)
 app.include_router(ml_services_router)  # Add the new ML services router
 app.include_router(clients_router)
 app.include_router(llm_router)
+app.include_router(dspy_router, prefix="")  # Include the DSPy router with empty prefix
 app.include_router(endpoints_router, prefix="/api", tags=["Authentication"])
 app.include_router(websocket_router)  # Add the WebSocket router
 
@@ -65,7 +67,8 @@ async def root():
             {"path": "/api/medical/export", "description": "Export Search and Analysis Results"},
             {"path": "/api/medical/ml", "description": "Machine Learning Services"},
             {"path": "/api/medical/clients", "description": "Medical Clients Management"},
-            {"path": "/api/llm", "description": "LLM Services"}
+            {"path": "/api/llm", "description": "LLM Services"},
+            {"path": "/api/dspy", "description": "DSPy Module Management"}
         ]
     }
 

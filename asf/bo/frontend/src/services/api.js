@@ -394,29 +394,29 @@ const apiService = {
     generateLLMResponse: (requestData) => apiCall('post', '/api/llm/gateway/generate', requestData),
 
     // DSPy endpoints
-    getDspyModules: () => apiCall('get', '/api/llm/dspy/modules'),
-    getDspyModule: (moduleName) => apiCall('get', `/api/llm/dspy/modules/${moduleName}`),
-    registerDspyModule: (moduleName, moduleType, parameters, description) => apiCall('post', '/api/llm/dspy/modules', {
+    getDspyModules: () => apiCall('get', '/api/dspy/modules'),
+    getDspyModule: (moduleName) => apiCall('get', `/api/dspy/modules/${moduleName}`),
+    registerDspyModule: (moduleName, moduleType, parameters, description) => apiCall('post', '/api/dspy/modules', {
       module_name: moduleName,
       module_type: moduleType,
       parameters,
       description
     }),
-    unregisterDspyModule: (moduleName) => apiCall('delete', `/api/llm/dspy/modules/${moduleName}`),
-    executeDspyModule: (moduleName, inputs, config) => apiCall('post', '/api/llm/dspy/execute', {
+    unregisterDspyModule: (moduleName) => apiCall('delete', `/api/dspy/modules/${moduleName}`),
+    executeDspyModule: (moduleName, inputs, config) => apiCall('post', '/api/dspy/execute', {
       module_name: moduleName,
       inputs,
       config
     }),
-    optimizeDspyModule: (moduleName, metric, numTrials, examples, config) => apiCall('post', '/api/llm/dspy/optimize', {
+    optimizeDspyModule: (moduleName, metric, numTrials, examples, config) => apiCall('post', '/api/dspy/optimize', {
       module_name: moduleName,
       metric,
       num_trials: numTrials,
       examples,
       config
     }),
-    getDspyConfig: () => apiCall('get', '/api/llm/dspy/config'),
-    updateDspyConfig: (config) => apiCall('put', '/api/llm/dspy/config', config),
+    getDspyConfig: () => apiCall('get', '/api/dspy/config'),
+    updateDspyConfig: (config) => apiCall('put', '/api/dspy/config', config),
 
     // BiomedLM endpoints
     getBiomedLMModels: () => apiCall('get', '/api/llm/biomedlm/models'),
