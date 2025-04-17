@@ -1,0 +1,35 @@
+#!/usr/bin/env python
+"""
+Direct OpenAI API key test script.
+This script tests the OpenAI API directly without going through the gateway.
+"""
+
+import openai
+import os
+
+# Set your API key here
+API_KEY = "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"
+
+# Set the API key directly in the OpenAI client
+client = openai.OpenAI(api_key=API_KEY)
+
+# Try a simple API call
+try:
+    print("Sending test request to OpenAI API...")
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": "Hello, can you tell me what time it is?"}
+        ],
+        max_tokens=100
+    )
+    
+    print("\nAPI call successful!")
+    print(f"Response: {response.choices[0].message.content}")
+    print(f"Tokens used: {response.usage.total_tokens}")
+    
+except Exception as e:
+    print(f"\nAPI call failed with error: {e}")
+
+print("\nTest complete.")

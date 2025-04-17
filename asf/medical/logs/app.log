@@ -21721,3 +21721,612 @@ Traceback (most recent call last):
 asf.medical.llm_gateway.core.factory.ProviderFactoryError: Failed to get provider 'openai_gpt4_default': Instantiation failed for 'openai_gpt4_default': OpenAI SDK client initialization failed: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
 2025-04-17 03:13:56,871 - asf.medical.llm_gateway.core.client - INFO - Request successful: 665f3252-8a8b-48d2-a8a7-5339ff36b3ea
 2025-04-17 03:13:56,872 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 03:31:18,906 - root - INFO - Logging configured with level: INFO
+2025-04-17 03:31:19,607 - root - INFO - Logging configured with level: INFO
+2025-04-17 03:31:19,609 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 03:31:19,715 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 03:31:22,891 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 03:31:22,955 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 03:31:22,957 - root - INFO - Using LLM Gateway implementation
+2025-04-17 03:31:34,311 - sqlalchemy.engine.Engine - INFO - SELECT DATABASE()
+2025-04-17 03:31:34,311 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-17 03:31:34,313 - sqlalchemy.engine.Engine - INFO - SELECT @@sql_mode
+2025-04-17 03:31:34,313 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-17 03:31:34,315 - sqlalchemy.engine.Engine - INFO - SELECT @@lower_case_table_names
+2025-04-17 03:31:34,315 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-17 03:31:34,317 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 03:31:34,322 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 03:31:34,323 - sqlalchemy.engine.Engine - INFO - [generated in 0.00109s] {'id_1': 1, 'param_1': 1}
+2025-04-17 03:31:34,328 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 03:31:34,332 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 03:31:34,333 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 03:31:34,333 - sqlalchemy.engine.Engine - INFO - [cached since 0.01146s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 03:31:34,338 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 03:31:37,870 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 03:31:37,872 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 03:31:37,874 - sqlalchemy.engine.Engine - INFO - [cached since 3.552s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 03:31:37,888 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 03:31:37,896 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 03:31:37,897 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 03:31:37,898 - sqlalchemy.engine.Engine - INFO - [cached since 3.576s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 03:31:37,904 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 03:31:37,919 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 03:31:37,920 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 03:31:37,921 - sqlalchemy.engine.Engine - INFO - [cached since 3.599s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 03:31:37,927 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 03:31:37,930 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 03:31:37,931 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 03:31:37,931 - sqlalchemy.engine.Engine - INFO - [cached since 3.609s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 03:31:37,936 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 03:31:44,047 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 03:31:44,048 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 03:31:44,049 - sqlalchemy.engine.Engine - INFO - [cached since 9.727s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 03:31:44,055 - asf.medical.llm_gateway.interventions.factory - INFO - Loading intervention definitions (0 found)...
+2025-04-17 03:31:44,055 - asf.medical.llm_gateway.interventions.factory - INFO - Registered 0 intervention types.
+2025-04-17 03:31:44,056 - asf.medical.llm_gateway.core.manager - INFO - Loading interventions...
+2025-04-17 03:31:44,056 - asf.medical.llm_gateway.core.client - INFO - Initialized LLMGatewayClient with batch concurrency limit: 8
+2025-04-17 03:31:44,057 - api.routers.llm_gateway - INFO - LLM Gateway client initialized with gateway ID: bo_gateway
+2025-04-17 03:31:44,057 - asf.medical.llm_gateway.core.client - INFO - Processing generate request: a26938a2-2a22-443c-b6fa-b460706e063a
+2025-04-17 03:31:44,058 - asf.medical.llm_gateway.core.factory - INFO - Creating new provider instance for ID: openai_gpt4_default
+2025-04-17 03:31:44,058 - asf.medical.llm_gateway.core.factory - INFO - Instantiating provider ID 'openai_gpt4_default' (Type: 'openai')
+2025-04-17 03:31:44,059 - asf.medical.llm_gateway.providers.base - INFO - Initializing OpenAIClient provider with ID: openai_gpt4_default
+2025-04-17 03:31:44,059 - asf.medical.llm_gateway.providers.openai_client - ERROR - No API key found for provider 'openai_gpt4_default'. Checked direct config, secrets, and env var.
+2025-04-17 03:31:44,060 - asf.medical.llm_gateway.providers.openai_client - ERROR - Failed to initialize OpenAI SDK client for provider openai_gpt4_default: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py", line 183, in __init__
+    raise ValueError(
+ValueError: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+2025-04-17 03:31:44,061 - asf.medical.llm_gateway.core.factory - ERROR - Instantiation error for provider 'openai_gpt4_default': OpenAI SDK client initialization failed: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py", line 183, in __init__
+    raise ValueError(
+ValueError: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 142, in _create_provider_sync
+    provider_instance = provider_class(
+                        ^^^^^^^^^^^^^^^
+  File "C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py", line 203, in __init__
+    raise ConnectionError(f"OpenAI SDK client initialization failed: {e}") from e
+ConnectionError: OpenAI SDK client initialization failed: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+2025-04-17 03:31:44,063 - asf.medical.llm_gateway.core.factory - ERROR - Failed to create or initialize provider 'openai_gpt4_default': Instantiation failed for 'openai_gpt4_default': OpenAI SDK client initialization failed: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py", line 183, in __init__
+    raise ValueError(
+ValueError: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 142, in _create_provider_sync
+    provider_instance = provider_class(
+                        ^^^^^^^^^^^^^^^
+  File "C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py", line 203, in __init__
+    raise ConnectionError(f"OpenAI SDK client initialization failed: {e}") from e
+ConnectionError: OpenAI SDK client initialization failed: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 99, in get_provider
+    instance = self._create_provider_sync( # Keep instantiation sync
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 151, in _create_provider_sync
+    raise ProviderFactoryError(f"Instantiation failed for '{provider_id}': {e}") from e
+asf.medical.llm_gateway.core.factory.ProviderFactoryError: Instantiation failed for 'openai_gpt4_default': OpenAI SDK client initialization failed: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+2025-04-17 03:31:44,064 - asf.medical.llm_gateway.core.manager - ERROR - Error during intervention manager processing for a26938a2-2a22-443c-b6fa-b460706e063a: Failed to get provider 'openai_gpt4_default': Instantiation failed for 'openai_gpt4_default': OpenAI SDK client initialization failed: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py", line 183, in __init__
+    raise ValueError(
+ValueError: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 142, in _create_provider_sync
+    provider_instance = provider_class(
+                        ^^^^^^^^^^^^^^^
+  File "C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py", line 203, in __init__
+    raise ConnectionError(f"OpenAI SDK client initialization failed: {e}") from e
+ConnectionError: OpenAI SDK client initialization failed: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 99, in get_provider
+    instance = self._create_provider_sync( # Keep instantiation sync
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 151, in _create_provider_sync
+    raise ProviderFactoryError(f"Instantiation failed for '{provider_id}': {e}") from e
+asf.medical.llm_gateway.core.factory.ProviderFactoryError: Instantiation failed for 'openai_gpt4_default': OpenAI SDK client initialization failed: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\core\manager.py", line 121, in process_request
+    provider = await self.provider_factory.get_provider(provider_id, provider_conf, self.gateway_config)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 117, in get_provider
+    raise ProviderFactoryError(f"Failed to get provider '{provider_id}': {e}") from e
+asf.medical.llm_gateway.core.factory.ProviderFactoryError: Failed to get provider 'openai_gpt4_default': Instantiation failed for 'openai_gpt4_default': OpenAI SDK client initialization failed: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+2025-04-17 03:31:44,067 - asf.medical.llm_gateway.core.client - INFO - Request successful: a26938a2-2a22-443c-b6fa-b460706e063a
+2025-04-17 03:31:44,067 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 03:52:54,380 - root - INFO - Logging configured with level: INFO
+2025-04-17 03:52:55,118 - root - INFO - Logging configured with level: INFO
+2025-04-17 03:52:55,119 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 03:52:55,229 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 03:52:58,584 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 03:52:58,648 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 03:52:58,651 - root - INFO - Using LLM Gateway implementation
+2025-04-17 03:53:11,641 - sqlalchemy.engine.Engine - INFO - SELECT DATABASE()
+2025-04-17 03:53:11,642 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-17 03:53:11,642 - sqlalchemy.engine.Engine - INFO - SELECT @@sql_mode
+2025-04-17 03:53:11,643 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-17 03:53:11,643 - sqlalchemy.engine.Engine - INFO - SELECT @@lower_case_table_names
+2025-04-17 03:53:11,643 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-17 03:53:11,644 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 03:53:11,646 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 03:53:11,646 - sqlalchemy.engine.Engine - INFO - [generated in 0.00062s] {'id_1': 1, 'param_1': 1}
+2025-04-17 03:53:11,649 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 03:53:11,653 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 03:53:11,653 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 03:53:11,653 - sqlalchemy.engine.Engine - INFO - [cached since 0.007722s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 03:53:11,656 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 03:53:52,294 - passlib.handlers.bcrypt - WARNING - (trapped) error reading bcrypt version
+Traceback (most recent call last):
+  File "C:\Users\urido\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\passlib\handlers\bcrypt.py", line 620, in _load_backend_mixin
+    version = _bcrypt.__about__.__version__
+              ^^^^^^^^^^^^^^^^^
+AttributeError: module 'bcrypt' has no attribute '__about__'
+2025-04-17 03:54:02,985 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 03:54:02,987 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 03:54:02,988 - sqlalchemy.engine.Engine - INFO - [cached since 51.34s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 03:54:02,999 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 03:54:03,005 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 03:54:03,007 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 03:54:03,008 - sqlalchemy.engine.Engine - INFO - [cached since 51.36s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 03:54:03,017 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 03:54:06,142 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 03:54:06,144 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 03:54:06,146 - sqlalchemy.engine.Engine - INFO - [cached since 54.5s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 03:54:06,153 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 03:54:06,158 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 03:54:06,159 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 03:54:06,160 - sqlalchemy.engine.Engine - INFO - [cached since 54.51s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 03:54:06,165 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 03:54:06,168 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 03:54:06,169 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 03:54:06,169 - sqlalchemy.engine.Engine - INFO - [cached since 54.52s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 03:54:06,174 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 03:54:06,191 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 03:54:06,192 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 03:54:06,192 - sqlalchemy.engine.Engine - INFO - [cached since 54.55s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 03:54:06,198 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 03:54:10,429 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 03:54:10,430 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 03:54:10,431 - sqlalchemy.engine.Engine - INFO - [cached since 58.79s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 03:54:10,437 - asf.medical.llm_gateway.interventions.factory - INFO - Loading intervention definitions (0 found)...
+2025-04-17 03:54:10,438 - asf.medical.llm_gateway.interventions.factory - INFO - Registered 0 intervention types.
+2025-04-17 03:54:10,438 - asf.medical.llm_gateway.core.manager - INFO - Loading interventions...
+2025-04-17 03:54:10,439 - asf.medical.llm_gateway.core.client - INFO - Initialized LLMGatewayClient with batch concurrency limit: 8
+2025-04-17 03:54:10,439 - api.routers.llm_gateway - INFO - LLM Gateway client initialized with gateway ID: bo_gateway
+2025-04-17 03:54:10,439 - asf.medical.llm_gateway.core.client - INFO - Processing generate request: 38fb15d0-f009-4372-8e05-94a32257f6aa
+2025-04-17 03:54:10,440 - asf.medical.llm_gateway.core.factory - INFO - Creating new provider instance for ID: openai_gpt4_default
+2025-04-17 03:54:10,440 - asf.medical.llm_gateway.core.factory - INFO - Instantiating provider ID 'openai_gpt4_default' (Type: 'openai')
+2025-04-17 03:54:10,441 - asf.medical.llm_gateway.providers.base - INFO - Initializing OpenAIClient provider with ID: openai_gpt4_default
+2025-04-17 03:54:10,441 - asf.medical.llm_gateway.providers.openai_client - WARNING - No API key found for provider 'openai_gpt4_default'. Using a default API key for testing.
+2025-04-17 03:54:10,441 - asf.medical.llm_gateway.providers.openai_client - INFO - Using API key for provider 'openai_gpt4_default': sk-yo...-key
+2025-04-17 03:54:10,765 - asf.medical.llm_gateway.providers.openai_client - INFO - Initialized OpenAIClient provider 'openai_gpt4_default'
+2025-04-17 03:54:10,765 - asf.medical.llm_gateway.core.factory - INFO - Successfully instantiated provider ID 'openai_gpt4_default'.
+2025-04-17 03:54:10,766 - asf.medical.llm_gateway.providers.openai_client - INFO - [OPENAI_REQUEST_START] ID: 38fb15d0-f009-4372-8e05-94a32257f6aa | Model: gpt-3.5-turbo | Provider: openai_gpt4_default
+2025-04-17 03:54:10,773 - asf.medical.llm_gateway.providers.openai_client - INFO - [OPENAI_REQUEST_STATS] ID: 38fb15d0-f009-4372-8e05-94a32257f6aa | MessageCount: 1 | PromptLength: 2 | ToolCount: 0
+2025-04-17 03:54:10,774 - asf.medical.llm_gateway.providers.openai_client - INFO - [OPENAI_API_CALL] ID: 38fb15d0-f009-4372-8e05-94a32257f6aa | Sending request to OpenAI model 'gpt-3.5-turbo'
+2025-04-17 03:54:11,557 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+2025-04-17 03:54:11,558 - asf.medical.llm_gateway.providers.openai_client - ERROR - [OPENAI_AUTH_ERROR] ID: 38fb15d0-f009-4372-8e05-94a32257f6aa | Authentication failed: Error code: 401 - {'error': {'message': 'Incorrect API key provided: sk-your-****************-key. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py", line 274, in generate
+    response_obj = await self._client.chat.completions.create(**openai_params)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\urido\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\openai\resources\chat\completions.py", line 1727, in create
+    return await self._post(
+           ^^^^^^^^^^^^^^^^^
+  File "C:\Users\urido\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\openai\_base_client.py", line 1849, in post
+    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\urido\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\openai\_base_client.py", line 1543, in request
+    return await self._request(
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\urido\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\openai\_base_client.py", line 1644, in _request
+    raise self._make_status_error_from_response(err.response) from None
+openai.AuthenticationError: Error code: 401 - {'error': {'message': 'Incorrect API key provided: sk-your-****************-key. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}
+2025-04-17 03:54:11,560 - asf.medical.llm_gateway.core.client - ERROR - Request processing failed: 38fb15d0-f009-4372-8e05-94a32257f6aa
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\core\client.py", line 54, in generate
+    response = await self.intervention_manager.process_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\code\asf\asf\medical\llm_gateway\core\manager.py", line 153, in process_request
+    response = LLMResponse(request_id=context.request_id, final_context=context, error_details=error_details or ErrorDetails(code="UNKNOWN_MANAGER_ERROR"), finish_reason=FinishReason.ERROR)
+                                                                                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\urido\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\pydantic\main.py", line 243, in __init__
+    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for ErrorDetails
+message
+  Field required [type=missing, input_value={'code': 'UNKNOWN_MANAGER_ERROR'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.11/v/missing
+2025-04-17 03:54:11,562 - api.routers.llm_gateway - ERROR - Error generating LLM response: can't subtract offset-naive and offset-aware datetimes
+2025-04-17 03:54:11,564 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 03:55:31,604 - root - INFO - Logging configured with level: INFO
+2025-04-17 03:55:32,309 - root - INFO - Logging configured with level: INFO
+2025-04-17 03:55:32,311 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 03:55:32,418 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 03:55:35,646 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 03:55:35,709 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 03:55:35,713 - root - INFO - Using LLM Gateway implementation
+2025-04-17 04:02:19,043 - root - INFO - Logging configured with level: INFO
+2025-04-17 04:02:19,731 - root - INFO - Logging configured with level: INFO
+2025-04-17 04:02:19,733 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 04:02:19,842 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 04:02:23,032 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 04:02:23,096 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 04:02:23,099 - root - INFO - Using LLM Gateway implementation
+2025-04-17 04:02:33,555 - sqlalchemy.engine.Engine - INFO - SELECT DATABASE()
+2025-04-17 04:02:33,556 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-17 04:02:33,556 - sqlalchemy.engine.Engine - INFO - SELECT @@sql_mode
+2025-04-17 04:02:33,558 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-17 04:02:33,558 - sqlalchemy.engine.Engine - INFO - SELECT @@lower_case_table_names
+2025-04-17 04:02:33,559 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-17 04:02:33,560 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 04:02:33,562 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 04:02:33,563 - sqlalchemy.engine.Engine - INFO - [generated in 0.00078s] {'id_1': 1, 'param_1': 1}
+2025-04-17 04:02:33,569 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 04:02:33,572 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 04:02:33,573 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 04:02:33,573 - sqlalchemy.engine.Engine - INFO - [cached since 0.01126s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 04:02:33,578 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 04:02:33,601 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 04:02:33,601 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 04:02:33,602 - sqlalchemy.engine.Engine - INFO - [cached since 0.03972s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 04:02:33,607 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 04:02:33,610 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 04:02:33,611 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 04:02:33,612 - sqlalchemy.engine.Engine - INFO - [cached since 0.0496s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 04:02:33,617 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 04:02:47,312 - passlib.handlers.bcrypt - WARNING - (trapped) error reading bcrypt version
+Traceback (most recent call last):
+  File "C:\Users\urido\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\passlib\handlers\bcrypt.py", line 620, in _load_backend_mixin
+    version = _bcrypt.__about__.__version__
+              ^^^^^^^^^^^^^^^^^
+AttributeError: module 'bcrypt' has no attribute '__about__'
+2025-04-17 04:02:54,702 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 04:02:54,703 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 04:02:54,704 - sqlalchemy.engine.Engine - INFO - [cached since 21.14s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 04:02:54,710 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 04:02:54,714 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 04:02:54,715 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 04:02:54,715 - sqlalchemy.engine.Engine - INFO - [cached since 21.15s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 04:02:54,720 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 04:02:59,147 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 04:02:59,147 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 04:02:59,148 - sqlalchemy.engine.Engine - INFO - [cached since 25.58s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 04:02:59,154 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 04:02:59,165 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 04:02:59,167 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 04:02:59,168 - sqlalchemy.engine.Engine - INFO - [cached since 25.61s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 04:02:59,177 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 04:02:59,179 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 04:02:59,180 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 04:02:59,181 - sqlalchemy.engine.Engine - INFO - [cached since 25.62s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 04:02:59,189 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 04:02:59,214 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 04:02:59,214 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 04:02:59,215 - sqlalchemy.engine.Engine - INFO - [cached since 25.65s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 04:02:59,220 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 04:03:03,539 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 04:03:03,540 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 04:03:03,542 - sqlalchemy.engine.Engine - INFO - [cached since 29.98s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 04:03:03,552 - asf.medical.llm_gateway.interventions.factory - INFO - Loading intervention definitions (0 found)...
+2025-04-17 04:03:03,552 - asf.medical.llm_gateway.interventions.factory - INFO - Registered 0 intervention types.
+2025-04-17 04:03:03,553 - asf.medical.llm_gateway.core.manager - INFO - Loading interventions...
+2025-04-17 04:03:03,553 - asf.medical.llm_gateway.core.client - INFO - Initialized LLMGatewayClient with batch concurrency limit: 8
+2025-04-17 04:03:03,554 - api.routers.llm_gateway - INFO - LLM Gateway client initialized with gateway ID: bo_gateway
+2025-04-17 04:03:03,555 - asf.medical.llm_gateway.core.client - INFO - Processing generate request: 2438244a-e734-4a0b-ba29-8ad4cdad73f9
+2025-04-17 04:03:03,555 - asf.medical.llm_gateway.core.factory - INFO - Creating new provider instance for ID: openai_gpt4_default
+2025-04-17 04:03:03,555 - asf.medical.llm_gateway.core.factory - INFO - Instantiating provider ID 'openai_gpt4_default' (Type: 'openai')
+2025-04-17 04:03:03,556 - asf.medical.llm_gateway.providers.base - INFO - Initializing OpenAIClient provider with ID: openai_gpt4_default
+2025-04-17 04:03:03,556 - asf.medical.llm_gateway.providers.openai_client - INFO - Using API key for provider 'openai_gpt4_default': sk-pr...kSMA
+2025-04-17 04:03:03,557 - asf.medical.llm_gateway.providers.openai_client - WARNING - API key for provider 'openai_gpt4_default' has invalid format 'sk-proj-'. Using a valid format for testing.
+2025-04-17 04:03:04,009 - asf.medical.llm_gateway.providers.openai_client - INFO - Initialized OpenAIClient provider 'openai_gpt4_default'
+2025-04-17 04:03:04,010 - asf.medical.llm_gateway.core.factory - INFO - Successfully instantiated provider ID 'openai_gpt4_default'.
+2025-04-17 04:03:04,011 - asf.medical.llm_gateway.providers.openai_client - INFO - [OPENAI_REQUEST_START] ID: 2438244a-e734-4a0b-ba29-8ad4cdad73f9 | Model: gpt-3.5-turbo | Provider: openai_gpt4_default
+2025-04-17 04:03:04,017 - asf.medical.llm_gateway.providers.openai_client - INFO - [OPENAI_REQUEST_STATS] ID: 2438244a-e734-4a0b-ba29-8ad4cdad73f9 | MessageCount: 1 | PromptLength: 2 | ToolCount: 0
+2025-04-17 04:03:04,018 - asf.medical.llm_gateway.providers.openai_client - INFO - [OPENAI_API_CALL] ID: 2438244a-e734-4a0b-ba29-8ad4cdad73f9 | Sending request to OpenAI model 'gpt-3.5-turbo'
+2025-04-17 04:03:04,737 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+2025-04-17 04:03:04,743 - asf.medical.llm_gateway.providers.openai_client - ERROR - [OPENAI_AUTH_ERROR] ID: 2438244a-e734-4a0b-ba29-8ad4cdad73f9 | Authentication failed: Error code: 401 - {'error': {'message': 'Incorrect API key provided: sk-_CnwM***************************************************************************************************************************************************kSMA. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py", line 272, in generate
+    response_obj = await self._client.chat.completions.create(**openai_params)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\urido\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\openai\resources\chat\completions.py", line 1727, in create
+    return await self._post(
+           ^^^^^^^^^^^^^^^^^
+  File "C:\Users\urido\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\openai\_base_client.py", line 1849, in post
+    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\urido\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\openai\_base_client.py", line 1543, in request
+    return await self._request(
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\urido\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\openai\_base_client.py", line 1644, in _request
+    raise self._make_status_error_from_response(err.response) from None
+openai.AuthenticationError: Error code: 401 - {'error': {'message': 'Incorrect API key provided: sk-_CnwM***************************************************************************************************************************************************kSMA. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}
+2025-04-17 04:03:04,757 - asf.medical.llm_gateway.core.client - ERROR - Request processing failed: 2438244a-e734-4a0b-ba29-8ad4cdad73f9
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\core\client.py", line 54, in generate
+    response = await self.intervention_manager.process_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\code\asf\asf\medical\llm_gateway\core\manager.py", line 153, in process_request
+    response = LLMResponse(request_id=context.request_id, final_context=context, error_details=error_details or ErrorDetails(code="UNKNOWN_MANAGER_ERROR"), finish_reason=FinishReason.ERROR)
+                                                                                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\urido\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\pydantic\main.py", line 243, in __init__
+    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for ErrorDetails
+message
+  Field required [type=missing, input_value={'code': 'UNKNOWN_MANAGER_ERROR'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.11/v/missing
+2025-04-17 04:03:04,763 - api.routers.llm_gateway - ERROR - Error generating LLM response: can't subtract offset-naive and offset-aware datetimes
+2025-04-17 04:03:04,766 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 04:18:03,475 - root - INFO - Logging configured with level: INFO
+2025-04-17 04:18:04,168 - root - INFO - Logging configured with level: INFO
+2025-04-17 04:18:04,170 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 04:18:04,277 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 04:18:07,505 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 04:18:07,568 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 04:18:07,571 - root - INFO - Using LLM Gateway implementation
+2025-04-17 04:18:19,520 - sqlalchemy.engine.Engine - INFO - SELECT DATABASE()
+2025-04-17 04:18:19,520 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-17 04:18:19,521 - sqlalchemy.engine.Engine - INFO - SELECT @@sql_mode
+2025-04-17 04:18:19,522 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-17 04:18:19,522 - sqlalchemy.engine.Engine - INFO - SELECT @@lower_case_table_names
+2025-04-17 04:18:19,522 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-17 04:18:19,523 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 04:18:19,525 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 04:18:19,525 - sqlalchemy.engine.Engine - INFO - [generated in 0.00030s] {'id_1': 1, 'param_1': 1}
+2025-04-17 04:18:19,528 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 04:18:19,531 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 04:18:19,532 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 04:18:19,532 - sqlalchemy.engine.Engine - INFO - [cached since 0.007402s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 04:18:19,535 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 04:18:19,581 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 04:18:19,581 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 04:18:19,581 - sqlalchemy.engine.Engine - INFO - [cached since 0.05666s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 04:18:19,584 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 04:18:19,587 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 04:18:19,587 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 04:18:19,588 - sqlalchemy.engine.Engine - INFO - [cached since 0.06293s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 04:18:19,590 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 04:18:19,593 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 04:18:19,594 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 04:18:19,594 - sqlalchemy.engine.Engine - INFO - [cached since 0.06933s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 04:18:19,597 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 04:18:19,600 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 04:18:19,600 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 04:18:19,601 - sqlalchemy.engine.Engine - INFO - [cached since 0.07595s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 04:18:19,603 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 04:33:27,516 - root - INFO - Logging configured with level: INFO
+2025-04-17 04:33:28,231 - root - INFO - Logging configured with level: INFO
+2025-04-17 04:33:28,233 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-17 04:33:28,342 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-17 04:33:31,647 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-17 04:33:31,711 - root - WARNING - MCP SDK not found, using placeholder types. MCPProvider will not function.
+2025-04-17 04:33:31,714 - root - INFO - Using LLM Gateway implementation
+2025-04-17 04:33:45,605 - sqlalchemy.engine.Engine - INFO - SELECT DATABASE()
+2025-04-17 04:33:45,606 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-17 04:33:45,607 - sqlalchemy.engine.Engine - INFO - SELECT @@sql_mode
+2025-04-17 04:33:45,607 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-17 04:33:45,607 - sqlalchemy.engine.Engine - INFO - SELECT @@lower_case_table_names
+2025-04-17 04:33:45,608 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-17 04:33:45,608 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 04:33:45,610 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 04:33:45,610 - sqlalchemy.engine.Engine - INFO - [generated in 0.00037s] {'id_1': 1, 'param_1': 1}
+2025-04-17 04:33:45,614 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 04:33:45,616 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 04:33:45,617 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 04:33:45,617 - sqlalchemy.engine.Engine - INFO - [cached since 0.006949s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 04:33:45,620 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 04:33:58,298 - passlib.handlers.bcrypt - WARNING - (trapped) error reading bcrypt version
+Traceback (most recent call last):
+  File "C:\Users\urido\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\passlib\handlers\bcrypt.py", line 620, in _load_backend_mixin
+    version = _bcrypt.__about__.__version__
+              ^^^^^^^^^^^^^^^^^
+AttributeError: module 'bcrypt' has no attribute '__about__'
+2025-04-17 04:34:07,393 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 04:34:07,394 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 04:34:07,395 - sqlalchemy.engine.Engine - INFO - [cached since 21.79s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 04:34:07,401 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 04:34:07,406 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 04:34:07,408 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 04:34:07,409 - sqlalchemy.engine.Engine - INFO - [cached since 21.8s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 04:34:07,415 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 04:34:09,248 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 04:34:09,249 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 04:34:09,249 - sqlalchemy.engine.Engine - INFO - [cached since 23.64s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 04:34:09,254 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 04:34:09,258 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 04:34:09,259 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 04:34:09,259 - sqlalchemy.engine.Engine - INFO - [cached since 23.65s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 04:34:09,264 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 04:34:09,270 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 04:34:09,270 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 04:34:09,272 - sqlalchemy.engine.Engine - INFO - [cached since 23.66s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 04:34:09,276 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 04:34:09,289 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 04:34:09,290 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 04:34:09,291 - sqlalchemy.engine.Engine - INFO - [cached since 23.68s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 04:34:09,296 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-17 04:34:13,985 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-17 04:34:13,986 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-17 04:34:13,986 - sqlalchemy.engine.Engine - INFO - [cached since 28.38s ago] {'id_1': 1, 'param_1': 1}
+2025-04-17 04:34:13,993 - asf.medical.llm_gateway.interventions.factory - INFO - Loading intervention definitions (0 found)...
+2025-04-17 04:34:13,993 - asf.medical.llm_gateway.interventions.factory - INFO - Registered 0 intervention types.
+2025-04-17 04:34:13,994 - asf.medical.llm_gateway.core.manager - INFO - Loading interventions...
+2025-04-17 04:34:13,994 - asf.medical.llm_gateway.core.client - INFO - Initialized LLMGatewayClient with batch concurrency limit: 8
+2025-04-17 04:34:13,994 - api.routers.llm_gateway - INFO - LLM Gateway client initialized with gateway ID: bo_gateway
+2025-04-17 04:34:13,995 - asf.medical.llm_gateway.core.client - INFO - Processing generate request: fd978178-c9c0-41d9-bd4e-04c7e07729d5
+2025-04-17 04:34:13,995 - asf.medical.llm_gateway.core.factory - INFO - Creating new provider instance for ID: openai_gpt4_default
+2025-04-17 04:34:13,995 - asf.medical.llm_gateway.core.factory - INFO - Instantiating provider ID 'openai_gpt4_default' (Type: 'openai')
+2025-04-17 04:34:13,996 - asf.medical.llm_gateway.providers.base - INFO - Initializing OpenAIClient provider with ID: openai_gpt4_default
+2025-04-17 04:34:13,996 - asf.medical.llm_gateway.providers.openai_client - INFO - Using API key for provider 'openai_gpt4_default': sk-sv...G_UA
+2025-04-17 04:34:14,331 - asf.medical.llm_gateway.providers.openai_client - INFO - Initialized OpenAIClient provider 'openai_gpt4_default'
+2025-04-17 04:34:14,332 - asf.medical.llm_gateway.core.factory - INFO - Successfully instantiated provider ID 'openai_gpt4_default'.
+2025-04-17 04:34:14,333 - asf.medical.llm_gateway.providers.openai_client - INFO - [OPENAI_REQUEST_START] ID: fd978178-c9c0-41d9-bd4e-04c7e07729d5 | Model: gpt-3.5-turbo | Provider: openai_gpt4_default
+2025-04-17 04:34:14,338 - asf.medical.llm_gateway.providers.openai_client - INFO - [OPENAI_REQUEST_STATS] ID: fd978178-c9c0-41d9-bd4e-04c7e07729d5 | MessageCount: 1 | PromptLength: 5 | ToolCount: 0
+2025-04-17 04:34:14,339 - asf.medical.llm_gateway.providers.openai_client - INFO - [OPENAI_API_CALL] ID: fd978178-c9c0-41d9-bd4e-04c7e07729d5 | Sending request to OpenAI model 'gpt-3.5-turbo'
+2025-04-17 04:34:15,231 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-04-17 04:34:15,242 - asf.medical.llm_gateway.providers.openai_client - INFO - [OPENAI_API_RESPONSE] ID: fd978178-c9c0-41d9-bd4e-04c7e07729d5 | Received response in 902.59ms | ResponseID: chatcmpl-BN8QnOm2R4IV4NOBS72IN5puuEjbU
+2025-04-17 04:34:15,244 - asf.medical.llm_gateway.providers.openai_client - INFO - [OPENAI_RESPONSE_STATS] ID: fd978178-c9c0-41d9-bd4e-04c7e07729d5 | ContentLength: 34 | ToolCalls: 0 | FinishReason: stop | PromptTokens: 9 | CompletionTokens: 10 | TotalTokens: 19
+2025-04-17 04:34:15,246 - asf.medical.llm_gateway.core.client - ERROR - Request processing failed: fd978178-c9c0-41d9-bd4e-04c7e07729d5
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\core\client.py", line 54, in generate
+    response = await self.intervention_manager.process_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\code\asf\asf\medical\llm_gateway\core\manager.py", line 153, in process_request
+    response = LLMResponse(request_id=context.request_id, final_context=context, error_details=error_details or ErrorDetails(code="UNKNOWN_MANAGER_ERROR"), finish_reason=FinishReason.ERROR)
+                                                                                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\urido\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\pydantic\main.py", line 243, in __init__
+    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for ErrorDetails
+message
+  Field required [type=missing, input_value={'code': 'UNKNOWN_MANAGER_ERROR'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.11/v/missing
+2025-04-17 04:34:15,252 - api.routers.llm_gateway - ERROR - Error generating LLM response: can't subtract offset-naive and offset-aware datetimes
+2025-04-17 04:34:15,253 - sqlalchemy.engine.Engine - INFO - ROLLBACK

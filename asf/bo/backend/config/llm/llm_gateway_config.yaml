@@ -26,7 +26,10 @@ additional_config:
         # Option 1: Secret reference (recommended for production)
         api_key_secret: llm:openai_api_key
 
-        # Option 2: Environment variable fallback
+        # Option 2: Direct API key (less secure but works for development)
+        api_key: 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
+
+        # Option 3: Environment variable (for flexibility)
         api_key_env_var: OPENAI_API_KEY
 
         base_url: ''

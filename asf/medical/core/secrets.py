@@ -1,289 +1,138 @@
 """
-Secrets management module for the Medical Research Synthesizer.
+Secrets management for ASF Medical.
 
-This module provides functionality for securely managing sensitive information
-such as API keys, passwords, and other credentials used by the application.
-
-Classes:
-    SecretManager: Manager for securely handling sensitive information.
-
-Functions:
-    get_secret: Get a secret from environment variables or a secrets manager.
-    load_secrets_from_file: Load secrets from a file.
-    encrypt_value: Encrypt a sensitive value.
-    decrypt_value: Decrypt an encrypted value.
+This module provides a simple secrets manager for storing and retrieving sensitive information
+such as API keys and credentials.
 """
-import os
+
 import json
 import logging
-import base64
-from typing import Optional, List, Dict
+import os
 from pathlib import Path
-import boto3
-import hvac
-from dotenv import load_dotenv
+from typing import Dict, Any, Optional
 
 logger = logging.getLogger(__name__)
 
 class SecretManager:
     """
-    Manager for securely handling sensitive information.
-
-    This class provides methods to store, retrieve, and manage secrets
-    using environment variables, files, or cloud-based secret management services.
-
-    Attributes:
-        provider (str): The secrets provider being used.
-        namespace (str): Namespace for organizing secrets.
-        cache (Dict[str, str]): Cache of retrieved secrets.
+    Manages secrets for the application.
+    
+    Supports loading secrets from:
+    1. Environment variables
+    2. Local secrets file
+    3. Default values (for development only)
     """
-    _instance = None
-
-    def __new__(cls):
-        """
-        Implement singleton pattern.
-
-        Returns:
-            SecretManager: The singleton instance of the SecretManager.
-        """
-        if cls._instance is None:
-            cls._instance = super(SecretManager, cls).__new__(cls)
-            cls._instance._initialized = False
-        return cls._instance
-
-    def __init__(self, provider: str = "env", namespace: str = None):
+    
+    def __init__(self, secrets_file: Optional[str] = None):
         """
         Initialize the SecretManager.
-
+        
         Args:
-            provider (str, optional): The secrets provider to use ("env", "vault", "aws").
-                Defaults to "env".
-            namespace (str, optional): Namespace for organizing secrets. Defaults to None.
+            secrets_file: Path to secrets file. If None, uses default location.
         """
-        if self._initialized:
-            return
-        self._initialized = True
-        self._secrets = {}
-        self._provider = provider or os.environ.get("SECRET_PROVIDER", "env")
-        self._namespace = namespace
-        if self._provider == "env":
-            self._load_from_env()
-        elif self._provider == "vault":
-            self._load_from_vault()
-        elif self._provider == "aws":
-            self._load_from_aws()
+        if secrets_file:
+            self.secrets_file = Path(secrets_file)
         else:
-            logger.warning(f"Unknown secret provider: {self._provider}, falling back to env")
-            self._load_from_env()
-
-    def _load_from_env(self):
-        """
-        Load secrets from environment variables or .env file.
-        """
-        env_file = Path(os.environ.get("ENV_FILE", ".env"))
-        if env_file.exists():
-            load_dotenv(env_file)
-        self._secrets = {
-            "database": {
-                "username": os.environ.get("DB_USERNAME", ""),
-                "password": os.environ.get("DB_PASSWORD", ""),
-            },
-            "api": {
-                "secret_key": os.environ.get("SECRET_KEY", ""),
-            },
-            "external": {
-                "ncbi_api_key": os.environ.get("NCBI_API_KEY", ""),
-            },
-            "redis": {
-                "password": os.environ.get("REDIS_PASSWORD", ""),
-            },
-            "graph": {
-                "neo4j_password": os.environ.get("NEO4J_PASSWORD", ""),
-            },
-            "llm": {
-                "openai_api_key": os.environ.get("OPENAI_API_KEY", ""),
-                "anthropic_api_key": os.environ.get("ANTHROPIC_API_KEY", ""),
-                "azure_openai_api_key": os.environ.get("AZURE_OPENAI_API_KEY", ""),
-            },
-        }
-
-    def _load_from_vault(self):
-        """
-        Load secrets from HashiCorp Vault.
-        """
+            # Default location: ~/.asf/secrets.json
+            home_dir = Path.home()
+            self.secrets_file = home_dir / ".asf" / "secrets.json"
+            
+        self.secrets: Dict[str, Dict[str, str]] = {}
+        self._load_secrets()
+    
+    def _load_secrets(self) -> None:
+        """Load secrets from the secrets file if it exists."""
+        if not self.secrets_file.exists():
+            logger.warning(f"Secrets file not found at {self.secrets_file}. Creating a new one.")
+            # Ensure directory exists
+            self.secrets_file.parent.mkdir(parents=True, exist_ok=True)
+            # Create empty secrets file
+            self._save_secrets()
+            return
+        
         try:
-            vault_url = os.environ.get("VAULT_ADDR", "http://localhost:8200")
-            vault_token = os.environ.get("VAULT_TOKEN", "")
-            vault_path = os.environ.get("VAULT_PATH", "secret/medical-research-synthesizer")
-            client = hvac.Client(url=vault_url, token=vault_token)
-            if not client.is_authenticated():
-                logger.error("Failed to authenticate with Vault")
-                self._load_from_env()
-                return
-            secret = client.secrets.kv.v2.read_secret_version(path=vault_path)
-            if secret and "data" in secret and "data" in secret["data"]:
-                self._secrets = secret["data"]["data"]
-            else:
-                logger.error("Failed to read secrets from Vault")
-                self._load_from_env()
+            with open(self.secrets_file, 'r') as f:
+                self.secrets = json.load(f)
+            logger.debug(f"Loaded secrets from {self.secrets_file}")
         except Exception as e:
-            logger.error(f"Error loading secrets from Vault: {e}")
-            self._load_from_env()
-
-    def _load_from_aws(self):
-        """
-        Load secrets from AWS Secrets Manager.
-        """
+            logger.error(f"Failed to load secrets from {self.secrets_file}: {e}")
+            self.secrets = {}
+    
+    def _save_secrets(self) -> None:
+        """Save secrets to the secrets file."""
         try:
-            region_name = os.environ.get("AWS_REGION", "us-east-1")
-            secret_name = os.environ.get("AWS_SECRET_NAME", "medical-research-synthesizer")
-            session = boto3.session.Session()
-            client = session.client(
-                service_name='secretsmanager',
-                region_name=region_name
-            )
-            get_secret_value_response = client.get_secret_value(
-                SecretId=secret_name
-            )
-            if 'SecretString' in get_secret_value_response:
-                secret = get_secret_value_response['SecretString']
-                self._secrets = json.loads(secret)
-            else:
-                decoded_binary_secret = base64.b64decode(get_secret_value_response['SecretBinary'])
-                self._secrets = json.loads(decoded_binary_secret)
+            self.secrets_file.parent.mkdir(parents=True, exist_ok=True)
+            with open(self.secrets_file, 'w') as f:
+                json.dump(self.secrets, f, indent=2)
+            # Set appropriate permissions (read/write only for owner)
+            os.chmod(self.secrets_file, 0o600)
+            logger.debug(f"Saved secrets to {self.secrets_file}")
         except Exception as e:
-            logger.error(f"Error loading secrets from AWS Secrets Manager: {e}")
-            self._load_from_env()
-
-    def get_secret(self, category: str, name: str, default: Optional[str] = None) -> str:
+            logger.error(f"Failed to save secrets to {self.secrets_file}: {e}")
+    
+    def get_secret(self, category: str, name: str) -> Optional[str]:
         """
-        Get a secret by category and name.
-
+        Get a secret value.
+        
         Args:
-            category (str): The category of the secret (e.g., "database", "api").
-            name (str): The name of the secret (e.g., "password", "secret_key").
-            default (Optional[str]): The default value to return if the secret is not found.
-
+            category: Secret category (e.g., 'llm', 'database')
+            name: Secret name (e.g., 'openai_api_key')
+            
         Returns:
-            str: The secret value or the default value if not found.
+            Secret value or None if not found
         """
-        return self._secrets.get(category, {}).get(name, default)
-
-    def set_secret(self, name: str, value: str) -> bool:
+        # First try environment variable with combined name
+        env_var = f"{category.upper()}_{name.upper()}"
+        value = os.environ.get(env_var)
+        if value:
+            logger.debug(f"Found secret {category}:{name} in environment variable {env_var}")
+            return value
+        
+        # Then check the secrets file
+        category_dict = self.secrets.get(category, {})
+        value = category_dict.get(name)
+        if value:
+            logger.debug(f"Found secret {category}:{name} in secrets file")
+            return value
+        
+        logger.warning(f"Secret {category}:{name} not found in environment or secrets file")
+        return None
+    
+    def set_secret(self, category: str, name: str, value: str) -> None:
         """
         Set a secret value.
-
+        
         Args:
-            name (str): Name of the secret.
-            value (str): Value of the secret.
-
-        Returns:
-            bool: True if the secret was successfully set, False otherwise.
+            category: Secret category (e.g., 'llm', 'database')
+            name: Secret name (e.g., 'openai_api_key')
+            value: Secret value
         """
-        # Implementation placeholder
-        return False
-
-    def delete_secret(self, name: str) -> bool:
+        if category not in self.secrets:
+            self.secrets[category] = {}
+        
+        self.secrets[category][name] = value
+        self._save_secrets()
+        logger.debug(f"Saved secret {category}:{name}")
+    
+    def delete_secret(self, category: str, name: str) -> bool:
         """
         Delete a secret.
-
+        
         Args:
-            name (str): Name of the secret to delete.
-
+            category: Secret category
+            name: Secret name
+            
         Returns:
-            bool: True if the secret was successfully deleted, False otherwise.
+            True if secret was deleted, False otherwise
         """
-        # Implementation placeholder
+        if category in self.secrets and name in self.secrets[category]:
+            del self.secrets[category][name]
+            # Remove empty categories
+            if not self.secrets[category]:
+                del self.secrets[category]
+            self._save_secrets()
+            logger.debug(f"Deleted secret {category}:{name}")
+            return True
+        
+        logger.warning(f"Secret {category}:{name} not found, nothing to delete")
         return False
-
-    def list_secrets(self) -> List[str]:
-        """
-        List all available secrets.
-
-        Returns:
-            List[str]: List of secret names.
-        """
-        # Implementation placeholder
-        return []
-
-    def rotate_secret(self, name: str, new_value: str = None) -> bool:
-        """
-        Rotate a secret with a new value.
-
-        Args:
-            name (str): Name of the secret to rotate.
-            new_value (str, optional): New value for the secret. If not provided, a value will be generated.
-                Defaults to None.
-
-        Returns:
-            bool: True if the secret was successfully rotated, False otherwise.
-        """
-        # Implementation placeholder
-        return False
-
-def get_secret(name: str, default: str = None) -> str:
-    """
-    Get a secret from environment variables or a secrets manager.
-
-    Args:
-        name (str): Name of the secret.
-        default (str, optional): Default value if the secret is not found. Defaults to None.
-
-    Returns:
-        str: The secret value.
-
-    Raises:
-        KeyError: If the secret is not found and no default is provided.
-    """
-    # Implementation placeholder
-    return default
-
-def load_secrets_from_file(file_path: str, encoding: str = "utf-8") -> Dict[str, str]:
-    """
-    Load secrets from a file.
-
-    Args:
-        file_path (str): Path to the secrets file.
-        encoding (str, optional): File encoding. Defaults to "utf-8".
-
-    Returns:
-        Dict[str, str]: Dictionary of secret name-value pairs.
-
-    Raises:
-        FileNotFoundError: If the secrets file is not found.
-        PermissionError: If the secrets file cannot be read.
-        ValueError: If the secrets file has an invalid format.
-    """
-    # Implementation placeholder
-    return {}
-
-def encrypt_value(value: str, key: bytes = None) -> str:
-    """
-    Encrypt a sensitive value.
-
-    Args:
-        value (str): The value to encrypt.
-        key (bytes, optional): Encryption key. If not provided, a default key will be used. Defaults to None.
-
-    Returns:
-        str: Encrypted value encoded as a base64 string.
-    """
-    # Implementation placeholder
-    return ""
-
-def decrypt_value(encrypted_value: str, key: bytes = None) -> str:
-    """
-    Decrypt an encrypted value.
-
-    Args:
-        encrypted_value (str): The encrypted value as a base64 string.
-        key (bytes, optional): Encryption key. If not provided, a default key will be used. Defaults to None.
-
-    Returns:
-        str: Decrypted value.
-
-    Raises:
-        ValueError: If the value cannot be decrypted.
-    """
-    # Implementation placeholder
-    return ""

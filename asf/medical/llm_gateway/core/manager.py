@@ -150,8 +150,18 @@ class InterventionManager:
 
         # Ensure response exists even if errors occurred early
         if response is None:
-             response = LLMResponse(request_id=context.request_id, final_context=context, error_details=error_details or ErrorDetails(code="UNKNOWN_MANAGER_ERROR"), finish_reason=FinishReason.ERROR)
-
+             # Always ensure the error_details has a message field
+             if error_details is None:
+                 error_details = ErrorDetails(
+                     code="UNKNOWN_MANAGER_ERROR", 
+                     message="Unknown error occurred during request processing"
+                 )
+             response = LLMResponse(
+                 request_id=context.request_id, 
+                 final_context=context, 
+                 error_details=error_details, 
+                 finish_reason=FinishReason.ERROR
+             )
 
         # Update performance metrics on the final response object
         llm_latency = response.performance_metrics.llm_latency_ms if response.performance_metrics else None

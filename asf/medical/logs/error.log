@@ -308,3 +308,166 @@ Traceback (most recent call last):
   File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 117, in get_provider
     raise ProviderFactoryError(f"Failed to get provider '{provider_id}': {e}") from e
 asf.medical.llm_gateway.core.factory.ProviderFactoryError: Failed to get provider 'openai_gpt4_default': Instantiation failed for 'openai_gpt4_default': OpenAI SDK client initialization failed: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+2025-04-17 03:31:44,059 - asf.medical.llm_gateway.providers.openai_client - ERROR - C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py:182 - No API key found for provider 'openai_gpt4_default'. Checked direct config, secrets, and env var.
+2025-04-17 03:31:44,060 - asf.medical.llm_gateway.providers.openai_client - ERROR - C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py:202 - Failed to initialize OpenAI SDK client for provider openai_gpt4_default: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py", line 183, in __init__
+    raise ValueError(
+ValueError: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+2025-04-17 03:31:44,061 - asf.medical.llm_gateway.core.factory - ERROR - C:\code\asf\asf\medical\llm_gateway\core\factory.py:150 - Instantiation error for provider 'openai_gpt4_default': OpenAI SDK client initialization failed: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py", line 183, in __init__
+    raise ValueError(
+ValueError: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 142, in _create_provider_sync
+    provider_instance = provider_class(
+                        ^^^^^^^^^^^^^^^
+  File "C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py", line 203, in __init__
+    raise ConnectionError(f"OpenAI SDK client initialization failed: {e}") from e
+ConnectionError: OpenAI SDK client initialization failed: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+2025-04-17 03:31:44,063 - asf.medical.llm_gateway.core.factory - ERROR - C:\code\asf\asf\medical\llm_gateway\core\factory.py:113 - Failed to create or initialize provider 'openai_gpt4_default': Instantiation failed for 'openai_gpt4_default': OpenAI SDK client initialization failed: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py", line 183, in __init__
+    raise ValueError(
+ValueError: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 142, in _create_provider_sync
+    provider_instance = provider_class(
+                        ^^^^^^^^^^^^^^^
+  File "C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py", line 203, in __init__
+    raise ConnectionError(f"OpenAI SDK client initialization failed: {e}") from e
+ConnectionError: OpenAI SDK client initialization failed: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 99, in get_provider
+    instance = self._create_provider_sync( # Keep instantiation sync
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 151, in _create_provider_sync
+    raise ProviderFactoryError(f"Instantiation failed for '{provider_id}': {e}") from e
+asf.medical.llm_gateway.core.factory.ProviderFactoryError: Instantiation failed for 'openai_gpt4_default': OpenAI SDK client initialization failed: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+2025-04-17 03:31:44,064 - asf.medical.llm_gateway.core.manager - ERROR - C:\code\asf\asf\medical\llm_gateway\core\manager.py:141 - Error during intervention manager processing for a26938a2-2a22-443c-b6fa-b460706e063a: Failed to get provider 'openai_gpt4_default': Instantiation failed for 'openai_gpt4_default': OpenAI SDK client initialization failed: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py", line 183, in __init__
+    raise ValueError(
+ValueError: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 142, in _create_provider_sync
+    provider_instance = provider_class(
+                        ^^^^^^^^^^^^^^^
+  File "C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py", line 203, in __init__
+    raise ConnectionError(f"OpenAI SDK client initialization failed: {e}") from e
+ConnectionError: OpenAI SDK client initialization failed: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 99, in get_provider
+    instance = self._create_provider_sync( # Keep instantiation sync
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 151, in _create_provider_sync
+    raise ProviderFactoryError(f"Instantiation failed for '{provider_id}': {e}") from e
+asf.medical.llm_gateway.core.factory.ProviderFactoryError: Instantiation failed for 'openai_gpt4_default': OpenAI SDK client initialization failed: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\core\manager.py", line 121, in process_request
+    provider = await self.provider_factory.get_provider(provider_id, provider_conf, self.gateway_config)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 117, in get_provider
+    raise ProviderFactoryError(f"Failed to get provider '{provider_id}': {e}") from e
+asf.medical.llm_gateway.core.factory.ProviderFactoryError: Failed to get provider 'openai_gpt4_default': Instantiation failed for 'openai_gpt4_default': OpenAI SDK client initialization failed: OpenAI API key not found for provider 'openai_gpt4_default'. Checked connection_params.api_key, secrets, and environment variable 'OPENAI_API_KEY'.
+2025-04-17 03:54:11,558 - asf.medical.llm_gateway.providers.openai_client - ERROR - C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py:303 - [OPENAI_AUTH_ERROR] ID: 38fb15d0-f009-4372-8e05-94a32257f6aa | Authentication failed: Error code: 401 - {'error': {'message': 'Incorrect API key provided: sk-your-****************-key. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py", line 274, in generate
+    response_obj = await self._client.chat.completions.create(**openai_params)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\urido\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\openai\resources\chat\completions.py", line 1727, in create
+    return await self._post(
+           ^^^^^^^^^^^^^^^^^
+  File "C:\Users\urido\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\openai\_base_client.py", line 1849, in post
+    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\urido\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\openai\_base_client.py", line 1543, in request
+    return await self._request(
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\urido\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\openai\_base_client.py", line 1644, in _request
+    raise self._make_status_error_from_response(err.response) from None
+openai.AuthenticationError: Error code: 401 - {'error': {'message': 'Incorrect API key provided: sk-your-****************-key. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}
+2025-04-17 03:54:11,560 - asf.medical.llm_gateway.core.client - ERROR - C:\code\asf\asf\medical\llm_gateway\core\client.py:61 - Request processing failed: 38fb15d0-f009-4372-8e05-94a32257f6aa
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\core\client.py", line 54, in generate
+    response = await self.intervention_manager.process_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\code\asf\asf\medical\llm_gateway\core\manager.py", line 153, in process_request
+    response = LLMResponse(request_id=context.request_id, final_context=context, error_details=error_details or ErrorDetails(code="UNKNOWN_MANAGER_ERROR"), finish_reason=FinishReason.ERROR)
+                                                                                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\urido\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\pydantic\main.py", line 243, in __init__
+    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for ErrorDetails
+message
+  Field required [type=missing, input_value={'code': 'UNKNOWN_MANAGER_ERROR'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.11/v/missing
+2025-04-17 03:54:11,562 - api.routers.llm_gateway - ERROR - C:\code\asf\asf\bo\backend\api\routers\llm_gateway.py:1076 - Error generating LLM response: can't subtract offset-naive and offset-aware datetimes
+2025-04-17 04:03:04,743 - asf.medical.llm_gateway.providers.openai_client - ERROR - C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py:301 - [OPENAI_AUTH_ERROR] ID: 2438244a-e734-4a0b-ba29-8ad4cdad73f9 | Authentication failed: Error code: 401 - {'error': {'message': 'Incorrect API key provided: sk-_CnwM***************************************************************************************************************************************************kSMA. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\providers\openai_client.py", line 272, in generate
+    response_obj = await self._client.chat.completions.create(**openai_params)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\urido\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\openai\resources\chat\completions.py", line 1727, in create
+    return await self._post(
+           ^^^^^^^^^^^^^^^^^
+  File "C:\Users\urido\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\openai\_base_client.py", line 1849, in post
+    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\urido\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\openai\_base_client.py", line 1543, in request
+    return await self._request(
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\urido\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\openai\_base_client.py", line 1644, in _request
+    raise self._make_status_error_from_response(err.response) from None
+openai.AuthenticationError: Error code: 401 - {'error': {'message': 'Incorrect API key provided: sk-_CnwM***************************************************************************************************************************************************kSMA. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}
+2025-04-17 04:03:04,757 - asf.medical.llm_gateway.core.client - ERROR - C:\code\asf\asf\medical\llm_gateway\core\client.py:61 - Request processing failed: 2438244a-e734-4a0b-ba29-8ad4cdad73f9
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\core\client.py", line 54, in generate
+    response = await self.intervention_manager.process_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\code\asf\asf\medical\llm_gateway\core\manager.py", line 153, in process_request
+    response = LLMResponse(request_id=context.request_id, final_context=context, error_details=error_details or ErrorDetails(code="UNKNOWN_MANAGER_ERROR"), finish_reason=FinishReason.ERROR)
+                                                                                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\urido\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\pydantic\main.py", line 243, in __init__
+    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for ErrorDetails
+message
+  Field required [type=missing, input_value={'code': 'UNKNOWN_MANAGER_ERROR'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.11/v/missing
+2025-04-17 04:03:04,763 - api.routers.llm_gateway - ERROR - C:\code\asf\asf\bo\backend\api\routers\llm_gateway.py:1076 - Error generating LLM response: can't subtract offset-naive and offset-aware datetimes
+2025-04-17 04:34:15,246 - asf.medical.llm_gateway.core.client - ERROR - C:\code\asf\asf\medical\llm_gateway\core\client.py:61 - Request processing failed: fd978178-c9c0-41d9-bd4e-04c7e07729d5
+Traceback (most recent call last):
+  File "C:\code\asf\asf\medical\llm_gateway\core\client.py", line 54, in generate
+    response = await self.intervention_manager.process_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\code\asf\asf\medical\llm_gateway\core\manager.py", line 153, in process_request
+    response = LLMResponse(request_id=context.request_id, final_context=context, error_details=error_details or ErrorDetails(code="UNKNOWN_MANAGER_ERROR"), finish_reason=FinishReason.ERROR)
+                                                                                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\urido\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\pydantic\main.py", line 243, in __init__
+    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for ErrorDetails
+message
+  Field required [type=missing, input_value={'code': 'UNKNOWN_MANAGER_ERROR'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.11/v/missing
+2025-04-17 04:34:15,252 - api.routers.llm_gateway - ERROR - C:\code\asf\asf\bo\backend\api\routers\llm_gateway.py:1076 - Error generating LLM response: can't subtract offset-naive and offset-aware datetimes
