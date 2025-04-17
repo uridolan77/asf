@@ -6,7 +6,7 @@ import {
   Grid, IconButton, InputAdornment, Link, TextField, Typography,
   Alert, CircularProgress
 } from '@mui/material';
-import logo from '../assets/images/asfmrslogo.png';
+import logo from '../assets/images/asfmrslogo.jpg';
 import {
   LockOutlined as LockOutlinedIcon,
   Visibility as VisibilityIcon,

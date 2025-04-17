@@ -1,22 +1,23 @@
 import React, { useState } from 'react';
-import { 
-  List, 
-  ListItem, 
-  ListItemButton, 
-  ListItemText, 
+import {
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemText,
   ListItemAvatar,
   ListItemSecondaryAction,
-  Avatar, 
-  Typography, 
+  Avatar,
+  Typography,
   Chip,
   Box,
   IconButton,
   TextField,
   InputAdornment,
   Tooltip,
-  useTheme
+  useTheme,
+  Divider
 } from '@mui/material';
-import { 
+import {
   Memory as MemoryIcon,
   Search as SearchIcon,
   FilterList as FilterListIcon,
@@ -26,10 +27,10 @@ import {
   Delete as DeleteIcon
 } from '@mui/icons-material';
 
-const AdaptersList = ({ adapters, selectedAdapter, onAdapterSelect }) => {
+const AdaptersList = ({ adapters, selectedAdapter, onSelect }) => {
   const theme = useTheme();
   const [searchTerm, setSearchTerm] = useState('');
-  
+
   const getStatusIcon = (status) => {
     switch (status) {
       case 'ready':
@@ -43,7 +44,7 @@ const AdaptersList = ({ adapters, selectedAdapter, onAdapterSelect }) => {
         return null;
     }
   };
-  
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'ready':
@@ -57,18 +58,18 @@ const AdaptersList = ({ adapters, selectedAdapter, onAdapterSelect }) => {
         return theme.palette.grey[500];
     }
   };
-  
-  const filteredAdapters = adapters.filter(adapter => 
+
+  const filteredAdapters = adapters.filter(adapter =>
     adapter.adapter_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     adapter.base_model_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     adapter.cl_strategy.toLowerCase().includes(searchTerm.toLowerCase()) ||
     adapter.peft_method.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (adapter.description && adapter.description.toLowerCase().includes(searchTerm.toLowerCase()))
   );
-  
+
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <Box sx={{ p: 2 }}>
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <Box sx={{ p: 2, borderBottom: `1px solid ${theme.palette.divider}` }}>
         <TextField
           fullWidth
           size="small"
@@ -91,75 +92,87 @@ const AdaptersList = ({ adapters, selectedAdapter, onAdapterSelect }) => {
               </InputAdornment>
             )
           }}
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              borderRadius: theme.shape.borderRadius,
+            }
+          }}
         />
       </Box>
-      
-      <List sx={{ flexGrow: 1, overflow: 'auto', pt: 0 }}>
-        {filteredAdapters.length === 0 ? (
-          <Box sx={{ p: 2, textAlign: 'center' }}>
-            <Typography variant="body2" color="textSecondary">
-              No adapters found
-            </Typography>
-          </Box>
-        ) : (
-          filteredAdapters.map((adapter) => (
-            <ListItem 
-              key={adapter.adapter_id}
-              disablePadding
-              divider
-              secondaryAction={
-                <Tooltip title={adapter.status}>
-                  <Box>{getStatusIcon(adapter.status)}</Box>
-                </Tooltip>
-              }
-            >
-              <ListItemButton 
-                selected={selectedAdapter && selectedAdapter.adapter_id === adapter.adapter_id}
-                onClick={() => onAdapterSelect(adapter)}
-                sx={{ 
-                  borderLeft: selectedAdapter && selectedAdapter.adapter_id === adapter.adapter_id 
-                    ? `4px solid ${theme.palette.primary.main}` 
+
+      <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
+        <List sx={{ p: 0 }}>
+          {filteredAdapters.length === 0 ? (
+            <Box sx={{ p: 2, textAlign: 'center' }}>
+              <Typography variant="body2" color="textSecondary">
+                No adapters found
+              </Typography>
+            </Box>
+          ) : (
+            filteredAdapters.map((adapter) => (
+              <ListItem
+                key={adapter.adapter_id}
+                disablePadding
+                divider
+                secondaryAction={
+                  <Box sx={{ pr: 1 }}>
+                    <Tooltip title={adapter.status}>
+                      <Box>{getStatusIcon(adapter.status)}</Box>
+                    </Tooltip>
+                  </Box>
+                }
+                sx={{
+                  borderLeft: selectedAdapter && selectedAdapter.adapter_id === adapter.adapter_id
+                    ? `4px solid ${theme.palette.primary.main}`
                     : '4px solid transparent',
+                  backgroundColor: selectedAdapter && selectedAdapter.adapter_id === adapter.adapter_id
+                    ? theme.palette.action.selected
+                    : 'transparent',
                 }}
               >
-                <ListItemAvatar>
-                  <Avatar sx={{ bgcolor: theme.palette.primary.main }}>
-                    <MemoryIcon />
-                  </Avatar>
-                </ListItemAvatar>
-                <ListItemText
-                  primary={
-                    <Typography variant="subtitle2" noWrap>
-                      {adapter.adapter_name}
-                    </Typography>
-                  }
-                  secondary={
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, mt: 0.5 }}>
-                      <Typography variant="caption" color="textSecondary" noWrap>
-                        {adapter.base_model_name}
+                <ListItemButton
+                  onClick={() => onSelect(adapter)}
+                  sx={{ py: 1.5 }}
+                >
+                  <ListItemAvatar>
+                    <Avatar sx={{ bgcolor: theme.palette.primary.main }}>
+                      <MemoryIcon />
+                    </Avatar>
+                  </ListItemAvatar>
+                  <ListItemText
+                    primary={
+                      <Typography variant="subtitle2" noWrap fontWeight="medium">
+                        {adapter.adapter_name}
                       </Typography>
-                      <Box sx={{ display: 'flex', gap: 0.5 }}>
-                        <Chip 
-                          label={adapter.cl_strategy} 
-                          size="small" 
-                          variant="outlined"
-                          sx={{ height: 20, fontSize: '0.7rem' }}
-                        />
-                        <Chip 
-                          label={adapter.peft_method} 
-                          size="small" 
-                          variant="outlined"
-                          sx={{ height: 20, fontSize: '0.7rem' }}
-                        />
+                    }
+                    secondary={
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, mt: 0.5 }}>
+                        <Typography variant="caption" color="textSecondary" noWrap>
+                          {adapter.base_model_name}
+                        </Typography>
+                        <Box sx={{ display: 'flex', gap: 0.5 }}>
+                          <Chip
+                            label={adapter.cl_strategy}
+                            size="small"
+                            variant="outlined"
+                            sx={{ height: 20, fontSize: '0.7rem' }}
+                          />
+                          <Chip
+                            label={adapter.peft_method}
+                            size="small"
+                            variant="outlined"
+                            sx={{ height: 20, fontSize: '0.7rem' }}
+                          />
+                        </Box>
                       </Box>
-                    </Box>
-                  }
-                />
-              </ListItemButton>
-            </ListItem>
-          ))
-        )}
-      </List>
+                    }
+                  />
+                </ListItemButton>
+              </ListItem>
+            ))
+          )}
+        </List>
+      </Box>
     </Box>
   );
 };

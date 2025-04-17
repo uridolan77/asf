@@ -1,15 +1,16 @@
 import axios from 'axios';
-import { API_BASE_URL } from '../config';
 import {
   generateMockAdapters,
   generateMockAdapter,
   generateMockEvaluationResults,
   generateMockForgettingResults
-} from '../components/llm/cl_peft/mockData';
+} from '../components/LLM/cl_peft/mockData';
 
-// Set to false to use real API calls instead of mock data
-const USE_MOCK_DATA = false;
+// Set to true to use mock data instead of real API calls
+const USE_MOCK_DATA = true;
 
+// Define API base URL using environment variable or fallback to localhost
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 const API_URL = `${API_BASE_URL}/llm/cl-peft`;
 
 /**
