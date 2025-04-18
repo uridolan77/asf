@@ -10,98 +10,27 @@ from fastapi import APIRouter, Depends, HTTPException, Body, status
 from pydantic import BaseModel, Field
 from datetime import datetime
 
-# Import dependencies
+# Import dependencies from the new consolidated structure
+try:
+    # Updated imports for the consolidated LLM Gateway structure
+    from asf.medical.llm_gateway.mcp import (
+        Transport, TransportConfig, 
+        StdioConfig, GrpcConfig, HttpConfig,
+        TransportFactory
+    )
+    from asf.medical.llm_gateway.providers import MCPProvider
+    from asf.medical.llm_gateway.resilience import CircuitBreaker
+    MCP_AVAILABLE = True
+except ImportError:
+    MCP_AVAILABLE = False
 
-# Mock user and service for demonstration
-class User:
-    def __init__(self, username):
-        self.username = username
+# Import services
+from ...services.llm.llm_service import get_llm_service
+from ...services.llm.gateway_service import get_llm_gateway_service
 
-def get_current_user():
-    return User("demo_user")
-
-def get_admin_user():
-    return User("admin_user")
-
-# Mock LLM Gateway service
-class LLMGatewayService:
-    async def get_mcp_providers(self):
-        return [
-            {
-                "provider_id": "anthropic_mcp",
-                "display_name": "Anthropic MCP",
-                "status": "operational",
-                "transport_type": "stdio",
-                "checked_at": datetime.now().isoformat(),
-                "circuit_breaker": {"state": "closed", "failure_count": 0},
-                "models": ["claude-3-opus", "claude-3-sonnet", "claude-3-haiku"]
-            },
-            {
-                "provider_id": "openai_mcp",
-                "display_name": "OpenAI MCP",
-                "status": "operational",
-                "transport_type": "http",
-                "checked_at": datetime.now().isoformat(),
-                "circuit_breaker": {"state": "closed", "failure_count": 0},
-                "models": ["gpt-4", "gpt-3.5-turbo"]
-            }
-        ]
-
-    async def register_mcp_provider(self, config):
-        return {
-            "provider_id": config.provider_id,
-            "display_name": config.display_name,
-            "status": "operational"
-        }
-
-    async def update_mcp_provider(self, provider_id, config):
-        return {
-            "provider_id": provider_id,
-            "display_name": config.get("display_name", "Updated Provider"),
-            "status": "operational"
-        }
-
-    async def delete_mcp_provider(self, provider_id):
-        return True
-
-    async def test_mcp_provider(self, provider_id):
-        return {
-            "success": True,
-            "message": "Connection successful"
-        }
-
-    async def get_mcp_provider_status(self, provider_id):
-        return {
-            "provider_id": provider_id,
-            "display_name": f"{provider_id.capitalize()} Provider",
-            "status": "operational",
-            "transport_type": "stdio",
-            "checked_at": datetime.now().isoformat(),
-            "circuit_breaker": {"state": "closed", "failure_count": 0},
-            "models": ["claude-3-opus", "claude-3-sonnet", "claude-3-haiku"]
-        }
-
-    async def get_mcp_provider_usage(self, provider_id, period):
-        return {
-            "provider_id": provider_id,
-            "total_requests": 120,
-            "successful_requests": 115,
-            "failed_requests": 5,
-            "total_tokens": 25000,
-            "average_latency_ms": 245.5,
-            "period_start": (datetime.now()).isoformat(),
-            "period_end": datetime.now().isoformat()
-        }
-
-    async def generate_with_mcp(self, request):
-        return {
-            "id": "gen_123456",
-            "content": "This is a mock response from the MCP provider.",
-            "model": request.get("model", "claude-3-haiku")
-        }
-
-def get_llm_gateway_service():
-    return LLMGatewayService()
+# Import user dependencies
+from ...dependencies import get_current_user, get_admin_user
+from ...models import User
 
 router = APIRouter(prefix="/mcp", tags=["mcp"])
 

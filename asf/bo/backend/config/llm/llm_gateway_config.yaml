@@ -10,6 +10,22 @@ additional_config:
         claude-3-opus-20240229: {}
         claude-3-sonnet-20240229: {}
       provider_type: anthropic
+      transport:
+        type: http
+        base_url: https://api.anthropic.com
+        timeout_seconds: 60
+      resilience:
+        circuit_breaker:
+          enabled: true
+          failure_threshold: 5
+          recovery_timeout: 30
+        retry:
+          max_retries: 3
+          base_delay: 1.0
+          max_delay: 60.0
+      observability:
+        metrics_enabled: true
+        tracing_enabled: true
     biomedlm_local:
       connection_params:
         model_path: ${BIOMEDLM_MODEL_PATH}
@@ -18,6 +34,13 @@ additional_config:
       models:
         biomedlm-2-7b: {}
       provider_type: biomedlm
+      transport:
+        type: local
+        timeout_seconds: 120
+      resilience:
+        circuit_breaker:
+          enabled: true
+          failure_threshold: 3
     openai_gpt4_default:
       connection_params:
         # IMPORTANT: Do not store API keys directly in this file!
@@ -39,6 +62,14 @@ additional_config:
         gpt-4: {}
         gpt-4-turbo-preview: {}
       provider_type: openai
+      transport:
+        type: http
+        timeout_seconds: 60
+      resilience:
+        circuit_breaker:
+          enabled: true
+        retry:
+          max_retries: 2
 allowed_providers:
 - openai_gpt4_default
 - anthropic_claude3
@@ -54,3 +85,9 @@ max_retries: 2
 preload_providers:
 - openai_gpt4_default
 retry_delay_seconds: 1.0
+observability:
+  metrics_enabled: true
+  metrics_export_interval_seconds: 60
+  tracing_enabled: false
+  logging_level: INFO
+  structured_logging: true

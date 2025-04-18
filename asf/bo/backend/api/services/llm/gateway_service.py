@@ -13,14 +13,21 @@ from fastapi import Depends, HTTPException, status
 
 from ...utils import handle_api_error
 
-# Import LLM Gateway components if available
+# Import LLM Gateway components from the new consolidated structure
 try:
-    from asf.medical.llm_gateway.core.client import LLMGatewayClient
-    from asf.medical.llm_gateway.core.models import (
-        LLMRequest, LLMConfig, InterventionContext, ContentItem,
-        GatewayConfig, ProviderConfig, MCPRole
+    # Updated imports for the consolidated structure
+    from asf.medical.llm_gateway.providers.base import LLMProvider, LLMProviderConfig
+    from asf.medical.llm_gateway.transport.base import Transport, TransportConfig
+    from asf.medical.llm_gateway.transport.factory import TransportFactory
+    
+    # Common models and client imports
+    from asf.medical.llm_gateway.models import (
+        LLMRequest, LLMResponse, LLMConfig, ConversationContext, 
+        MessageRole, UsageInfo, ModelCard, FinishReason
     )
-    from asf.medical.llm_gateway.core.factory import ProviderFactory
+    from asf.medical.llm_gateway.client import LLMGatewayClient
+    from asf.medical.llm_gateway.config import GatewayConfig
+    
     LLM_GATEWAY_AVAILABLE = True
 except ImportError:
     LLM_GATEWAY_AVAILABLE = False
@@ -56,11 +63,14 @@ class LLMGatewayService:
             # Create GatewayConfig from dict
             gateway_config = GatewayConfig(**self._config)
             
-            # Create provider factory
-            provider_factory = ProviderFactory()
+            # Initialize transport factory
+            transport_factory = TransportFactory()
             
-            # Create gateway client
-            self._client = LLMGatewayClient(gateway_config, provider_factory)
+            # Create gateway client with the new consolidated structure
+            self._client = LLMGatewayClient(
+                config=gateway_config,
+                transport_factory=transport_factory
+            )
             logger.info(f"LLM Gateway client initialized with gateway ID: {gateway_config.gateway_id}")
         except Exception as e:
             logger.error(f"Failed to initialize LLM Gateway client: {str(e)}")
@@ -358,7 +368,7 @@ class LLMGatewayService:
             
             # Create a test request
             llm_config = LLMConfig(model_identifier=model_id)
-            context = InterventionContext(session_id=f"test-{datetime.utcnow().timestamp()}")
+            context = ConversationContext(session_id=f"test-{datetime.utcnow().timestamp()}")
             
             llm_req = LLMRequest(
                 prompt_content="Hello, this is a test request. Please respond with 'Test successful'.",
@@ -429,11 +439,11 @@ class LLMGatewayService:
                 system_prompt=request_data.get("system_prompt")
             )
             
-            context = InterventionContext(session_id=f"bo-{datetime.utcnow().timestamp()}")
+            context = ConversationContext(session_id=f"bo-{datetime.utcnow().timestamp()}")
             
             # Add system prompt if provided
             if request_data.get("system_prompt"):
-                context.add_conversation_turn(MCPRole.SYSTEM.value, request_data["system_prompt"])
+                context.add_conversation_turn(MessageRole.SYSTEM.value, request_data["system_prompt"])
             
             llm_req = LLMRequest(
                 prompt_content=request_data["prompt"],

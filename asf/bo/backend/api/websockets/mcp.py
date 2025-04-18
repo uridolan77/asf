@@ -15,11 +15,23 @@ from typing import Dict, List, Set, Any, Optional
 from fastapi import WebSocket, WebSocketDisconnect, Depends, HTTPException, status
 from starlette.websockets import WebSocketState
 
-from api.auth.dependencies import get_current_user_ws
-from models.user import User
-from api.services.llm.gateway_service import get_llm_gateway_service
-from api.websockets.mcp_manager import mcp_manager
-from api.websockets.auth import authenticate_ws_connection, check_mcp_access
+# Import the updated dependencies
+try:
+    # Updated imports for the consolidated LLM Gateway structure
+    from asf.medical.llm_gateway.mcp import MCPSession, EnhancedSessionPool
+    from asf.medical.llm_gateway.providers import MCPProvider
+    from asf.medical.llm_gateway.observability import MetricsService
+    MCP_AVAILABLE = True
+except ImportError:
+    MCP_AVAILABLE = False
+    logging.warning("LLM Gateway MCP components not available. WebSocket functionality will be limited.")
+
+# Fix relative imports by using absolute imports instead
+from asf.bo.backend.api.auth.dependencies import get_current_user_ws
+from asf.bo.backend.api.models.user import User
+from asf.bo.backend.api.services.llm.gateway_service import get_llm_gateway_service
+from asf.bo.backend.api.websockets.mcp_manager import mcp_manager
+from asf.bo.backend.api.websockets.auth import authenticate_ws_connection, check_mcp_access
 
 logger = logging.getLogger(__name__)
 
