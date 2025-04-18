@@ -1,0 +1,51 @@
+# BiomedLM Configuration for BO
+
+# Model Configuration
+model_name: biomedlm-2-7b
+model_path: ${BIOMEDLM_MODEL_PATH}
+use_gpu: true
+precision: fp16
+device_map: auto
+max_memory: null
+
+# Inference Configuration
+max_new_tokens: 512
+temperature: 0.2
+top_p: 0.95
+top_k: 50
+repetition_penalty: 1.1
+do_sample: true
+num_beams: 1
+
+# LoRA Adapters
+lora_adapters:
+  contradiction_detection:
+    path: ./models/lora/contradiction_detection
+    description: "Fine-tuned for medical contradiction detection"
+    
+  medical_summarization:
+    path: ./models/lora/medical_summarization
+    description: "Fine-tuned for medical literature summarization"
+    
+  clinical_qa:
+    path: ./models/lora/clinical_qa
+    description: "Fine-tuned for clinical question answering"
+
+# Fine-tuning Configuration
+fine_tuning:
+  learning_rate: 3e-4
+  batch_size: 8
+  num_epochs: 3
+  lora_r: 16
+  lora_alpha: 32
+  lora_dropout: 0.05
+  target_modules: ["q_proj", "v_proj"]
+  
+# Caching Configuration
+cache_enabled: true
+cache_dir: ./cache/biomedlm
+cache_ttl: 3600
+
+# Performance Monitoring
+enable_performance_logging: true
+performance_log_path: ./logs/biomedlm_performance.log

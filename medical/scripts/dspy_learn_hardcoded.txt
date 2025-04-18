@@ -1,0 +1,75 @@
+
+DSPy Documentation Highlights
+
+Getting Started with DSPy
+
+DSPy is a framework for programming foundation models (LMs) with methods like prompting, fine-tuning, and reasoning. DSPy abstracts over these methods to let you define your program in terms of modules like 'Predict' and 'Generate', without specifying whether they'll be implemented with few-shot prompting or fine-tuning until runtime.
+
+Core DSPy Modules
+
+1. Predict: The simplest DSPy module. Given input fields, predict a specific output field.
+   Example: Predict("question -> answer")
+
+2. Generate: For text generation tasks. Given input fields, generate text for the output field.
+   Example: Generate("context, question -> answer")
+
+3. ChainOfThought: Extension of Predict that introduces a reasoning step.
+   Example: ChainOfThought("question -> answer")
+   
+4. ReAct: Module for tasks requiring reasoning and acting, like using tools.
+
+5. Teleprompter: A DSPy optimizer that automatically improves prompts.
+
+Programming with DSPy
+
+DSPy programs are composed of modules connected together. You can define your own modules by subclassing dspy.Module:
+
+```python
+import dspy
+
+class SimplifiedRAG(dspy.Module):
+    def __init__(self):
+        self.retrieve = dspy.Retrieve(k=3)
+        self.generate = dspy.Generate("context, question -> answer")
+    
+    def forward(self, question):
+        context = self.retrieve(question).passages
+        answer = self.generate(context=context, question=question)
+        return answer
+```
+
+Optimizing with Teleprompter
+
+Teleprompter can automatically optimize your DSPy program:
+
+```python
+# Define your program
+rag = SimplifiedRAG()
+
+# Create a teleprompter optimizer 
+teleprompter = dspy.Teleprompter(metric=your_metric_function)
+
+# Optimize your program
+optimized_rag = teleprompter.optimize(rag, trainset=examples)
+```
+
+DSPy Signatures
+
+Signatures define the input and output fields of modules:
+- Basic syntax: `"input1, input2 -> output"`
+- With types: `"question: str -> answer: str"`
+
+DSPy LM Configuration
+
+Configure language models using the LM class:
+
+```python
+import dspy
+from dspy.backends import OpenAI
+
+# Set up language model
+lm = OpenAI(model="gpt-3.5-turbo")
+dspy.settings.configure(lm=lm)
+```
+
+DSPy supports many backends including local models, OpenAI, Anthropic, etc.

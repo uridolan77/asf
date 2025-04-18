@@ -1,0 +1,69 @@
+{
+  "ncbi": {
+    "name": "NCBI",
+    "config": {
+      "api_key": "",
+      "email": "your.email@example.com",
+      "base_url": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/",
+      "timeout": 30.0,
+      "max_retries": 3,
+      "cache_ttl": 3600,
+      "use_cache": true
+    }
+  },
+  "umls": {
+    "name": "UMLS",
+    "config": {
+      "api_key": "test-key",
+      "base_url": "https://uts-ws.nlm.nih.gov/api",
+      "timeout": 30.0,
+      "max_retries": 3,
+      "cache_ttl": 86400,
+      "use_cache": true
+    }
+  },
+  "clinical_trials": {
+    "name": "ClinicalTrials.gov",
+    "config": {
+      "base_url": "https://clinicaltrials.gov/api/v2",
+      "timeout": 30.0,
+      "max_retries": 3,
+      "cache_ttl": 3600,
+      "use_cache": true
+    }
+  },
+  "cochrane": {
+    "name": "Cochrane Library",
+    "config": {
+      "api_key": "",
+      "base_url": "https://www.cochranelibrary.com",
+      "timeout": 30.0,
+      "max_retries": 3,
+      "cache_ttl": 86400,
+      "use_cache": true
+    }
+  },
+  "crossref": {
+    "name": "Crossref",
+    "config": {
+      "email": "your.email@example.com",
+      "plus_api_token": "",
+      "base_url": "https://api.crossref.org",
+      "timeout": 30.0,
+      "max_retries": 3,
+      "cache_ttl": 86400,
+      "use_cache": true
+    }
+  },
+  "snomed": {
+    "name": "SNOMED CT",
+    "config": {
+      "api_key": "",
+      "access_mode": "umls",
+      "edition": "US",
+      "cache_dir": "./snomed_cache",
+      "cache_ttl": 86400,
+      "use_cache": true
+    }
+  }
+}

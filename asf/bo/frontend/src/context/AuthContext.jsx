@@ -8,7 +8,7 @@ import { useNotification } from './NotificationContext.jsx';
 const AuthContext = createContext();
 
 // Base API URL
-const API_URL = 'http://localhost:8000';  // Hardcoded for now
+const API_URL = import.meta.env.VITE_API_URL || '';  // Use environment variable or empty string as fallback
 
 // Create the AuthProvider component
 export const AuthProvider = ({ children }) => {

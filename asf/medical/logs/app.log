@@ -28891,3 +28891,95 @@ AttributeError: module 'bcrypt' has no attribute '__about__'
 2025-04-18 23:43:58,726 - api.websockets.mcp_manager - INFO - Started heartbeat task
 2025-04-18 23:43:59,025 - api.websockets.mcp_manager - INFO - Heartbeat task cancelled
 2025-04-18 23:43:59,026 - api.websockets.mcp_manager - INFO - Message queue cleanup task cancelled
+2025-04-19 00:40:57,784 - root - INFO - Logging configured with level: INFO
+2025-04-19 00:40:58,551 - root - INFO - Logging configured with level: INFO
+2025-04-19 00:40:58,552 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-19 00:40:58,619 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-19 00:45:56,422 - root - INFO - Logging configured with level: INFO
+2025-04-19 00:45:57,211 - root - INFO - Logging configured with level: INFO
+2025-04-19 00:45:57,213 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-19 00:45:57,278 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-19 00:46:00,747 - asf.medical.llm_gateway.observability.prometheus - INFO - Initialized Prometheus exporter (push_gateway=False, push_interval=15)
+2025-04-19 00:46:04,510 - llm_gateway.resilience.metrics - INFO - {'component': 'resilience_metrics', 'event': 'Initialized Prometheus exporter for resilience patterns', 'logger': 'llm_gateway.resilience.metrics', 'level': 'info', 'timestamp': '2025-04-18T21:46:04.510979Z'}
+2025-04-19 00:46:04,551 - mcp_observability.tracing - INFO - {'event': 'Added OTLP exporter with endpoint localhost:4317', 'logger': 'mcp_observability.tracing', 'level': 'info', 'timestamp': '2025-04-18T21:46:04.551485Z'}
+2025-04-19 00:46:04,552 - mcp_observability.tracing - INFO - {'service': 'llm_gateway_resilience', 'otlp_enabled': True, 'otlp_endpoint': 'localhost:4317', 'event': 'Initialized tracing service', 'logger': 'mcp_observability.tracing', 'level': 'info', 'timestamp': '2025-04-18T21:46:04.552484Z'}
+2025-04-19 00:46:04,552 - llm_gateway.resilience.tracing - INFO - {'component': 'resilience_tracing', 'event': 'Initialized tracing service for resilience patterns', 'logger': 'llm_gateway.resilience.tracing', 'level': 'info', 'timestamp': '2025-04-18T21:46:04.552484Z'}
+2025-04-19 00:46:05,096 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-19 00:46:05,109 - root - INFO - Using LLM Gateway implementation
+2025-04-19 00:46:05,126 - root - WARNING - LLM Gateway MCP components not available. WebSocket functionality will be limited.
+2025-04-19 00:46:05,127 - root - WARNING - LLM Gateway not available. Some functionality will be limited.
+2025-04-19 00:46:05,128 - root - WARNING - DSPy is not available. Some functionality will be limited. Error: No module named 'medical.ml.dspy.dspy_client'
+2025-04-19 00:46:05,130 - root - WARNING - BiomedLM is not available. Some functionality will be limited.
+2025-04-19 00:46:05,172 - datasets - INFO - PyTorch version 2.6.0 available.
+2025-04-19 00:46:05,334 - api.websockets.mcp_manager - INFO - Started message queue cleanup task
+2025-04-19 00:46:05,335 - api.websockets.mcp_manager - INFO - Started heartbeat task
+2025-04-19 00:46:05,414 - api.websockets.mcp_manager - INFO - Message queue cleanup task cancelled
+2025-04-19 00:46:05,415 - api.websockets.mcp_manager - INFO - Heartbeat task cancelled
+2025-04-19 00:47:19,005 - root - INFO - Logging configured with level: INFO
+2025-04-19 00:47:19,785 - root - INFO - Logging configured with level: INFO
+2025-04-19 00:47:19,787 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-19 00:47:19,908 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-19 00:47:23,671 - asf.medical.llm_gateway.observability.prometheus - INFO - Initialized Prometheus exporter (push_gateway=False, push_interval=15)
+2025-04-19 00:47:23,801 - llm_gateway.resilience.metrics - INFO - {'component': 'resilience_metrics', 'event': 'Initialized Prometheus exporter for resilience patterns', 'logger': 'llm_gateway.resilience.metrics', 'level': 'info', 'timestamp': '2025-04-18T21:47:23.801008Z'}
+2025-04-19 00:47:23,845 - mcp_observability.tracing - INFO - {'event': 'Added OTLP exporter with endpoint localhost:4317', 'logger': 'mcp_observability.tracing', 'level': 'info', 'timestamp': '2025-04-18T21:47:23.845001Z'}
+2025-04-19 00:47:23,846 - mcp_observability.tracing - INFO - {'service': 'llm_gateway_resilience', 'otlp_enabled': True, 'otlp_endpoint': 'localhost:4317', 'event': 'Initialized tracing service', 'logger': 'mcp_observability.tracing', 'level': 'info', 'timestamp': '2025-04-18T21:47:23.846001Z'}
+2025-04-19 00:47:23,847 - llm_gateway.resilience.tracing - INFO - {'component': 'resilience_tracing', 'event': 'Initialized tracing service for resilience patterns', 'logger': 'llm_gateway.resilience.tracing', 'level': 'info', 'timestamp': '2025-04-18T21:47:23.847001Z'}
+2025-04-19 00:47:24,921 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-19 00:47:24,937 - root - INFO - Using LLM Gateway implementation
+2025-04-19 00:47:24,969 - root - WARNING - LLM Gateway MCP components not available. WebSocket functionality will be limited.
+2025-04-19 00:47:24,970 - root - WARNING - LLM Gateway not available. Some functionality will be limited.
+2025-04-19 00:47:24,972 - root - WARNING - DSPy is not available. Some functionality will be limited. Error: No module named 'medical.ml.dspy.dspy_client'
+2025-04-19 00:47:24,975 - root - WARNING - BiomedLM is not available. Some functionality will be limited.
+2025-04-19 00:47:25,053 - datasets - INFO - PyTorch version 2.6.0 available.
+2025-04-19 00:47:40,863 - root - INFO - Logging configured with level: INFO
+2025-04-19 00:47:41,607 - root - INFO - Logging configured with level: INFO
+2025-04-19 00:47:41,609 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-19 00:47:41,725 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-19 00:47:44,954 - asf.medical.llm_gateway.observability.prometheus - INFO - Initialized Prometheus exporter (push_gateway=False, push_interval=15)
+2025-04-19 00:47:45,013 - llm_gateway.resilience.metrics - INFO - {'component': 'resilience_metrics', 'event': 'Initialized Prometheus exporter for resilience patterns', 'logger': 'llm_gateway.resilience.metrics', 'level': 'info', 'timestamp': '2025-04-18T21:47:45.013362Z'}
+2025-04-19 00:47:45,038 - mcp_observability.tracing - INFO - {'event': 'Added OTLP exporter with endpoint localhost:4317', 'logger': 'mcp_observability.tracing', 'level': 'info', 'timestamp': '2025-04-18T21:47:45.038362Z'}
+2025-04-19 00:47:45,039 - mcp_observability.tracing - INFO - {'service': 'llm_gateway_resilience', 'otlp_enabled': True, 'otlp_endpoint': 'localhost:4317', 'event': 'Initialized tracing service', 'logger': 'mcp_observability.tracing', 'level': 'info', 'timestamp': '2025-04-18T21:47:45.039362Z'}
+2025-04-19 00:47:45,039 - llm_gateway.resilience.tracing - INFO - {'component': 'resilience_tracing', 'event': 'Initialized tracing service for resilience patterns', 'logger': 'llm_gateway.resilience.tracing', 'level': 'info', 'timestamp': '2025-04-18T21:47:45.039362Z'}
+2025-04-19 00:47:45,522 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-19 00:47:45,531 - root - INFO - Using LLM Gateway implementation
+2025-04-19 00:47:45,547 - root - WARNING - LLM Gateway MCP components not available. WebSocket functionality will be limited.
+2025-04-19 00:47:45,548 - root - WARNING - LLM Gateway not available. Some functionality will be limited.
+2025-04-19 00:47:45,549 - root - WARNING - DSPy is not available. Some functionality will be limited. Error: No module named 'medical.ml.dspy.dspy_client'
+2025-04-19 00:47:45,551 - root - WARNING - BiomedLM is not available. Some functionality will be limited.
+2025-04-19 00:47:45,589 - datasets - INFO - PyTorch version 2.6.0 available.
+2025-04-19 00:49:50,334 - root - INFO - Logging configured with level: INFO
+2025-04-19 00:49:51,131 - root - INFO - Logging configured with level: INFO
+2025-04-19 00:49:51,133 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-19 00:49:51,199 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-19 00:49:54,605 - asf.medical.llm_gateway.observability.prometheus - INFO - Initialized Prometheus exporter (push_gateway=False, push_interval=15)
+2025-04-19 00:49:54,668 - llm_gateway.resilience.metrics - INFO - {'component': 'resilience_metrics', 'event': 'Initialized Prometheus exporter for resilience patterns', 'logger': 'llm_gateway.resilience.metrics', 'level': 'info', 'timestamp': '2025-04-18T21:49:54.668462Z'}
+2025-04-19 00:49:54,691 - mcp_observability.tracing - INFO - {'event': 'Added OTLP exporter with endpoint localhost:4317', 'logger': 'mcp_observability.tracing', 'level': 'info', 'timestamp': '2025-04-18T21:49:54.691928Z'}
+2025-04-19 00:49:54,691 - mcp_observability.tracing - INFO - {'service': 'llm_gateway_resilience', 'otlp_enabled': True, 'otlp_endpoint': 'localhost:4317', 'event': 'Initialized tracing service', 'logger': 'mcp_observability.tracing', 'level': 'info', 'timestamp': '2025-04-18T21:49:54.691928Z'}
+2025-04-19 00:49:54,692 - llm_gateway.resilience.tracing - INFO - {'component': 'resilience_tracing', 'event': 'Initialized tracing service for resilience patterns', 'logger': 'llm_gateway.resilience.tracing', 'level': 'info', 'timestamp': '2025-04-18T21:49:54.692928Z'}
+2025-04-19 00:49:55,218 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-19 00:49:55,226 - root - INFO - Using LLM Gateway implementation
+2025-04-19 00:49:55,242 - root - WARNING - LLM Gateway MCP components not available. WebSocket functionality will be limited.
+2025-04-19 00:49:55,243 - root - WARNING - LLM Gateway not available. Some functionality will be limited.
+2025-04-19 00:49:55,244 - root - WARNING - DSPy is not available. Some functionality will be limited. Error: No module named 'medical.ml.dspy.dspy_client'
+2025-04-19 00:49:55,245 - root - WARNING - BiomedLM is not available. Some functionality will be limited.
+2025-04-19 00:49:55,285 - datasets - INFO - PyTorch version 2.6.0 available.
+2025-04-19 00:49:55,431 - api.websockets.mcp_manager - INFO - Started message queue cleanup task
+2025-04-19 00:49:55,431 - api.websockets.mcp_manager - INFO - Started heartbeat task
+2025-04-19 00:54:52,829 - root - INFO - Logging configured with level: INFO
+2025-04-19 00:54:53,630 - root - INFO - Logging configured with level: INFO
+2025-04-19 00:54:53,631 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-19 00:54:53,695 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-19 00:54:57,034 - asf.medical.llm_gateway.observability.prometheus - INFO - Initialized Prometheus exporter (push_gateway=False, push_interval=15)
+2025-04-19 00:54:57,093 - llm_gateway.resilience.metrics - INFO - {'component': 'resilience_metrics', 'event': 'Initialized Prometheus exporter for resilience patterns', 'logger': 'llm_gateway.resilience.metrics', 'level': 'info', 'timestamp': '2025-04-18T21:54:57.093822Z'}
+2025-04-19 00:54:57,116 - mcp_observability.tracing - INFO - {'event': 'Added OTLP exporter with endpoint localhost:4317', 'logger': 'mcp_observability.tracing', 'level': 'info', 'timestamp': '2025-04-18T21:54:57.116824Z'}
+2025-04-19 00:54:57,116 - mcp_observability.tracing - INFO - {'service': 'llm_gateway_resilience', 'otlp_enabled': True, 'otlp_endpoint': 'localhost:4317', 'event': 'Initialized tracing service', 'logger': 'mcp_observability.tracing', 'level': 'info', 'timestamp': '2025-04-18T21:54:57.116824Z'}
+2025-04-19 00:54:57,116 - llm_gateway.resilience.tracing - INFO - {'component': 'resilience_tracing', 'event': 'Initialized tracing service for resilience patterns', 'logger': 'llm_gateway.resilience.tracing', 'level': 'info', 'timestamp': '2025-04-18T21:54:57.116824Z'}
+2025-04-19 00:54:57,684 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-19 00:54:57,693 - root - INFO - Using LLM Gateway implementation
+2025-04-19 00:54:57,709 - root - WARNING - LLM Gateway MCP components not available. WebSocket functionality will be limited.
+2025-04-19 00:54:57,710 - root - WARNING - LLM Gateway not available. Some functionality will be limited.
+2025-04-19 00:54:57,711 - root - WARNING - DSPy is not available. Some functionality will be limited. Error: No module named 'medical.ml.dspy.dspy_client'
+2025-04-19 00:54:57,713 - root - WARNING - BiomedLM is not available. Some functionality will be limited.
+2025-04-19 00:54:57,752 - datasets - INFO - PyTorch version 2.6.0 available.
+2025-04-19 00:54:57,899 - api.websockets.mcp_manager - INFO - Started message queue cleanup task
+2025-04-19 00:54:57,899 - api.websockets.mcp_manager - INFO - Started heartbeat task

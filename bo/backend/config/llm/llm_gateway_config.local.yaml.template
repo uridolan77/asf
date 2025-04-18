@@ -1,0 +1,15 @@
+# Local LLM Gateway Configuration Template
+# Copy this file to llm_gateway_config.local.yaml and add your API keys
+# This file is ignored by git and should not be committed
+
+# This configuration extends the base configuration in llm_gateway_config.yaml
+# Only add the fields you want to override
+
+additional_config:
+  providers:
+    openai_gpt4_default:
+      connection_params:
+        # Add your OpenAI API key here
+        api_key: YOUR_OPENAI_API_KEY_HERE
+        
+    # Add other provider configurations as needed
