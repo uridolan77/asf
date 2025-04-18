@@ -30,6 +30,7 @@ import SNOMEDPage from './pages/medical/clients/SNOMEDPage';
 // LLM pages
 import LLMDashboard from './pages/llm/LLMDashboard';
 import CLPEFTDashboard from './components/llm/cl_peft/CLPEFTDashboard';
+import MCPDashboard from './pages/MCPDashboard';
 
 // Search pages
 import PICOSearch from './pages/search/PICOSearch';
@@ -54,6 +55,7 @@ const routes = [
       // LLM routes
       { path: 'llm/dashboard', element: <LLMDashboard /> },
       { path: 'llm/cl-peft', element: <CLPEFTDashboard /> },
+      { path: 'mcp', element: <MCPDashboard /> },
 
       // Search routes
       { path: 'search/pico', element: <PICOSearch /> },

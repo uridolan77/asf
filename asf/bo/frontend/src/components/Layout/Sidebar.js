@@ -43,7 +43,7 @@ const SidebarItem = ({ title, icon, href, children, open, onClick }) => {
   const location = useLocation();
   const theme = useTheme();
   const active = href ? location.pathname === href : false;
-  
+
   if (children) {
     return (
       <>
@@ -52,12 +52,12 @@ const SidebarItem = ({ title, icon, href, children, open, onClick }) => {
             <ListItemIcon sx={{ color: open ? theme.palette.primary.main : 'inherit' }}>
               {icon}
             </ListItemIcon>
-            <ListItemText 
-              primary={title} 
-              primaryTypographyProps={{ 
+            <ListItemText
+              primary={title}
+              primaryTypographyProps={{
                 fontWeight: open ? 600 : 400,
                 color: open ? theme.palette.primary.main : 'inherit'
-              }} 
+              }}
             />
             {open ? <ExpandLess /> : <ExpandMore />}
           </ListItemButton>
@@ -70,14 +70,14 @@ const SidebarItem = ({ title, icon, href, children, open, onClick }) => {
       </>
     );
   }
-  
+
   return (
     <ListItem disablePadding>
-      <ListItemButton 
-        component={RouterLink} 
+      <ListItemButton
+        component={RouterLink}
         to={href}
         selected={active}
-        sx={{ 
+        sx={{
           pl: 2,
           '&.Mui-selected': {
             backgroundColor: theme.palette.action.selected,
@@ -92,12 +92,12 @@ const SidebarItem = ({ title, icon, href, children, open, onClick }) => {
         <ListItemIcon sx={{ color: active ? theme.palette.primary.main : 'inherit' }}>
           {icon}
         </ListItemIcon>
-        <ListItemText 
-          primary={title} 
-          primaryTypographyProps={{ 
+        <ListItemText
+          primary={title}
+          primaryTypographyProps={{
             fontWeight: active ? 600 : 400,
             color: active ? theme.palette.primary.main : 'inherit'
-          }} 
+          }}
         />
       </ListItemButton>
     </ListItem>
@@ -108,14 +108,14 @@ const NestedSidebarItem = ({ title, href }) => {
   const location = useLocation();
   const theme = useTheme();
   const active = location.pathname === href;
-  
+
   return (
     <ListItem disablePadding>
-      <ListItemButton 
-        component={RouterLink} 
+      <ListItemButton
+        component={RouterLink}
         to={href}
         selected={active}
-        sx={{ 
+        sx={{
           pl: 4,
           '&.Mui-selected': {
             backgroundColor: theme.palette.action.selected,
@@ -127,13 +127,13 @@ const NestedSidebarItem = ({ title, href }) => {
           }
         }}
       >
-        <ListItemText 
-          primary={title} 
-          primaryTypographyProps={{ 
+        <ListItemText
+          primary={title}
+          primaryTypographyProps={{
             fontWeight: active ? 600 : 400,
             color: active ? theme.palette.primary.main : 'inherit',
             fontSize: '0.875rem'
-          }} 
+          }}
         />
       </ListItemButton>
     </ListItem>
@@ -145,19 +145,19 @@ const Sidebar = ({ open, onClose }) => {
   const [medicalOpen, setMedicalOpen] = React.useState(false);
   const [llmOpen, setLlmOpen] = React.useState(false);
   const [searchOpen, setSearchOpen] = React.useState(false);
-  
+
   const handleMedicalClick = () => {
     setMedicalOpen(!medicalOpen);
   };
-  
+
   const handleLlmClick = () => {
     setLlmOpen(!llmOpen);
   };
-  
+
   const handleSearchClick = () => {
     setSearchOpen(!searchOpen);
   };
-  
+
   const content = (
     <Box
       sx={{
@@ -186,7 +186,7 @@ const Sidebar = ({ open, onClose }) => {
             icon={<DashboardIcon />}
             href="/dashboard"
           />
-          
+
           <Box sx={{ mt: 2 }}>
             <Typography
               variant="overline"
@@ -196,7 +196,7 @@ const Sidebar = ({ open, onClose }) => {
               Medical
             </Typography>
           </Box>
-          
+
           <SidebarItem
             title="Medical Clients"
             icon={<MedicalServicesIcon />}
@@ -210,7 +210,7 @@ const Sidebar = ({ open, onClose }) => {
             <NestedSidebarItem title="CrossRef" href="/medical/clients/crossref" />
             <NestedSidebarItem title="SNOMED" href="/medical/clients/snomed" />
           </SidebarItem>
-          
+
           <Box sx={{ mt: 2 }}>
             <Typography
               variant="overline"
@@ -220,7 +220,7 @@ const Sidebar = ({ open, onClose }) => {
               LLM
             </Typography>
           </Box>
-          
+
           <SidebarItem
             title="LLM Management"
             icon={<PsychologyIcon />}
@@ -229,8 +229,9 @@ const Sidebar = ({ open, onClose }) => {
           >
             <NestedSidebarItem title="Dashboard" href="/llm/dashboard" />
             <NestedSidebarItem title="CL-PEFT" href="/llm/cl-peft" />
+            <NestedSidebarItem title="MCP Dashboard" href="/mcp-dashboard" />
           </SidebarItem>
-          
+
           <Box sx={{ mt: 2 }}>
             <Typography
               variant="overline"
@@ -240,7 +241,7 @@ const Sidebar = ({ open, onClose }) => {
               Search
             </Typography>
           </Box>
-          
+
           <SidebarItem
             title="Search Tools"
             icon={<SearchIcon />}
@@ -250,7 +251,7 @@ const Sidebar = ({ open, onClose }) => {
             <NestedSidebarItem title="PICO Search" href="/search/pico" />
             <NestedSidebarItem title="Knowledge Base" href="/search/knowledge-base" />
           </SidebarItem>
-          
+
           <Box sx={{ mt: 2 }}>
             <Typography
               variant="overline"
@@ -260,13 +261,13 @@ const Sidebar = ({ open, onClose }) => {
               System
             </Typography>
           </Box>
-          
+
           <SidebarItem
             title="Settings"
             icon={<SettingsIcon />}
             href="/settings"
           />
-          
+
           <SidebarItem
             title="Help"
             icon={<HelpIcon />}
@@ -282,7 +283,7 @@ const Sidebar = ({ open, onClose }) => {
       </Box>
     </Box>
   );
-  
+
   return (
     <SidebarRoot>
       <Box

@@ -31,6 +31,7 @@ from api.routers.medical_clinical_data import router as medical_clinical_data_ro
 from api.routers.llm_gateway import router as llm_gateway_router
 from api.routers.document_processing import router as document_processing_router
 from api.routers.dspy import router as dspy_router  # Import the DSPy router
+from api.routers.llm.mcp import router as mcp_router  # Import the MCP router
 
 # Import config routers
 from api.routers.config.provider_router import router as provider_router
@@ -73,6 +74,7 @@ app.include_router(clients_router)
 app.include_router(llm_gateway_router)
 app.include_router(document_processing_router)
 app.include_router(dspy_router)
+app.include_router(mcp_router, prefix="/api/llm")
 
 # Include config routers
 app.include_router(provider_router)

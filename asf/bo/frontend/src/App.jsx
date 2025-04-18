@@ -25,17 +25,18 @@ const ClientsManagementPage = lazy(() => import('./pages/ClientsManagementPage')
 const NCBIClientPage = lazy(() => import('./pages/NCBIClientPage'));
 const LLMManagement = lazy(() => import('./pages/LLMManagement'));
 const DocumentProcessing = lazy(() => import('./pages/DocumentProcessing'));
+const MCPDashboard = lazy(() => import('./pages/MCPDashboard'));
 
 // Loading fallback component
 const LoadingFallback = () => {
   return (
-    <div style={{ 
-      display: 'flex', 
-      justifyContent: 'center', 
-      alignItems: 'center', 
+    <div style={{
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
       height: '100vh',
       flexDirection: 'column',
-      backgroundColor: '#f5f5f5' 
+      backgroundColor: '#f5f5f5'
     }}>
       <CircularProgress size={40} />
       <div style={{ marginTop: 16 }}>Loading page...</div>
@@ -47,19 +48,19 @@ const LoadingFallback = () => {
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
   const [showLoader, setShowLoader] = useState(true);
-  
+
   // Use a delayed loader to prevent flickering
   useEffect(() => {
     // Only show loader if still loading after 300ms
     const timer = setTimeout(() => {
       setShowLoader(loading);
     }, 300);
-    
+
     // If not loading anymore, immediately hide loader
     if (!loading) {
       setShowLoader(false);
     }
-    
+
     return () => clearTimeout(timer);
   }, [loading]);
 
@@ -67,12 +68,12 @@ const ProtectedRoute = ({ children }) => {
   if (isAuthenticated) {
     return children;
   }
-  
+
   // Only show loading state if still loading after delay
   if (loading && showLoader) {
     return <LoadingFallback />;
   }
-  
+
   // If not authenticated and not loading, redirect to login
   return <Navigate to="/login" replace />;
 };
@@ -81,16 +82,16 @@ const ProtectedRoute = ({ children }) => {
 const AnimatedRoutes = () => {
   const location = useLocation();
   const progressBarRef = useRef(null);
-  
+
   // Trigger progress bar on route change
   useEffect(() => {
     if (progressBarRef.current) {
       progressBarRef.current.start();
-      
+
       const timer = setTimeout(() => {
         progressBarRef.current.complete();
       }, 500);
-      
+
       return () => clearTimeout(timer);
     }
   }, [location]);
@@ -169,6 +170,11 @@ const AnimatedRoutes = () => {
             <Route path="/document-processing" element={
               <ProtectedRoute>
                 <DocumentProcessing />
+              </ProtectedRoute>
+            } />
+            <Route path="/mcp-dashboard" element={
+              <ProtectedRoute>
+                <MCPDashboard />
               </ProtectedRoute>
             } />
 

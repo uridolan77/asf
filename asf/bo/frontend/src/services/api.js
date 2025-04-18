@@ -435,6 +435,17 @@ const apiService = {
     }),
     getBiomedLMConfig: () => apiCall('get', '/api/llm/biomedlm/config'),
     updateBiomedLMConfig: (config) => apiCall('put', '/api/llm/biomedlm/config', config),
+
+    // MCP (Model Context Protocol) endpoints
+    getMCPInfo: () => apiCall('get', '/api/llm/mcp/info'),
+    getMCPProviders: () => apiCall('get', '/api/llm/mcp/providers'),
+    getMCPProviderStatus: (providerId) => apiCall('get', `/api/llm/mcp/providers/${providerId}/status`),
+    getMCPProviderUsage: (providerId, period = 'day') => apiCall('get', `/api/llm/mcp/providers/${providerId}/usage`, { period }),
+    testMCPProvider: (providerId) => apiCall('post', `/api/llm/mcp/providers/${providerId}/test`),
+    registerMCPProvider: (config) => apiCall('post', '/api/llm/mcp/providers', config),
+    updateMCPProvider: (providerId, config) => apiCall('put', `/api/llm/mcp/providers/${providerId}`, config),
+    deleteMCPProvider: (providerId) => apiCall('delete', `/api/llm/mcp/providers/${providerId}`),
+    generateWithMCP: (request) => apiCall('post', '/api/llm/mcp/generate', request),
   },
 };
 

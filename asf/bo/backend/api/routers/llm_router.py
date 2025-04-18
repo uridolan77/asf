@@ -17,6 +17,8 @@ from .llm.main import router as llm_main_router
 from .llm.gateway import router as llm_gateway_router
 from .llm.dspy import router as llm_dspy_router
 from .llm.biomedlm import router as llm_biomedlm_router
+from .llm.cl_peft import router as llm_cl_peft_router
+from .llm.mcp import router as llm_mcp_router
 
 # Create the main LLM router
 router = APIRouter(prefix="/api/llm", tags=["llm"])
@@ -28,6 +30,8 @@ router.include_router(llm_main_router)
 router.include_router(llm_gateway_router)
 router.include_router(llm_dspy_router)
 router.include_router(llm_biomedlm_router)
+router.include_router(llm_cl_peft_router)
+router.include_router(llm_mcp_router)
 
 # Add additional endpoints to the main router
 @router.get("/status")
@@ -37,9 +41,9 @@ async def get_llm_status(
 ):
     """
     Get the status of all LLM components.
-    
+
     This endpoint returns the status of all LLM components,
-    including LLM Gateway, DSPy, and BiomedLM.
+    including LLM Gateway, DSPy, BiomedLM, CL-PEFT, and MCP.
     """
     try:
         status = await llm_service.get_status()
@@ -58,9 +62,9 @@ async def get_available_models(
 ):
     """
     Get all available models from all LLM components.
-    
+
     This endpoint returns all available models from all LLM components,
-    including LLM Gateway, DSPy, and BiomedLM.
+    including LLM Gateway, DSPy, BiomedLM, CL-PEFT, and MCP.
     """
     try:
         models = await llm_service.get_available_models()
@@ -80,7 +84,7 @@ async def generate_text(
 ):
     """
     Generate text using the appropriate LLM component.
-    
+
     This endpoint generates text using the appropriate LLM component
     based on the request data.
     """
@@ -103,7 +107,7 @@ async def get_usage_statistics(
 ):
     """
     Get usage statistics for all LLM components.
-    
+
     This endpoint returns usage statistics for all LLM components,
     including LLM Gateway, DSPy, and BiomedLM.
     """
