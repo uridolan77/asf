@@ -14,6 +14,7 @@ import uuid
 import random
 import logging
 import httpx
+from fastapi.openapi.docs import get_swagger_ui_html, get_redoc_html
 
 # Create router
 logger = logging.getLogger(__name__)
@@ -59,6 +60,24 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/login")
 
 app = FastAPI()
+
+# Add root endpoint
+@app.get("/")
+async def root():
+    return {
+        "message": "BO Medical Research Backend API",
+        "version": "1.0.0",
+        "status": "online",
+        "docs_url": "/docs",
+        "endpoints": [
+            {"path": "/api/knowledge-base", "description": "Knowledge Base Management"},
+            {"path": "/api/knowledge-base/search", "description": "Search Medical Literature"},
+            {"path": "/api/knowledge-base/search-pico", "description": "PICO Search"},
+            {"path": "/api/medical/analysis", "description": "Medical Literature Analysis"},
+            {"path": "/api/medical/export", "description": "Export Search and Analysis Results"},
+            {"path": "/docs", "description": "API Documentation"}
+        ]
+    }
 
 # Configure CORS - Allow specific origins for development
 app.add_middleware(
@@ -1665,5 +1684,4 @@ def test_medical_client_connection(
             "Network error"
         ]
         result["error_message"] = random.choice(error_messages)
-
     return result

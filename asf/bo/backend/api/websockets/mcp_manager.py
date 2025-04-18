@@ -96,6 +96,12 @@ class MCPConnectionManager:
     
     def _start_background_tasks(self) -> None:
         """Start background tasks for queue cleanup and heartbeats."""
+        # Check if tasks should be disabled via environment variable
+        import os
+        if os.environ.get("DISABLE_MCP_WEBSOCKET_TASKS") == "1":
+            logger.info("MCP WebSocket background tasks disabled via environment variable")
+            return
+            
         if self._queue_cleanup_task is None or self._queue_cleanup_task.done():
             self._queue_cleanup_task = asyncio.create_task(self._cleanup_message_queues())
             logger.info("Started message queue cleanup task")

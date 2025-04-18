@@ -54,6 +54,13 @@ def ensure_package_structure(start_dir):
 ensure_package_structure(project_root)
 
 if __name__ == '__main__':
+    # Set environment variable to disable MCP websocket background tasks
+    os.environ["DISABLE_MCP_WEBSOCKET_TASKS"] = "1"
+    
+    # Set other environment variables to disable potentially problematic components
+    os.environ["DISABLE_PROMETHEUS"] = "1"  # Disable Prometheus metrics if they exist
+    os.environ["LOG_LEVEL"] = "debug"  # Enable debug logging
+    
     import uvicorn
     from sqlalchemy import text
     from sqlalchemy.exc import OperationalError
@@ -108,4 +115,13 @@ if __name__ == '__main__':
         exit(1)
 
     print('Running backend server...')
-    uvicorn.run("api.endpoints:app", host="0.0.0.0", port=8000, reload=True)
+    # Use a different port and configure uvicorn with more explicit settings
+    uvicorn.run(
+        "api.endpoints:app", 
+        host="127.0.0.1",  # Use localhost instead of 0.0.0.0
+        port=9000,         # Use a higher port number to avoid permission issues
+        reload=True,
+        log_level="debug",
+        workers=1,
+        lifespan="on"
+    )
