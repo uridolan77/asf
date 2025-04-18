@@ -30,7 +30,7 @@ from ...services.llm.gateway_service import get_llm_gateway_service
 
 # Import user dependencies
 from ...dependencies import get_current_user, get_admin_user
-from ...models import User
+from models.user import User  # Fix: Import User from correct location
 
 router = APIRouter(prefix="/mcp", tags=["mcp"])
 

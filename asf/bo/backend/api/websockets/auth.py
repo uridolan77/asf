@@ -15,10 +15,10 @@ from typing import Dict, Optional, Any, Tuple, List
 from fastapi import WebSocket, WebSocketDisconnect, HTTPException, status
 from starlette.websockets import WebSocketState
 
-# Update to use absolute imports instead of relative imports
-from asf.bo.backend.api.auth.dependencies import get_current_user_ws
-from asf.bo.backend.api.models.user import User
-from asf.bo.backend.api.services.auth_service import get_auth_service
+# Update to use correct import paths
+from api.auth.dependencies import get_current_user_ws
+from models.user import User  # Updated path to the User model
+from api.services.auth_service import get_auth_service
 
 logger = logging.getLogger(__name__)
 
