@@ -15,6 +15,9 @@ from typing import Dict, Any, Optional, List, AsyncGenerator, Union
 
 from pydantic import BaseModel, Field
 
+# Import the base Transport and TransportError from the consolidated transport layer
+from asf.medical.llm_gateway.transport.base import Transport as BaseTransport, TransportError
+
 logger = logging.getLogger(__name__)
 
 
@@ -57,6 +60,9 @@ class Transport(ABC):
     
     A transport is responsible for sending and receiving messages
     to/from an MCP server using a specific communication protocol.
+    
+    Note: This is an MCP-specific transport interface that wraps
+    the core Transport implementations from the consolidated transport layer.
     """
     
     @abstractmethod

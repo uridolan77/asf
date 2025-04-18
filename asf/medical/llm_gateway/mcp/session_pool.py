@@ -16,7 +16,8 @@ from datetime import datetime
 from enum import Enum
 import heapq
 
-from asf.medical.llm_gateway.mcp.observability.metrics import MetricsService
+# Updated imports to use consolidated components
+from asf.medical.llm_gateway.observability.metrics import MetricsService
 from asf.medical.llm_gateway.observability.prometheus import get_prometheus_exporter
 
 logger = logging.getLogger(__name__)

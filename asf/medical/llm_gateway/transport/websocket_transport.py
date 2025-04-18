@@ -15,7 +15,15 @@ from typing import AsyncGenerator, Dict, List, Any, Optional, AsyncIterator, Tup
 from contextlib import asynccontextmanager
 from datetime import datetime
 
-from medical.llm_gateway.mcp.resilience.retry import RetryPolicy
+from asf.medical.llm_gateway.transport.base import (
+    Transport, TransportConfig, TransportResponse, TransportError,
+    CircuitBreakerOpenError, RateLimitExceededError
+)
+from asf.medical.llm_gateway.observability.metrics import MetricsService
+from asf.medical.llm_gateway.resilience.circuit_breaker import CircuitBreaker
+from asf.medical.llm_gateway.resilience.retry import RetryPolicy, DEFAULT_RETRY_POLICY
+from asf.medical.llm_gateway.observability.prometheus import get_prometheus_exporter
+from asf.medical.llm_gateway.resilience.rate_limiter import RateLimiter, RateLimitConfig
 
 # Import websockets library
 try:
@@ -56,17 +64,6 @@ except ImportError:
     class InvalidHandshake(WebSocketException):
         """Stub for InvalidHandshake."""
         pass
-
-from asf.medical.llm_gateway.transport.base import (
-    BaseTransport, TransportConfig, TransportError, 
-    CircuitBreakerOpenError, RateLimitExceededError
-)
-from asf.medical.llm_gateway.mcp.observability.metrics import MetricsService
-from asf.medical.llm_gateway.mcp.resilience.circuit_breaker import CircuitBreaker
-from asf.medical.llm_gateway.mcp.resilience.circuit_breaker import CircuitBreaker
-from asf.medical.llm_gateway.observability.prometheus import get_prometheus_exporter
-from asf.medical.llm_gateway.resilience.rate_limiter import RateLimiter, RateLimitConfig
-
 
 logger = logging.getLogger(__name__)
 
@@ -269,8 +266,7 @@ class WebSocketSession:
         if self.is_closed:
             raise TransportError(
                 message="WebSocket connection is closed",
-                code="CONNECTION_CLOSED",
-                transport_type="websocket"
+                code="CONNECTION_CLOSED"
             )
         
         # Update timestamp
@@ -296,15 +292,13 @@ class WebSocketSession:
                 raise TransportError(
                     message=f"WebSocket connection closed while sending: {str(e)}",
                     code="CONNECTION_CLOSED",
-                    transport_type="websocket",
-                    original_error=e
+                    details={"error_type": type(e).__name__}
                 )
             except Exception as e:
                 raise TransportError(
                     message=f"Error sending WebSocket message: {str(e)}",
                     code="SEND_ERROR",
-                    transport_type="websocket",
-                    original_error=e
+                    details={"error_type": type(e).__name__}
                 )
             
             # Wait for response with timeout
@@ -318,8 +312,7 @@ class WebSocketSession:
                 raise TransportError(
                     message=f"Timeout waiting for WebSocket response after {self.config.read_timeout}s",
                     code="RESPONSE_TIMEOUT",
-                    transport_type="websocket",
-                    original_error=e
+                    details={"timeout": self.config.read_timeout}
                 )
         finally:
             # Clean up response queue
@@ -341,8 +334,7 @@ class WebSocketSession:
         if self.is_closed:
             raise TransportError(
                 message="WebSocket connection is closed",
-                code="CONNECTION_CLOSED",
-                transport_type="websocket"
+                code="CONNECTION_CLOSED"
             )
         
         # Update timestamp
@@ -371,15 +363,13 @@ class WebSocketSession:
                 raise TransportError(
                     message=f"WebSocket connection closed while sending: {str(e)}",
                     code="CONNECTION_CLOSED",
-                    transport_type="websocket",
-                    original_error=e
+                    details={"error_type": type(e).__name__}
                 )
             except Exception as e:
                 raise TransportError(
                     message=f"Error sending WebSocket message: {str(e)}",
                     code="SEND_ERROR",
-                    transport_type="websocket",
-                    original_error=e
+                    details={"error_type": type(e).__name__}
                 )
             
             # Stream responses
@@ -592,8 +582,7 @@ class WebSocketConnectionPool:
             if best_session is None:
                 raise TransportError(
                     message="No WebSocket sessions available and pool is full",
-                    code="POOL_FULL",
-                    transport_type="websocket"
+                    code="POOL_FULL"
                 )
             
             return best_session
@@ -614,8 +603,7 @@ class WebSocketConnectionPool:
         if not WEBSOCKETS_AVAILABLE:
             raise TransportError(
                 message="WebSocket transport requires 'websockets' package",
-                code="MISSING_DEPENDENCY",
-                transport_type="websocket"
+                code="MISSING_DEPENDENCY"
             )
         
         # Create SSL context if needed
@@ -671,29 +659,25 @@ class WebSocketConnectionPool:
             raise TransportError(
                 message=f"Timeout connecting to WebSocket after {self.config.connect_timeout}s",
                 code="CONNECTION_TIMEOUT",
-                transport_type="websocket",
-                original_error=e
+                details={"timeout": self.config.connect_timeout}
             )
         except InvalidStatusCode as e:
             raise TransportError(
                 message=f"WebSocket connection failed with status code {e.status_code}",
                 code="INVALID_STATUS",
-                transport_type="websocket",
-                original_error=e
+                details={"status_code": e.status_code}
             )
         except InvalidHandshake as e:
             raise TransportError(
                 message=f"WebSocket handshake failed: {str(e)}",
                 code="HANDSHAKE_FAILED",
-                transport_type="websocket",
-                original_error=e
+                details={"error": str(e)}
             )
         except Exception as e:
             raise TransportError(
                 message=f"Error creating WebSocket connection: {str(e)}",
                 code="CONNECTION_ERROR",
-                transport_type="websocket",
-                original_error=e
+                details={"error_type": type(e).__name__}
             )
     
     def _create_ssl_context(self) -> ssl.SSLContext:
@@ -793,7 +777,7 @@ class WebSocketConnectionPool:
         }
 
 
-class WebSocketTransport(BaseTransport):
+class WebSocketTransport(Transport):
     """
     WebSocket transport implementation.
     
@@ -811,6 +795,7 @@ class WebSocketTransport(BaseTransport):
     
     def __init__(
         self,
+        provider_id: str,
         config: Dict[str, Any],
         metrics_service: Optional[MetricsService] = None,
         prometheus_exporter: Optional[Any] = None
@@ -819,11 +804,12 @@ class WebSocketTransport(BaseTransport):
         Initialize WebSocket transport.
         
         Args:
+            provider_id: Provider ID
             config: Transport configuration
             metrics_service: Metrics service
             prometheus_exporter: Prometheus exporter
         """
-        super().__init__(config)
+        self.provider_id = provider_id
         
         if not WEBSOCKETS_AVAILABLE:
             logger.warning("WebSocket transport requires 'websockets' package")
@@ -858,7 +844,7 @@ class WebSocketTransport(BaseTransport):
         
         # Create connection pool
         self.pool = WebSocketConnectionPool(
-            provider_id=self.transport_type,
+            provider_id=provider_id,
             config=self.config,
             metrics_service=self.metrics_service,
             prometheus_exporter=self.prometheus
@@ -877,7 +863,7 @@ class WebSocketTransport(BaseTransport):
         self.circuit_breaker = None
         if config.get("enable_circuit_breaker", True):
             self.circuit_breaker = CircuitBreaker(
-                name=f"websocket_{self.transport_type}",
+                name=f"websocket_{provider_id}",
                 failure_threshold=config.get("circuit_breaker_threshold", 5),
                 recovery_timeout=config.get("circuit_breaker_recovery_timeout", 30),
                 half_open_max_calls=config.get("circuit_breaker_half_open_max_calls", 1),
@@ -895,19 +881,16 @@ class WebSocketTransport(BaseTransport):
                 adaptive_factor=config.get("rate_limit_adaptive_factor", 0.5)
             )
             self.rate_limiter = RateLimiter(
-                provider_id=self.transport_type,
+                provider_id=provider_id,
                 config=rate_limit_config
             )
         
-        logger.info(
-            f"Initialized WebSocket transport with URI {self.config.uri}",
-            pool_size=self.config.pool_size
-        )
+        logger.info(f"Initialized WebSocket transport for {provider_id} with URI {self.config.uri}")
     
     @asynccontextmanager
-    async def connect(self) -> AsyncGenerator[Any, None]:
+    async def connect(self) -> AsyncGenerator[WebSocketSession, None]:
         """
-        Get a connection from the pool.
+        Get a WebSocket session from the pool.
         
         Returns:
             WebSocket session
@@ -919,24 +902,24 @@ class WebSocketTransport(BaseTransport):
         """
         # Check circuit breaker
         if self.circuit_breaker and self.circuit_breaker.is_open():
-            logger.warning("Circuit breaker open, failing fast")
+            logger.warning(f"Circuit breaker open for {self.provider_id}, failing fast")
             self.prometheus.record_circuit_breaker_event(
-                provider_id=self.transport_type,
+                provider_id=self.provider_id,
                 state="open",
                 event="rejected_request"
             )
             raise CircuitBreakerOpenError(
-                message=f"Circuit breaker open for {self.transport_type}",
-                transport_type="websocket"
+                message=f"Circuit breaker open for {self.provider_id}",
+                details={"transport_type": "websocket"}
             )
         
         # Check rate limit
         if self.rate_limiter:
             success, wait_time = await self.rate_limiter.acquire()
             if not success:
-                logger.warning(f"Rate limit exceeded, retry after {wait_time:.2f}s")
+                logger.warning(f"Rate limit exceeded for {self.provider_id}, retry after {wait_time:.2f}s")
                 self.prometheus.record_rate_limit_event(
-                    provider_id=self.transport_type,
+                    provider_id=self.provider_id,
                     wait_time=wait_time
                 )
                 raise RateLimitExceededError(
@@ -979,21 +962,38 @@ class WebSocketTransport(BaseTransport):
             
             raise
     
-    async def send_message(self, message: Dict[str, Any]) -> Dict[str, Any]:
+    async def send_request(
+        self,
+        method: str,
+        request: Any,
+        metadata: Optional[Dict[str, Any]] = None,
+        timeout: Optional[float] = None
+    ) -> TransportResponse:
         """
-        Send a message to the server.
+        Send a request and get a response.
         
         Args:
-            message: Message to send
+            method: Method name
+            request: Request data
+            metadata: Request metadata
+            timeout: Request timeout
             
         Returns:
-            Server response
-            
-        Raises:
-            TransportError: If an error occurs
+            Response data
         """
         # Record metrics for the request
         start_time = time.time()
+        
+        # Create message
+        message = {
+            "method": method,
+            "request_id": metadata.get("request_id") if metadata else str(uuid.uuid4()),
+            "params": request
+        }
+        
+        # Add metadata
+        if metadata:
+            message["metadata"] = metadata
         
         # Apply retry policy
         for attempt in range(self.retry_policy.max_retries + 1):
@@ -1005,14 +1005,20 @@ class WebSocketTransport(BaseTransport):
                     
                     # Record metrics
                     duration = time.time() - start_time
+                    latency_ms = duration * 1000
+                    
                     self.prometheus.record_request(
-                        provider_id=self.transport_type,
-                        method="send_message",
+                        provider_id=self.provider_id,
+                        method=method,
                         status="success",
                         duration=duration
                     )
                     
-                    return response
+                    return TransportResponse(
+                        data=response,
+                        metadata={},
+                        latency_ms=latency_ms
+                    )
             
             except TransportError as e:
                 # Check if error is retryable
@@ -1026,8 +1032,8 @@ class WebSocketTransport(BaseTransport):
                 # Record metrics
                 duration = time.time() - start_time
                 self.prometheus.record_request(
-                    provider_id=self.transport_type,
-                    method="send_message",
+                    provider_id=self.provider_id,
+                    method=method,
                     status="error",
                     duration=duration,
                     error_type=e.code
@@ -1039,8 +1045,8 @@ class WebSocketTransport(BaseTransport):
                 # Record metrics
                 duration = time.time() - start_time
                 self.prometheus.record_request(
-                    provider_id=self.transport_type,
-                    method="send_message",
+                    provider_id=self.provider_id,
+                    method=method,
                     status="error",
                     duration=duration,
                     error_type=type(e).__name__
@@ -1050,26 +1056,42 @@ class WebSocketTransport(BaseTransport):
                 raise TransportError(
                     message=f"Unexpected error in WebSocket transport: {str(e)}",
                     code="INTERNAL",
-                    details={"error_type": type(e).__name__},
-                    transport_type="websocket",
-                    original_error=e
+                    details={"error_type": type(e).__name__}
                 )
     
-    async def send_message_stream(self, message: Dict[str, Any]) -> AsyncIterator[Dict[str, Any]]:
+    async def send_streaming_request(
+        self,
+        method: str,
+        request: Any,
+        metadata: Optional[Dict[str, Any]] = None,
+        timeout: Optional[float] = None
+    ) -> AsyncIterator[TransportResponse]:
         """
-        Send a message and stream responses.
+        Send a streaming request.
         
         Args:
-            message: Message to send
+            method: Method name
+            request: Request data
+            metadata: Request metadata
+            timeout: Request timeout
             
         Returns:
-            Iterator of response messages
-            
-        Raises:
-            TransportError: If an error occurs
+            Iterator of response chunks
         """
         # Record metrics for the request
         start_time = time.time()
+        
+        # Create message
+        message = {
+            "method": method,
+            "request_id": metadata.get("request_id") if metadata else str(uuid.uuid4()),
+            "params": request,
+            "stream": True
+        }
+        
+        # Add metadata
+        if metadata:
+            message["metadata"] = metadata
         
         # Apply retry policy
         for attempt in range(self.retry_policy.max_retries + 1):
@@ -1079,21 +1101,30 @@ class WebSocketTransport(BaseTransport):
                     # Send message and stream responses
                     chunk_index = 0
                     async for chunk in session.send_message_stream(message):
+                        # Calculate latency
+                        duration = time.time() - start_time
+                        latency_ms = duration * 1000
+                        
                         # Record chunk metrics
                         self.prometheus.record_stream_chunk(
-                            provider_id=self.transport_type,
+                            provider_id=self.provider_id,
                             chunk_index=chunk_index
                         )
                         
-                        # Yield chunk
-                        yield chunk
+                        # Yield response
+                        yield TransportResponse(
+                            data=chunk,
+                            metadata={},
+                            latency_ms=latency_ms
+                        )
+                        
                         chunk_index += 1
                     
-                    # Record metrics
+                    # Record metrics for the complete stream
                     duration = time.time() - start_time
                     self.prometheus.record_request(
-                        provider_id=self.transport_type,
-                        method="send_message_stream",
+                        provider_id=self.provider_id,
+                        method=method,
                         status="success",
                         duration=duration,
                         chunks=chunk_index
@@ -1114,8 +1145,8 @@ class WebSocketTransport(BaseTransport):
                 # Record metrics
                 duration = time.time() - start_time
                 self.prometheus.record_request(
-                    provider_id=self.transport_type,
-                    method="send_message_stream",
+                    provider_id=self.provider_id,
+                    method=method,
                     status="error",
                     duration=duration,
                     error_type=e.code
@@ -1127,8 +1158,8 @@ class WebSocketTransport(BaseTransport):
                 # Record metrics
                 duration = time.time() - start_time
                 self.prometheus.record_request(
-                    provider_id=self.transport_type,
-                    method="send_message_stream",
+                    provider_id=self.provider_id,
+                    method=method,
                     status="error",
                     duration=duration,
                     error_type=type(e).__name__
@@ -1138,9 +1169,7 @@ class WebSocketTransport(BaseTransport):
                 raise TransportError(
                     message=f"Unexpected error in WebSocket stream: {str(e)}",
                     code="INTERNAL",
-                    details={"error_type": type(e).__name__},
-                    transport_type="websocket",
-                    original_error=e
+                    details={"error_type": type(e).__name__}
                 )
     
     async def start(self) -> None:
@@ -1152,5 +1181,24 @@ class WebSocketTransport(BaseTransport):
         await self.pool.stop()
     
     def get_pool_stats(self) -> Dict[str, Any]:
-        """Get connection pool statistics."""
-        return self.pool.get_pool_stats()
+        """
+        Get connection pool statistics.
+        
+        Returns:
+            Pool statistics
+        """
+        stats = self.pool.get_pool_stats()
+        
+        if self.circuit_breaker:
+            stats["circuit_breaker"] = {
+                "is_open": self.circuit_breaker.is_open(),
+                "failure_count": self.circuit_breaker.failure_count,
+                "failure_threshold": self.circuit_breaker.failure_threshold,
+                "last_failure_time": self.circuit_breaker.last_failure_time.isoformat() if self.circuit_breaker.last_failure_time else None,
+                "reset_timeout_seconds": self.circuit_breaker.reset_timeout_seconds
+            }
+        
+        if self.rate_limiter:
+            stats["rate_limiter"] = self.rate_limiter.get_stats()
+            
+        return stats

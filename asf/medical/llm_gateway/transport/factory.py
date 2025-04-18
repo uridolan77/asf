@@ -1,5 +1,5 @@
 """
-Enhanced transport factory implementation for LLM Gateway.
+Unified transport factory for LLM Gateway.
 
 This module provides a factory for creating transport instances,
 with support for a variety of transport types and dynamic loading.
@@ -9,13 +9,15 @@ import importlib
 import logging
 from typing import Any, Dict, List, Optional, Type
 
-from asf.medical.llm_gateway.mcp.transport.base import BaseTransport
-from asf.medical.llm_gateway.mcp.transport.stdio import StdioTransport
-from asf.medical.llm_gateway.mcp.transport.grpc import GRPCTransport
-from asf.medical.llm_gateway.mcp.transport.http import HttpTransport
-from asf.medical.llm_gateway.mcp.transport.websocket import WebSocketTransport
-from asf.medical.llm_gateway.mcp.observability.metrics import MetricsService
+from asf.medical.llm_gateway.transport.base import Transport, TransportConfig, TransportError
+from asf.medical.llm_gateway.observability.metrics import MetricsService
 from asf.medical.llm_gateway.observability.prometheus import get_prometheus_exporter
+
+# Import Transport implementations - direct imports for the built-in types
+from asf.medical.llm_gateway.transport.grpc_transport import GRPCTransport
+from asf.medical.llm_gateway.transport.http_transport import HTTPTransport
+from asf.medical.llm_gateway.transport.websocket_transport import WebSocketTransport
+from asf.medical.llm_gateway.transport.stdio_transport import StdioTransport
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +29,7 @@ class TransportFactoryError(Exception):
 
 class TransportFactory:
     """
-    Enhanced factory for creating transport instances.
+    Unified factory for creating transport instances.
     
     This factory supports built-in transport types (stdio, gRPC, HTTP, WebSocket)
     and dynamically loaded custom transports using a flexible registration system.
@@ -42,17 +44,17 @@ class TransportFactory:
     
     # Registry of built-in transport types to their class paths
     BUILT_IN_TRANSPORTS = {
-        "stdio": "asf.medical.llm_gateway.transport.stdio.StdioTransport",
+        "stdio": "asf.medical.llm_gateway.transport.stdio_transport.StdioTransport",
         "grpc": "asf.medical.llm_gateway.transport.grpc_transport.GRPCTransport",
-        "http": "asf.medical.llm_gateway.transport.http.HttpTransport",
-        "websocket": "asf.medical.llm_gateway.transport.websocket.WebSocketTransport",
+        "http": "asf.medical.llm_gateway.transport.http_transport.HTTPTransport",
+        "websocket": "asf.medical.llm_gateway.transport.websocket_transport.WebSocketTransport",
     }
     
     # Direct mapping for fast lookups after first use
     _transport_classes = {
         "stdio": StdioTransport,
         "grpc": GRPCTransport,
-        "http": HttpTransport,
+        "http": HTTPTransport,
         "websocket": WebSocketTransport,
     }
     
@@ -77,7 +79,7 @@ class TransportFactory:
     def register_transport(
         self,
         transport_type: str,
-        transport_class: Optional[Type[BaseTransport]] = None,
+        transport_class: Optional[Type[Transport]] = None,
         class_path: Optional[str] = None
     ) -> None:
         """
@@ -100,9 +102,9 @@ class TransportFactory:
         transport_type = transport_type.lower()
         
         if transport_class:
-            # Ensure it's a BaseTransport subclass
-            if not issubclass(transport_class, BaseTransport):
-                raise ValueError(f"Transport class must inherit from BaseTransport")
+            # Ensure it's a Transport subclass
+            if not issubclass(transport_class, Transport):
+                raise ValueError(f"Transport class must inherit from Transport")
             
             # Register the class directly
             self._transport_classes[transport_type] = transport_class
@@ -114,18 +116,16 @@ class TransportFactory:
     
     def create_transport(
         self,
-        transport_type: str,
-        config: Dict[str, Any],
         provider_id: str,
+        config: Dict[str, Any],
         singleton: bool = False
-    ) -> BaseTransport:
+    ) -> Transport:
         """
-        Create a transport instance of the specified type.
+        Create a transport instance for the specified provider.
         
         Args:
-            transport_type: Type of transport (stdio, grpc, http, websocket, or custom)
-            config: Configuration for the transport
             provider_id: Provider ID using this transport
+            config: Configuration for the transport
             singleton: Whether to reuse existing instances with the same config
             
         Returns:
@@ -134,12 +134,12 @@ class TransportFactory:
         Raises:
             TransportFactoryError: If transport creation fails
         """
-        transport_type = transport_type.lower()
+        # Extract transport type from config
+        transport_type = config.get("transport_type", "default").lower()
         
         # Handle default transport type
         if not transport_type or transport_type == "default":
-            # Use config.transport_type if available, otherwise default to stdio
-            transport_type = config.get("transport_type", "stdio").lower()
+            transport_type = "http"  # Default to HTTP if not specified
         
         # Check for singleton reuse
         if singleton:
@@ -156,13 +156,10 @@ class TransportFactory:
         
         # Create the transport instance
         try:
-            # Add provider_id to the config
-            config_with_id = config.copy()
-            config_with_id["provider_id"] = provider_id
-            
             # Create the transport instance
             transport = transport_class(
-                config=config_with_id,
+                provider_id=provider_id,
+                config=config,
                 metrics_service=self.metrics_service,
                 prometheus_exporter=self.prometheus
             )
@@ -179,8 +176,7 @@ class TransportFactory:
         
         except Exception as e:
             self.logger.error(
-                f"Failed to create {transport_type} transport",
-                error=str(e),
+                f"Failed to create {transport_type} transport: {str(e)}",
                 exc_info=True
             )
             
@@ -188,7 +184,7 @@ class TransportFactory:
                 f"Failed to create {transport_type} transport: {str(e)}"
             ) from e
     
-    def _get_transport_class(self, transport_type: str) -> Type[BaseTransport]:
+    def _get_transport_class(self, transport_type: str) -> Type[Transport]:
         """
         Get the transport class for the specified type.
         
@@ -233,7 +229,7 @@ class TransportFactory:
                 ) from e
         
         # Try standard naming convention
-        standard_path = f"asf.medical.llm_gateway.transport.{transport_type}.{transport_type.capitalize()}Transport"
+        standard_path = f"asf.medical.llm_gateway.transport.{transport_type}_transport.{transport_type.capitalize()}Transport"
         try:
             transport_class = self._load_class(standard_path)
             self._transport_classes[transport_type] = transport_class
@@ -248,7 +244,7 @@ class TransportFactory:
             f"Unknown transport type '{transport_type}'. Available types: {', '.join(available_types)}"
         )
     
-    def _load_class(self, class_path: str) -> Type[BaseTransport]:
+    def _load_class(self, class_path: str) -> Type[Transport]:
         """
         Load a class by its fully qualified path.
         
@@ -260,7 +256,7 @@ class TransportFactory:
             
         Raises:
             ImportError: If module or class cannot be loaded
-            TypeError: If loaded class is not a BaseTransport subclass
+            TypeError: If loaded class is not a Transport subclass
         """
         try:
             # Split into module path and class name
@@ -272,9 +268,9 @@ class TransportFactory:
             # Get the class
             transport_class = getattr(module, class_name)
             
-            # Ensure it's a BaseTransport subclass
-            if not issubclass(transport_class, BaseTransport):
-                raise TypeError(f"Class {class_path} is not a BaseTransport subclass")
+            # Ensure it's a Transport subclass
+            if not issubclass(transport_class, Transport):
+                raise TypeError(f"Class {class_path} is not a Transport subclass")
             
             return transport_class
         
@@ -299,6 +295,7 @@ class TransportFactory:
         """
         Clean up all singleton transport instances.
         """
+        import asyncio
         cleanup_tasks = []
         for instance_key, transport in list(self._transport_instances.items()):
             if hasattr(transport, "stop") and callable(transport.stop):
@@ -309,6 +306,3 @@ class TransportFactory:
         
         self._transport_instances.clear()
         self.logger.info("Cleaned up all transport instances")
-
-# Import asyncio here instead of at the top to avoid circular imports
-import asyncio

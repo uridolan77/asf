@@ -8,7 +8,8 @@ import logging
 import uuid
 from typing import Dict, Any, List, Optional, AsyncGenerator, Union
 
-from .transport import Transport
+# Updated imports to use the consolidated transport layer
+from asf.medical.llm_gateway.transport.base import Transport, TransportError
 from .errors import McpError, McpTransportError
 
 logger = logging.getLogger(__name__)
