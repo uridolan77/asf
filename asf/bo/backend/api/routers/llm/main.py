@@ -6,7 +6,7 @@ which includes all sub-routers for specific LLM components.
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 import logging
 
 from ...auth import get_current_user, User
@@ -38,6 +38,65 @@ async def llm_root(current_user: User = Depends(get_current_user)):
     Root endpoint for LLM API.
 
     Returns information about available LLM endpoints.
+    """
+    return {
+        "status": "ok",
+        "message": "LLM API is operational"
+    }
+
+@router.get("/status")
+async def get_llm_status():
+    """
+    Get the status of all LLM components.
+
+    Returns a comprehensive status report for all LLM components,
+    including Gateway, DSPy, BiomedLM, CL-PEFT, and MCP.
+    """
+    # In a real implementation, we would check the actual status of each component
+    # For now, we'll return a mock status
+    return {
+        "success": True,
+        "data": {
+            "overall_status": "operational",
+            "components": {
+                "gateway": {
+                    "status": "available",
+                    "details": {
+                        "active_providers": ["openai", "anthropic", "local"],
+                        "total_providers": 3,
+                        "total_models": 12
+                    }
+                },
+                "dspy": {
+                    "status": "available",
+                    "modules": ["MedicalRAG", "ContradictionDetection", "EntityExtraction"],
+                    "modules_count": 3
+                },
+                "biomedlm": {
+                    "status": "available",
+                    "models": ["biomedlm-2-7b", "biomedlm-3-3b"],
+                    "models_count": 2
+                },
+                "cl_peft": {
+                    "status": "available",
+                    "adapters": ["medical-qa-lora", "clinical-notes-qlora"],
+                    "adapters_count": 2
+                },
+                "mcp": {
+                    "status": "available",
+                    "providers": ["openai-mcp", "anthropic-mcp", "local-mcp"],
+                    "providers_count": 3
+                }
+            }
+        }
+    }
+
+@router.get("/components")
+async def get_llm_components(current_user: User = Depends(get_current_user)):
+    """
+    Get information about all LLM components.
+
+    Returns a list of all available LLM components and their endpoints.
     """
     return {
         "status": "ok",

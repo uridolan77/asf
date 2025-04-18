@@ -17,6 +17,8 @@ from typing import Any, AsyncGenerator, Dict, Optional, Tuple, Union
 import structlog
 
 logger = structlog.get_logger("mcp_transport")
+# Add import at the top
+from asf.medical.llm_gateway.mcp.session_pool import EnhancedSessionPool, SessionPoolConfig, Session, SessionPriority
 
 
 class BaseTransport(ABC):
@@ -36,6 +38,27 @@ class BaseTransport(ABC):
         """
         self.config = config
         self.logger = logger.bind(transport_type=self.__class__.__name__)
+
+        session_pool_config = SessionPoolConfig(
+            min_size=config.get("pool_min_size", 2),
+            max_size=config.get("pool_max_size", 10),
+            max_idle_time_seconds=config.get("pool_max_idle_time_seconds", 300),
+            health_check_interval_seconds=config.get("health_check_interval_seconds", 60),
+            warmup_sessions=config.get("warmup_sessions", True),
+            create_on_demand=config.get("create_on_demand", True),
+            adaptive_sizing=config.get("adaptive_sizing", True)
+        )
+        
+        # Create session pool
+        self.session_pool = EnhancedSessionPool(
+            provider_id=self.transport_type,
+            create_session_func=self._create_session,
+            close_session_func=self._close_session,
+            ping_session_func=self._ping_session if hasattr(self, '_ping_session') else None,
+            config=session_pool_config,
+            metrics_service=self.metrics_service,
+            prometheus_exporter=self.prometheus        
+        )
     
     @asynccontextmanager
     @abstractmethod

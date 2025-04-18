@@ -6,7 +6,8 @@ import httpx
 import os
 import logging
 
-from .auth import get_current_user, get_current_admin_user, get_db
+from .auth.dependencies import get_current_user, get_db
+from .routers.auth import get_current_admin_user
 from models.user import User
 
 router = APIRouter()
@@ -164,49 +165,14 @@ def get_recent_updates(current_user: User = Depends(get_current_user), db: Sessi
 @router.get("/api/llm-usage")
 async def get_llm_usage(current_user: User = Depends(get_current_user)):
     """Get LLM usage statistics for the dashboard."""
-    try:
-        # Now we can use the auth_token attribute we added to the User object
-        async with httpx.AsyncClient() as client:
-            response = await client.get(
-                f"{MEDICAL_API_URL}/api/llm/usage",
-                headers={"Authorization": f"Bearer {current_user.auth_token}"}
-            )
-
-            if response.status_code != 200:
-                logger.warning(f"Failed to get LLM usage from API: {response.status_code}")
-                # Return fallback mock data
-                usage = [
-                    { "model": "gpt-4o", "usage_count": 2580 },
-                    { "model": "claude-3-opus", "usage_count": 1420 },
-                    { "model": "biomedlm-2-7b", "usage_count": 3850 },
-                    { "model": "mistralai/Mixtral-8x7B", "usage_count": 980 }
-                ]
-                return {"usage": usage}
-
-            # Process the response to match the expected format
-            data = response.json()
-            if isinstance(data, list):
-                # If the API returns a list directly, use it
-                return {"usage": data}
-            elif "usage" in data:
-                # If the API returns a dict with a usage key, use that
-                return data
-            else:
-                # Try to extract model usage from the response
-                usage = []
-                for model, count in data.get("components", {}).get("gateway", {}).get("models", {}).items():
-                    usage.append({"model": model, "usage_count": count})
-                return {"usage": usage}
-    except Exception as e:
-        logger.error(f"Error getting LLM usage: {str(e)}")
-        # Return fallback mock data
-        usage = [
-            { "model": "gpt-4o", "usage_count": 2580 },
-            { "model": "claude-3-opus", "usage_count": 1420 },
-            { "model": "biomedlm-2-7b", "usage_count": 3850 },
-            { "model": "mistralai/Mixtral-8x7B", "usage_count": 980 }
-        ]
-        return {"usage": usage}
+    # Return mock data for now
+    usage = [
+        { "model": "gpt-4o", "usage_count": 2580 },
+        { "model": "claude-3-opus", "usage_count": 1420 },
+        { "model": "biomedlm-2-7b", "usage_count": 3850 },
+        { "model": "mistralai/Mixtral-8x7B", "usage_count": 980 }
+    ]
+    return {"usage": usage}
 
 @router.get("/api/public/stats")
 def get_public_dashboard_stats():

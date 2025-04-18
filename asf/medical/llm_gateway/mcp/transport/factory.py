@@ -7,9 +7,9 @@ with support for a variety of transport types and dynamic loading.
 
 import importlib
 import logging
-from typing import Any, Dict, Optional, Type
+from typing import Any, Dict, List, Optional, Type
 
-from asf.medical.llm_gateway.transport.base import BaseTransport
+from asf.medical.llm_gateway.mcp.transport.base import BaseTransport
 from asf.medical.llm_gateway.mcp.transport.stdio import StdioTransport
 from asf.medical.llm_gateway.mcp.transport.grpc import GRPCTransport
 from asf.medical.llm_gateway.mcp.transport.http import HttpTransport

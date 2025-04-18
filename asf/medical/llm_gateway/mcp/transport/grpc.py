@@ -6,6 +6,7 @@ for connecting to LLM services that expose gRPC interfaces.
 """
 
 import asyncio
+import json
 import logging
 import time
 from typing import Dict, List, Any, Optional, AsyncIterator, Tuple, Union

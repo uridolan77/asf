@@ -12,26 +12,10 @@ import logging
 from ..auth import get_current_user, User
 from ..services.llm import get_llm_service, LLMService
 
-# Import LLM routers
-from .llm.main import router as llm_main_router
-from .llm.gateway import router as llm_gateway_router
-from .llm.dspy import router as llm_dspy_router
-from .llm.biomedlm import router as llm_biomedlm_router
-from .llm.cl_peft import router as llm_cl_peft_router
-from .llm.mcp import router as llm_mcp_router
-
 # Create the main LLM router
 router = APIRouter(prefix="/api/llm", tags=["llm"])
 
 logger = logging.getLogger(__name__)
-
-# Include sub-routers
-router.include_router(llm_main_router)
-router.include_router(llm_gateway_router)
-router.include_router(llm_dspy_router)
-router.include_router(llm_biomedlm_router)
-router.include_router(llm_cl_peft_router)
-router.include_router(llm_mcp_router)
 
 # Add additional endpoints to the main router
 @router.get("/status")
@@ -46,8 +30,11 @@ async def get_llm_status(
     including LLM Gateway, DSPy, BiomedLM, CL-PEFT, and MCP.
     """
     try:
-        status = await llm_service.get_status()
-        return status
+        status_data = await llm_service.get_status()
+        return {
+            "success": True,
+            "data": status_data
+        }
     except Exception as e:
         logger.error(f"Error getting LLM status: {str(e)}")
         raise HTTPException(
@@ -68,7 +55,10 @@ async def get_available_models(
     """
     try:
         models = await llm_service.get_available_models()
-        return models
+        return {
+            "success": True,
+            "data": models
+        }
     except Exception as e:
         logger.error(f"Error getting available models: {str(e)}")
         raise HTTPException(
@@ -90,7 +80,10 @@ async def generate_text(
     """
     try:
         result = await llm_service.generate_text(request_data)
-        return result
+        return {
+            "success": True,
+            "data": result
+        }
     except HTTPException:
         raise
     except Exception as e:
