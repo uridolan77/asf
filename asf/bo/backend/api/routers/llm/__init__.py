@@ -16,5 +16,6 @@ from .main import router as llm_router
 from .debug import router as debug_router
 from .cl_peft import router as cl_peft_router
 from .mcp import router as mcp_router
+from .grafana import router as grafana_router
 
-__all__ = ['gateway_router', 'dspy_router', 'biomedlm_router', 'llm_router', 'debug_router', 'cl_peft_router', 'mcp_router']
+__all__ = ['gateway_router', 'dspy_router', 'biomedlm_router', 'llm_router', 'debug_router', 'cl_peft_router', 'mcp_router', 'grafana_router']

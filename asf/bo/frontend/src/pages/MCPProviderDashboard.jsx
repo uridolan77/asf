@@ -21,12 +21,14 @@ import {
   Storage as StorageIcon,
   Speed as SpeedIcon,
   BugReport as BugReportIcon,
-  Insights as InsightsIcon
+  Insights as InsightsIcon,
+  Dashboard as DashboardIcon
 } from '@mui/icons-material';
 
 import PageLayout from '../components/Layout/PageLayout';
 import MCPUsageStats from '../components/LLM/MCP/MCPUsageStats';
 import CircuitBreakerStatus from '../components/LLM/MCP/CircuitBreakerStatus';
+import GrafanaDashboards from '../components/LLM/MCP/GrafanaDashboards';
 import { useMCPWebSocket } from '../hooks/useMCPWebSocket';
 import apiService from '../services/api';
 
@@ -53,7 +55,7 @@ function TabPanel(props) {
 
 /**
  * MCP Provider Dashboard
- * 
+ *
  * Comprehensive dashboard for monitoring and managing an MCP provider.
  */
 const MCPProviderDashboard = () => {
@@ -65,7 +67,7 @@ const MCPProviderDashboard = () => {
   const [error, setError] = useState(null);
   const [connectionPoolStats, setConnectionPoolStats] = useState(null);
   const [loadingPoolStats, setLoadingPoolStats] = useState(false);
-  
+
   // Get real-time status via WebSocket
   const {
     status,
@@ -73,7 +75,7 @@ const MCPProviderDashboard = () => {
     requestStatus,
     connectionState
   } = useMCPWebSocket(providerId);
-  
+
   // Fetch provider details
   useEffect(() => {
     const fetchProvider = async () => {
@@ -89,10 +91,10 @@ const MCPProviderDashboard = () => {
         setLoading(false);
       }
     };
-    
+
     fetchProvider();
   }, [providerId]);
-  
+
   // Fetch connection pool stats
   const fetchConnectionPoolStats = async () => {
     try {
@@ -105,28 +107,28 @@ const MCPProviderDashboard = () => {
       setLoadingPoolStats(false);
     }
   };
-  
+
   // Fetch connection pool stats when tab changes to "Connections"
   useEffect(() => {
     if (tabValue === 2) {
       fetchConnectionPoolStats();
     }
   }, [tabValue, providerId]);
-  
+
   // Handle tab change
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
   };
-  
+
   // Handle refresh
   const handleRefresh = () => {
     requestStatus();
-    
+
     if (tabValue === 2) {
       fetchConnectionPoolStats();
     }
   };
-  
+
   // Handle session refresh
   const handleSessionRefresh = async () => {
     try {
@@ -136,7 +138,7 @@ const MCPProviderDashboard = () => {
       console.error(`Error refreshing sessions for ${providerId}:`, error);
     }
   };
-  
+
   // Handle circuit breaker reset
   const handleCircuitBreakerReset = async () => {
     try {
@@ -146,11 +148,11 @@ const MCPProviderDashboard = () => {
       console.error(`Error resetting circuit breaker for ${providerId}:`, error);
     }
   };
-  
+
   // Get status color
   const getStatusColor = () => {
     if (!status) return theme.palette.grey[500];
-    
+
     switch (status.status) {
       case 'available':
         return theme.palette.success.main;
@@ -162,13 +164,13 @@ const MCPProviderDashboard = () => {
         return theme.palette.grey[500];
     }
   };
-  
+
   // Get WebSocket status color
   const getWebSocketStatusColor = () => {
     if (!isConnected) return theme.palette.error.main;
     return theme.palette.success.main;
   };
-  
+
   return (
     <PageLayout title={`MCP Provider: ${providerId}`}>
       <Container maxWidth="xl">
@@ -177,7 +179,7 @@ const MCPProviderDashboard = () => {
             {error}
           </Alert>
         )}
-        
+
         {/* Provider Header */}
         <Paper sx={{ p: 2, mb: 2 }}>
           <Box display="flex" justifyContent="space-between" alignItems="center">
@@ -189,7 +191,7 @@ const MCPProviderDashboard = () => {
                   {provider?.display_name || providerId}
                 </Typography>
               )}
-              
+
               {loading ? (
                 <Skeleton variant="text" width={200} />
               ) : (
@@ -198,7 +200,7 @@ const MCPProviderDashboard = () => {
                 </Typography>
               )}
             </Box>
-            
+
             <Box>
               <Button
                 variant="outlined"
@@ -208,7 +210,7 @@ const MCPProviderDashboard = () => {
               >
                 Refresh
               </Button>
-              
+
               <Button
                 variant="outlined"
                 startIcon={<SettingsIcon />}
@@ -218,9 +220,9 @@ const MCPProviderDashboard = () => {
               </Button>
             </Box>
           </Box>
-          
+
           <Divider sx={{ my: 2 }} />
-          
+
           <Grid container spacing={2}>
             <Grid item xs={12} md={4}>
               <Box display="flex" alignItems="center">
@@ -241,7 +243,7 @@ const MCPProviderDashboard = () => {
                 {status?.message || 'No status message available'}
               </Typography>
             </Grid>
-            
+
             <Grid item xs={12} md={4}>
               <Box display="flex" alignItems="center">
                 <Box
@@ -261,7 +263,7 @@ const MCPProviderDashboard = () => {
                 {connectionState || 'No connection state available'}
               </Typography>
             </Grid>
-            
+
             <Grid item xs={12} md={4}>
               <Box display="flex" flexWrap="wrap" gap={1}>
                 {loading ? (
@@ -277,7 +279,7 @@ const MCPProviderDashboard = () => {
                         variant="outlined"
                       />
                     ))}
-                    
+
                     {!provider?.models?.length && (
                       <Typography variant="body2" color="text.secondary">
                         No models available
@@ -289,7 +291,7 @@ const MCPProviderDashboard = () => {
             </Grid>
           </Grid>
         </Paper>
-        
+
         {/* Tabs */}
         <Paper sx={{ mb: 2 }}>
           <Tabs
@@ -304,23 +306,24 @@ const MCPProviderDashboard = () => {
             <Tab label="Metrics" icon={<SpeedIcon />} iconPosition="start" />
             <Tab label="Connections" icon={<StorageIcon />} iconPosition="start" />
             <Tab label="Errors" icon={<BugReportIcon />} iconPosition="start" />
+            <Tab label="Dashboards" icon={<DashboardIcon />} iconPosition="start" />
           </Tabs>
-          
+
           {/* Overview Tab */}
           <TabPanel value={tabValue} index={0}>
             <Grid container spacing={3}>
               <Grid item xs={12} md={8}>
                 <MCPUsageStats providerId={providerId} />
               </Grid>
-              
+
               <Grid item xs={12} md={4}>
                 <CircuitBreakerStatus providerId={providerId} />
-                
+
                 <Paper variant="outlined" sx={{ p: 2 }}>
                   <Typography variant="h6" gutterBottom>
                     Quick Actions
                   </Typography>
-                  
+
                   <Box display="flex" flexDirection="column" gap={1}>
                     <Button
                       variant="outlined"
@@ -329,7 +332,7 @@ const MCPProviderDashboard = () => {
                     >
                       Refresh Sessions
                     </Button>
-                    
+
                     <Button
                       variant="outlined"
                       color="warning"
@@ -343,26 +346,26 @@ const MCPProviderDashboard = () => {
               </Grid>
             </Grid>
           </TabPanel>
-          
+
           {/* Metrics Tab */}
           <TabPanel value={tabValue} index={1}>
             <Typography variant="h6" gutterBottom>
               Performance Metrics
             </Typography>
-            
+
             {/* Metrics content will go here */}
             <Alert severity="info">
               Detailed metrics visualization is under development.
             </Alert>
           </TabPanel>
-          
+
           {/* Connections Tab */}
           <TabPanel value={tabValue} index={2}>
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
               <Typography variant="h6">
                 Connection Pool
               </Typography>
-              
+
               <Button
                 variant="outlined"
                 startIcon={<RefreshIcon />}
@@ -372,7 +375,7 @@ const MCPProviderDashboard = () => {
                 Refresh
               </Button>
             </Box>
-            
+
             {loadingPoolStats ? (
               <Skeleton variant="rectangular" height={200} />
             ) : connectionPoolStats ? (
@@ -382,7 +385,7 @@ const MCPProviderDashboard = () => {
                     <Typography variant="subtitle1" gutterBottom>
                       Pool Statistics
                     </Typography>
-                    
+
                     <Grid container spacing={2}>
                       <Grid item xs={6}>
                         <Typography variant="body2" color="text.secondary">
@@ -392,7 +395,7 @@ const MCPProviderDashboard = () => {
                           {connectionPoolStats.pool_size} / {connectionPoolStats.max_size}
                         </Typography>
                       </Grid>
-                      
+
                       <Grid item xs={6}>
                         <Typography variant="body2" color="text.secondary">
                           Active Connections
@@ -401,7 +404,7 @@ const MCPProviderDashboard = () => {
                           {connectionPoolStats.active_connections || 0}
                         </Typography>
                       </Grid>
-                      
+
                       <Grid item xs={6}>
                         <Typography variant="body2" color="text.secondary">
                           Transport Type
@@ -410,7 +413,7 @@ const MCPProviderDashboard = () => {
                           {connectionPoolStats.transport_type || 'Unknown'}
                         </Typography>
                       </Grid>
-                      
+
                       <Grid item xs={6}>
                         <Typography variant="body2" color="text.secondary">
                           Idle Timeout
@@ -422,36 +425,36 @@ const MCPProviderDashboard = () => {
                     </Grid>
                   </Paper>
                 </Grid>
-                
+
                 <Grid item xs={12} md={6}>
                   <Paper variant="outlined" sx={{ p: 2 }}>
                     <Typography variant="subtitle1" gutterBottom>
                       Connection Health
                     </Typography>
-                    
+
                     <Grid container spacing={2}>
                       <Grid item xs={6}>
                         <Typography variant="body2" color="text.secondary">
                           Success Rate
                         </Typography>
                         <Typography variant="h6">
-                          {connectionPoolStats.success_rate 
-                            ? `${(connectionPoolStats.success_rate * 100).toFixed(1)}%` 
+                          {connectionPoolStats.success_rate
+                            ? `${(connectionPoolStats.success_rate * 100).toFixed(1)}%`
                             : 'N/A'}
                         </Typography>
                       </Grid>
-                      
+
                       <Grid item xs={6}>
                         <Typography variant="body2" color="text.secondary">
                           Avg Response Time
                         </Typography>
                         <Typography variant="h6">
-                          {connectionPoolStats.avg_response_time_ms 
-                            ? `${connectionPoolStats.avg_response_time_ms.toFixed(1)} ms` 
+                          {connectionPoolStats.avg_response_time_ms
+                            ? `${connectionPoolStats.avg_response_time_ms.toFixed(1)} ms`
                             : 'N/A'}
                         </Typography>
                       </Grid>
-                      
+
                       <Grid item xs={6}>
                         <Typography variant="body2" color="text.secondary">
                           Total Requests
@@ -460,7 +463,7 @@ const MCPProviderDashboard = () => {
                           {connectionPoolStats.total_requests || 0}
                         </Typography>
                       </Grid>
-                      
+
                       <Grid item xs={6}>
                         <Typography variant="body2" color="text.secondary">
                           Error Count
@@ -472,14 +475,14 @@ const MCPProviderDashboard = () => {
                     </Grid>
                   </Paper>
                 </Grid>
-                
+
                 {connectionPoolStats.connections && connectionPoolStats.connections.length > 0 && (
                   <Grid item xs={12}>
                     <Paper variant="outlined" sx={{ p: 2 }}>
                       <Typography variant="subtitle1" gutterBottom>
                         Active Connections
                       </Typography>
-                      
+
                       <Box sx={{ overflowX: 'auto' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                           <thead>
@@ -530,17 +533,22 @@ const MCPProviderDashboard = () => {
               </Alert>
             )}
           </TabPanel>
-          
+
           {/* Errors Tab */}
           <TabPanel value={tabValue} index={3}>
             <Typography variant="h6" gutterBottom>
               Error Analysis
             </Typography>
-            
+
             {/* Errors content will go here */}
             <Alert severity="info">
               Error analysis visualization is under development.
             </Alert>
+          </TabPanel>
+
+          {/* Dashboards Tab */}
+          <TabPanel value={tabValue} index={4}>
+            <GrafanaDashboards providerId={providerId} />
           </TabPanel>
         </Paper>
       </Container>
