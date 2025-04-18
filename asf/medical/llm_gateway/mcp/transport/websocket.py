@@ -11,9 +11,11 @@ import logging
 import time
 import ssl
 import uuid
-from typing import Dict, List, Any, Optional, AsyncIterator, Tuple, Union
+from typing import AsyncGenerator, Dict, List, Any, Optional, AsyncIterator, Tuple, Union
 from contextlib import asynccontextmanager
 from datetime import datetime
+
+from medical.llm_gateway.mcp.resilience.retry import RetryPolicy
 
 # Import websockets library
 try:
@@ -59,11 +61,12 @@ from asf.medical.llm_gateway.transport.base import (
     BaseTransport, TransportConfig, TransportError, 
     CircuitBreakerOpenError, RateLimitExceededError
 )
-from asf.medical.llm_gateway.observability.metrics import MetricsService
+from asf.medical.llm_gateway.mcp.observability.metrics import MetricsService
+from asf.medical.llm_gateway.mcp.resilience.circuit_breaker import CircuitBreaker
+from asf.medical.llm_gateway.mcp.resilience.circuit_breaker import CircuitBreaker
 from asf.medical.llm_gateway.observability.prometheus import get_prometheus_exporter
-from asf.medical.llm_gateway.resilience.circuit_breaker import CircuitBreaker
 from asf.medical.llm_gateway.resilience.rate_limiter import RateLimiter, RateLimitConfig
-from asf.medical.llm_gateway.resilience.retry import RetryPolicy, DEFAULT_RETRY_POLICY
+
 
 logger = logging.getLogger(__name__)
 

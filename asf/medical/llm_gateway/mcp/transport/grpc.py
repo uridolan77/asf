@@ -6,10 +6,11 @@ for connecting to LLM services that expose gRPC interfaces.
 """
 
 import asyncio
+from contextlib import asynccontextmanager
 import json
 import logging
 import time
-from typing import Dict, List, Any, Optional, AsyncIterator, Tuple, Union
+from typing import Dict, List, Any, Optional, AsyncIterator, Tuple, Union, AsyncGenerator
 
 import grpc
 from grpc.aio import Channel, ClientCallDetails, UnaryUnaryCall, UnaryStreamCall
@@ -309,7 +310,7 @@ class GRPCTransport(BaseTransport):
             channel = grpc.aio.insecure_channel(self.endpoint, options=options)
         
         return channel
-    
+
     @asynccontextmanager
     async def connect(self) -> AsyncGenerator[Tuple[Any, Any], None]:
         """
