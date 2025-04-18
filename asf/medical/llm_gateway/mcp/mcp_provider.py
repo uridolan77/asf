@@ -74,6 +74,7 @@ from asf.medical.llm_gateway.resilience.circuit_breaker import CircuitBreaker
 from asf.medical.llm_gateway.resilience.retry import RetryPolicy, DEFAULT_RETRY_POLICY
 from asf.medical.llm_gateway.observability.metrics import MetricsService
 from asf.medical.llm_gateway.observability.tracing import TracingService
+from asf.medical.llm_gateway.observability.prometheus import get_prometheus_exporter
 from asf.medical.llm_gateway.config.models import MCPConnectionConfig
 
 # Import WebSocket broadcast function if available
@@ -155,6 +156,7 @@ class MCPProvider(BaseProvider):
         # Initialize telemetry
         self.tracing_service = TracingService()
         self.metrics_service = MetricsService()
+        self.prometheus = get_prometheus_exporter()
 
         # WebSocket status
         self._websocket_available = _websocket_available
@@ -168,6 +170,16 @@ class MCPProvider(BaseProvider):
                 "WebSocket broadcasting not available for MCP provider",
                 provider_id=self.provider_id
             )
+
+        # Register provider with Prometheus
+        self.prometheus.update_provider_info(
+            self.provider_id,
+            {
+                "provider_type": self.provider_config.provider_type,
+                "transport_type": self.connection_config.transport_type,
+                "display_name": getattr(self.provider_config, 'display_name', self.provider_id),
+            }
+        )
 
         # Create validated connection config
         self.connection_config = MCPConnectionConfig.model_validate(conn_params)
@@ -542,6 +554,16 @@ class MCPProvider(BaseProvider):
         """
         # Record request metrics
         request_counter.add(1, {"provider": self.provider_id, "model": request.config.model_identifier})
+
+        # Record Prometheus metrics
+        self.prometheus.record_request(
+            provider_id=self.provider_id,
+            model=request.config.model_identifier,
+            status="started",
+            duration_seconds=0,
+            input_tokens=0,
+            output_tokens=0
+        )
 
         # Broadcast event via WebSocket
         if self._websocket_available:
