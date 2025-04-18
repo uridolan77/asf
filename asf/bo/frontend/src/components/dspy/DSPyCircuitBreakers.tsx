@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
   Box,
   Paper,
@@ -23,80 +23,41 @@ import {
   Error as ErrorIcon,
   Warning as WarningIcon
 } from '@mui/icons-material';
-import ClientService from '../../services/ClientService';
-import { formatDateTime } from '../../utils/formatters';
+import { useDSPy } from '../../hooks/useDSPy';
+import { useFeatureFlags } from '../../context/FeatureFlagContext';
 
 interface DSPyCircuitBreakersProps {
   clientId: string;
 }
 
 const DSPyCircuitBreakers: React.FC<DSPyCircuitBreakersProps> = ({ clientId }) => {
-  const [circuitBreakers, setCircuitBreakers] = useState<any[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const { isEnabled } = useFeatureFlags();
+  const useMockData = isEnabled('useMockData');
 
-  useEffect(() => {
-    loadCircuitBreakers();
-  }, [clientId]);
+  // Use the DSPy hook
+  const {
+    getCircuitBreakersByClient,
+    resetCircuitBreaker
+  } = useDSPy();
 
-  const loadCircuitBreakers = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const response = await ClientService.getCircuitBreakerStatus(clientId);
-      setCircuitBreakers(response);
-    } catch (err) {
-      console.error('Error loading circuit breakers:', err);
-      setError('Failed to load circuit breaker status. Please try again.');
-      
-      // For demonstration purposes, generate mock data if API fails
-      const mockData = generateMockCircuitBreakerData();
-      setCircuitBreakers(mockData);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Get circuit breakers by client
+  const {
+    data: circuitBreakers = [],
+    isLoading,
+    isError,
+    error,
+    refetch: refetchCircuitBreakers
+  } = getCircuitBreakersByClient(clientId);
 
-  const generateMockCircuitBreakerData = () => {
-    const mockData = [];
-    const modules = ['MedicalEvidenceExtractor', 'ContradictionDetector', 'DiagnosticReasoning', 'ClinicalQA'];
-    const states = ['CLOSED', 'OPEN', 'HALF_OPEN'];
-    const now = new Date();
-    
-    for (const module of modules) {
-      const state = states[Math.floor(Math.random() * states.length)];
-      const failureCount = state === 'OPEN' ? Math.floor(Math.random() * 10) + 5 : Math.floor(Math.random() * 5);
-      
-      const lastStateChange = new Date(now);
-      lastStateChange.setMinutes(now.getMinutes() - Math.floor(Math.random() * 60));
-      
-      mockData.push({
-        name: module,
-        state: state,
-        failure_count: failureCount,
-        success_count: state === 'CLOSED' ? Math.floor(Math.random() * 50) + 20 : Math.floor(Math.random() * 10),
-        failure_threshold: 5,
-        reset_timeout: 60,
-        last_failure: state !== 'CLOSED' ? lastStateChange.toISOString() : null,
-        last_state_change: lastStateChange.toISOString(),
-      });
-    }
-    
-    return mockData;
-  };
+  // Reset circuit breaker
+  const {
+    mutate: resetCircuitBreakerMutate,
+    isPending: isResetting
+  } = resetCircuitBreaker(clientId, '');
 
-  const resetCircuitBreaker = async (circuitBreakerName: string) => {
-    try {
-      // In a real implementation, you would call an API to reset the circuit breaker
-      // await ClientService.resetCircuitBreaker(clientId, circuitBreakerName);
-      
-      // For now, just reload the data
-      await loadCircuitBreakers();
-    } catch (err) {
-      console.error(`Error resetting circuit breaker ${circuitBreakerName}:`, err);
-      setError(`Failed to reset circuit breaker ${circuitBreakerName}. Please try again.`);
-    }
+  // Handle reset circuit breaker
+  const handleResetCircuitBreaker = (breakerName: string) => {
+    resetCircuitBreakerMutate({ breaker_name: breakerName });
   };
 
   const getStateColor = (state: string) => {
@@ -117,7 +78,15 @@ const DSPyCircuitBreakers: React.FC<DSPyCircuitBreakersProps> = ({ clientId }) =
     }
   };
 
-  if (loading) {
+  if (useMockData) {
+    return (
+      <Alert severity="info">
+        Using mock data. Toggle the "Use Mock Data" feature flag to use real API data.
+      </Alert>
+    );
+  }
+
+  if (isLoading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
         <CircularProgress size={24} />
@@ -125,9 +94,9 @@ const DSPyCircuitBreakers: React.FC<DSPyCircuitBreakersProps> = ({ clientId }) =
     );
   }
 
-  if (error && circuitBreakers.length === 0) {
+  if (isError && circuitBreakers.length === 0) {
     return (
-      <Alert severity="error">{error}</Alert>
+      <Alert severity="error">{error?.message || 'Failed to load circuit breakers'}</Alert>
     );
   }
 
@@ -135,15 +104,15 @@ const DSPyCircuitBreakers: React.FC<DSPyCircuitBreakersProps> = ({ clientId }) =
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Typography variant="subtitle1">Circuit Breaker Status</Typography>
-        <IconButton size="small" onClick={loadCircuitBreakers} disabled={loading}>
+        <IconButton size="small" onClick={() => refetchCircuitBreakers()} disabled={isLoading}>
           <RefreshIcon fontSize="small" />
         </IconButton>
       </Box>
-      
-      {error && (
-        <Alert severity="warning" sx={{ mb: 2 }}>{error}</Alert>
+
+      {isError && (
+        <Alert severity="warning" sx={{ mb: 2 }}>{error?.message || 'Failed to load circuit breakers'}</Alert>
       )}
-      
+
       {circuitBreakers.length === 0 ? (
         <Alert severity="info">No circuit breakers found for this client.</Alert>
       ) : (
@@ -173,18 +142,18 @@ const DSPyCircuitBreakers: React.FC<DSPyCircuitBreakersProps> = ({ clientId }) =
                     />
                   </TableCell>
                   <TableCell align="right">{cb.failure_count} / {cb.failure_threshold}</TableCell>
-                  <TableCell align="right">{cb.success_count}</TableCell>
+                  <TableCell align="right">N/A</TableCell>
                   <TableCell>
-                    {cb.last_failure ? formatDateTime(cb.last_failure) : 'N/A'}
+                    {cb.last_failure_time ? new Date(cb.last_failure_time).toLocaleString() : 'N/A'}
                   </TableCell>
-                  <TableCell>{formatDateTime(cb.last_state_change)}</TableCell>
+                  <TableCell>{new Date().toLocaleString()}</TableCell>
                   <TableCell>
                     <Tooltip title="Reset Circuit Breaker">
                       <Button
                         size="small"
                         variant="outlined"
-                        onClick={() => resetCircuitBreaker(cb.name)}
-                        disabled={cb.state === 'CLOSED'}
+                        onClick={() => handleResetCircuitBreaker(cb.name)}
+                        disabled={cb.state === 'CLOSED' || isResetting}
                       >
                         Reset
                       </Button>

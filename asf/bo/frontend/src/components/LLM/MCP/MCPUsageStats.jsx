@@ -24,7 +24,7 @@ import {
   Wifi as WifiIcon,
   WifiOff as WifiOffIcon
 } from '@mui/icons-material';
-import { useQuery } from 'react-query';
+import { useQuery } from '@tanstack/react-query';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
   Legend, ResponsiveContainer, LineChart, Line, AreaChart, Area

@@ -1,9 +1,10 @@
 import { useApiQuery, useApiPost } from './useApi';
 import { useQueryClient } from '@tanstack/react-query';
 import { useNotification } from '../context/NotificationContext';
+import { useFeatureFlags } from '../context/FeatureFlagContext';
 
 // Types
-interface SearchResult {
+export interface SearchResult {
   id: string;
   title: string;
   authors: string[];
@@ -14,13 +15,13 @@ interface SearchResult {
   source: string;
 }
 
-interface SearchResponse {
+export interface SearchResponse {
   articles: SearchResult[];
   query: string;
   total_results: number;
 }
 
-interface PICOSearchParams {
+export interface PICOSearchParams {
   condition: string;
   interventions: string[];
   outcomes: string[];
@@ -30,14 +31,14 @@ interface PICOSearchParams {
   max_results?: number;
 }
 
-interface PICOSearchResponse {
+export interface PICOSearchResponse {
   total_count: number;
   page: number;
   page_size: number;
   results: SearchResult[];
 }
 
-interface SearchHistoryItem {
+export interface SearchHistoryItem {
   id: string;
   query: string;
   type: 'standard' | 'pico';
@@ -48,19 +49,30 @@ interface SearchHistoryItem {
 /**
  * Hook for medical search operations
  */
+export interface StandardSearchParams {
+  query: string;
+  max_results?: number;
+  page?: number;
+  page_size?: number;
+  search_method?: string;
+  use_graph_rag?: boolean;
+}
+
 export function useMedicalSearch() {
   const queryClient = useQueryClient();
   const { showSuccess, showError } = useNotification();
+  const { isEnabled } = useFeatureFlags();
+  const useMockData = isEnabled('useMockData');
 
   // Standard search
-  const search = (query: string, maxResults: number = 20) => {
-    return useApiPost<SearchResponse, { query: string; max_results: number }>(
+  const search = () => {
+    return useApiPost<SearchResponse, StandardSearchParams>(
       '/api/medical/search',
       {
         onSuccess: (data) => {
           // Save search to history
           saveSearchToHistory({
-            query,
+            query: data.query,
             type: 'standard',
             timestamp: new Date().toISOString(),
             result_count: data.total_results
@@ -83,7 +95,7 @@ export function useMedicalSearch() {
           const picoDescription = `P: ${params.population || params.condition}, ` +
                                  `I: ${params.interventions.join(', ')}, ` +
                                  `O: ${params.outcomes.join(', ')}`;
-          
+
           saveSearchToHistory({
             query: picoDescription,
             type: 'pico',
@@ -136,11 +148,43 @@ export function useMedicalSearch() {
     }
   );
 
+  // Get search suggestions
+  const getSearchSuggestions = (query: string) => {
+    return useApiQuery<{ suggestions: string[] }>(
+      `/api/medical/search/suggestions?query=${encodeURIComponent(query)}`,
+      ['medical', 'search', 'suggestions', query],
+      {
+        enabled: !!query && query.length >= 2,
+        staleTime: 60 * 60 * 1000, // 1 hour
+        onError: (error) => {
+          console.error('Failed to fetch search suggestions:', error);
+        }
+      }
+    );
+  };
+
+  // Get search methods
+  const {
+    data: searchMethods = [],
+    isLoading: isLoadingSearchMethods,
+    isError: isErrorSearchMethods,
+    error: errorSearchMethods
+  } = useApiQuery<string[]>(
+    '/api/medical/search/methods',
+    ['medical', 'search', 'methods'],
+    {
+      staleTime: 3600000, // 1 hour
+      onError: (error) => {
+        console.error('Failed to fetch search methods:', error);
+      }
+    }
+  );
+
   return {
     // Search functions
     search,
     picoSearch,
-    
+
     // Search history
     searchHistory: searchHistory.searches,
     isLoadingHistory,
@@ -150,6 +194,18 @@ export function useMedicalSearch() {
     saveSearchToHistory,
     isSavingHistory,
     isErrorSavingHistory,
-    errorSavingHistory
+    errorSavingHistory,
+
+    // Suggestions
+    getSearchSuggestions,
+
+    // Search methods
+    searchMethods,
+    isLoadingSearchMethods,
+    isErrorSearchMethods,
+    errorSearchMethods,
+
+    // Feature flags
+    useMockData
   };
 }

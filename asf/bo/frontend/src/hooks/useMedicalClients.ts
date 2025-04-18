@@ -1,9 +1,10 @@
 import { useApiQuery, useApiPost, useApiPut } from './useApi';
 import { useQueryClient } from '@tanstack/react-query';
 import { useNotification } from '../context/NotificationContext';
+import { useFeatureFlags } from '../context/FeatureFlagContext';
 
 // Types
-interface MedicalClient {
+export interface MedicalClient {
   id: string;
   name: string;
   description: string;
@@ -14,14 +15,14 @@ interface MedicalClient {
   config?: Record<string, any>;
 }
 
-interface ClientStatus {
+export interface ClientStatus {
   status: string;
   last_checked: string;
   response_time?: number;
   error_message?: string;
 }
 
-interface ClientUsage {
+export interface ClientUsage {
   client_id: string;
   total_requests: number;
   successful_requests: number;
@@ -33,7 +34,7 @@ interface ClientUsage {
   }>;
 }
 
-interface ClientConfig {
+export interface ClientConfig {
   api_key?: string;
   base_url?: string;
   timeout?: number;
@@ -42,12 +43,31 @@ interface ClientConfig {
   [key: string]: any;
 }
 
+export interface TestResult {
+  success: boolean;
+  message: string;
+  response_time?: number;
+  details?: Record<string, any>;
+}
+
+export interface UpdateClientConfigParams {
+  client_id: string;
+  config: ClientConfig;
+}
+
+export interface TestConnectionParams {
+  client_id: string;
+  endpoint?: string;
+}
+
 /**
  * Hook for medical clients operations
  */
 export function useMedicalClients() {
   const queryClient = useQueryClient();
   const { showSuccess, showError } = useNotification();
+  const { isEnabled } = useFeatureFlags();
+  const useMockData = isEnabled('useMockData');
 
   // Get all medical clients
   const {
@@ -202,9 +222,12 @@ export function useMedicalClients() {
 
     // Client testing
     testClientConnection,
-    
+
     // Client endpoints
     getClientEndpoints,
-    testEndpoint
+    testEndpoint,
+
+    // Feature flags
+    useMockData
   };
 }

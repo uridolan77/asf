@@ -12,9 +12,9 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Path, BackgroundTa
 from pydantic import BaseModel
 
 from api.auth.dependencies import get_current_user
-from api.models.user import User
+from models.user import User
 from api.services.llm.grafana_service import get_grafana_service
-from api.services.llm.gateway_service import get_gateway_service
+from api.services.llm.gateway_service import get_llm_gateway_service as get_gateway_service
 
 logger = logging.getLogger(__name__)
 
@@ -46,17 +46,17 @@ async def get_dashboard_urls(
 ):
     """
     Get URLs for all dashboards.
-    
+
     Returns:
         Dashboard URLs
     """
     grafana_service = get_grafana_service()
     urls = await grafana_service.get_dashboard_urls()
-    
+
     dashboards = []
     for name, url in urls.items():
         dashboards.append(DashboardURL(dashboard_id=name, url=url))
-    
+
     return DashboardURLs(dashboards=dashboards)
 
 
@@ -66,13 +66,13 @@ async def get_overview_dashboard_url(
 ):
     """
     Get the URL for the overview dashboard.
-    
+
     Returns:
         Dashboard URL
     """
     grafana_service = get_grafana_service()
     url = await grafana_service.get_overview_dashboard_url()
-    
+
     return DashboardURL(dashboard_id="mcp_overview", url=url)
 
 
@@ -82,13 +82,13 @@ async def get_performance_dashboard_url(
 ):
     """
     Get the URL for the performance dashboard.
-    
+
     Returns:
         Dashboard URL
     """
     grafana_service = get_grafana_service()
     url = await grafana_service.get_performance_dashboard_url()
-    
+
     return DashboardURL(dashboard_id="mcp_performance", url=url)
 
 
@@ -98,13 +98,13 @@ async def get_errors_dashboard_url(
 ):
     """
     Get the URL for the errors dashboard.
-    
+
     Returns:
         Dashboard URL
     """
     grafana_service = get_grafana_service()
     url = await grafana_service.get_errors_dashboard_url()
-    
+
     return DashboardURL(dashboard_id="mcp_errors", url=url)
 
 
@@ -115,16 +115,16 @@ async def get_provider_dashboard_url(
 ):
     """
     Get the URL for a provider dashboard.
-    
+
     Args:
         provider_id: Provider ID
-        
+
     Returns:
         Dashboard URL
     """
     grafana_service = get_grafana_service()
     url = await grafana_service.get_provider_dashboard_url(provider_id)
-    
+
     return DashboardURL(dashboard_id=f"mcp-provider-{provider_id}", url=url)
 
 
@@ -135,38 +135,38 @@ async def provision_provider_dashboard(
 ):
     """
     Provision a dashboard for a specific provider.
-    
+
     Args:
         provider_id: Provider ID
-        
+
     Returns:
         Provision result
     """
     gateway_service = get_gateway_service()
     grafana_service = get_grafana_service()
-    
+
     # Get provider details
     provider = await gateway_service.get_provider(provider_id)
-    
+
     if not provider:
         raise HTTPException(status_code=404, detail=f"Provider {provider_id} not found")
-    
+
     # Provision dashboard
     result = await grafana_service.provision_provider_dashboard(
         provider_id=provider_id,
         provider_type=provider.get("provider_type", "unknown"),
         display_name=provider.get("display_name")
     )
-    
+
     if not result:
         return ProvisionDashboardResponse(
             success=False,
             message=f"Failed to provision dashboard for provider {provider_id}"
         )
-    
+
     # Get dashboard URL
     url = await grafana_service.get_provider_dashboard_url(provider_id)
-    
+
     return ProvisionDashboardResponse(
         success=True,
         dashboard_id=f"mcp-provider-{provider_id}",
@@ -182,15 +182,15 @@ async def setup_grafana(
 ):
     """
     Set up Grafana with datasources, dashboards, and alert rules.
-    
+
     Returns:
         Setup result
     """
     grafana_service = get_grafana_service()
-    
+
     # Run setup in background
     background_tasks.add_task(grafana_service.setup_grafana)
-    
+
     return {
         "message": "Grafana setup started in background",
         "status": "pending"

@@ -44,7 +44,6 @@ const TermSearch: React.FC = () => {
   const [term, setTerm] = useState<string>('');
   const [maxTrials, setMaxTrials] = useState<number>(10);
   const [error, setError] = useState<string>('');
-  const [results, setResults] = useState<any>(null);
   const [expandedConcept, setExpandedConcept] = useState<string | null>(null);
 
   // Feature flags
@@ -62,7 +61,8 @@ const TermSearch: React.FC = () => {
     mutate: executeSearch,
     isPending: isLoading,
     isError: isSearchError,
-    error: searchError
+    error: searchError,
+    data: results
   } = searchConceptAndTrials();
 
   // Get term suggestions
@@ -89,11 +89,7 @@ const TermSearch: React.FC = () => {
       include_mappings: true
     };
 
-    executeSearch(params, {
-      onSuccess: (data) => {
-        setResults(data);
-      }
-    });
+    executeSearch(params);
   };
 
   // Toggle expanded concept

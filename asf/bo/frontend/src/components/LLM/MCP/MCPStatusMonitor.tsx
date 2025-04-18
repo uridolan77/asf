@@ -29,11 +29,15 @@ import {
   WifiOff as WifiOffIcon,
   Notifications as NotificationsIcon
 } from '@mui/icons-material';
-import { useQuery } from '@tanstack/react-query';
 
-import apiService from '../../../services/api';
-import { ContentLoader } from '../../UI/LoadingIndicators';
+import { useMCP, MCPProviderStatus } from '../../../hooks/useMCP';
 import { useMCPWebSocket } from '../../../hooks/useMCPWebSocket';
+import { useFeatureFlags } from '../../../context/FeatureFlagContext';
+import { ContentLoader } from '../../UI/LoadingIndicators';
+
+interface MCPStatusMonitorProps {
+  providerId: string;
+}
 
 /**
  * MCPStatusMonitor Component
@@ -41,26 +45,21 @@ import { useMCPWebSocket } from '../../../hooks/useMCPWebSocket';
  * This component provides real-time monitoring of MCP providers,
  * including status, health checks, and circuit breaker state.
  */
-const MCPStatusMonitor = ({ providerId }) => {
-  // Fetch provider status via REST API
+const MCPStatusMonitor: React.FC<MCPStatusMonitorProps> = ({ providerId }) => {
+  const { isEnabled } = useFeatureFlags();
+  const useMockData = isEnabled('useMockData');
+  
+  // Use the MCP hook
+  const { getProviderStatus } = useMCP();
+  
+  // Fetch provider status via React Query
   const {
     data: status,
     isLoading,
     isError,
     error,
     refetch
-  } = useQuery(
-    ['mcpProviderStatus', providerId],
-    () => apiService.llm.getMCPProviderStatus(providerId),
-    {
-      enabled: !!providerId,
-      refetchInterval: 30000, // Refetch every 30 seconds
-      refetchOnWindowFocus: true,
-      onError: (err) => {
-        console.error(`Error fetching status for provider ${providerId}:`, err);
-      }
-    }
-  );
+  } = getProviderStatus(providerId);
 
   // Get real-time updates via WebSocket
   const {
@@ -81,7 +80,7 @@ const MCPStatusMonitor = ({ providerId }) => {
   const displayStatus = latestStatus || status;
 
   // Get status color
-  const getStatusColor = (status) => {
+  const getStatusColor = (status?: string) => {
     if (!status) return 'default';
 
     return status === 'operational' ||
@@ -92,7 +91,7 @@ const MCPStatusMonitor = ({ providerId }) => {
   };
 
   // Get status icon
-  const getStatusIcon = (status) => {
+  const getStatusIcon = (status?: string) => {
     if (!status) return <SyncIcon />;
 
     return status === 'operational' ||
@@ -103,7 +102,7 @@ const MCPStatusMonitor = ({ providerId }) => {
   };
 
   // Format date
-  const formatDate = (dateString) => {
+  const formatDate = (dateString?: string) => {
     if (!dateString) return 'N/A';
 
     try {
@@ -114,13 +113,13 @@ const MCPStatusMonitor = ({ providerId }) => {
   };
 
   // Calculate time since last check
-  const getTimeSinceLastCheck = (checkedAt) => {
+  const getTimeSinceLastCheck = (checkedAt?: string) => {
     if (!checkedAt) return 'N/A';
 
     try {
       const checkedDate = new Date(checkedAt);
       const now = new Date();
-      const diffMs = now - checkedDate;
+      const diffMs = now.getTime() - checkedDate.getTime();
       const diffSec = Math.floor(diffMs / 1000);
 
       if (diffSec < 60) {
@@ -141,6 +140,14 @@ const MCPStatusMonitor = ({ providerId }) => {
     return (
       <Alert severity="info">
         Please select a provider to view its status.
+      </Alert>
+    );
+  }
+
+  if (useMockData) {
+    return (
+      <Alert severity="info">
+        Using mock data. Toggle the "Use Mock Data" feature flag to use real API data.
       </Alert>
     );
   }
@@ -167,7 +174,7 @@ const MCPStatusMonitor = ({ providerId }) => {
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h6">Provider Status: {displayStatus?.display_name || providerId}</Typography>
+        <Typography variant="h6">Provider Status: {displayStatus?.name || providerId}</Typography>
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Tooltip title={wsConnected ? 'WebSocket Connected' : 'WebSocket Disconnected'}>
@@ -182,7 +189,7 @@ const MCPStatusMonitor = ({ providerId }) => {
 
           <Tooltip title="Last updated">
             <Typography variant="body2" color="text.secondary">
-              {getTimeSinceLastCheck(displayStatus?.checked_at)}
+              {getTimeSinceLastCheck(displayStatus?.health_check?.last_check)}
             </Typography>
           </Tooltip>
 
@@ -219,11 +226,11 @@ const MCPStatusMonitor = ({ providerId }) => {
           <Card>
             <CardHeader
               title="Provider Status"
-              avatar={getStatusIcon(status?.status)}
+              avatar={getStatusIcon(displayStatus?.status)}
               action={
                 <Chip
-                  label={status?.status || 'unknown'}
-                  color={getStatusColor(status?.status)}
+                  label={displayStatus?.status || 'unknown'}
+                  color={getStatusColor(displayStatus?.status)}
                 />
               }
             />
@@ -232,19 +239,25 @@ const MCPStatusMonitor = ({ providerId }) => {
               <Grid container spacing={2}>
                 <Grid item xs={6}>
                   <Typography variant="subtitle2">Provider ID:</Typography>
-                  <Typography variant="body2">{displayStatus?.provider_id || 'N/A'}</Typography>
+                  <Typography variant="body2">{displayStatus?.id || 'N/A'}</Typography>
                 </Grid>
                 <Grid item xs={6}>
-                  <Typography variant="subtitle2">Transport Type:</Typography>
-                  <Typography variant="body2">{displayStatus?.transport_type || 'N/A'}</Typography>
+                  <Typography variant="subtitle2">Health Check:</Typography>
+                  <Typography variant="body2">
+                    <Chip
+                      size="small"
+                      label={displayStatus?.health_check?.status || 'unknown'}
+                      color={getStatusColor(displayStatus?.health_check?.status)}
+                    />
+                  </Typography>
                 </Grid>
                 <Grid item xs={6}>
                   <Typography variant="subtitle2">Last Checked:</Typography>
-                  <Typography variant="body2">{formatDate(displayStatus?.checked_at)}</Typography>
+                  <Typography variant="body2">{formatDate(displayStatus?.health_check?.last_check)}</Typography>
                 </Grid>
                 <Grid item xs={6}>
-                  <Typography variant="subtitle2">Message:</Typography>
-                  <Typography variant="body2">{displayStatus?.message || 'No message'}</Typography>
+                  <Typography variant="subtitle2">Error:</Typography>
+                  <Typography variant="body2">{displayStatus?.health_check?.error || 'None'}</Typography>
                 </Grid>
               </Grid>
             </CardContent>
@@ -258,8 +271,10 @@ const MCPStatusMonitor = ({ providerId }) => {
               title="Circuit Breaker"
               avatar={
                 <Tooltip title="Circuit Breaker Status">
-                  {displayStatus?.circuit_breaker?.state === 'open' ? (
+                  {displayStatus?.circuit_breaker?.state === 'OPEN' ? (
                     <ErrorIcon color="error" />
+                  ) : displayStatus?.circuit_breaker?.state === 'HALF_OPEN' ? (
+                    <WarningIcon color="warning" />
                   ) : (
                     <CheckCircleIcon color="success" />
                   )}
@@ -268,7 +283,10 @@ const MCPStatusMonitor = ({ providerId }) => {
               action={
                 <Chip
                   label={displayStatus?.circuit_breaker?.state || 'unknown'}
-                  color={displayStatus?.circuit_breaker?.state === 'open' ? 'error' : 'success'}
+                  color={
+                    displayStatus?.circuit_breaker?.state === 'OPEN' ? 'error' :
+                    displayStatus?.circuit_breaker?.state === 'HALF_OPEN' ? 'warning' : 'success'
+                  }
                 />
               }
             />
@@ -281,7 +299,7 @@ const MCPStatusMonitor = ({ providerId }) => {
                     <Box sx={{ width: '100%', mr: 1 }}>
                       <LinearProgress
                         variant="determinate"
-                        value={Math.min((displayStatus?.circuit_breaker?.failure_count || 0) * 20, 100)}
+                        value={Math.min(((displayStatus?.circuit_breaker?.failure_count || 0) / 5) * 100, 100)}
                         color={
                           (displayStatus?.circuit_breaker?.failure_count || 0) >= 5 ? 'error' :
                           (displayStatus?.circuit_breaker?.failure_count || 0) >= 3 ? 'warning' : 'primary'
@@ -296,14 +314,12 @@ const MCPStatusMonitor = ({ providerId }) => {
                   </Box>
                 </Grid>
 
-                {displayStatus?.circuit_breaker?.recovery_time && (
-                  <Grid item xs={12}>
-                    <Typography variant="subtitle2">Recovery Time:</Typography>
-                    <Typography variant="body2">
-                      {formatDate(displayStatus?.circuit_breaker?.recovery_time)}
-                    </Typography>
-                  </Grid>
-                )}
+                <Grid item xs={12}>
+                  <Typography variant="subtitle2">Reset Timeout:</Typography>
+                  <Typography variant="body2">
+                    {displayStatus?.circuit_breaker?.reset_timeout || 0} seconds
+                  </Typography>
+                </Grid>
 
                 {displayStatus?.circuit_breaker?.last_failure && (
                   <Grid item xs={12}>
@@ -318,8 +334,64 @@ const MCPStatusMonitor = ({ providerId }) => {
           </Card>
         </Grid>
 
+        {/* Metrics Card */}
+        <Grid item xs={12} md={6}>
+          <Card>
+            <CardHeader
+              title="Performance Metrics"
+              avatar={<SpeedIcon />}
+            />
+            <Divider />
+            <CardContent>
+              <Grid container spacing={2}>
+                <Grid item xs={6}>
+                  <Typography variant="subtitle2">Request Count:</Typography>
+                  <Typography variant="body2">
+                    {displayStatus?.metrics?.request_count || 0}
+                  </Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="subtitle2">Error Count:</Typography>
+                  <Typography variant="body2">
+                    {displayStatus?.metrics?.error_count || 0}
+                  </Typography>
+                </Grid>
+                <Grid item xs={12}>
+                  <Typography variant="subtitle2" gutterBottom>Latency:</Typography>
+                  <Grid container spacing={1}>
+                    <Grid item xs={3}>
+                      <Typography variant="caption" color="text.secondary">Avg:</Typography>
+                      <Typography variant="body2">
+                        {displayStatus?.metrics?.latency?.avg?.toFixed(2) || 'N/A'} ms
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={3}>
+                      <Typography variant="caption" color="text.secondary">p50:</Typography>
+                      <Typography variant="body2">
+                        {displayStatus?.metrics?.latency?.p50?.toFixed(2) || 'N/A'} ms
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={3}>
+                      <Typography variant="caption" color="text.secondary">p95:</Typography>
+                      <Typography variant="body2">
+                        {displayStatus?.metrics?.latency?.p95?.toFixed(2) || 'N/A'} ms
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={3}>
+                      <Typography variant="caption" color="text.secondary">p99:</Typography>
+                      <Typography variant="body2">
+                        {displayStatus?.metrics?.latency?.p99?.toFixed(2) || 'N/A'} ms
+                      </Typography>
+                    </Grid>
+                  </Grid>
+                </Grid>
+              </Grid>
+            </CardContent>
+          </Card>
+        </Grid>
+
         {/* Models Card */}
-        <Grid item xs={12}>
+        <Grid item xs={12} md={6}>
           <Card>
             <CardHeader
               title="Supported Models"

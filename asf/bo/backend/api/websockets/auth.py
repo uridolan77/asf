@@ -16,7 +16,7 @@ from fastapi import WebSocket, WebSocketDisconnect, HTTPException, status
 from starlette.websockets import WebSocketState
 
 from api.auth.dependencies import get_current_user_ws
-from api.models.user import User
+from models.user import User
 from api.services.auth_service import get_auth_service
 
 logger = logging.getLogger(__name__)
@@ -36,10 +36,10 @@ REQUIRED_ROLES_FOR_MCP = ["admin", "developer", "operator"]
 async def authenticate_ws_connection(websocket: WebSocket) -> Optional[User]:
     """
     Authenticate a WebSocket connection with enhanced token handling.
-    
+
     Args:
         websocket: The WebSocket connection
-        
+
     Returns:
         User object if authentication successful, None otherwise
     """
@@ -51,12 +51,12 @@ async def authenticate_ws_connection(websocket: WebSocket) -> Optional[User]:
             auth_header = websocket.headers.get("authorization")
             if auth_header and auth_header.startswith("Bearer "):
                 token = auth_header.split(" ")[1]
-        
+
         if not token:
             logger.warning("No token provided in WebSocket connection")
             await websocket.close(code=1008)  # Policy violation
             return None
-        
+
         # Check token cache first
         user = await _get_cached_user(token)
         if user:
@@ -69,16 +69,16 @@ async def authenticate_ws_connection(websocket: WebSocket) -> Optional[User]:
                         "message": "Authentication token is about to expire"
                     })
             return user
-        
+
         # If not in cache, validate with auth service
         user = await get_current_user_ws(websocket)
         if user:
             # Cache the token
             await _cache_token(token, user)
             return user
-        
+
         return None
-    
+
     except Exception as e:
         logger.error(f"Error in WebSocket authentication: {str(e)}")
         if websocket.client_state == WebSocketState.CONNECTED:
@@ -89,24 +89,24 @@ async def authenticate_ws_connection(websocket: WebSocket) -> Optional[User]:
 async def check_mcp_access(user: User) -> bool:
     """
     Check if user has access to MCP functionality.
-    
+
     Args:
         user: User to check
-        
+
     Returns:
         True if user has access, False otherwise
     """
     if not user:
         return False
-    
+
     # Get auth service
     auth_service = get_auth_service()
-    
+
     # Check user role
     user_role = await auth_service.get_user_role(user.id)
     if not user_role:
         return False
-    
+
     # Check if role has access to MCP
     return user_role.name.lower() in REQUIRED_ROLES_FOR_MCP
 
@@ -114,10 +114,10 @@ async def check_mcp_access(user: User) -> bool:
 async def _get_cached_user(token: str) -> Optional[User]:
     """
     Get user from token cache if token is valid.
-    
+
     Args:
         token: JWT token
-        
+
     Returns:
         User object if token is valid and in cache, None otherwise
     """
@@ -135,7 +135,7 @@ async def _get_cached_user(token: str) -> Optional[User]:
 async def _cache_token(token: str, user: User) -> None:
     """
     Cache a token with its expiration time.
-    
+
     Args:
         token: JWT token
         user: User object
@@ -154,10 +154,10 @@ async def _cache_token(token: str, user: User) -> None:
 async def _should_refresh_token(token: str) -> bool:
     """
     Check if token should be refreshed.
-    
+
     Args:
         token: JWT token
-        
+
     Returns:
         True if token should be refreshed, False otherwise
     """
@@ -176,20 +176,20 @@ async def cleanup_token_cache() -> None:
     while True:
         try:
             await asyncio.sleep(TOKEN_CACHE_CLEANUP_INTERVAL)
-            
+
             now = datetime.utcnow()
             expired_tokens = []
-            
+
             async with _token_cache_lock:
                 for token, (expiry, _) in _token_cache.items():
                     if now > expiry:
                         expired_tokens.append(token)
-                
+
                 for token in expired_tokens:
                     del _token_cache[token]
-            
+
             logger.debug(f"Cleaned up {len(expired_tokens)} expired tokens from cache")
-        
+
         except asyncio.CancelledError:
             break
         except Exception as e:

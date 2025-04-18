@@ -1,10 +1,10 @@
-import { useQuery, useMutation, useQueryClient } from 'react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import apiService from '../services/api';
 import { useNotification } from '../context/NotificationContext';
 
 /**
  * Custom hook for managing MCP providers using React Query
- * 
+ *
  * This hook provides methods for fetching, creating, updating, and deleting
  * MCP providers with automatic cache invalidation and optimistic updates.
  */

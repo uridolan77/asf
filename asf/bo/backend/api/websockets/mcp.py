@@ -16,8 +16,8 @@ from fastapi import WebSocket, WebSocketDisconnect, Depends, HTTPException, stat
 from starlette.websockets import WebSocketState
 
 from api.auth.dependencies import get_current_user_ws
-from api.models.user import User
-from api.services.llm.gateway_service import get_gateway_service
+from models.user import User
+from api.services.llm.gateway_service import get_llm_gateway_service
 from api.websockets.mcp_manager import mcp_manager
 from api.websockets.auth import authenticate_ws_connection, check_mcp_access
 
@@ -84,7 +84,7 @@ async def handle_mcp_websocket(
 
                     # Send initial status update
                     try:
-                        gateway_service = get_gateway_service()
+                        gateway_service = get_llm_gateway_service()
                         status = await gateway_service.get_provider_status(provider_id)
 
                         await mcp_manager.send_message(client_id, {
@@ -108,7 +108,7 @@ async def handle_mcp_websocket(
 
                 elif message_type == 'request_status' and provider_id:
                     # Get provider status
-                    gateway_service = get_gateway_service()
+                    gateway_service = get_llm_gateway_service()
                     status = await gateway_service.get_provider_status(provider_id)
 
                     # Send status update
@@ -121,7 +121,7 @@ async def handle_mcp_websocket(
 
                 elif message_type == 'request_metrics' and provider_id:
                     # Get provider metrics
-                    gateway_service = get_gateway_service()
+                    gateway_service = get_llm_gateway_service()
                     metrics = await gateway_service.get_provider_metrics(provider_id)
 
                     # Send metrics update

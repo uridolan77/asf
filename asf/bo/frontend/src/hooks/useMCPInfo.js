@@ -1,10 +1,10 @@
-import { useQuery } from 'react-query';
+import { useQuery } from '@tanstack/react-query';
 import apiService from '../services/api';
 import { useNotification } from '../context/NotificationContext';
 
 /**
  * Custom hook for fetching MCP information
- * 
+ *
  * This hook provides methods for fetching MCP information
  * with automatic caching and refetching.
  */
