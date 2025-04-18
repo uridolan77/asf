@@ -1083,3 +1083,8 @@ asf.medical.llm_gateway.core.factory.ProviderFactoryError: Failed to get provide
 2025-04-18 21:38:56,681 - api.endpoints - ERROR - C:\code\asf\asf\bo\backend\api\endpoints.py:549 - Error getting LLM usage: 'str' object has no attribute 'token'
 2025-04-18 21:38:56,996 - api.endpoints - ERROR - C:\code\asf\asf\bo\backend\api\endpoints.py:549 - Error getting LLM usage: 'str' object has no attribute 'token'
 2025-04-18 21:38:59,210 - api.endpoints - ERROR - C:\code\asf\asf\bo\backend\api\endpoints.py:549 - Error getting LLM usage: 'str' object has no attribute 'token'
+2025-04-18 22:28:21,488 - api.endpoints - ERROR - C:\code\asf\asf\bo\backend\api\endpoints.py:549 - Error getting LLM usage: 'str' object has no attribute 'token'
+2025-04-18 22:28:21,655 - api.endpoints - ERROR - C:\code\asf\asf\bo\backend\api\endpoints.py:549 - Error getting LLM usage: 'str' object has no attribute 'token'
+2025-04-18 22:28:23,991 - api.endpoints - ERROR - C:\code\asf\asf\bo\backend\api\endpoints.py:549 - Error getting LLM usage: 'str' object has no attribute 'token'
+2025-04-18 22:28:26,086 - api.endpoints - ERROR - C:\code\asf\asf\bo\backend\api\endpoints.py:838 - Error getting search history: 'str' object has no attribute 'token'
+2025-04-18 22:28:26,894 - api.endpoints - ERROR - C:\code\asf\asf\bo\backend\api\endpoints.py:838 - Error getting search history: 'str' object has no attribute 'token'

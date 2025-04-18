@@ -28850,3 +28850,44 @@ AttributeError: module 'bcrypt' has no attribute '__about__'
 2025-04-18 21:40:42,969 - datasets - INFO - PyTorch version 2.6.0 available.
 2025-04-18 21:40:43,109 - api.websockets.mcp_manager - INFO - Started message queue cleanup task
 2025-04-18 21:40:43,109 - api.websockets.mcp_manager - INFO - Started heartbeat task
+2025-04-18 22:28:01,920 - api.websockets.mcp_manager - INFO - Message queue cleanup task cancelled
+2025-04-18 22:28:01,921 - api.websockets.mcp_manager - INFO - Heartbeat task cancelled
+2025-04-18 22:28:01,922 - api.websockets.mcp_manager - INFO - Connection manager shut down
+2025-04-18 22:28:01,923 - api.websockets.mcp_manager - INFO - Connection manager shut down
+2025-04-18 22:28:07,047 - root - INFO - Logging configured with level: INFO
+2025-04-18 22:28:08,870 - root - INFO - Logging configured with level: INFO
+2025-04-18 22:28:08,872 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-18 22:28:08,958 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-18 22:28:13,987 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-18 22:28:14,000 - root - INFO - Using LLM Gateway implementation
+2025-04-18 22:28:14,054 - root - WARNING - LLM Gateway MCP components not available. WebSocket functionality will be limited.
+2025-04-18 22:28:14,057 - root - WARNING - LLM Gateway not available. Some functionality will be limited.
+2025-04-18 22:28:14,058 - root - WARNING - DSPy is not available. Some functionality will be limited. Error: No module named 'medical.ml.dspy.dspy_client'
+2025-04-18 22:28:14,061 - root - WARNING - BiomedLM is not available. Some functionality will be limited.
+2025-04-18 22:28:14,115 - datasets - INFO - PyTorch version 2.6.0 available.
+2025-04-18 22:28:14,316 - api.websockets.mcp_manager - INFO - Started message queue cleanup task
+2025-04-18 22:28:14,316 - api.websockets.mcp_manager - INFO - Started heartbeat task
+2025-04-18 22:28:21,488 - api.endpoints - ERROR - Error getting LLM usage: 'str' object has no attribute 'token'
+2025-04-18 22:28:21,655 - api.endpoints - ERROR - Error getting LLM usage: 'str' object has no attribute 'token'
+2025-04-18 22:28:23,991 - api.endpoints - ERROR - Error getting LLM usage: 'str' object has no attribute 'token'
+2025-04-18 22:28:26,086 - api.endpoints - ERROR - Error getting search history: 'str' object has no attribute 'token'
+2025-04-18 22:28:26,894 - api.endpoints - ERROR - Error getting search history: 'str' object has no attribute 'token'
+2025-04-18 23:42:48,008 - api.websockets.mcp_manager - INFO - Message queue cleanup task cancelled
+2025-04-18 23:42:48,013 - api.websockets.mcp_manager - INFO - Heartbeat task cancelled
+2025-04-18 23:42:48,015 - api.websockets.mcp_manager - INFO - Connection manager shut down
+2025-04-18 23:42:48,019 - api.websockets.mcp_manager - INFO - Connection manager shut down
+2025-04-18 23:42:58,313 - root - INFO - Logging configured with level: INFO
+2025-04-18 23:43:06,564 - root - INFO - Logging configured with level: INFO
+2025-04-18 23:43:06,572 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-18 23:43:07,232 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-18 23:43:56,389 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-18 23:43:56,513 - root - INFO - Using LLM Gateway implementation
+2025-04-18 23:43:56,770 - root - WARNING - LLM Gateway MCP components not available. WebSocket functionality will be limited.
+2025-04-18 23:43:56,777 - root - WARNING - LLM Gateway not available. Some functionality will be limited.
+2025-04-18 23:43:56,785 - root - WARNING - DSPy is not available. Some functionality will be limited. Error: No module named 'medical.ml.dspy.dspy_client'
+2025-04-18 23:43:56,796 - root - WARNING - BiomedLM is not available. Some functionality will be limited.
+2025-04-18 23:43:57,129 - datasets - INFO - PyTorch version 2.6.0 available.
+2025-04-18 23:43:58,725 - api.websockets.mcp_manager - INFO - Started message queue cleanup task
+2025-04-18 23:43:58,726 - api.websockets.mcp_manager - INFO - Started heartbeat task
+2025-04-18 23:43:59,025 - api.websockets.mcp_manager - INFO - Heartbeat task cancelled
+2025-04-18 23:43:59,026 - api.websockets.mcp_manager - INFO - Message queue cleanup task cancelled

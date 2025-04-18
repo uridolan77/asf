@@ -27,6 +27,7 @@ const NCBIClientPage = lazy(() => import('./pages/NCBIClientPage'));
 const LLMManagement = lazy(() => import('./pages/LLMManagement'));
 const DocumentProcessing = lazy(() => import('./pages/DocumentProcessing'));
 const MCPDashboard = lazy(() => import('./pages/MCPDashboard'));
+const LLMProgressTracking = lazy(() => import('./pages/LLMProgressTracking'));
 
 // Loading fallback component
 const LoadingFallback = () => {
@@ -176,6 +177,11 @@ const AnimatedRoutes = () => {
             <Route path="/mcp-dashboard" element={
               <ProtectedRoute>
                 <MCPDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/llm-progress" element={
+              <ProtectedRoute>
+                <LLMProgressTracking />
               </ProtectedRoute>
             } />
 

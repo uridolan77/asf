@@ -1,24 +1,28 @@
 """
-DSPy Modules for Medical Research
+DSPy Modules
 
-This package contains specialized DSPy modules for medical research tasks.
+This package provides domain-agnostic DSPy modules for various NLP tasks.
 """
 
-from .medical_rag import MedicalRAGModule, EnhancedMedicalRAGModule
+from .enhanced_rag import AdvancedRAGModule, MultiStageRAGModule
 from .contradiction_detection import ContradictionDetectionModule, TemporalContradictionModule
 from .evidence_extraction import EvidenceExtractionModule
-from .medical_summarization import MedicalSummarizationModule
-from .clinical_qa import ClinicalQAModule
-from .diagnostic_reasoning import DiagnosticReasoningModule, SpecialistConsultModule
+from .content_summarization import ContentSummarizationModule, StructuredContentSummarizationModule, MultiDocumentSummarizationModule
+from .advanced_qa import AdvancedQAModule, StructuredReasoningModule, GuidelineQAModule
+from .reasoning import ReasoningModule, ExpertConsultModule
 
 __all__ = [
-    'MedicalRAGModule',
-    'EnhancedMedicalRAGModule',
+    'AdvancedRAGModule',
+    'MultiStageRAGModule',
     'ContradictionDetectionModule',
     'TemporalContradictionModule',
     'EvidenceExtractionModule',
-    'MedicalSummarizationModule',
-    'ClinicalQAModule',
-    'DiagnosticReasoningModule',
-    'SpecialistConsultModule'
+    'ContentSummarizationModule',
+    'StructuredContentSummarizationModule',
+    'MultiDocumentSummarizationModule',
+    'AdvancedQAModule',
+    'StructuredReasoningModule',
+    'GuidelineQAModule',
+    'ReasoningModule',
+    'ExpertConsultModule'
 ]

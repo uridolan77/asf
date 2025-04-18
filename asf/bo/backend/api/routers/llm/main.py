@@ -18,17 +18,21 @@ from .biomedlm import router as biomedlm_router
 from .debug import router as debug_router
 from .cl_peft import router as cl_peft_router
 from .mcp import router as mcp_router
+from .progress import router as progress_router
+from .enhanced_gateway import router as enhanced_gateway_router
 
 # Create the main LLM router
 router = APIRouter(prefix="/api/llm", tags=["llm"])
 
 # Include sub-routers
 router.include_router(gateway_router)
+router.include_router(enhanced_gateway_router)
 router.include_router(dspy_router)
 router.include_router(biomedlm_router)
 router.include_router(debug_router)
 router.include_router(cl_peft_router)
 router.include_router(mcp_router)
+router.include_router(progress_router)
 
 logger = logging.getLogger(__name__)
 
@@ -163,6 +167,25 @@ async def get_llm_components(current_user: User = Depends(get_current_user)):
                     "/api/llm/mcp/providers/{provider_id}/test",
                     "/api/llm/mcp/providers/{provider_id}/models",
                     "/api/llm/mcp/generate"
+                ]
+            },
+            {
+                "name": "progress",
+                "description": "Progress tracking for LLM operations",
+                "endpoints": [
+                    "/api/llm/progress/operations",
+                    "/api/llm/progress/operations/{operation_id}",
+                    "/api/llm/progress/active",
+                    "/api/llm/progress/summary"
+                ]
+            },
+            {
+                "name": "enhanced-gateway",
+                "description": "Enhanced LLM Gateway with progress tracking",
+                "endpoints": [
+                    "/api/llm/enhanced-gateway/providers",
+                    "/api/llm/enhanced-gateway/models",
+                    "/api/llm/enhanced-gateway/generate"
                 ]
             }
         ]
