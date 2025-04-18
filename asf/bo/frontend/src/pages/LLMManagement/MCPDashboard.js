@@ -73,11 +73,11 @@ const MCPDashboard = () => {
   } = useMCPProviders();
 
   // Filter active providers
-  const activeProviders = providers.filter(p =>
+  const activeProviders = Array.isArray(providers) ? providers.filter(p =>
     p.status === 'operational' ||
     p.status === 'available' ||
     p.status === 'connected'
-  );
+  ) : [];
 
   // Set selected provider if none is selected and active providers exist
   if (activeProviders.length > 0 && !selectedProvider) {
@@ -99,7 +99,7 @@ const MCPDashboard = () => {
     return (
       <StaggeredList>
         <Grid container spacing={2}>
-          {providers.map((provider) => (
+          {Array.isArray(providers) && providers.map((provider) => (
             <Grid item xs={12} md={6} lg={4} key={provider.provider_id}>
               <Card
                 variant="outlined"
@@ -264,7 +264,7 @@ const MCPDashboard = () => {
           </Box>
         </Box>
 
-        {mcpInfo && (
+        {mcpInfo && mcpInfo.name && (
           <Paper sx={{ p: 3, mb: 3 }}>
             <Typography variant="h6" gutterBottom>
               {mcpInfo.name} ({mcpInfo.version})
@@ -277,7 +277,7 @@ const MCPDashboard = () => {
               <Grid item xs={12} md={6}>
                 <Typography variant="subtitle1" gutterBottom>Features:</Typography>
                 <Box component="ul" sx={{ pl: 2 }}>
-                  {mcpInfo.features.map((feature, index) => (
+                  {mcpInfo.features && Array.isArray(mcpInfo.features) && mcpInfo.features.map((feature, index) => (
                     <Box component="li" key={index}>
                       <Typography>{feature}</Typography>
                     </Box>
@@ -288,7 +288,7 @@ const MCPDashboard = () => {
               <Grid item xs={12} md={6}>
                 <Typography variant="subtitle1" gutterBottom>Transport Types:</Typography>
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                  {mcpInfo.transport_types.map((type, index) => (
+                  {mcpInfo.transport_types && Array.isArray(mcpInfo.transport_types) && mcpInfo.transport_types.map((type, index) => (
                     <Chip
                       key={index}
                       label={type}
@@ -349,7 +349,7 @@ const MCPDashboard = () => {
             {activeTab === 0 && (
               providersLoading ? (
                 <ContentLoader height={200} message="Loading MCP providers..." />
-              ) : providers.length > 0 ? (
+              ) : Array.isArray(providers) && providers.length > 0 ? (
                 renderProviderCards()
               ) : (
                 <Alert severity="info">
@@ -363,7 +363,7 @@ const MCPDashboard = () => {
           <Box role="tabpanel" hidden={activeTab !== 1} id="tabpanel-1" aria-labelledby="tab-1" sx={{ p: 3 }}>
             {activeTab === 1 && (
               <>
-                {providers.length > 0 ? (
+                {Array.isArray(providers) && providers.length > 0 ? (
                   <Box sx={{ mb: 3 }}>
                     <FormControl fullWidth sx={{ maxWidth: 300, mb: 3 }}>
                       <InputLabel id="provider-select-label">Select Provider</InputLabel>

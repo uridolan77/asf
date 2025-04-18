@@ -47,7 +47,7 @@ import apiService from '../../../services/api';
  */
 const ProviderManagement = () => {
   const { showSuccess, showError } = useNotification();
-  
+
   // State
   const [providers, setProviders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -69,7 +69,7 @@ const ProviderManagement = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [providerToDelete, setProviderToDelete] = useState(null);
-  
+
   // Provider types
   const providerTypes = [
     { value: 'openai', label: 'OpenAI' },
@@ -81,39 +81,46 @@ const ProviderManagement = () => {
     { value: 'azure_openai', label: 'Azure OpenAI' },
     { value: 'custom', label: 'Custom' }
   ];
-  
+
   // Load providers on mount
   useEffect(() => {
     loadProviders();
   }, []);
-  
+
   // Load providers
   const loadProviders = async () => {
     setLoading(true);
-    
+
     try {
+      console.log('Fetching LLM providers...');
       const result = await apiService.llm.getProviders();
-      
+
       if (result.success) {
+        console.log('Providers loaded successfully:', result.data);
         setProviders(result.data);
       } else {
+        console.error('Failed to load providers:', result.error);
         showError(`Failed to load providers: ${result.error}`);
+        // Set empty providers array to avoid undefined errors
+        setProviders([]);
       }
     } catch (error) {
       console.error('Error loading providers:', error);
       showError(`Error loading providers: ${error.message}`);
+      // Set empty providers array to avoid undefined errors
+      setProviders([]);
     } finally {
       setLoading(false);
     }
   };
-  
+
   // Refresh providers
   const handleRefresh = async () => {
     setRefreshing(true);
     await loadProviders();
     setRefreshing(false);
   };
-  
+
   // Open add dialog
   const handleOpenAddDialog = () => {
     setDialogMode('add');
@@ -131,12 +138,12 @@ const ProviderManagement = () => {
     });
     setDialogOpen(true);
   };
-  
+
   // Open edit dialog
   const handleOpenEditDialog = (provider) => {
     setDialogMode('edit');
     setSelectedProvider(provider);
-    
+
     // Transform provider data to form values
     setFormValues({
       provider_id: provider.provider_id,
@@ -149,10 +156,10 @@ const ProviderManagement = () => {
       },
       models: {} // This needs to be fetched from the provider config
     });
-    
+
     setDialogOpen(true);
   };
-  
+
   // Handle dialog close
   const handleDialogClose = () => {
     setDialogOpen(false);
@@ -168,7 +175,7 @@ const ProviderManagement = () => {
       models: {}
     });
   };
-  
+
   // Handle form input change
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -177,7 +184,7 @@ const ProviderManagement = () => {
       [name]: value
     }));
   };
-  
+
   // Handle connection params change
   const handleConnectionParamChange = (e) => {
     const { name, value } = e.target;
@@ -189,7 +196,7 @@ const ProviderManagement = () => {
       }
     }));
   };
-  
+
   // Handle form submit
   const handleSubmit = async () => {
     // Validate form
@@ -197,17 +204,17 @@ const ProviderManagement = () => {
       showError('Provider ID is required');
       return;
     }
-    
+
     if (!formValues.display_name) {
       showError('Display name is required');
       return;
     }
-    
+
     try {
       if (dialogMode === 'add') {
         // Create default models based on provider type
         let defaultModels = {};
-        
+
         if (formValues.provider_type === 'openai') {
           defaultModels = {
             "gpt-4-turbo": {
@@ -243,17 +250,17 @@ const ProviderManagement = () => {
             }
           };
         }
-        
+
         // Create provider with default models or empty if not a known provider
         const createData = {
           ...formValues,
           models: defaultModels
         };
-        
+
         console.log('Creating provider with data:', createData);
-        
+
         const result = await apiService.llm.registerProvider(createData);
-        
+
         if (result.success) {
           showSuccess(`Provider "${formValues.display_name}" created successfully`);
           handleDialogClose();
@@ -272,7 +279,7 @@ const ProviderManagement = () => {
             enabled: formValues.enabled
           }
         );
-        
+
         if (result.success) {
           showSuccess(`Provider "${formValues.display_name}" updated successfully`);
           handleDialogClose();
@@ -286,14 +293,14 @@ const ProviderManagement = () => {
       showError(`Error saving provider: ${error.message}`);
     }
   };
-  
+
   // Test provider
   const handleTestProvider = async (providerId) => {
     setTestingProvider(providerId);
-    
+
     try {
       const result = await apiService.llm.testProvider(providerId);
-      
+
       if (result.success) {
         showSuccess(`Provider "${providerId}" test successful`);
       } else {
@@ -306,20 +313,20 @@ const ProviderManagement = () => {
       setTestingProvider(null);
     }
   };
-  
+
   // Open delete confirm dialog
   const handleOpenDeleteConfirm = (provider) => {
     setProviderToDelete(provider);
     setDeleteConfirmOpen(true);
   };
-  
+
   // Handle delete confirm
   const handleDeleteConfirm = async () => {
     if (!providerToDelete) return;
-    
+
     try {
       const result = await apiService.llm.deleteProvider(providerToDelete.provider_id);
-      
+
       if (result.success) {
         showSuccess(`Provider "${providerToDelete.display_name}" deleted successfully`);
         setDeleteConfirmOpen(false);
@@ -333,7 +340,7 @@ const ProviderManagement = () => {
       showError(`Error deleting provider: ${error.message}`);
     }
   };
-  
+
   // Get status color
   const getStatusColor = (status) => {
     switch (status) {
@@ -347,7 +354,7 @@ const ProviderManagement = () => {
         return 'default';
     }
   };
-  
+
   // Get status icon
   const getStatusIcon = (status) => {
     switch (status) {
@@ -361,9 +368,27 @@ const ProviderManagement = () => {
         return null;
     }
   };
-  
+
   // Render provider cards
   const renderProviderCards = () => {
+    if (providers.length === 0) {
+      return (
+        <Paper sx={{ p: 3, textAlign: 'center' }}>
+          <Typography variant="body1" color="text.secondary">
+            No LLM providers found. Click "Add Provider" to create a new provider.
+          </Typography>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={handleOpenAddDialog}
+            sx={{ mt: 2 }}
+          >
+            Add Provider
+          </Button>
+        </Paper>
+      );
+    }
+
     return (
       <Grid container spacing={3}>
         {providers.map((provider) => (
@@ -388,15 +413,21 @@ const ProviderManagement = () => {
                 <Typography variant="body2" color="text.secondary" gutterBottom>
                   Last Checked: {new Date(provider.checked_at).toLocaleString()}
                 </Typography>
-                
+
                 <Typography variant="subtitle2" gutterBottom sx={{ mt: 2 }}>
                   Models:
                 </Typography>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                  {provider.models.map((model) => (
-                    <Chip key={model} label={model} size="small" variant="outlined" />
-                  ))}
-                </Box>
+                {provider.models && provider.models.length > 0 ? (
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                    {provider.models.map((model) => (
+                      <Chip key={model} label={model} size="small" variant="outlined" />
+                    ))}
+                  </Box>
+                ) : (
+                  <Typography variant="body2" color="text.secondary">
+                    No models configured
+                  </Typography>
+                )}
               </CardContent>
               <CardActions>
                 <Button
@@ -430,9 +461,27 @@ const ProviderManagement = () => {
       </Grid>
     );
   };
-  
+
   // Render provider table
   const renderProviderTable = () => {
+    if (providers.length === 0) {
+      return (
+        <Paper sx={{ p: 3, textAlign: 'center' }}>
+          <Typography variant="body1" color="text.secondary">
+            No LLM providers found. Click "Add Provider" to create a new provider.
+          </Typography>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={handleOpenAddDialog}
+            sx={{ mt: 2 }}
+          >
+            Add Provider
+          </Button>
+        </Paper>
+      );
+    }
+
     return (
       <TableContainer component={Paper}>
         <Table>
@@ -461,7 +510,7 @@ const ProviderManagement = () => {
                   />
                 </TableCell>
                 <TableCell>
-                  {provider.models.length > 0 ? (
+                  {provider.models && provider.models.length > 0 ? (
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                       {provider.models.slice(0, 2).map((model) => (
                         <Chip key={model} label={model} size="small" variant="outlined" />
@@ -516,7 +565,7 @@ const ProviderManagement = () => {
       </TableContainer>
     );
   };
-  
+
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
@@ -541,31 +590,17 @@ const ProviderManagement = () => {
           </Button>
         </Box>
       </Box>
-      
+
       {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
           <CircularProgress />
         </Box>
-      ) : providers.length === 0 ? (
-        <Paper sx={{ p: 3, textAlign: 'center' }}>
-          <Typography variant="body1" gutterBottom>
-            No LLM providers found.
-          </Typography>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={handleOpenAddDialog}
-            sx={{ mt: 2 }}
-          >
-            Add Provider
-          </Button>
-        </Paper>
       ) : (
         <Box sx={{ mb: 4 }}>
           {renderProviderTable()}
         </Box>
       )}
-      
+
       {/* Provider Form Dialog */}
       <Dialog open={dialogOpen} onClose={handleDialogClose} maxWidth="md" fullWidth>
         <DialogTitle>
@@ -658,7 +693,7 @@ const ProviderManagement = () => {
           </Button>
         </DialogActions>
       </Dialog>
-      
+
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteConfirmOpen} onClose={() => setDeleteConfirmOpen(false)}>
         <DialogTitle>Confirm Delete</DialogTitle>

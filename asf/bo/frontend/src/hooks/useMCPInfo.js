@@ -18,20 +18,18 @@ export const useMCPInfo = () => {
     isError,
     error,
     refetch
-  } = useQuery(
-    ['mcpInfo'],
-    () => apiService.llm.getMCPInfo(),
-    {
-      staleTime: 3600000, // 1 hour
-      refetchOnWindowFocus: false,
-      onError: (err) => {
-        showError(`Failed to fetch MCP information: ${err.message}`);
-      }
+  } = useQuery({
+    queryKey: ['mcpInfo'],
+    queryFn: () => apiService.llm.getMCPInfo(),
+    staleTime: 3600000, // 1 hour
+    refetchOnWindowFocus: false,
+    onError: (err) => {
+      showError(`Failed to fetch MCP information: ${err.message}`);
     }
-  );
+  });
 
   return {
-    mcpInfo,
+    mcpInfo: mcpInfo || null, // Ensure mcpInfo is null if undefined
     isLoading,
     isError,
     error,

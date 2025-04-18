@@ -56,7 +56,7 @@ import apiService from '../../../services/api';
  */
 const ModelManagement = () => {
   const { showSuccess, showError } = useNotification();
-  
+
   // State
   const [models, setModels] = useState([]);
   const [providers, setProviders] = useState([]);
@@ -79,7 +79,7 @@ const ModelManagement = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [filterProviderId, setFilterProviderId] = useState('');
   const [filterModelType, setFilterModelType] = useState('');
-  
+
   // Model types
   const modelTypes = [
     { value: 'chat', label: 'Chat Completion' },
@@ -88,7 +88,7 @@ const ModelManagement = () => {
     { value: 'image', label: 'Image Generation' },
     { value: 'vision', label: 'Vision' }
   ];
-  
+
   // Capabilities
   const capabilityOptions = [
     { value: 'function_calling', label: 'Function Calling' },
@@ -99,49 +99,62 @@ const ModelManagement = () => {
     { value: 'reasoning', label: 'Reasoning' },
     { value: 'tool_use', label: 'Tool Use' }
   ];
-  
+
   // Load data on mount
   useEffect(() => {
     loadData();
   }, []);
-  
+
   // Load data
   const loadData = async () => {
     setLoading(true);
-    
+
     try {
+      console.log('Fetching LLM providers and models...');
       // Load providers first
       const providersResult = await apiService.llm.getProviders();
-      
+
       if (providersResult.success) {
+        console.log('Providers loaded successfully:', providersResult.data);
         setProviders(providersResult.data);
-        
+
         // Then load models
         const modelsResult = await apiService.llm.getModels();
-        
+
         if (modelsResult.success) {
-          setModels(modelsResult.data);
+          console.log('Models loaded successfully:', modelsResult.data);
+          setModels(modelsResult.data || []);
         } else {
+          console.error('Failed to load models:', modelsResult.error);
           showError(`Failed to load models: ${modelsResult.error}`);
+          // Set empty models array to avoid undefined errors
+          setModels([]);
         }
       } else {
+        console.error('Failed to load providers:', providersResult.error);
         showError(`Failed to load providers: ${providersResult.error}`);
+        // Set empty providers array to avoid undefined errors
+        setProviders([]);
+        setModels([]);
       }
     } catch (error) {
       console.error('Error loading data:', error);
       showError(`Error loading data: ${error.message}`);
+      // Set empty arrays to avoid undefined errors
+      setProviders([]);
+      setModels([]);
     } finally {
       setLoading(false);
     }
   };
-  
+
   // Refresh data
   const handleRefresh = async () => {
     setRefreshing(true);
     await loadData();
     setRefreshing(false);
   };
-  
+
   // Open add dialog
   const handleOpenAddDialog = () => {
     setDialogMode('add');
@@ -158,12 +171,12 @@ const ModelManagement = () => {
     });
     setDialogOpen(true);
   };
-  
+
   // Open edit dialog
   const handleOpenEditDialog = (model) => {
     setDialogMode('edit');
     setSelectedModel(model);
-    
+
     // Transform model data to form values
     setFormValues({
       model_id: model.model_id,
@@ -175,15 +188,15 @@ const ModelManagement = () => {
       max_output_tokens: model.max_output_tokens || null,
       parameters: model.parameters || {}
     });
-    
+
     setDialogOpen(true);
   };
-  
+
   // Handle dialog close
   const handleDialogClose = () => {
     setDialogOpen(false);
   };
-  
+
   // Handle form input change
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -192,7 +205,7 @@ const ModelManagement = () => {
       [name]: value
     }));
   };
-  
+
   // Handle number input change
   const handleNumberInputChange = (e) => {
     const { name, value } = e.target;
@@ -201,7 +214,7 @@ const ModelManagement = () => {
       [name]: value === '' ? null : Number(value)
     }));
   };
-  
+
   // Handle capabilities change
   const handleCapabilitiesChange = (_, newValue) => {
     setFormValues((prev) => ({
@@ -209,7 +222,7 @@ const ModelManagement = () => {
       capabilities: newValue.map(item => typeof item === 'string' ? item : item.value)
     }));
   };
-  
+
   // Handle form submit
   const handleSubmit = async () => {
     // Validate form
@@ -217,22 +230,22 @@ const ModelManagement = () => {
       showError('Model ID is required');
       return;
     }
-    
+
     if (!formValues.provider_id) {
       showError('Provider is required');
       return;
     }
-    
+
     if (!formValues.display_name) {
       showError('Display name is required');
       return;
     }
-    
+
     try {
       if (dialogMode === 'add') {
         // Create model
         const result = await apiService.llm.createModel(formValues);
-        
+
         if (result.success) {
           showSuccess(`Model "${formValues.display_name}" created successfully`);
           handleDialogClose();
@@ -254,7 +267,7 @@ const ModelManagement = () => {
             parameters: formValues.parameters
           }
         );
-        
+
         if (result.success) {
           showSuccess(`Model "${formValues.display_name}" updated successfully`);
           handleDialogClose();
@@ -268,23 +281,23 @@ const ModelManagement = () => {
       showError(`Error saving model: ${error.message}`);
     }
   };
-  
+
   // Open delete confirm dialog
   const handleOpenDeleteConfirm = (model) => {
     setModelToDelete(model);
     setDeleteConfirmOpen(true);
   };
-  
+
   // Handle delete confirm
   const handleDeleteConfirm = async () => {
     if (!modelToDelete) return;
-    
+
     try {
       const result = await apiService.llm.deleteModel(
         modelToDelete.model_id,
         modelToDelete.provider_id
       );
-      
+
       if (result.success) {
         showSuccess(`Model "${modelToDelete.display_name}" deleted successfully`);
         setDeleteConfirmOpen(false);
@@ -298,7 +311,7 @@ const ModelManagement = () => {
       showError(`Error deleting model: ${error.message}`);
     }
   };
-  
+
   // Get filtered models
   const getFilteredModels = () => {
     return models.filter(model => {
@@ -306,22 +319,22 @@ const ModelManagement = () => {
       if (filterProviderId && model.provider_id !== filterProviderId) {
         return false;
       }
-      
+
       // Filter by model type
       if (filterModelType && model.model_type !== filterModelType) {
         return false;
       }
-      
+
       return true;
     });
   };
-  
+
   // Get provider name by ID
   const getProviderName = (providerId) => {
     const provider = providers.find(p => p.provider_id === providerId);
     return provider ? (provider.display_name || provider.provider_id) : providerId;
   };
-  
+
   // Get capability icon
   const getCapabilityIcon = (capability) => {
     switch (capability) {
@@ -336,7 +349,7 @@ const ModelManagement = () => {
         return <TextFieldsIcon fontSize="small" />;
     }
   };
-  
+
   // Get model type color
   const getModelTypeColor = (modelType) => {
     switch (modelType) {
@@ -354,11 +367,33 @@ const ModelManagement = () => {
         return 'default';
     }
   };
-  
+
   // Render model table
   const renderModelTable = () => {
     const filteredModels = getFilteredModels();
-    
+
+    if (filteredModels.length === 0) {
+      return (
+        <Paper sx={{ p: 3, textAlign: 'center' }}>
+          <Typography variant="body1" color="text.secondary">
+            {models.length === 0 ?
+              'No models found. Click "Add Model" to create a new model.' :
+              'No models match the current filters. Try changing or clearing the filters.'}
+          </Typography>
+          {models.length === 0 && providers.length > 0 && (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={handleOpenAddDialog}
+              sx={{ mt: 2 }}
+            >
+              Add Model
+            </Button>
+          )}
+        </Paper>
+      );
+    }
+
     return (
       <TableContainer component={Paper}>
         <Table>
@@ -437,7 +472,7 @@ const ModelManagement = () => {
       </TableContainer>
     );
   };
-  
+
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
@@ -463,7 +498,13 @@ const ModelManagement = () => {
           </Button>
         </Box>
       </Box>
-      
+
+      {providers.length === 0 && !loading && (
+        <Alert severity="info" sx={{ mb: 3 }}>
+          No LLM providers found. Please add a provider in the Providers tab before adding models.
+        </Alert>
+      )}
+
       {/* Filters */}
       <Paper sx={{ p: 2, mb: 3 }}>
         <Grid container spacing={2} alignItems="center">
@@ -502,8 +543,8 @@ const ModelManagement = () => {
             </FormControl>
           </Grid>
           <Grid item xs={12} sm={6} md={4}>
-            <Button 
-              variant="outlined" 
+            <Button
+              variant="outlined"
               onClick={() => {
                 setFilterProviderId('');
                 setFilterModelType('');
@@ -514,7 +555,7 @@ const ModelManagement = () => {
           </Grid>
         </Grid>
       </Paper>
-      
+
       {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
           <CircularProgress />
@@ -560,7 +601,7 @@ const ModelManagement = () => {
           {renderModelTable()}
         </Box>
       )}
-      
+
       {/* Model Form Dialog */}
       <Dialog open={dialogOpen} onClose={handleDialogClose} maxWidth="md" fullWidth>
         <DialogTitle>
@@ -686,7 +727,7 @@ const ModelManagement = () => {
           </Button>
         </DialogActions>
       </Dialog>
-      
+
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteConfirmOpen} onClose={() => setDeleteConfirmOpen(false)}>
         <DialogTitle>Confirm Delete</DialogTitle>

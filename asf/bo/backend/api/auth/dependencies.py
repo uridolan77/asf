@@ -31,14 +31,14 @@ def get_db():
 async def get_current_user(token: str = Depends(oauth2_scheme), db = Depends(get_db)):
     """
     Get current user from token.
-    
+
     Args:
         token: JWT token
         db: Database session
-        
+
     Returns:
         User: Current user
-        
+
     Raises:
         HTTPException: If token is invalid or user not found
     """
@@ -47,7 +47,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db = Depends(get
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
-    
+
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id: str = payload.get("sub")
@@ -55,38 +55,44 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db = Depends(get
             raise credentials_exception
     except jwt.PyJWTError:
         raise credentials_exception
-    
+
     # In a real app, this would query the database
     # For now, we'll just return a mock user based on the user_id
     if user_id == "1":
-        return User(
+        # Create a User object without the token parameter
+        user = User(
             id=1,
             username="admin",
             email="admin@example.com",
-            role_id=1,
-            token=token
+            role_id=1
         )
+        # Store the token as an attribute (not a column)
+        user.auth_token = token
+        return user
     elif user_id == "2":
-        return User(
+        # Create a User object without the token parameter
+        user = User(
             id=2,
             username="user",
             email="user@example.com",
-            role_id=2,
-            token=token
+            role_id=2
         )
-    
+        # Store the token as an attribute (not a column)
+        user.auth_token = token
+        return user
+
     raise credentials_exception
 
 async def get_current_user_ws(websocket: WebSocket):
     """
     Get current user from WebSocket connection.
-    
+
     Args:
         websocket: WebSocket connection
-        
+
     Returns:
         User: Current user
-        
+
     Raises:
         WebSocketDisconnect: If token is invalid or user not found
     """
@@ -98,12 +104,12 @@ async def get_current_user_ws(websocket: WebSocket):
             auth_header = websocket.headers.get("authorization")
             if auth_header and auth_header.startswith("Bearer "):
                 token = auth_header.split(" ")[1]
-        
+
         if not token:
             logger.warning("No token provided in WebSocket connection")
             await websocket.close(code=1008)  # Policy violation
             return None
-        
+
         # Decode token
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id: str = payload.get("sub")
@@ -111,30 +117,36 @@ async def get_current_user_ws(websocket: WebSocket):
             logger.warning("Invalid token in WebSocket connection")
             await websocket.close(code=1008)  # Policy violation
             return None
-        
+
         # In a real app, this would query the database
         # For now, we'll just return a mock user based on the user_id
         if user_id == "1":
-            return User(
+            # Create a User object without the token parameter
+            user = User(
                 id=1,
                 username="admin",
                 email="admin@example.com",
-                role_id=1,
-                token=token
+                role_id=1
             )
+            # Store the token as an attribute (not a column)
+            user.auth_token = token
+            return user
         elif user_id == "2":
-            return User(
+            # Create a User object without the token parameter
+            user = User(
                 id=2,
                 username="user",
                 email="user@example.com",
-                role_id=2,
-                token=token
+                role_id=2
             )
-        
+            # Store the token as an attribute (not a column)
+            user.auth_token = token
+            return user
+
         logger.warning(f"User not found for ID: {user_id}")
         await websocket.close(code=1008)  # Policy violation
         return None
-    
+
     except jwt.PyJWTError as e:
         logger.warning(f"JWT error in WebSocket connection: {str(e)}")
         await websocket.close(code=1008)  # Policy violation

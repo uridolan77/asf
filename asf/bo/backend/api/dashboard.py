@@ -165,11 +165,11 @@ def get_recent_updates(current_user: User = Depends(get_current_user), db: Sessi
 async def get_llm_usage(current_user: User = Depends(get_current_user)):
     """Get LLM usage statistics for the dashboard."""
     try:
-        # Call the medical API to get the LLM usage statistics
+        # Now we can use the auth_token attribute we added to the User object
         async with httpx.AsyncClient() as client:
             response = await client.get(
                 f"{MEDICAL_API_URL}/api/llm/usage",
-                headers={"Authorization": f"Bearer {current_user.token}"}
+                headers={"Authorization": f"Bearer {current_user.auth_token}"}
             )
 
             if response.status_code != 200:

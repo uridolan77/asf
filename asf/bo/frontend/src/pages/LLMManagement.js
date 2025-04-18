@@ -180,10 +180,7 @@ const LLMManagement = () => {
     setRefreshing(true);
 
     try {
-      // We'll simulate a successful response for development
-      // Once backend is ready, uncomment the actual API call
-
-      /*
+      // Make the actual API call to get LLM status
       const result = await apiService.llm.getStatus();
 
       if (result.success) {
@@ -198,70 +195,33 @@ const LLMManagement = () => {
         ]);
       } else {
         showError(`Failed to load LLM status: ${result.error}`);
-      }
-      */
-
-      // Simulated response for development
-      setTimeout(() => {
+        // Fallback to default status if API call fails
         setLlmStatus({
-          overall_status: 'operational',
+          overall_status: 'degraded',
           components: {
-            gateway: {
-              status: 'available',
-              details: {
-                providers: [
-                  { id: 'openai', name: 'OpenAI', type: 'API', is_active: true, requires_api_key: true, models_count: 5 },
-                  { id: 'anthropic', name: 'Anthropic', type: 'API', is_active: true, requires_api_key: true, models_count: 3 },
-                  { id: 'local', name: 'Local Models', type: 'Local', is_active: true, requires_api_key: false, models_count: 2 }
-                ],
-                active_providers: [
-                  { id: 'openai', name: 'OpenAI', type: 'API', is_active: true, requires_api_key: true, models_count: 5 },
-                  { id: 'anthropic', name: 'Anthropic', type: 'API', is_active: true, requires_api_key: true, models_count: 3 },
-                  { id: 'local', name: 'Local Models', type: 'Local', is_active: true, requires_api_key: false, models_count: 2 }
-                ]
-              }
-            },
-            dspy: {
-              status: 'available',
-              modules: [
-                { name: 'MedicalSummarizer', module_type: 'Summarization', optimized: true, description: 'Summarizes medical text', tags: ['medical', 'nlp'] },
-                { name: 'EvidenceExtractor', module_type: 'Extraction', optimized: false, description: 'Extracts evidences from medical literature', tags: ['evidence', 'medical'] },
-                { name: 'ContradictionDetector', module_type: 'Classification', optimized: true, description: 'Detects contradictions in medical claims', tags: ['contradiction', 'medical'] }
-              ],
-              modules_count: 3
-            },
-            biomedlm: {
-              status: 'available',
-              models: [
-                { id: 'biomedlm-base', name: 'BioMedLM Base', status: 'active', size: '7B', description: 'Base biomedical language model', tags: ['medical', 'base'] },
-                { id: 'biomedlm-clinical', name: 'BioMedLM Clinical', status: 'active', size: '13B', description: 'Clinical-focused biomedical model', tags: ['clinical', 'medical'] }
-              ],
-              models_count: 2
-            },
-            cl_peft: {
-              status: 'available',
-              adapters: [
-                { adapter_id: 'adapter_12345678', adapter_name: 'Medical QA Adapter', base_model_name: 'meta-llama/Llama-2-7b-hf', cl_strategy: 'generative_replay', peft_method: 'lora' },
-                { adapter_id: 'adapter_87654321', adapter_name: 'Clinical Notes Adapter', base_model_name: 'mistralai/Mistral-7B-v0.1', cl_strategy: 'ewc', peft_method: 'qlora' }
-              ],
-              adapters_count: 2
-            },
-            mcp: {
-              status: 'available',
-              providers: [
-                { provider_id: 'anthropic_mcp', display_name: 'Anthropic MCP', transport_type: 'grpc', status: 'connected' },
-                { provider_id: 'openai_mcp', display_name: 'OpenAI MCP', transport_type: 'http', status: 'connected' }
-              ],
-              providers_count: 2
-            }
+            gateway: { status: 'unknown', details: {} },
+            dspy: { status: 'unknown', modules: [], modules_count: 0 },
+            biomedlm: { status: 'unknown', models: [], models_count: 0 },
+            cl_peft: { status: 'unknown', adapters: [], adapters_count: 0 },
+            mcp: { status: 'unknown', providers: [], providers_count: 0 }
           }
         });
-        showSuccess('LLM status loaded successfully');
-        setRefreshing(false);
-      }, 1000);
+      }
+      setRefreshing(false);
     } catch (error) {
       console.error('Error loading LLM status:', error);
       showError(`Error loading LLM status: ${error.message}`);
+      // Fallback to default status if API call fails
+      setLlmStatus({
+        overall_status: 'error',
+        components: {
+          gateway: { status: 'error', details: {} },
+          dspy: { status: 'error', modules: [], modules_count: 0 },
+          biomedlm: { status: 'error', models: [], models_count: 0 },
+          cl_peft: { status: 'error', adapters: [], adapters_count: 0 },
+          mcp: { status: 'error', providers: [], providers_count: 0 }
+        }
+      });
       setRefreshing(false);
     }
   };

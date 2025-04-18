@@ -26,7 +26,9 @@ from api.routers.llm_gateway import router as llm_gateway_router
 from api.routers.document_processing import router as document_processing_router
 from api.routers.dspy import router as dspy_router
 from api.routers.llm.mcp import router as mcp_router
-from api.routers.websockets import router as websocket_router
+from api.routers.llm.main import router as llm_router
+# Commented out due to missing module
+# from api.routers.websockets import router as websocket_router
 
 # Import config routers
 from api.routers.config.provider_router import router as provider_router
@@ -37,21 +39,22 @@ from api.routers.config.user_provider_router import router as user_provider_rout
 from api.clients import router as clients_router
 
 # Import new modular routers
-from api.auth import router as auth_router
-from api.dashboard import router as dashboard_router
-from api.medical_search import router as med_search_router
-from api.knowledge_base import router as kb_router
-from api.medical_analysis import router as analysis_router
-from api.medical_clients import router as med_clients_router
-from api.export import router as export_router
+# Commented out due to missing modules
+# from api.auth import router as auth_router
+# from api.dashboard import router as dashboard_router
+# from api.medical_search import router as med_search_router
+# from api.knowledge_base import router as kb_router
+# from api.medical_analysis import router as analysis_router
+# from api.medical_clients import router as med_clients_router
+# from api.export import router as export_router
 
 app = FastAPI()
 
 # Configure CORS - Allow specific origins for development
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:5173", "http://localhost:5174", 
-                  "http://localhost:57104", "http://localhost:57054", 
+    allow_origins=["http://localhost:3000", "http://localhost:5173", "http://localhost:5174",
+                  "http://localhost:57104", "http://localhost:57054",
                   "http://10.100.102.28:57104", "http://10.100.102.28:57054"],
     allow_credentials=True,
     allow_methods=["*"],
@@ -70,8 +73,10 @@ app.include_router(clients_router)
 app.include_router(llm_gateway_router)
 app.include_router(document_processing_router)
 app.include_router(dspy_router)
+app.include_router(llm_router)
 app.include_router(mcp_router, prefix="/api/llm")
-app.include_router(websocket_router)
+# Commented out due to missing module
+# app.include_router(websocket_router)
 
 # Include config routers
 app.include_router(provider_router)
@@ -79,10 +84,12 @@ app.include_router(configuration_router)
 app.include_router(user_provider_router)
 
 # Include new modular routers
-app.include_router(auth_router)
-app.include_router(dashboard_router)
-app.include_router(med_search_router)
-app.include_router(kb_router)
-app.include_router(analysis_router)
-app.include_router(med_clients_router)
-app.include_router(export_router)
+# Commented out due to missing modules
+# app.include_router(auth_router)
+# app.include_router(dashboard_router)
+# app.include_router(med_search_router)
+# app.include_router(kb_router)
+# app.include_router(analysis_router)
+# app.include_router(med_clients_router)
+# app.include_router(export_router)
+

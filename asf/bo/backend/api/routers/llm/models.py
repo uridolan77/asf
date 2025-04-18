@@ -18,6 +18,10 @@ class ProviderStatus(BaseModel):
     checked_at: str
     message: Optional[str] = None
 
+    class Config:
+        # Allow extra fields for future compatibility
+        extra = "allow"
+
 class GatewayStatus(BaseModel):
     gateway_id: str
     status: str
