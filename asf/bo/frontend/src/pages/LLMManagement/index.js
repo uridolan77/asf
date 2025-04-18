@@ -1,5 +1,5 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import {
   Box,
   Tab,
@@ -58,6 +58,7 @@ const LLMManagement = () => {
   });
 
   const navigate = useNavigate();
+  const location = useLocation();
   const { showSuccess, showError } = useNotification();
 
   // Use API hook for fetching user data
@@ -88,6 +89,44 @@ const LLMManagement = () => {
     loadLlmStatus();
   }, []);
 
+  // Set active tab based on query parameter
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tabParam = params.get('tab');
+
+    if (tabParam) {
+      switch (tabParam.toLowerCase()) {
+        case 'providers':
+          setActiveTab(0);
+          break;
+        case 'models':
+          setActiveTab(1);
+          break;
+        case 'gateway':
+          setActiveTab(2);
+          break;
+        case 'dspy':
+          setActiveTab(3);
+          break;
+        case 'biomedlm':
+          setActiveTab(4);
+          break;
+        case 'cl-peft':
+        case 'clpeft':
+          setActiveTab(5);
+          break;
+        case 'mcp':
+          setActiveTab(6);
+          break;
+        case 'usage':
+          setActiveTab(7);
+          break;
+        default:
+          break;
+      }
+    }
+  }, [location]);
+
   // Handle logout
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -97,6 +136,43 @@ const LLMManagement = () => {
   // Handle tab change
   const handleTabChange = (_, newValue) => {
     setActiveTab(newValue);
+
+    // Update URL with tab parameter
+    let tabName = '';
+    switch (newValue) {
+      case 0:
+        tabName = 'providers';
+        break;
+      case 1:
+        tabName = 'models';
+        break;
+      case 2:
+        tabName = 'gateway';
+        break;
+      case 3:
+        tabName = 'dspy';
+        break;
+      case 4:
+        tabName = 'biomedlm';
+        break;
+      case 5:
+        tabName = 'cl-peft';
+        break;
+      case 6:
+        tabName = 'mcp';
+        break;
+      case 7:
+        tabName = 'usage';
+        break;
+      default:
+        break;
+    }
+
+    if (tabName) {
+      const params = new URLSearchParams(location.search);
+      params.set('tab', tabName);
+      navigate({ search: params.toString() }, { replace: true });
+    }
   };
 
   // Load LLM status
@@ -481,7 +557,7 @@ const LLMManagement = () => {
             to="/mcp-dashboard"
             sx={{ ml: 2 }}
           >
-            Open MCP Dashboard
+            Open Standalone MCP Dashboard Page
           </Button>
         </Typography>
         <Typography component="div">

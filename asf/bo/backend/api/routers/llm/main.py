@@ -17,6 +17,7 @@ from .dspy import router as dspy_router
 from .biomedlm import router as biomedlm_router
 from .debug import router as debug_router
 from .cl_peft import router as cl_peft_router
+from .mcp import router as mcp_router
 
 # Create the main LLM router
 router = APIRouter(prefix="/api/llm", tags=["llm"])
@@ -27,6 +28,7 @@ router.include_router(dspy_router)
 router.include_router(biomedlm_router)
 router.include_router(debug_router)
 router.include_router(cl_peft_router)
+router.include_router(mcp_router)
 
 logger = logging.getLogger(__name__)
 
@@ -91,6 +93,17 @@ async def llm_root(current_user: User = Depends(get_current_user)):
                     "/api/llm/cl-peft/strategies",
                     "/api/llm/cl-peft/peft-methods",
                     "/api/llm/cl-peft/base-models"
+                ]
+            },
+            {
+                "name": "mcp",
+                "description": "Model Context Protocol (MCP) for standardized interaction with LLMs",
+                "endpoints": [
+                    "/api/llm/mcp/providers",
+                    "/api/llm/mcp/providers/{provider_id}",
+                    "/api/llm/mcp/providers/{provider_id}/test",
+                    "/api/llm/mcp/providers/{provider_id}/models",
+                    "/api/llm/mcp/generate"
                 ]
             }
         ]

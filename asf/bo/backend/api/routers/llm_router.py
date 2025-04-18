@@ -109,7 +109,7 @@ async def get_usage_statistics(
     Get usage statistics for all LLM components.
 
     This endpoint returns usage statistics for all LLM components,
-    including LLM Gateway, DSPy, and BiomedLM.
+    including LLM Gateway, DSPy, BiomedLM, CL-PEFT, and MCP.
     """
     try:
         usage = await llm_service.get_usage_statistics()

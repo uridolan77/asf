@@ -1,5 +1,5 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Box,
   Tab,
@@ -11,7 +11,6 @@ import {
   CircularProgress
 } from '@mui/material';
 import {
-
   SmartToy as SmartToyIcon,
   Psychology as PsychologyIcon,
   Biotech as BiotechIcon,
@@ -19,7 +18,8 @@ import {
   Refresh as RefreshIcon,
   Cloud as CloudIcon,
   Memory as MemoryIcon,
-  AutoFixHigh as AutoFixHighIcon
+  AutoFixHigh as AutoFixHighIcon,
+  Code as CodeIcon
 } from '@mui/icons-material';
 
 import PageLayout from '../components/Layout/PageLayout.js';
@@ -33,6 +33,7 @@ const GatewayDashboard = lazy(() => import('./LLMManagement/GatewayDashboard'));
 const DSPyDashboard = lazy(() => import('./LLMManagement/DSPyDashboard'));
 const BiomedLMDashboard = lazy(() => import('./LLMManagement/BiomedLMDashboard'));
 const CLPEFTDashboard = lazy(() => import('./LLMManagement/CLPEFTDashboard'));
+const MCPDashboard = lazy(() => import('./LLMManagement/MCPDashboard'));
 const UsageDashboard = lazy(() => import('./LLMManagement/UsageDashboard'));
 const ProviderManagement = lazy(() => import('../components/LLM/Providers/ProviderManagement'));
 const ModelManagement = lazy(() => import('../components/LLM/Models/ModelManagement'));
@@ -51,11 +52,13 @@ const LLMManagement = () => {
       gateway: { status: 'unknown', details: {} },
       dspy: { status: 'unknown', modules: [], modules_count: 0 },
       biomedlm: { status: 'unknown', models: [], models_count: 0 },
-      cl_peft: { status: 'unknown', adapters: [], adapters_count: 0 }
+      cl_peft: { status: 'unknown', adapters: [], adapters_count: 0 },
+      mcp: { status: 'unknown', providers: [], providers_count: 0 }
     }
   });
 
   const navigate = useNavigate();
+  const location = useLocation();
   const { showSuccess, showError } = useNotification();
 
   // Use API hook for fetching user data
@@ -86,6 +89,44 @@ const LLMManagement = () => {
     loadLlmStatus();
   }, []);
 
+  // Set active tab based on query parameter
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tabParam = params.get('tab');
+
+    if (tabParam) {
+      switch (tabParam.toLowerCase()) {
+        case 'providers':
+          setActiveTab(0);
+          break;
+        case 'models':
+          setActiveTab(1);
+          break;
+        case 'gateway':
+          setActiveTab(2);
+          break;
+        case 'dspy':
+          setActiveTab(3);
+          break;
+        case 'biomedlm':
+          setActiveTab(4);
+          break;
+        case 'cl-peft':
+        case 'clpeft':
+          setActiveTab(5);
+          break;
+        case 'mcp':
+          setActiveTab(6);
+          break;
+        case 'usage':
+          setActiveTab(7);
+          break;
+        default:
+          break;
+      }
+    }
+  }, [location]);
+
   // Handle logout
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -95,6 +136,43 @@ const LLMManagement = () => {
   // Handle tab change
   const handleTabChange = (_, newValue) => {
     setActiveTab(newValue);
+
+    // Update URL with tab parameter
+    let tabName = '';
+    switch (newValue) {
+      case 0:
+        tabName = 'providers';
+        break;
+      case 1:
+        tabName = 'models';
+        break;
+      case 2:
+        tabName = 'gateway';
+        break;
+      case 3:
+        tabName = 'dspy';
+        break;
+      case 4:
+        tabName = 'biomedlm';
+        break;
+      case 5:
+        tabName = 'cl-peft';
+        break;
+      case 6:
+        tabName = 'mcp';
+        break;
+      case 7:
+        tabName = 'usage';
+        break;
+      default:
+        break;
+    }
+
+    if (tabName) {
+      const searchParams = new URLSearchParams(window.location.search);
+      searchParams.set('tab', tabName);
+      navigate({ search: searchParams.toString() }, { replace: true });
+    }
   };
 
   // Load LLM status
@@ -167,6 +245,14 @@ const LLMManagement = () => {
                 { adapter_id: 'adapter_87654321', adapter_name: 'Clinical Notes Adapter', base_model_name: 'mistralai/Mistral-7B-v0.1', cl_strategy: 'ewc', peft_method: 'qlora' }
               ],
               adapters_count: 2
+            },
+            mcp: {
+              status: 'available',
+              providers: [
+                { provider_id: 'anthropic_mcp', display_name: 'Anthropic MCP', transport_type: 'grpc', status: 'connected' },
+                { provider_id: 'openai_mcp', display_name: 'OpenAI MCP', transport_type: 'http', status: 'connected' }
+              ],
+              providers_count: 2
             }
           }
         });
@@ -286,6 +372,11 @@ const LLMManagement = () => {
                     Adapters: {status.adapters_count || 0}
                   </Typography>
                 )}
+                {status.status === 'available' && component === 'mcp' && (
+                  <Typography variant="body2">
+                    Providers: {status.providers_count || 0}
+                  </Typography>
+                )}
               </Paper>
             ))}
           </Box>
@@ -339,10 +430,16 @@ const LLMManagement = () => {
               aria-controls="tabpanel-5"
             />
             <Tab
-              icon={<BarChartIcon />}
-              label="Usage"
+              icon={<CodeIcon />}
+              label="MCP"
               id="tab-6"
               aria-controls="tabpanel-6"
+            />
+            <Tab
+              icon={<BarChartIcon />}
+              label="Usage"
+              id="tab-7"
+              aria-controls="tabpanel-7"
             />
           </Tabs>
         </Box>
@@ -422,6 +519,19 @@ const LLMManagement = () => {
         <Box role="tabpanel" hidden={activeTab !== 6} id="tabpanel-6" aria-labelledby="tab-6" sx={{ p: 3 }}>
           {activeTab === 6 && (
             <Suspense fallback={<ContentLoader />}>
+              <ErrorBoundary fallback={<Alert severity="error">Failed to load MCP Dashboard component</Alert>}>
+                <MCPDashboard
+                  status={llmStatus?.components?.mcp}
+                  onRefresh={loadLlmStatus}
+                />
+              </ErrorBoundary>
+            </Suspense>
+          )}
+        </Box>
+
+        <Box role="tabpanel" hidden={activeTab !== 7} id="tabpanel-7" aria-labelledby="tab-7" sx={{ p: 3 }}>
+          {activeTab === 7 && (
+            <Suspense fallback={<ContentLoader />}>
               <ErrorBoundary fallback={<Alert severity="error">Failed to load Usage Dashboard component</Alert>}>
                 <UsageDashboard
                   status={llmStatus}
@@ -438,7 +548,7 @@ const LLMManagement = () => {
         <Typography variant="h6" gutterBottom>About LLM Management</Typography>
         <Typography paragraph>
           This page provides management functionality for Large Language Model (LLM) components,
-          including LLM Gateway, DSPy, and BiomedLM.
+          including LLM Gateway, DSPy, BiomedLM, CL-PEFT, and MCP.
         </Typography>
         <Typography component="div" sx={{ mb: 2 }}>
           <strong>LLM Gateway</strong> - Manage LLM providers and configurations, test connections,
@@ -460,6 +570,11 @@ const LLMManagement = () => {
           adapters. CL-PEFT combines continual learning strategies with efficient fine-tuning
           techniques like LoRA and QLoRA to adapt language models to new tasks while mitigating
           catastrophic forgetting.
+        </Typography>
+        <Typography component="div" sx={{ mb: 2 }}>
+          <strong>MCP</strong> - Manage Model Context Protocol (MCP) providers for standardized
+          interaction with large language models. MCP provides a unified protocol with support for
+          multiple transport options, streaming, and advanced resilience features.
         </Typography>
         <Typography component="div">
           <strong>Usage</strong> - Monitor usage statistics for all LLM components, including

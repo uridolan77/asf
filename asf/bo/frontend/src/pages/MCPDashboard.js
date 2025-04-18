@@ -5,7 +5,7 @@ import PageLayout from '../components/Layout/PageLayout';
 
 /**
  * MCP Dashboard Page
- * 
+ *
  * This is a standalone page for the MCP dashboard that can be accessed directly.
  */
 const MCPDashboard = () => {
@@ -14,8 +14,8 @@ const MCPDashboard = () => {
       title="MCP Dashboard"
       breadcrumbs={[
         { label: 'Home', path: '/' },
-        { label: 'LLM Management', path: '/llm' },
-        { label: 'MCP Dashboard', path: '/mcp' }
+        { label: 'LLM Management', path: '/llm-management' },
+        { label: 'MCP Dashboard', path: '/mcp-dashboard' }
       ]}
     >
       <Paper sx={{ p: 3, mb: 3 }}>
@@ -26,7 +26,17 @@ const MCPDashboard = () => {
           The Model Context Protocol (MCP) is a standardized protocol for interacting with large language models.
           This dashboard allows you to manage MCP providers, monitor their status, and view usage statistics.
         </Typography>
-        
+
+        <Button
+          variant="contained"
+          color="primary"
+          component={Link}
+          to="/llm-management?tab=mcp"
+          sx={{ mb: 2 }}
+        >
+          Go to LLM Management MCP Tab
+        </Button>
+
         <Grid container spacing={3} sx={{ mt: 2 }}>
           <Grid item xs={12} md={4}>
             <Card>
@@ -39,13 +49,13 @@ const MCPDashboard = () => {
                 </Typography>
               </CardContent>
               <CardActions>
-                <Button size="small" component={Link} to="/llm">
+                <Button size="small" component={Link} to="/llm-management">
                   Go to LLM Management
                 </Button>
               </CardActions>
             </Card>
           </Grid>
-          
+
           <Grid item xs={12} md={4}>
             <Card>
               <CardContent>
@@ -57,13 +67,13 @@ const MCPDashboard = () => {
                 </Typography>
               </CardContent>
               <CardActions>
-                <Button size="small" component={Link} to="/llm">
+                <Button size="small" component={Link} to="/llm-management">
                   Go to LLM Management
                 </Button>
               </CardActions>
             </Card>
           </Grid>
-          
+
           <Grid item xs={12} md={4}>
             <Card>
               <CardContent>
@@ -75,7 +85,7 @@ const MCPDashboard = () => {
                 </Typography>
               </CardContent>
               <CardActions>
-                <Button size="small" component={Link} to="/llm">
+                <Button size="small" component={Link} to="/llm-management">
                   Go to LLM Management
                 </Button>
               </CardActions>
@@ -83,7 +93,7 @@ const MCPDashboard = () => {
           </Grid>
         </Grid>
       </Paper>
-      
+
       <Paper sx={{ p: 3 }}>
         <Typography variant="h5" gutterBottom>
           About MCP
@@ -92,7 +102,7 @@ const MCPDashboard = () => {
           The Model Context Protocol (MCP) provides a standardized way to interact with large language models,
           with support for multiple transport options, streaming, and advanced resilience features.
         </Typography>
-        
+
         <Typography variant="h6" gutterBottom>
           Key Features:
         </Typography>
