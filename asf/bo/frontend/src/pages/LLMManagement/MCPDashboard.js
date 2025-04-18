@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Paper,
@@ -19,7 +19,11 @@ import {
   Alert,
   CircularProgress,
   Chip,
-  Tooltip
+  Tooltip,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Select
 } from '@mui/material';
 import {
   CloudQueue as CloudQueueIcon,
@@ -30,14 +34,15 @@ import {
   Storage as StorageIcon,
   Speed as SpeedIcon,
   Code as CodeIcon,
-  Dns as DnsIcon
+  Dns as DnsIcon,
+  Refresh as RefreshIcon
 } from '@mui/icons-material';
 
 import { useAuth } from '../../context/AuthContext';
-import { useNotification } from '../../context/NotificationContext';
-import apiService from '../../services/api';
 import { ContentLoader } from '../../components/UI/LoadingIndicators';
 import { FadeIn, StaggeredList } from '../../components/UI/Animations';
+import { useMCPProviders } from '../../hooks/useMCPProviders';
+import { useMCPInfo } from '../../hooks/useMCPInfo';
 import MCPProviderManagement from '../../components/LLM/MCP/MCPProviderManagement';
 import MCPStatusMonitor from '../../components/LLM/MCP/MCPStatusMonitor';
 import MCPUsageStats from '../../components/LLM/MCP/MCPUsageStats';
@@ -45,113 +50,50 @@ import MCPConfigDialog from '../../components/LLM/MCP/MCPConfigDialog';
 
 /**
  * MCP (Model Context Protocol) Dashboard
- * 
+ *
  * This component provides a comprehensive interface for managing MCP providers,
  * monitoring their status, and viewing usage statistics.
  */
 const MCPDashboard = () => {
   const { user } = useAuth();
-  const { showSuccess, showError } = useNotification();
-  
+
   // State
   const [activeTab, setActiveTab] = useState(0);
-  const [providers, setProviders] = useState([]);
-  const [activeProviders, setActiveProviders] = useState([]);
   const [selectedProvider, setSelectedProvider] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [mcpInfo, setMcpInfo] = useState(null);
   const [configDialogOpen, setConfigDialogOpen] = useState(false);
-  
-  // Load MCP info and providers on mount
-  useEffect(() => {
-    loadMCPInfo();
-    loadProviders();
-  }, []);
-  
-  // Load MCP information
-  const loadMCPInfo = async () => {
-    try {
-      const result = await apiService.llm.getMCPInfo();
-      
-      if (result.success) {
-        setMcpInfo(result.data);
-      } else {
-        showError(`Failed to load MCP information: ${result.error}`);
-      }
-    } catch (error) {
-      console.error('Error loading MCP information:', error);
-      showError(`Error loading MCP information: ${error.message}`);
-    }
-  };
-  
-  // Load MCP providers
-  const loadProviders = async () => {
-    setLoading(true);
-    
-    try {
-      const result = await apiService.llm.getMCPProviders();
-      
-      if (result.success) {
-        setProviders(result.data);
-        // Filter active providers
-        const active = result.data.filter(p =>
-          p.status === 'operational' ||
-          p.status === 'available' ||
-          p.status === 'connected'
-        );
-        setActiveProviders(active);
-        
-        if (active.length > 0 && !selectedProvider) {
-          setSelectedProvider(active[0].provider_id);
-        }
-      } else {
-        showError(`Failed to load MCP providers: ${result.error}`);
-      }
-    } catch (error) {
-      console.error('Error loading MCP providers:', error);
-      showError(`Error loading MCP providers: ${error.message}`);
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  // Refresh providers
-  const refreshProviders = async () => {
-    setRefreshing(true);
-    
-    try {
-      await loadProviders();
-      showSuccess('MCP providers refreshed successfully');
-    } catch (error) {
-      console.error('Error refreshing MCP providers:', error);
-      showError(`Error refreshing MCP providers: ${error.message}`);
-    } finally {
-      setRefreshing(false);
-    }
-  };
-  
-  // Test provider connection
-  const testProvider = async (providerId) => {
-    try {
-      const result = await apiService.llm.testMCPProvider(providerId);
-      
-      if (result.success) {
-        showSuccess(`Connection to ${providerId} successful (${result.data.latency_ms.toFixed(2)}ms)`);
-      } else {
-        showError(`Connection to ${providerId} failed: ${result.error}`);
-      }
-    } catch (error) {
-      console.error(`Error testing MCP provider ${providerId}:`, error);
-      showError(`Error testing MCP provider: ${error.message}`);
-    }
-  };
-  
+
+  // Use MCP hooks
+  const { mcpInfo, isLoading: mcpInfoLoading } = useMCPInfo();
+  const {
+    providers,
+    isLoading: providersLoading,
+    refetch: refetchProviders,
+    testProvider,
+    testProviderLoading
+  } = useMCPProviders();
+
+  // Filter active providers
+  const activeProviders = providers.filter(p =>
+    p.status === 'operational' ||
+    p.status === 'available' ||
+    p.status === 'connected'
+  );
+
+  // Set selected provider if none is selected and active providers exist
+  if (activeProviders.length > 0 && !selectedProvider) {
+    setSelectedProvider(activeProviders[0].provider_id);
+  }
+
   // Handle tab change
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
   };
-  
+
+  // Handle provider selection change
+  const handleProviderChange = (event) => {
+    setSelectedProvider(event.target.value);
+  };
+
   // Render provider cards
   const renderProviderCards = () => {
     return (
@@ -159,7 +101,7 @@ const MCPDashboard = () => {
         <Grid container spacing={2}>
           {providers.map((provider) => (
             <Grid item xs={12} md={6} lg={4} key={provider.provider_id}>
-              <Card 
+              <Card
                 variant="outlined"
                 sx={{
                   height: '100%',
@@ -169,7 +111,12 @@ const MCPDashboard = () => {
                   '&:hover': {
                     boxShadow: 3,
                     transform: 'translateY(-4px)'
-                  }
+                  },
+                  cursor: 'pointer'
+                }}
+                onClick={() => {
+                  setSelectedProvider(provider.provider_id);
+                  setActiveTab(1); // Switch to status tab
                 }}
               >
                 <CardHeader
@@ -209,7 +156,7 @@ const MCPDashboard = () => {
                         secondary={provider.transport_type}
                       />
                     </ListItem>
-                    
+
                     {provider.circuit_breaker && (
                       <ListItem>
                         <ListItemIcon sx={{ minWidth: '32px' }}>
@@ -221,7 +168,7 @@ const MCPDashboard = () => {
                         />
                       </ListItem>
                     )}
-                    
+
                     {provider.models && provider.models.length > 0 && (
                       <ListItem>
                         <ListItemIcon sx={{ minWidth: '32px' }}>
@@ -233,7 +180,7 @@ const MCPDashboard = () => {
                         />
                       </ListItem>
                     )}
-                    
+
                     <ListItem>
                       <ListItemIcon sx={{ minWidth: '32px' }}>
                         <StorageIcon fontSize="small" />
@@ -244,9 +191,9 @@ const MCPDashboard = () => {
                       />
                     </ListItem>
                   </List>
-                  
+
                   {provider.message && (
-                    <Alert 
+                    <Alert
                       severity={
                         provider.status === 'error' ? 'error' :
                         provider.status === 'warning' ? 'warning' : 'info'
@@ -260,14 +207,19 @@ const MCPDashboard = () => {
                 <CardActions>
                   <Button
                     size="small"
-                    onClick={() => testProvider(provider.provider_id)}
-                    startIcon={<CheckIcon />}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      testProvider(provider.provider_id);
+                    }}
+                    startIcon={testProviderLoading ? <CircularProgress size={16} /> : <CheckIcon />}
+                    disabled={testProviderLoading}
                   >
                     Test Connection
                   </Button>
                   <Button
                     size="small"
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
                       setSelectedProvider(provider.provider_id);
                       setActiveTab(1);
                     }}
@@ -283,7 +235,7 @@ const MCPDashboard = () => {
       </StaggeredList>
     );
   };
-  
+
   return (
     <FadeIn>
       <Box sx={{ mb: 4 }}>
@@ -291,17 +243,17 @@ const MCPDashboard = () => {
           <Typography variant="h4" component="h1">
             MCP Provider Management
           </Typography>
-          
+
           <Box sx={{ display: 'flex', gap: 1 }}>
             <Button
               variant="outlined"
-              onClick={refreshProviders}
-              disabled={refreshing}
-              startIcon={refreshing ? <CircularProgress size={20} /> : null}
+              onClick={() => refetchProviders()}
+              disabled={providersLoading}
+              startIcon={providersLoading ? <CircularProgress size={20} /> : <RefreshIcon />}
             >
-              {refreshing ? 'Refreshing...' : 'Refresh'}
+              {providersLoading ? 'Refreshing...' : 'Refresh'}
             </Button>
-            
+
             <Button
               variant="contained"
               color="primary"
@@ -311,7 +263,7 @@ const MCPDashboard = () => {
             </Button>
           </Box>
         </Box>
-        
+
         {mcpInfo && (
           <Paper sx={{ p: 3, mb: 3 }}>
             <Typography variant="h6" gutterBottom>
@@ -320,7 +272,7 @@ const MCPDashboard = () => {
             <Typography paragraph>
               {mcpInfo.description}
             </Typography>
-            
+
             <Grid container spacing={2}>
               <Grid item xs={12} md={6}>
                 <Typography variant="subtitle1" gutterBottom>Features:</Typography>
@@ -332,7 +284,7 @@ const MCPDashboard = () => {
                   ))}
                 </Box>
               </Grid>
-              
+
               <Grid item xs={12} md={6}>
                 <Typography variant="subtitle1" gutterBottom>Transport Types:</Typography>
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
@@ -345,7 +297,7 @@ const MCPDashboard = () => {
                     />
                   ))}
                 </Box>
-                
+
                 {mcpInfo.documentation_url && (
                   <Box sx={{ mt: 2 }}>
                     <Button
@@ -362,7 +314,7 @@ const MCPDashboard = () => {
             </Grid>
           </Paper>
         )}
-        
+
         <Paper sx={{ mb: 3 }}>
           <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
             <Tabs
@@ -391,11 +343,11 @@ const MCPDashboard = () => {
               />
             </Tabs>
           </Box>
-          
+
           {/* Providers Tab */}
           <Box role="tabpanel" hidden={activeTab !== 0} id="tabpanel-0" aria-labelledby="tab-0" sx={{ p: 3 }}>
             {activeTab === 0 && (
-              loading ? (
+              providersLoading ? (
                 <ContentLoader height={200} message="Loading MCP providers..." />
               ) : providers.length > 0 ? (
                 renderProviderCards()
@@ -406,26 +358,62 @@ const MCPDashboard = () => {
               )
             )}
           </Box>
-          
-          {/* Usage Statistics Tab */}
+
+          {/* Status & Usage Tab */}
           <Box role="tabpanel" hidden={activeTab !== 1} id="tabpanel-1" aria-labelledby="tab-1" sx={{ p: 3 }}>
-            {activeTab === 1 && selectedProvider && (
-              <MCPUsageStats providerId={selectedProvider} />
+            {activeTab === 1 && (
+              <>
+                {providers.length > 0 ? (
+                  <Box sx={{ mb: 3 }}>
+                    <FormControl fullWidth sx={{ maxWidth: 300, mb: 3 }}>
+                      <InputLabel id="provider-select-label">Select Provider</InputLabel>
+                      <Select
+                        labelId="provider-select-label"
+                        value={selectedProvider || ''}
+                        onChange={handleProviderChange}
+                        label="Select Provider"
+                      >
+                        {providers.map((provider) => (
+                          <MenuItem key={provider.provider_id} value={provider.provider_id}>
+                            {provider.display_name || provider.provider_id}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+
+                    {selectedProvider ? (
+                      <Grid container spacing={3}>
+                        <Grid item xs={12}>
+                          <MCPStatusMonitor providerId={selectedProvider} />
+                        </Grid>
+                        <Grid item xs={12}>
+                          <Divider sx={{ my: 3 }} />
+                          <MCPUsageStats providerId={selectedProvider} />
+                        </Grid>
+                      </Grid>
+                    ) : (
+                      <Alert severity="info">
+                        Please select a provider to view its status and usage statistics.
+                      </Alert>
+                    )}
+                  </Box>
+                ) : (
+                  <Alert severity="info">
+                    No MCP providers found. Add a provider first to view status and usage statistics.
+                  </Alert>
+                )}
+              </>
             )}
           </Box>
-          
+
           {/* Provider Management Tab */}
           <Box role="tabpanel" hidden={activeTab !== 2} id="tabpanel-2" aria-labelledby="tab-2" sx={{ p: 3 }}>
             {activeTab === 2 && (
-              <MCPProviderManagement
-                onProviderAdded={loadProviders}
-                onProviderUpdated={loadProviders}
-                onProviderDeleted={loadProviders}
-              />
+              <MCPProviderManagement />
             )}
           </Box>
         </Paper>
-        
+
         {/* Additional information */}
         <Paper sx={{ p: 3 }}>
           <Typography variant="h6" gutterBottom>About MCP Providers</Typography>
@@ -433,7 +421,7 @@ const MCPDashboard = () => {
             The Model Context Protocol (MCP) is a standardized protocol for interacting with large language models.
             This page allows you to manage MCP providers, monitor their status, and view usage statistics.
           </Typography>
-          
+
           <Grid container spacing={2}>
             <Grid item xs={12} md={6}>
               <Typography variant="subtitle1" gutterBottom>Key Features:</Typography>
@@ -444,7 +432,7 @@ const MCPDashboard = () => {
                 <Box component="li"><Typography>Comprehensive observability with metrics and tracing</Typography></Box>
               </Box>
             </Grid>
-            
+
             <Grid item xs={12} md={6}>
               <Typography variant="subtitle1" gutterBottom>Management Features:</Typography>
               <Box component="ul" sx={{ pl: 2 }}>
@@ -457,14 +445,15 @@ const MCPDashboard = () => {
           </Grid>
         </Paper>
       </Box>
-      
+
       {/* Config Dialog */}
       <MCPConfigDialog
         open={configDialogOpen}
+        mode="add"
         onClose={() => setConfigDialogOpen(false)}
-        onSave={() => {
+        onSave={(providerData) => {
           setConfigDialogOpen(false);
-          loadProviders();
+          // The provider will be added through the useMCPProviders hook
         }}
       />
     </FadeIn>
