@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Route, Routes, useLocation, Navigate } from 'r
 import { ThemeProvider, CssBaseline, CircularProgress } from '@mui/material';
 import { NotificationProvider } from './context/NotificationContext.jsx';
 import { AuthProvider, useAuth } from './context/AuthContext.jsx';
+import QueryProvider from './context/QueryProvider.jsx';
 import { TopProgressBar } from './components/UI/LoadingIndicators.js';
 import { PageTransition } from './components/UI/Animations.js';
 
@@ -192,11 +193,13 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <NotificationProvider>
-        <Router>
-          <AuthProvider>
-            <AnimatedRoutes />
-          </AuthProvider>
-        </Router>
+        <QueryProvider>
+          <Router>
+            <AuthProvider>
+              <AnimatedRoutes />
+            </AuthProvider>
+          </Router>
+        </QueryProvider>
       </NotificationProvider>
     </ThemeProvider>
   );
