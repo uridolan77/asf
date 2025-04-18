@@ -23,6 +23,23 @@ from .decorators import (
     CircuitOpenError
 )
 
+# Import tracing components
+try:
+    from .tracing import (
+        ResilienceTracing,
+        get_resilience_tracing,
+        with_circuit_breaker_tracing
+    )
+    from .traced_decorators import (
+        with_traced_circuit_breaker,
+        with_traced_provider_circuit_breaker,
+        with_traced_retry,
+        with_traced_timeout
+    )
+    TRACING_AVAILABLE = True
+except ImportError:
+    TRACING_AVAILABLE = False
+
 __all__ = [
     # Circuit breaker
     'CircuitBreaker',
@@ -50,3 +67,18 @@ __all__ = [
     'with_timeout',
     'CircuitOpenError'
 ]
+
+# Add tracing components if available
+if TRACING_AVAILABLE:
+    __all__.extend([
+        # Tracing
+        'ResilienceTracing',
+        'get_resilience_tracing',
+        'with_circuit_breaker_tracing',
+
+        # Traced decorators
+        'with_traced_circuit_breaker',
+        'with_traced_provider_circuit_breaker',
+        'with_traced_retry',
+        'with_traced_timeout'
+    ])
