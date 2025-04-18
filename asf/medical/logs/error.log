@@ -1032,3 +1032,12 @@ Traceback (most recent call last):
   File "C:\code\asf\asf\medical\llm_gateway\core\factory.py", line 117, in get_provider
     raise ProviderFactoryError(f"Failed to get provider '{provider_id}': {e}") from e
 asf.medical.llm_gateway.core.factory.ProviderFactoryError: Failed to get provider 'openai_gpt4_default': Instantiation failed for 'openai_gpt4_default': OpenAI SDK client initialization failed: 'OpenAIClient' object has no attribute '_connection_params'
+2025-04-18 04:33:15,275 - api.endpoints - ERROR - C:\code\asf\asf\bo\backend\api\endpoints.py:547 - Error getting LLM usage: 'str' object has no attribute 'token'
+2025-04-18 04:33:15,741 - api.endpoints - ERROR - C:\code\asf\asf\bo\backend\api\endpoints.py:547 - Error getting LLM usage: 'str' object has no attribute 'token'
+2025-04-18 04:33:19,435 - api.endpoints - ERROR - C:\code\asf\asf\bo\backend\api\endpoints.py:547 - Error getting LLM usage: 'str' object has no attribute 'token'
+2025-04-18 04:41:18,157 - api.endpoints - ERROR - C:\code\asf\asf\bo\backend\api\endpoints.py:547 - Error getting LLM usage: 'str' object has no attribute 'token'
+2025-04-18 04:41:18,325 - api.endpoints - ERROR - C:\code\asf\asf\bo\backend\api\endpoints.py:547 - Error getting LLM usage: 'str' object has no attribute 'token'
+2025-04-18 04:46:23,694 - api.endpoints - ERROR - C:\code\asf\asf\bo\backend\api\endpoints.py:836 - Error getting search history: 'str' object has no attribute 'token'
+2025-04-18 04:46:24,224 - api.endpoints - ERROR - C:\code\asf\asf\bo\backend\api\endpoints.py:836 - Error getting search history: 'str' object has no attribute 'token'
+2025-04-18 04:46:39,009 - api.endpoints - ERROR - C:\code\asf\asf\bo\backend\api\endpoints.py:547 - Error getting LLM usage: 'str' object has no attribute 'token'
+2025-04-18 04:46:39,793 - api.endpoints - ERROR - C:\code\asf\asf\bo\backend\api\endpoints.py:547 - Error getting LLM usage: 'str' object has no attribute 'token'

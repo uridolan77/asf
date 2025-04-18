@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { getErrorMessage, logError, handleAuthError } from '../utils/errorHandler';
+import { getErrorMessage, logError } from '../utils/errorHandler';
 
 // Create axios instance with default config
 const api = axios.create({
@@ -102,8 +102,7 @@ export const apiCall = async (method, url, data = null, options = {}, signal = n
   }
 };
 
-// Import LLM API service
-import llmApi from './llmApi';
+// LLM API service is integrated directly
 
 // API service methods
 const apiService = {
@@ -132,10 +131,38 @@ const apiService = {
 
   // Analysis endpoints
   analysis: {
-    contradictions: (params) => apiCall('post', '/api/medical/analysis/contradictions', params),
-    cap: () => apiCall('get', '/api/medical/analysis/cap'),
-    getById: (id) => apiCall('get', `/api/medical/analysis/${id}`),
-    getHistory: (params) => apiCall('get', '/api/medical/analysis/history', params),
+    contradictions: (params) => {
+      // Try both endpoints with fallback
+      return apiCall('post', '/api/medical/analysis/contradictions', params)
+        .catch(error => {
+          console.warn('Primary analysis endpoint failed, trying fallback', error);
+          return apiCall('post', '/v1/analysis/contradictions', params);
+        });
+    },
+    cap: () => {
+      // Try both endpoints with fallback
+      return apiCall('get', '/api/medical/analysis/cap')
+        .catch(error => {
+          console.warn('Primary CAP endpoint failed, trying fallback', error);
+          return apiCall('get', '/v1/analysis/cap');
+        });
+    },
+    getById: (id) => {
+      // Try both endpoints with fallback
+      return apiCall('get', `/api/medical/analysis/${id}`)
+        .catch(error => {
+          console.warn('Primary analysis retrieval endpoint failed, trying fallback', error);
+          return apiCall('get', `/v1/analysis/${id}`);
+        });
+    },
+    getHistory: (params) => {
+      // Try both endpoints with fallback
+      return apiCall('get', '/api/medical/analysis/history', params)
+        .catch(error => {
+          console.warn('Primary analysis history endpoint failed, trying fallback', error);
+          return apiCall('get', '/v1/analysis/history', params);
+        });
+    },
   },
 
   // Export endpoints

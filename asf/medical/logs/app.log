@@ -27500,3 +27500,231 @@ WHERE users.id = %(id_1)s
  LIMIT %(param_1)s
 2025-04-18 04:16:08,128 - sqlalchemy.engine.Engine - INFO - [cached since 61.3s ago] {'id_1': 1, 'param_1': 1}
 2025-04-18 04:16:08,147 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 04:16:55,452 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 04:16:55,453 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 04:16:55,453 - sqlalchemy.engine.Engine - INFO - [cached since 108.6s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 04:16:55,456 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 04:16:55,458 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 04:16:55,458 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 04:16:55,459 - sqlalchemy.engine.Engine - INFO - [cached since 108.6s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 04:16:55,462 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 04:17:07,230 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 04:17:07,231 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 04:17:07,232 - sqlalchemy.engine.Engine - INFO - [cached since 120.4s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 04:17:07,242 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 04:17:07,246 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 04:17:07,247 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 04:17:07,248 - sqlalchemy.engine.Engine - INFO - [cached since 120.4s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 04:17:07,263 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 04:17:07,298 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 04:17:07,300 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 04:17:07,300 - sqlalchemy.engine.Engine - INFO - [cached since 120.5s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 04:17:07,314 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 04:17:07,318 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 04:17:07,320 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 04:17:07,320 - sqlalchemy.engine.Engine - INFO - [cached since 120.5s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 04:17:07,330 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 04:17:08,017 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 04:17:08,018 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 04:17:08,019 - sqlalchemy.engine.Engine - INFO - [cached since 121.2s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 04:17:08,024 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 04:17:08,028 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 04:17:08,029 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 04:17:08,030 - sqlalchemy.engine.Engine - INFO - [cached since 121.2s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 04:17:08,041 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 04:17:08,042 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 04:17:08,045 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 04:17:08,046 - sqlalchemy.engine.Engine - INFO - [cached since 121.2s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 04:17:08,052 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 04:17:08,055 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 04:17:08,056 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 04:17:08,059 - sqlalchemy.engine.Engine - INFO - [cached since 121.2s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 04:17:08,077 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 04:17:08,613 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 04:17:08,615 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 04:17:08,616 - sqlalchemy.engine.Engine - INFO - [cached since 121.8s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 04:17:08,626 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 04:17:08,633 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 04:17:08,634 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 04:17:08,635 - sqlalchemy.engine.Engine - INFO - [cached since 121.8s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 04:17:08,647 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 04:23:49,204 - root - INFO - Logging configured with level: INFO
+2025-04-18 04:23:49,907 - root - INFO - Logging configured with level: INFO
+2025-04-18 04:23:49,908 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-18 04:23:50,013 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-18 04:23:53,414 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-18 04:23:53,422 - root - INFO - Using LLM Gateway implementation
+2025-04-18 04:23:53,457 - root - WARNING - DSPy is not available. Some functionality will be limited. Error: No module named 'medical.ml.dspy.dspy_client'
+2025-04-18 04:23:53,459 - root - WARNING - BiomedLM is not available. Some functionality will be limited.
+2025-04-18 04:23:53,497 - datasets - INFO - PyTorch version 2.6.0 available.
+2025-04-18 04:25:00,020 - root - INFO - Logging configured with level: INFO
+2025-04-18 04:25:00,728 - root - INFO - Logging configured with level: INFO
+2025-04-18 04:25:00,730 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-18 04:25:00,840 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-18 04:25:04,225 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-18 04:25:04,234 - root - INFO - Using LLM Gateway implementation
+2025-04-18 04:25:04,265 - root - WARNING - DSPy is not available. Some functionality will be limited. Error: No module named 'medical.ml.dspy.dspy_client'
+2025-04-18 04:25:04,266 - root - WARNING - BiomedLM is not available. Some functionality will be limited.
+2025-04-18 04:25:04,303 - datasets - INFO - PyTorch version 2.6.0 available.
+2025-04-18 04:29:41,506 - root - INFO - Logging configured with level: INFO
+2025-04-18 04:29:42,257 - root - INFO - Logging configured with level: INFO
+2025-04-18 04:29:42,259 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-18 04:29:42,366 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-18 04:29:45,831 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-18 04:29:45,840 - root - INFO - Using LLM Gateway implementation
+2025-04-18 04:29:45,872 - root - WARNING - DSPy is not available. Some functionality will be limited. Error: No module named 'medical.ml.dspy.dspy_client'
+2025-04-18 04:29:45,875 - root - WARNING - BiomedLM is not available. Some functionality will be limited.
+2025-04-18 04:29:45,911 - datasets - INFO - PyTorch version 2.6.0 available.
+2025-04-18 04:30:02,173 - root - INFO - Logging configured with level: INFO
+2025-04-18 04:30:02,895 - root - INFO - Logging configured with level: INFO
+2025-04-18 04:30:02,898 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-18 04:30:03,005 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-18 04:30:06,497 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-18 04:30:06,506 - root - INFO - Using LLM Gateway implementation
+2025-04-18 04:30:06,537 - root - WARNING - DSPy is not available. Some functionality will be limited. Error: No module named 'medical.ml.dspy.dspy_client'
+2025-04-18 04:30:06,539 - root - WARNING - BiomedLM is not available. Some functionality will be limited.
+2025-04-18 04:30:06,577 - datasets - INFO - PyTorch version 2.6.0 available.
+2025-04-18 04:30:16,982 - root - INFO - Logging configured with level: INFO
+2025-04-18 04:30:17,707 - root - INFO - Logging configured with level: INFO
+2025-04-18 04:30:17,708 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-18 04:30:17,813 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-18 04:30:21,305 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-18 04:30:21,313 - root - INFO - Using LLM Gateway implementation
+2025-04-18 04:30:21,343 - root - WARNING - DSPy is not available. Some functionality will be limited. Error: No module named 'medical.ml.dspy.dspy_client'
+2025-04-18 04:30:21,346 - root - WARNING - BiomedLM is not available. Some functionality will be limited.
+2025-04-18 04:30:21,381 - datasets - INFO - PyTorch version 2.6.0 available.
+2025-04-18 04:30:34,145 - root - INFO - Logging configured with level: INFO
+2025-04-18 04:30:34,846 - root - INFO - Logging configured with level: INFO
+2025-04-18 04:30:34,848 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-18 04:30:34,955 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-18 04:30:37,489 - root - INFO - Logging configured with level: INFO
+2025-04-18 04:30:38,188 - root - INFO - Logging configured with level: INFO
+2025-04-18 04:30:38,190 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-18 04:30:38,299 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-18 04:30:38,426 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-18 04:30:38,436 - root - INFO - Using LLM Gateway implementation
+2025-04-18 04:30:38,468 - root - WARNING - DSPy is not available. Some functionality will be limited. Error: No module named 'medical.ml.dspy.dspy_client'
+2025-04-18 04:30:38,470 - root - WARNING - BiomedLM is not available. Some functionality will be limited.
+2025-04-18 04:30:38,507 - datasets - INFO - PyTorch version 2.6.0 available.
+2025-04-18 04:30:41,733 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-18 04:30:41,743 - root - INFO - Using LLM Gateway implementation
+2025-04-18 04:30:41,776 - root - WARNING - DSPy is not available. Some functionality will be limited. Error: No module named 'medical.ml.dspy.dspy_client'
+2025-04-18 04:30:41,778 - root - WARNING - BiomedLM is not available. Some functionality will be limited.
+2025-04-18 04:30:41,822 - datasets - INFO - PyTorch version 2.6.0 available.
+2025-04-18 04:33:13,220 - passlib.handlers.bcrypt - WARNING - (trapped) error reading bcrypt version
+Traceback (most recent call last):
+  File "C:\Users\urido\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\passlib\handlers\bcrypt.py", line 620, in _load_backend_mixin
+    version = _bcrypt.__about__.__version__
+              ^^^^^^^^^^^^^^^^^
+AttributeError: module 'bcrypt' has no attribute '__about__'
+2025-04-18 04:33:15,275 - api.endpoints - ERROR - Error getting LLM usage: 'str' object has no attribute 'token'
+2025-04-18 04:33:15,741 - api.endpoints - ERROR - Error getting LLM usage: 'str' object has no attribute 'token'
+2025-04-18 04:33:19,435 - api.endpoints - ERROR - Error getting LLM usage: 'str' object has no attribute 'token'
+2025-04-18 04:35:36,461 - root - INFO - Logging configured with level: INFO
+2025-04-18 04:35:37,190 - root - INFO - Logging configured with level: INFO
+2025-04-18 04:35:37,192 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-18 04:35:37,303 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-18 04:35:40,847 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-18 04:35:40,856 - root - INFO - Using LLM Gateway implementation
+2025-04-18 04:35:40,889 - root - WARNING - DSPy is not available. Some functionality will be limited. Error: No module named 'medical.ml.dspy.dspy_client'
+2025-04-18 04:35:40,890 - root - WARNING - BiomedLM is not available. Some functionality will be limited.
+2025-04-18 04:35:40,928 - datasets - INFO - PyTorch version 2.6.0 available.
+2025-04-18 04:36:08,691 - root - INFO - Logging configured with level: INFO
+2025-04-18 04:36:09,395 - root - INFO - Logging configured with level: INFO
+2025-04-18 04:36:09,398 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-18 04:36:09,503 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-18 04:36:12,952 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-18 04:36:12,960 - root - INFO - Using LLM Gateway implementation
+2025-04-18 04:36:12,992 - root - WARNING - DSPy is not available. Some functionality will be limited. Error: No module named 'medical.ml.dspy.dspy_client'
+2025-04-18 04:36:12,994 - root - WARNING - BiomedLM is not available. Some functionality will be limited.
+2025-04-18 04:36:13,031 - datasets - INFO - PyTorch version 2.6.0 available.
+2025-04-18 04:41:18,157 - api.endpoints - ERROR - Error getting LLM usage: 'str' object has no attribute 'token'
+2025-04-18 04:41:18,325 - api.endpoints - ERROR - Error getting LLM usage: 'str' object has no attribute 'token'
+2025-04-18 04:41:21,854 - sqlalchemy.engine.Engine - INFO - SELECT DATABASE()
+2025-04-18 04:41:21,855 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-18 04:41:21,855 - sqlalchemy.engine.Engine - INFO - SELECT @@sql_mode
+2025-04-18 04:41:21,856 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-18 04:41:21,856 - sqlalchemy.engine.Engine - INFO - SELECT @@lower_case_table_names
+2025-04-18 04:41:21,856 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-04-18 04:41:21,857 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 04:41:21,859 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 04:41:21,859 - sqlalchemy.engine.Engine - INFO - [generated in 0.00037s] {'id_1': 1, 'param_1': 1}
+2025-04-18 04:41:21,862 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 04:41:21,865 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 04:41:21,866 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 04:41:21,866 - sqlalchemy.engine.Engine - INFO - [cached since 0.007181s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 04:41:21,869 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 04:45:49,440 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 04:45:49,442 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 04:45:49,445 - sqlalchemy.engine.Engine - INFO - [cached since 267.6s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 04:45:49,453 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 04:45:49,457 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 04:45:49,458 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 04:45:49,459 - sqlalchemy.engine.Engine - INFO - [cached since 267.6s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 04:45:49,466 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 04:46:23,694 - api.endpoints - ERROR - Error getting search history: 'str' object has no attribute 'token'
+2025-04-18 04:46:24,224 - api.endpoints - ERROR - Error getting search history: 'str' object has no attribute 'token'
+2025-04-18 04:46:39,009 - api.endpoints - ERROR - Error getting LLM usage: 'str' object has no attribute 'token'
+2025-04-18 04:46:39,793 - api.endpoints - ERROR - Error getting LLM usage: 'str' object has no attribute 'token'
+2025-04-18 04:46:50,679 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 04:46:50,681 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 04:46:50,684 - sqlalchemy.engine.Engine - INFO - [cached since 328.8s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 04:46:50,693 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-04-18 04:46:50,696 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-04-18 04:46:50,697 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(id_1)s 
+ LIMIT %(param_1)s
+2025-04-18 04:46:50,698 - sqlalchemy.engine.Engine - INFO - [cached since 328.8s ago] {'id_1': 1, 'param_1': 1}
+2025-04-18 04:46:50,703 - sqlalchemy.engine.Engine - INFO - ROLLBACK

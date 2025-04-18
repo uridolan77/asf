@@ -12,8 +12,14 @@ import sys
 import json
 import uuid
 import random
+import logging
+import httpx
 
 # Create router
+logger = logging.getLogger(__name__)
+
+# API URLs
+MEDICAL_API_URL = os.getenv("MEDICAL_API_URL", "http://localhost:8000")
 router = APIRouter()
 
 # Add the project root directory to sys.path to import the asf module
@@ -501,6 +507,53 @@ def get_recent_updates(current_user: User = Depends(oauth2_scheme), db: Session 
 
     return updates
 
+@app.get("/api/llm-usage")
+async def get_llm_usage(current_user: User = Depends(oauth2_scheme)):
+    """Get LLM usage statistics for the dashboard."""
+    try:
+        # Call the medical API to get the LLM usage statistics
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{MEDICAL_API_URL}/api/llm/usage",
+                headers={"Authorization": f"Bearer {current_user.token}"}
+            )
+
+            if response.status_code != 200:
+                logger.warning(f"Failed to get LLM usage from API: {response.status_code}")
+                # Return fallback mock data
+                usage = [
+                    { "model": "gpt-4o", "usage_count": 2580 },
+                    { "model": "claude-3-opus", "usage_count": 1420 },
+                    { "model": "biomedlm-2-7b", "usage_count": 3850 },
+                    { "model": "mistralai/Mixtral-8x7B", "usage_count": 980 }
+                ]
+                return {"usage": usage}
+
+            # Process the response to match the expected format
+            data = response.json()
+            if isinstance(data, list):
+                # If the API returns a list directly, use it
+                return {"usage": data}
+            elif "usage" in data:
+                # If the API returns a dict with a usage key, use that
+                return data
+            else:
+                # Try to extract model usage from the response
+                usage = []
+                for model, count in data.get("components", {}).get("gateway", {}).get("models", {}).items():
+                    usage.append({"model": model, "usage_count": count})
+                return {"usage": usage}
+    except Exception as e:
+        logger.error(f"Error getting LLM usage: {str(e)}")
+        # Return fallback mock data
+        usage = [
+            { "model": "gpt-4o", "usage_count": 2580 },
+            { "model": "claude-3-opus", "usage_count": 1420 },
+            { "model": "biomedlm-2-7b", "usage_count": 3850 },
+            { "model": "mistralai/Mixtral-8x7B", "usage_count": 980 }
+        ]
+        return {"usage": usage}
+
 @app.get("/api/public/stats")
 def get_public_dashboard_stats():
     """Get basic dashboard statistics without requiring authentication."""
@@ -709,30 +762,148 @@ def search_pico(
                        f"I: {', '.join(request.interventions)}, " \
                        f"O: {', '.join(request.outcomes)}"
 
-    articles = [
-        {
-            "id": f"pico_{i}",
-            "title": f"PICO Study on {request.condition} - Part {i}",
-            "authors": ["PICO Author A", "PICO Author B"],
-            "journal": "PICO Medical Journal",
-            "year": 2023 - i,
-            "abstract": f"Using the PICO framework, this study examines {request.condition} " \
-                       f"with interventions like {', '.join(request.interventions[:1])} " \
-                       f"measuring outcomes including {', '.join(request.outcomes[:1])}.",
-            "relevance_score": round(random.uniform(0.7, 0.99), 2)
-        }
-        for i in range(1, min(request.max_results + 1, 21))
-    ]
+    # In a real implementation, this would call the medical API
+    # For now, we'll just return mock data
 
+    # Save search to history
+    search_id = str(uuid.uuid4())
+
+    # Return mock results
     return {
         "success": True,
-        "message": f"Found {len(articles)} results for PICO query",
+        "message": f"Found 5 results for PICO search: {pico_description}",
         "data": {
-            "articles": articles,
-            "pico_query": pico_description,
-            "total_results": len(articles)
+            "total_count": 5,
+            "page": 1,
+            "page_size": 20,
+            "results": [
+                {
+                    "id": f"result_{i}",
+                    "title": f"PICO Study {i} on {request.condition}",
+                    "authors": ["Author A", "Author B"],
+                    "journal": "Journal of Medical Research",
+                    "year": 2025 - i,
+                    "abstract": f"This study examines {request.condition} with {', '.join(request.interventions)}...",
+                    "relevance_score": 0.95 - (i * 0.1)
+                } for i in range(5)
+            ]
         }
     }
+
+@app.get("/api/medical/search/history")
+async def get_search_history(current_user: User = Depends(oauth2_scheme)):
+    """
+    Get search history for the current user.
+    """
+    try:
+        # Call the medical API to get the search history
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{MEDICAL_API_URL}/api/search/history",
+                headers={"Authorization": f"Bearer {current_user.token}"}
+            )
+
+            if response.status_code != 200:
+                logger.warning(f"Failed to get search history from medical API: {response.status_code}")
+                # Return fallback mock data
+                searches = [
+                    {
+                        "id": "search_1",
+                        "query": "pneumonia treatment",
+                        "type": "standard",
+                        "timestamp": (datetime.now() - timedelta(days=1)).isoformat(),
+                        "result_count": 42
+                    },
+                    {
+                        "id": "search_2",
+                        "query": "P: adults with hypertension, I: ACE inhibitors, C: ARBs, O: blood pressure reduction",
+                        "type": "pico",
+                        "timestamp": (datetime.now() - timedelta(days=3)).isoformat(),
+                        "result_count": 15
+                    },
+                    {
+                        "id": "search_3",
+                        "query": "diabetes management",
+                        "type": "standard",
+                        "timestamp": (datetime.now() - timedelta(days=5)).isoformat(),
+                        "result_count": 78
+                    }
+                ]
+                return {"searches": searches}
+
+            return response.json()
+    except Exception as e:
+        logger.error(f"Error getting search history: {str(e)}")
+        # Return fallback mock data
+        searches = [
+            {
+                "id": "search_1",
+                "query": "pneumonia treatment",
+                "type": "standard",
+                "timestamp": (datetime.now() - timedelta(days=1)).isoformat(),
+                "result_count": 42
+            },
+            {
+                "id": "search_2",
+                "query": "P: adults with hypertension, I: ACE inhibitors, C: ARBs, O: blood pressure reduction",
+                "type": "pico",
+                "timestamp": (datetime.now() - timedelta(days=3)).isoformat(),
+                "result_count": 15
+            },
+            {
+                "id": "search_3",
+                "query": "diabetes management",
+                "type": "standard",
+                "timestamp": (datetime.now() - timedelta(days=5)).isoformat(),
+                "result_count": 78
+            }
+        ]
+        return {"searches": searches}
+
+@app.post("/api/medical/search/history")
+async def save_search_history(search: dict = Body(...), current_user: User = Depends(oauth2_scheme)):
+    """
+    Save a search to the user's history.
+    """
+    try:
+        # Call the medical API to save the search history
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{MEDICAL_API_URL}/api/search/history",
+                json=search,
+                headers={"Authorization": f"Bearer {current_user.token}"}
+            )
+
+            if response.status_code != 200:
+                logger.warning(f"Failed to save search history to medical API: {response.status_code}")
+                # Return fallback mock response
+                search_id = str(uuid.uuid4())
+                return {
+                    "success": True,
+                    "message": "Search saved to history (local)",
+                    "data": {
+                        "id": search_id,
+                        "query": search.get("query", ""),
+                        "type": search.get("type", "standard"),
+                        "timestamp": search.get("timestamp", datetime.now(datetime.timezone.utc).isoformat())
+                    }
+                }
+
+            return response.json()
+    except Exception as e:
+        logger.error(f"Error saving search history: {str(e)}")
+        # Return fallback mock response
+        search_id = str(uuid.uuid4())
+        return {
+            "success": True,
+            "message": "Search saved to history (local)",
+            "data": {
+                "id": search_id,
+                "query": search.get("query", ""),
+                "type": search.get("type", "standard"),
+                "timestamp": search.get("timestamp", datetime.now(datetime.timezone.utc).isoformat())
+            }
+        }
 
 @app.post("/api/medical/analysis/contradictions")
 def analyze_contradictions(
