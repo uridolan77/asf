@@ -13,6 +13,14 @@ from datetime import datetime
 
 # Import from medical.ml.cl_peft instead of asf.medical.ml.cl_peft
 try:
+    import sys
+    import os
+    # Add the project root to sys.path if not already there
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../../../..'))
+    if project_root not in sys.path:
+        sys.path.insert(0, project_root)
+        print(f"Added {project_root} to Python path in cl_peft_service.py")
+
     from medical.ml.cl_peft import (
         CLPEFTAdapterConfig,
         CLStrategy,
@@ -21,6 +29,7 @@ try:
         get_target_modules_for_model
     )
     from medical.ml.services.cl_peft_service import CLPEFTService as MedicalCLPEFTService
+    print("Successfully imported from medical.ml.cl_peft")
 except ImportError as e:
     logger = logging.getLogger(__name__)
     logger.warning(f"Failed to import from medical.ml.cl_peft: {str(e)}")

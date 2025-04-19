@@ -40,73 +40,85 @@ except ImportError:
 from api.utils.json_encoder import CustomJSONEncoder
 
 # Import the document processing module
-# Use mock implementation directly
-print("Using mock document processing implementation")
+# Use direct import from the medical.ml package
+try:
+    import sys
+    import os
+    # Add the project root to sys.path if not already there
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../..'))
+    if project_root not in sys.path:
+        sys.path.insert(0, project_root)
+        print(f"Added {project_root} to Python path in document_processing.py")
 
-# Define mock classes for document processing
-class MedicalResearchSynthesizer:
-    def __init__(self, **kwargs):
-        self.name = "Mock MedicalResearchSynthesizer"
-        print("Using mock MedicalResearchSynthesizer")
+    # Try to import from medical.ml.document_processing
+    from medical.ml.document_processing import MedicalResearchSynthesizer, EnhancedMedicalResearchSynthesizer
+    print("Successfully imported document processing from medical.ml.document_processing")
+except ImportError as e:
+    print(f"Failed to import document processing: {e}")
+    # Define mock classes for error handling
+    class MedicalResearchSynthesizer:
+        def __init__(self, **kwargs):
+            self.name = "Mock MedicalResearchSynthesizer"
+            print("Using mock MedicalResearchSynthesizer")
 
-    def process(self, *args, **kwargs):
-        # Return a minimal document structure and metrics
-        doc_structure = type('DocumentStructure', (), {
-            'title': 'Mock Document',
-            'abstract': 'This is a mock document for testing.',
-            'entities': [],
-            'relations': [],
-            'sections': [],
-            'references': [],
-            'metadata': {'mock': True},
-            'to_dict': lambda self: {
-                'title': self.title,
-                'abstract': self.abstract,
+        def process(self, *args, **kwargs):
+            # Return a minimal document structure and metrics
+            doc_structure = type('DocumentStructure', (), {
+                'title': 'Mock Document',
+                'abstract': 'This is a mock document for testing.',
                 'entities': [],
                 'relations': [],
                 'sections': [],
                 'references': [],
-                'metadata': {'mock': True}
-            }
-        })()
-        metrics = {"total_processing_time": 0.1, "error": None}
-        return doc_structure, metrics
+                'metadata': {'mock': True},
+                'to_dict': lambda self: {
+                    'title': self.title,
+                    'abstract': self.abstract,
+                    'entities': [],
+                    'relations': [],
+                    'sections': [],
+                    'references': [],
+                    'metadata': {'mock': True}
+                }
+            })()
+            metrics = {"total_processing_time": 0.1, "error": None}
+            return doc_structure, metrics
 
-    def process_with_progress(self, *args, **kwargs):
-        # Call the progress callback a few times to simulate progress
-        if 'progress_callback' in kwargs:
-            for i in range(5):
-                kwargs['progress_callback'](f"Stage {i+1}", (i+1)/5)
-        return self.process(*args, **kwargs)
+        def process_with_progress(self, *args, **kwargs):
+            # Call the progress callback a few times to simulate progress
+            if 'progress_callback' in kwargs:
+                for i in range(5):
+                    kwargs['progress_callback'](f"Stage {i+1}", (i+1)/5)
+            return self.process(*args, **kwargs)
 
-    def process_streaming(self, *args, **kwargs):
-        # Call the streaming callback a few times to simulate streaming
-        if 'streaming_callback' in kwargs:
-            stages = ['parsing', 'extracting_entities', 'extracting_relations', 'summarizing']
-            for stage in stages:
-                result = type('Result', (), {'stage': stage, 'to_dict': lambda self: {'stage': self.stage}})()
-                kwargs['streaming_callback'](stage, result)
-        return self.process(*args, **kwargs)
+        def process_streaming(self, *args, **kwargs):
+            # Call the streaming callback a few times to simulate streaming
+            if 'streaming_callback' in kwargs:
+                stages = ['parsing', 'extracting_entities', 'extracting_relations', 'summarizing']
+                for stage in stages:
+                    result = type('Result', (), {'stage': stage, 'to_dict': lambda self: {'stage': self.stage}})()
+                    kwargs['streaming_callback'](stage, result)
+            return self.process(*args, **kwargs)
 
-    def process_parallel(self, *args, **kwargs):
-        return self.process(*args, **kwargs)
+        def process_parallel(self, *args, **kwargs):
+            return self.process(*args, **kwargs)
 
-    def save_results(self, doc_structure, result_dir):
-        import os
-        import json
-        os.makedirs(result_dir, exist_ok=True)
-        # Save a minimal result file
-        with open(os.path.join(result_dir, "document_structure.json"), "w") as f:
-            if hasattr(doc_structure, 'to_dict'):
-                json.dump(doc_structure.to_dict(), f, indent=2)
-            else:
-                json.dump({"mock": True}, f, indent=2)
+        def save_results(self, doc_structure, result_dir):
+            import os
+            import json
+            os.makedirs(result_dir, exist_ok=True)
+            # Save a minimal result file
+            with open(os.path.join(result_dir, "document_structure.json"), "w") as f:
+                if hasattr(doc_structure, 'to_dict'):
+                    json.dump(doc_structure.to_dict(), f, indent=2)
+                else:
+                    json.dump({"mock": True}, f, indent=2)
 
-    def close(self):
-        pass
+        def close(self):
+            pass
 
-# Create an alias for the enhanced version
-EnhancedMedicalResearchSynthesizer = MedicalResearchSynthesizer
+    # Create an alias for the enhanced version
+    EnhancedMedicalResearchSynthesizer = MedicalResearchSynthesizer
 
 # Create the router
 router = APIRouter(prefix="/api/document-processing", tags=["document-processing"])

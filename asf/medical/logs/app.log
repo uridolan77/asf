@@ -29291,3 +29291,10 @@ AttributeError: module 'bcrypt' has no attribute '__about__'
 2025-04-19 03:36:46,342 - datasets - INFO - PyTorch version 2.6.0 available.
 2025-04-19 03:36:46,488 - api.websockets.mcp_manager - INFO - MCP WebSocket background tasks disabled via environment variable
 2025-04-19 03:36:46,551 - passlib.registry - DEBUG - registered 'bcrypt' handler: <class 'passlib.handlers.bcrypt.bcrypt'>
+2025-04-19 04:16:57,619 - root - INFO - Logging configured with level: DEBUG
+2025-04-19 04:16:57,620 - root - WARNING - BiomedLM is not available. Some functionality will be limited.
+2025-04-19 04:16:57,621 - api.services.llm.cl_peft_service - WARNING - Failed to import from medical.ml.cl_peft: No module named 'medical.ml.cl_peft'
+2025-04-19 04:16:57,622 - api.websockets.mcp_manager - INFO - MCP WebSocket background tasks disabled via environment variable
+2025-04-19 04:16:58,163 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-19 04:16:58,172 - root - INFO - Using LLM Gateway implementation
+2025-04-19 04:16:58,366 - datasets - INFO - PyTorch version 2.6.0 available.

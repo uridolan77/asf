@@ -104,32 +104,6 @@ problematic_modules = [
     "asf.medical.visualization.contradiction_visualizer"
 ]
 
-# Add these additional modules that are causing issues
-problematic_modules.extend([
-    "medical.visualization",
-    "medical.visualization.contradiction_visualizer",
-    "medical.services",
-    "medical.services.search_service",
-    "medical.services.terminology_service",
-    "medical.services.clinical_data_service",  # Add the missing clinical data service
-    "medical.ml",  # Add the missing ML module
-    "medical.ml.cl_peft",  # Add the missing CL-PEFT module
-    "asf.medical.ml",  # Add the missing ASF ML module
-    "asf.medical.ml.cl_peft"  # Add the missing ASF CL-PEFT module
-])
-
-# Remove modules from problematic modules to use the real implementation
-modules_to_use_real = [
-    "medical.clients",
-    "medical.clients.clinical_trials_gov",
-    "medical.clients.clinical_trials_gov.clinical_trials_client",
-    "medical.ml",
-    "medical.ml.cl_peft",
-    "medical.ml.cl_peft.config",
-    "asf.medical.ml",
-    "asf.medical.ml.cl_peft",
-    "asf.medical.ml.cl_peft.config"
-]
 
 for module_name in modules_to_use_real:
     if module_name in problematic_modules:
