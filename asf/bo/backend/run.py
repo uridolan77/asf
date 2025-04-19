@@ -56,11 +56,23 @@ ensure_package_structure(project_root)
 if __name__ == '__main__':
     # Set environment variable to disable MCP websocket background tasks
     os.environ["DISABLE_MCP_WEBSOCKET_TASKS"] = "1"
-    
+
     # Set other environment variables to disable potentially problematic components
     os.environ["DISABLE_PROMETHEUS"] = "1"  # Disable Prometheus metrics if they exist
+    os.environ["DISABLE_TRACING"] = "1"  # Disable tracing
+    os.environ["DISABLE_METRICS"] = "1"  # Disable metrics
+    os.environ["DISABLE_OTLP"] = "1"  # Disable OpenTelemetry
+    os.environ["DISABLE_OBSERVABILITY"] = "1"  # Disable all observability
     os.environ["LOG_LEVEL"] = "debug"  # Enable debug logging
-    
+
+    # Import and run the disable_observability module
+    try:
+        from disable_observability import disable_all_observability
+        disable_all_observability()
+        print("Successfully disabled all observability components")
+    except Exception as e:
+        print(f"Failed to disable observability components: {str(e)}")
+
     import uvicorn
     from sqlalchemy import text
     from sqlalchemy.exc import OperationalError
@@ -117,7 +129,7 @@ if __name__ == '__main__':
     print('Running backend server...')
     # Use a different port and configure uvicorn with more explicit settings
     uvicorn.run(
-        "api.endpoints:app", 
+        "api.endpoints:app",
         host="127.0.0.1",  # Use localhost instead of 0.0.0.0
         port=9000,         # Use a higher port number to avoid permission issues
         reload=True,

@@ -1,9 +1,18 @@
 """
-Simple script to run the backend server.
+Simple script to run the backend server with all observability components disabled.
 """
 import os
 import sys
 import uvicorn
+
+# Set environment variables to disable all observability components
+os.environ["DISABLE_MCP_WEBSOCKET_TASKS"] = "1"
+os.environ["DISABLE_PROMETHEUS"] = "1"
+os.environ["DISABLE_TRACING"] = "1"
+os.environ["DISABLE_METRICS"] = "1"
+os.environ["DISABLE_OTLP"] = "1"
+os.environ["DISABLE_OBSERVABILITY"] = "1"
+os.environ["LOG_LEVEL"] = "debug"
 
 # Add the project root to the Python path
 project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -26,4 +35,13 @@ print(f"Added {bo_dir} to Python path")
 
 # Run the server
 if __name__ == "__main__":
-    uvicorn.run("api.endpoints:app", host="0.0.0.0", port=8000, reload=True)
+    print("Running backend server with observability disabled...")
+    uvicorn.run(
+        "api.endpoints:app",
+        host="127.0.0.1",  # Use localhost instead of 0.0.0.0
+        port=8000,         # Use port 8000 as requested
+        reload=True,
+        log_level="debug",
+        workers=1,
+        lifespan="on"
+    )

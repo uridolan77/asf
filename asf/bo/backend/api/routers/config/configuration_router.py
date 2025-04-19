@@ -2,13 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, status, Request, Query
 from typing import List, Optional, Dict, Any
 from sqlalchemy.orm import Session
 import logging
-import sys
-import os
 
-# Add the backend directory to sys.path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
-
-# Use absolute imports
+# Use relative imports
 from config.database import get_db
 from services.configuration_service import ConfigurationService
 from api.auth import get_current_user

@@ -24,8 +24,8 @@ additional_config:
           base_delay: 1.0
           max_delay: 60.0
       observability:
-        metrics_enabled: true
-        tracing_enabled: true
+        metrics_enabled: false
+        tracing_enabled: false
     biomedlm_local:
       connection_params:
         model_path: ${BIOMEDLM_MODEL_PATH}
@@ -86,8 +86,8 @@ preload_providers:
 - openai_gpt4_default
 retry_delay_seconds: 1.0
 observability:
-  metrics_enabled: true
+  metrics_enabled: false
   metrics_export_interval_seconds: 60
   tracing_enabled: false
   logging_level: INFO
-  structured_logging: true
+  structured_logging: false

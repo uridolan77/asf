@@ -35,11 +35,33 @@ from api.routers.medical_contradiction import router as medical_contradiction_ro
 from api.routers.medical_terminology import router as medical_terminology_router
 from api.routers.enhanced_medical_contradiction import router as enhanced_medical_contradiction_router
 from api.routers.medical_clinical_data import router as medical_clinical_data_router
-from api.routers.llm_gateway import router as llm_gateway_router
 from api.routers.document_processing import router as document_processing_router
-from api.routers.dspy import router as dspy_router  # Import the DSPy router
-from api.routers.llm.mcp import router as mcp_router  # Import the MCP router
-from api.websockets import router as websocket_router  # Import the WebSocket router
+
+# Check if LLM Gateway is disabled
+DISABLE_LLM_GATEWAY = os.environ.get("DISABLE_LLM_GATEWAY", "0").lower() in ("1", "true", "yes")
+
+# Import LLM-related routers only if not disabled
+if not DISABLE_LLM_GATEWAY:
+    try:
+        from api.routers.llm_gateway import router as llm_gateway_router
+        from api.routers.dspy import router as dspy_router  # Import the DSPy router
+        from api.routers.llm.mcp import router as mcp_router  # Import the MCP router
+        from api.websockets import router as websocket_router  # Import the WebSocket router
+        print("LLM Gateway routers imported successfully")
+    except ImportError as e:
+        print(f"Failed to import LLM Gateway routers: {str(e)}")
+        # Create dummy routers
+        llm_gateway_router = APIRouter()
+        dspy_router = APIRouter()
+        mcp_router = APIRouter()
+        websocket_router = APIRouter()
+else:
+    print("LLM Gateway disabled via environment variable")
+    # Create dummy routers
+    llm_gateway_router = APIRouter()
+    dspy_router = APIRouter()
+    mcp_router = APIRouter()
+    websocket_router = APIRouter()
 
 # Import config routers
 from api.routers.config.provider_router import router as provider_router
