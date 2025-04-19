@@ -29298,3 +29298,268 @@ AttributeError: module 'bcrypt' has no attribute '__about__'
 2025-04-19 04:16:58,163 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
 2025-04-19 04:16:58,172 - root - INFO - Using LLM Gateway implementation
 2025-04-19 04:16:58,366 - datasets - INFO - PyTorch version 2.6.0 available.
+2025-04-19 04:50:41,589 - root - INFO - Logging configured with level: DEBUG
+2025-04-19 04:50:42,359 - root - INFO - Logging configured with level: DEBUG
+2025-04-19 04:50:42,361 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-19 04:50:42,428 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-19 04:50:45,645 - asf.medical.llm_gateway.observability.disable_patch - INFO - Observability components disabled via patch module
+2025-04-19 04:50:45,646 - mcp_observability.metrics - INFO - {'event': 'Metrics service disabled via environment variable', 'logger': 'mcp_observability.metrics', 'level': 'info', 'timestamp': '2025-04-19T01:50:45.646460Z'}
+2025-04-19 04:50:45,646 - asf.medical.llm_gateway.observability.prometheus - INFO - Prometheus metrics disabled via environment variable
+2025-04-19 04:50:45,646 - asf.medical.llm_gateway.observability.prometheus - INFO - Initialized Prometheus exporter (push_gateway=False, push_interval=15)
+2025-04-19 04:50:45,648 - mcp_observability.tracing - INFO - {'event': 'Tracing disabled via environment variable', 'logger': 'mcp_observability.tracing', 'level': 'info', 'timestamp': '2025-04-19T01:50:45.648461Z'}
+2025-04-19 04:50:45,652 - root - WARNING - LLM Gateway MCP components not available. WebSocket functionality will be limited.
+2025-04-19 04:50:45,682 - mcp_observability.metrics - INFO - {'event': 'Metrics infrastructure initialization skipped due to environment variables', 'logger': 'mcp_observability.metrics', 'level': 'info', 'timestamp': '2025-04-19T01:50:45.682462Z'}
+2025-04-19 04:50:45,683 - llm_gateway.resilience.metrics - ERROR - {'component': 'resilience_metrics', 'error': "'MetricsService' object has no attribute 'meter'", 'event': 'Failed to initialize metrics service', 'logger': 'llm_gateway.resilience.metrics', 'level': 'error', 'timestamp': '2025-04-19T01:50:45.682462Z', 'exception': 'Traceback (most recent call last):\n  File "C:\\code\\asf\\asf\\medical\\llm_gateway\\resilience\\metrics.py", line 52, in __init__\n    self.metrics_service = MetricsService()\n                           ^^^^^^^^^^^^^^^^\n  File "C:\\code\\asf\\asf\\medical\\llm_gateway\\observability\\metrics.py", line 82, in __init__\n    self._create_standard_metrics()\n  File "C:\\code\\asf\\asf\\medical\\llm_gateway\\observability\\metrics.py", line 172, in _create_standard_metrics\n    self.request_counter = self.meter.create_counter(\n                           ^^^^^^^^^^\nAttributeError: \'MetricsService\' object has no attribute \'meter\''}
+2025-04-19 04:50:45,683 - llm_gateway.resilience.metrics - INFO - {'component': 'resilience_metrics', 'event': 'Initialized Prometheus exporter for resilience patterns', 'logger': 'llm_gateway.resilience.metrics', 'level': 'info', 'timestamp': '2025-04-19T01:50:45.683462Z'}
+2025-04-19 04:50:45,683 - mcp_observability.tracing - INFO - {'event': 'Tracing infrastructure initialization skipped due to environment variables', 'logger': 'mcp_observability.tracing', 'level': 'info', 'timestamp': '2025-04-19T01:50:45.683462Z'}
+2025-04-19 04:50:45,684 - mcp_observability.tracing - INFO - {'service': 'llm_gateway_resilience', 'otlp_enabled': True, 'otlp_endpoint': 'localhost:4317', 'event': 'Initialized tracing service', 'logger': 'mcp_observability.tracing', 'level': 'info', 'timestamp': '2025-04-19T01:50:45.684462Z'}
+2025-04-19 04:50:45,684 - llm_gateway.resilience.tracing - INFO - {'component': 'resilience_tracing', 'event': 'Initialized tracing service for resilience patterns', 'logger': 'llm_gateway.resilience.tracing', 'level': 'info', 'timestamp': '2025-04-19T01:50:45.684462Z'}
+2025-04-19 04:50:45,685 - root - WARNING - LLM Gateway not available. Some functionality will be limited.
+2025-04-19 04:50:45,686 - root - WARNING - DSPy is not available. Some functionality will be limited. Error: No module named 'medical.ml.dspy.dspy_client'
+2025-04-19 04:50:45,688 - root - WARNING - BiomedLM is not available. Some functionality will be limited.
+2025-04-19 04:50:45,734 - datasets - INFO - PyTorch version 2.6.0 available.
+2025-04-19 04:50:45,882 - api.websockets.mcp_manager - INFO - MCP WebSocket background tasks disabled via environment variable
+2025-04-19 04:50:46,408 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-19 04:50:46,416 - root - INFO - Using LLM Gateway implementation
+2025-04-19 05:01:47,598 - root - INFO - Logging configured with level: DEBUG
+2025-04-19 05:01:48,390 - root - INFO - Logging configured with level: DEBUG
+2025-04-19 05:01:48,391 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-19 05:01:48,455 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-19 05:01:51,789 - mcp_observability.metrics - INFO - {'event': 'Metrics service disabled via environment variable', 'logger': 'mcp_observability.metrics', 'level': 'info', 'timestamp': '2025-04-19T02:01:51.789406Z'}
+2025-04-19 05:01:51,790 - asf.medical.llm_gateway.observability.prometheus - INFO - Prometheus metrics disabled
+2025-04-19 05:01:51,790 - asf.medical.llm_gateway.observability.prometheus - INFO - Initialized Prometheus exporter (push_gateway=False, push_interval=15)
+2025-04-19 05:01:51,792 - mcp_observability.tracing - INFO - {'event': 'Tracing disabled - using no-op implementation', 'logger': 'mcp_observability.tracing', 'level': 'info', 'timestamp': '2025-04-19T02:01:51.792785Z'}
+2025-04-19 05:01:51,797 - root - WARNING - LLM Gateway MCP components not available. WebSocket functionality will be limited.
+2025-04-19 05:01:51,826 - mcp_observability.metrics - INFO - {'event': 'Initialized metrics service (disabled)', 'logger': 'mcp_observability.metrics', 'level': 'info', 'timestamp': '2025-04-19T02:01:51.826125Z'}
+2025-04-19 05:01:51,827 - llm_gateway.resilience.metrics - INFO - {'component': 'resilience_metrics', 'event': 'Initialized metrics service for resilience patterns', 'logger': 'llm_gateway.resilience.metrics', 'level': 'info', 'timestamp': '2025-04-19T02:01:51.827133Z'}
+2025-04-19 05:01:51,827 - mcp_observability.tracing - INFO - {'service': 'llm_gateway_resilience', 'event': 'Initialized tracing service (disabled)', 'logger': 'mcp_observability.tracing', 'level': 'info', 'timestamp': '2025-04-19T02:01:51.827133Z'}
+2025-04-19 05:01:51,827 - llm_gateway.resilience.tracing - INFO - {'component': 'resilience_tracing', 'event': 'Initialized tracing service for resilience patterns', 'logger': 'llm_gateway.resilience.tracing', 'level': 'info', 'timestamp': '2025-04-19T02:01:51.827133Z'}
+2025-04-19 05:05:10,059 - root - INFO - Logging configured with level: DEBUG
+2025-04-19 05:05:10,807 - root - INFO - Logging configured with level: DEBUG
+2025-04-19 05:05:10,809 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-19 05:05:10,871 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-19 05:05:14,079 - mcp_observability.metrics - INFO - {'event': 'Metrics service disabled via environment variable', 'logger': 'mcp_observability.metrics', 'level': 'info', 'timestamp': '2025-04-19T02:05:14.079435Z'}
+2025-04-19 05:05:14,079 - asf.medical.llm_gateway.observability.prometheus - INFO - Prometheus metrics disabled
+2025-04-19 05:05:14,079 - asf.medical.llm_gateway.observability.prometheus - INFO - Initialized Prometheus exporter (push_gateway=False, push_interval=15)
+2025-04-19 05:05:14,097 - mcp_observability.tracing - INFO - {'event': 'Tracing disabled - using no-op implementation', 'logger': 'mcp_observability.tracing', 'level': 'info', 'timestamp': '2025-04-19T02:05:14.097436Z'}
+2025-04-19 05:05:14,103 - root - WARNING - LLM Gateway MCP components not available. WebSocket functionality will be limited.
+2025-04-19 05:05:14,136 - mcp_observability.metrics - INFO - {'event': 'Initialized metrics service (disabled)', 'logger': 'mcp_observability.metrics', 'level': 'info', 'timestamp': '2025-04-19T02:05:14.136435Z'}
+2025-04-19 05:05:14,137 - llm_gateway.resilience.metrics - INFO - {'component': 'resilience_metrics', 'event': 'Initialized metrics service for resilience patterns', 'logger': 'llm_gateway.resilience.metrics', 'level': 'info', 'timestamp': '2025-04-19T02:05:14.137437Z'}
+2025-04-19 05:05:14,137 - llm_gateway.resilience.metrics - INFO - {'component': 'resilience_metrics', 'event': 'Initialized Prometheus exporter for resilience patterns', 'logger': 'llm_gateway.resilience.metrics', 'level': 'info', 'timestamp': '2025-04-19T02:05:14.137437Z'}
+2025-04-19 05:05:14,137 - mcp_observability.tracing - INFO - {'service': 'llm_gateway_resilience', 'event': 'Initialized tracing service (disabled)', 'logger': 'mcp_observability.tracing', 'level': 'info', 'timestamp': '2025-04-19T02:05:14.137437Z'}
+2025-04-19 05:05:14,137 - llm_gateway.resilience.tracing - INFO - {'component': 'resilience_tracing', 'event': 'Initialized tracing service for resilience patterns', 'logger': 'llm_gateway.resilience.tracing', 'level': 'info', 'timestamp': '2025-04-19T02:05:14.137437Z'}
+2025-04-19 05:05:14,137 - root - WARNING - LLM Gateway not available. Some functionality will be limited.
+2025-04-19 05:05:14,139 - root - WARNING - DSPy is not available. Some functionality will be limited. Error: No module named 'medical.ml.dspy.dspy_client'
+2025-04-19 05:05:14,140 - root - WARNING - BiomedLM is not available. Some functionality will be limited.
+2025-04-19 05:05:14,181 - datasets - INFO - PyTorch version 2.6.0 available.
+2025-04-19 05:05:14,335 - api.websockets.mcp_manager - INFO - MCP WebSocket background tasks disabled via environment variable
+2025-04-19 05:05:14,868 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-19 05:05:14,879 - root - INFO - Using LLM Gateway implementation
+2025-04-19 05:08:15,509 - root - INFO - Logging configured with level: DEBUG
+2025-04-19 05:08:16,294 - root - INFO - Logging configured with level: DEBUG
+2025-04-19 05:08:16,296 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-19 05:08:16,361 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-19 05:08:19,492 - mcp_observability.metrics - INFO - {'event': 'Metrics service disabled via environment variable', 'logger': 'mcp_observability.metrics', 'level': 'info', 'timestamp': '2025-04-19T02:08:19.492205Z'}
+2025-04-19 05:08:19,493 - asf.medical.llm_gateway.observability.prometheus - INFO - Prometheus metrics completely disabled
+2025-04-19 05:08:19,494 - mcp_observability.tracing - INFO - {'event': 'Tracing disabled - using no-op implementation', 'logger': 'mcp_observability.tracing', 'level': 'info', 'timestamp': '2025-04-19T02:08:19.494832Z'}
+2025-04-19 05:08:19,498 - root - WARNING - LLM Gateway MCP components not available. WebSocket functionality will be limited.
+2025-04-19 05:08:19,527 - llm_gateway.resilience.metrics - INFO - {'component': 'resilience_metrics', 'event': 'Initialized metrics service for resilience patterns', 'logger': 'llm_gateway.resilience.metrics', 'level': 'info', 'timestamp': '2025-04-19T02:08:19.527836Z'}
+2025-04-19 05:08:19,527 - mcp_observability.tracing - INFO - {'service': 'llm_gateway_resilience', 'event': 'Initialized tracing service (disabled)', 'logger': 'mcp_observability.tracing', 'level': 'info', 'timestamp': '2025-04-19T02:08:19.527836Z'}
+2025-04-19 05:08:19,527 - llm_gateway.resilience.tracing - INFO - {'component': 'resilience_tracing', 'event': 'Initialized tracing service for resilience patterns', 'logger': 'llm_gateway.resilience.tracing', 'level': 'info', 'timestamp': '2025-04-19T02:08:19.527836Z'}
+2025-04-19 05:08:19,527 - root - WARNING - LLM Gateway not available. Some functionality will be limited.
+2025-04-19 05:08:19,529 - root - WARNING - DSPy is not available. Some functionality will be limited. Error: No module named 'medical.ml.dspy.dspy_client'
+2025-04-19 05:08:19,531 - root - WARNING - BiomedLM is not available. Some functionality will be limited.
+2025-04-19 05:08:19,571 - datasets - INFO - PyTorch version 2.6.0 available.
+2025-04-19 05:08:19,712 - api.websockets.mcp_manager - INFO - MCP WebSocket background tasks disabled via environment variable
+2025-04-19 05:08:20,222 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-19 05:08:20,232 - root - INFO - Using LLM Gateway implementation
+2025-04-19 05:17:11,815 - root - INFO - Logging configured with level: DEBUG
+2025-04-19 05:17:12,590 - root - INFO - Logging configured with level: DEBUG
+2025-04-19 05:17:12,591 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-19 05:17:12,663 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-19 05:17:15,901 - asf.medical.llm_gateway.observability.prometheus - INFO - Prometheus metrics completely disabled
+2025-04-19 05:17:15,905 - root - WARNING - LLM Gateway MCP components not available. WebSocket functionality will be limited.
+2025-04-19 05:17:15,935 - root - WARNING - LLM Gateway not available. Some functionality will be limited.
+2025-04-19 05:17:15,936 - root - WARNING - DSPy is not available. Some functionality will be limited. Error: No module named 'medical.ml.dspy.dspy_client'
+2025-04-19 05:17:15,938 - root - WARNING - BiomedLM is not available. Some functionality will be limited.
+2025-04-19 05:17:15,991 - datasets - INFO - PyTorch version 2.6.0 available.
+2025-04-19 05:17:16,150 - api.websockets.mcp_manager - INFO - MCP WebSocket background tasks disabled via environment variable
+2025-04-19 05:17:16,675 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-19 05:17:16,684 - root - INFO - Using LLM Gateway implementation
+2025-04-19 05:24:24,474 - root - INFO - Logging configured with level: DEBUG
+2025-04-19 05:24:25,258 - root - INFO - Logging configured with level: DEBUG
+2025-04-19 05:24:25,259 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-19 05:24:25,320 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-19 05:24:28,469 - mcp_observability - INFO - Observability package completely disabled at import level
+2025-04-19 05:24:28,473 - root - WARNING - LLM Gateway MCP components not available. WebSocket functionality will be limited.
+2025-04-19 05:28:23,225 - root - INFO - Logging configured with level: DEBUG
+2025-04-19 05:28:23,981 - root - INFO - Logging configured with level: DEBUG
+2025-04-19 05:28:23,983 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-19 05:28:24,043 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-19 05:28:27,152 - mcp_observability - INFO - Observability package completely disabled at import level
+2025-04-19 05:28:27,155 - root - WARNING - LLM Gateway MCP components not available. WebSocket functionality will be limited.
+2025-04-19 05:28:27,185 - root - WARNING - LLM Gateway not available. Some functionality will be limited.
+2025-04-19 05:28:27,186 - root - WARNING - DSPy is not available. Some functionality will be limited. Error: No module named 'medical.ml.dspy.dspy_client'
+2025-04-19 05:28:27,188 - root - WARNING - BiomedLM is not available. Some functionality will be limited.
+2025-04-19 05:28:27,225 - datasets - INFO - PyTorch version 2.6.0 available.
+2025-04-19 05:28:27,366 - api.websockets.mcp_manager - INFO - MCP WebSocket background tasks disabled via environment variable
+2025-04-19 05:28:27,875 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-19 05:28:27,883 - root - INFO - Using LLM Gateway implementation
+2025-04-19 05:42:32,273 - root - INFO - Logging configured with level: DEBUG
+2025-04-19 05:42:33,041 - root - INFO - Logging configured with level: DEBUG
+2025-04-19 05:42:33,042 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-19 05:42:33,107 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-19 05:42:36,245 - mcp_observability - INFO - Observability package completely disabled at import level
+2025-04-19 05:42:36,249 - root - WARNING - LLM Gateway MCP components not available. WebSocket functionality will be limited.
+2025-04-19 05:42:36,252 - root - WARNING - LLM Gateway not available. Some functionality will be limited.
+2025-04-19 05:42:36,253 - root - WARNING - DSPy is not available. Some functionality will be limited. Error: No module named 'medical.ml.dspy.dspy_client'
+2025-04-19 05:42:36,255 - root - WARNING - BiomedLM is not available. Some functionality will be limited.
+2025-04-19 05:42:36,293 - datasets - INFO - PyTorch version 2.6.0 available.
+2025-04-19 05:42:36,435 - api.websockets.mcp_manager - INFO - MCP WebSocket background tasks disabled via environment variable
+2025-04-19 05:43:21,987 - root - INFO - Logging configured with level: DEBUG
+2025-04-19 05:43:22,794 - root - INFO - Logging configured with level: DEBUG
+2025-04-19 05:43:22,796 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-19 05:43:22,858 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-19 05:43:26,510 - mcp_observability - INFO - Observability package completely disabled at import level
+2025-04-19 05:43:26,515 - root - WARNING - LLM Gateway MCP components not available. WebSocket functionality will be limited.
+2025-04-19 05:43:26,516 - root - WARNING - LLM Gateway not available. Some functionality will be limited.
+2025-04-19 05:43:26,518 - root - WARNING - DSPy is not available. Some functionality will be limited. Error: No module named 'medical.ml.dspy.dspy_client'
+2025-04-19 05:43:26,520 - root - WARNING - BiomedLM is not available. Some functionality will be limited.
+2025-04-19 05:43:26,560 - datasets - INFO - PyTorch version 2.6.0 available.
+2025-04-19 05:43:26,726 - api.websockets.mcp_manager - INFO - MCP WebSocket background tasks disabled via environment variable
+2025-04-19 05:43:26,778 - root - INFO - Using LLM Gateway implementation
+2025-04-19 05:43:27,308 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-19 05:43:47,892 - root - INFO - Logging configured with level: INFO
+2025-04-19 05:43:48,671 - root - INFO - Logging configured with level: INFO
+2025-04-19 05:43:48,673 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-19 05:43:48,744 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-19 05:43:51,980 - mcp_observability - INFO - Observability package completely disabled at import level
+2025-04-19 05:43:51,984 - root - WARNING - LLM Gateway MCP components not available. WebSocket functionality will be limited.
+2025-04-19 05:43:51,985 - root - WARNING - LLM Gateway not available. Some functionality will be limited.
+2025-04-19 05:43:51,986 - root - WARNING - DSPy is not available. Some functionality will be limited. Error: No module named 'medical.ml.dspy.dspy_client'
+2025-04-19 05:43:51,988 - root - WARNING - BiomedLM is not available. Some functionality will be limited.
+2025-04-19 05:43:52,030 - datasets - INFO - PyTorch version 2.6.0 available.
+2025-04-19 05:43:52,176 - api.websockets.mcp_manager - INFO - Started message queue cleanup task
+2025-04-19 05:43:52,176 - api.websockets.mcp_manager - INFO - Started heartbeat task
+2025-04-19 05:43:52,824 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-19 05:44:59,270 - root - INFO - Logging configured with level: INFO
+2025-04-19 05:45:00,095 - root - INFO - Logging configured with level: INFO
+2025-04-19 05:45:00,097 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-19 05:45:00,160 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-19 05:45:03,599 - mcp_observability - INFO - Observability package completely disabled at import level
+2025-04-19 05:45:03,604 - root - WARNING - LLM Gateway MCP components not available. WebSocket functionality will be limited.
+2025-04-19 05:45:03,605 - root - WARNING - LLM Gateway not available. Some functionality will be limited.
+2025-04-19 05:45:03,606 - root - WARNING - DSPy is not available. Some functionality will be limited. Error: No module named 'medical.ml.dspy.dspy_client'
+2025-04-19 05:45:03,608 - root - WARNING - BiomedLM is not available. Some functionality will be limited.
+2025-04-19 05:45:03,651 - datasets - INFO - PyTorch version 2.6.0 available.
+2025-04-19 05:45:03,806 - api.websockets.mcp_manager - INFO - Started message queue cleanup task
+2025-04-19 05:45:03,806 - api.websockets.mcp_manager - INFO - Started heartbeat task
+2025-04-19 05:45:04,423 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-19 05:48:47,968 - root - INFO - Logging configured with level: INFO
+2025-04-19 05:48:48,745 - root - INFO - Logging configured with level: INFO
+2025-04-19 05:48:48,747 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-19 05:48:48,815 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-19 05:48:51,920 - mcp_observability - INFO - Observability package completely disabled at import level
+2025-04-19 05:48:51,924 - root - WARNING - LLM Gateway MCP components not available. WebSocket functionality will be limited.
+2025-04-19 05:48:51,929 - root - WARNING - LLM Gateway not available. Some functionality will be limited.
+2025-04-19 05:48:51,930 - root - WARNING - DSPy is not available. Some functionality will be limited. Error: No module named 'medical.ml.dspy.dspy_client'
+2025-04-19 05:48:51,932 - root - WARNING - BiomedLM is not available. Some functionality will be limited.
+2025-04-19 05:48:51,972 - datasets - INFO - PyTorch version 2.6.0 available.
+2025-04-19 05:48:52,119 - api.websockets.mcp_manager - INFO - Started message queue cleanup task
+2025-04-19 05:48:52,120 - api.websockets.mcp_manager - INFO - Started heartbeat task
+2025-04-19 05:48:52,683 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-19 05:50:36,803 - root - INFO - Logging configured with level: INFO
+2025-04-19 05:50:37,620 - root - INFO - Logging configured with level: INFO
+2025-04-19 05:50:37,621 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-19 05:50:37,681 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-19 05:50:40,764 - mcp_observability - INFO - Observability package completely disabled at import level
+2025-04-19 05:50:40,767 - root - WARNING - LLM Gateway MCP components not available. WebSocket functionality will be limited.
+2025-04-19 05:50:40,768 - root - WARNING - LLM Gateway not available. Some functionality will be limited.
+2025-04-19 05:50:40,769 - root - WARNING - DSPy is not available. Some functionality will be limited. Error: No module named 'medical.ml.dspy.dspy_client'
+2025-04-19 05:50:40,771 - root - WARNING - BiomedLM is not available. Some functionality will be limited.
+2025-04-19 05:50:40,808 - datasets - INFO - PyTorch version 2.6.0 available.
+2025-04-19 05:50:40,962 - api.websockets.mcp_manager - INFO - Started message queue cleanup task
+2025-04-19 05:50:40,962 - api.websockets.mcp_manager - INFO - Started heartbeat task
+2025-04-19 05:50:41,542 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-19 05:51:24,819 - root - INFO - Logging configured with level: INFO
+2025-04-19 05:51:25,655 - root - INFO - Logging configured with level: INFO
+2025-04-19 05:51:25,656 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-19 05:51:25,719 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-19 05:51:28,953 - mcp_observability - INFO - Observability package completely disabled at import level
+2025-04-19 05:51:28,956 - root - WARNING - LLM Gateway MCP components not available. WebSocket functionality will be limited.
+2025-04-19 05:51:28,958 - root - WARNING - LLM Gateway not available. Some functionality will be limited.
+2025-04-19 05:51:28,959 - root - WARNING - DSPy is not available. Some functionality will be limited. Error: No module named 'medical.ml.dspy.dspy_client'
+2025-04-19 05:51:28,960 - root - WARNING - BiomedLM is not available. Some functionality will be limited.
+2025-04-19 05:51:29,004 - datasets - INFO - PyTorch version 2.6.0 available.
+2025-04-19 05:51:29,148 - api.websockets.mcp_manager - INFO - Started message queue cleanup task
+2025-04-19 05:51:29,148 - api.websockets.mcp_manager - INFO - Started heartbeat task
+2025-04-19 05:52:13,534 - root - INFO - Logging configured with level: INFO
+2025-04-19 05:52:14,351 - root - INFO - Logging configured with level: INFO
+2025-04-19 05:52:14,353 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-19 05:52:14,418 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-19 05:52:17,936 - mcp_observability - INFO - Observability package completely disabled at import level
+2025-04-19 05:52:17,939 - root - WARNING - LLM Gateway MCP components not available. WebSocket functionality will be limited.
+2025-04-19 05:52:17,941 - root - WARNING - LLM Gateway not available. Some functionality will be limited.
+2025-04-19 05:52:17,942 - root - WARNING - DSPy is not available. Some functionality will be limited. Error: No module named 'medical.ml.dspy.dspy_client'
+2025-04-19 05:52:17,944 - root - WARNING - BiomedLM is not available. Some functionality will be limited.
+2025-04-19 05:52:17,985 - datasets - INFO - PyTorch version 2.6.0 available.
+2025-04-19 05:52:18,133 - api.websockets.mcp_manager - INFO - Started message queue cleanup task
+2025-04-19 05:52:18,134 - api.websockets.mcp_manager - INFO - Started heartbeat task
+2025-04-19 05:52:18,735 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-19 05:53:26,016 - root - INFO - Logging configured with level: INFO
+2025-04-19 05:53:26,058 - datasets - INFO - PyTorch version 2.6.0 available.
+2025-04-19 05:53:26,272 - mcp_observability - INFO - Observability package completely disabled at import level
+2025-04-19 05:53:26,276 - root - WARNING - LLM Gateway not available. Some functionality will be limited.
+2025-04-19 05:53:26,278 - root - WARNING - DSPy is not available. Some functionality will be limited. Error: No module named 'medical.ml.dspy.dspy_client'
+2025-04-19 05:53:26,279 - root - WARNING - BiomedLM is not available. Some functionality will be limited.
+2025-04-19 05:55:23,286 - root - INFO - Logging configured with level: INFO
+2025-04-19 05:55:23,328 - datasets - INFO - PyTorch version 2.6.0 available.
+2025-04-19 05:55:23,538 - mcp_observability - INFO - Observability package completely disabled at import level
+2025-04-19 05:55:23,542 - root - WARNING - LLM Gateway not available. Some functionality will be limited.
+2025-04-19 05:55:23,544 - root - WARNING - DSPy is not available. Some functionality will be limited. Error: No module named 'medical.ml.dspy.dspy_client'
+2025-04-19 05:55:23,545 - root - WARNING - BiomedLM is not available. Some functionality will be limited.
+2025-04-19 05:57:43,915 - root - INFO - Logging configured with level: DEBUG
+2025-04-19 05:57:44,366 - root - INFO - Logging configured with level: INFO
+2025-04-19 05:57:44,760 - root - INFO - Logging configured with level: DEBUG
+2025-04-19 05:57:44,761 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-19 05:57:44,826 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-19 05:57:45,171 - root - INFO - Logging configured with level: INFO
+2025-04-19 05:57:45,173 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-19 05:57:45,236 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-19 05:57:48,103 - mcp_observability - INFO - Observability package completely disabled at import level
+2025-04-19 05:57:48,107 - root - WARNING - LLM Gateway MCP components not available. WebSocket functionality will be limited.
+2025-04-19 05:57:48,108 - root - WARNING - LLM Gateway not available. Some functionality will be limited.
+2025-04-19 05:57:48,109 - root - WARNING - DSPy is not available. Some functionality will be limited. Error: No module named 'medical.ml.dspy.dspy_client'
+2025-04-19 05:57:48,111 - root - WARNING - BiomedLM is not available. Some functionality will be limited.
+2025-04-19 05:57:48,150 - datasets - INFO - PyTorch version 2.6.0 available.
+2025-04-19 05:57:48,308 - api.websockets.mcp_manager - INFO - MCP WebSocket background tasks disabled via environment variable
+2025-04-19 05:57:48,458 - mcp_observability - INFO - Observability package completely disabled at import level
+2025-04-19 05:57:48,462 - root - WARNING - LLM Gateway MCP components not available. WebSocket functionality will be limited.
+2025-04-19 05:57:48,463 - root - WARNING - LLM Gateway not available. Some functionality will be limited.
+2025-04-19 05:57:48,464 - root - WARNING - DSPy is not available. Some functionality will be limited. Error: No module named 'medical.ml.dspy.dspy_client'
+2025-04-19 05:57:48,466 - root - WARNING - BiomedLM is not available. Some functionality will be limited.
+2025-04-19 05:57:48,503 - datasets - INFO - PyTorch version 2.6.0 available.
+2025-04-19 05:57:48,661 - api.websockets.mcp_manager - INFO - Started message queue cleanup task
+2025-04-19 05:57:48,662 - api.websockets.mcp_manager - INFO - Started heartbeat task
+2025-04-19 05:57:48,904 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-19 05:57:49,260 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-19 05:58:39,078 - root - INFO - Logging configured with level: INFO
+2025-04-19 05:58:39,118 - datasets - INFO - PyTorch version 2.6.0 available.
+2025-04-19 05:58:39,340 - mcp_observability - INFO - Observability package completely disabled at import level
+2025-04-19 05:58:39,344 - root - WARNING - LLM Gateway not available. Some functionality will be limited.
+2025-04-19 05:58:39,346 - root - WARNING - DSPy is not available. Some functionality will be limited. Error: No module named 'medical.ml.dspy.dspy_client'
+2025-04-19 05:58:39,347 - root - WARNING - BiomedLM is not available. Some functionality will be limited.
+2025-04-19 05:59:54,965 - root - INFO - Logging configured with level: INFO
+2025-04-19 05:59:55,761 - root - INFO - Logging configured with level: INFO
+2025-04-19 05:59:55,763 - medical.core.cache - INFO - Cache manager initialized in development environment
+2025-04-19 05:59:55,827 - asf.medical.storage.database - INFO - Configured sync database connection pool
+2025-04-19 05:59:59,226 - mcp_observability - INFO - Observability package completely disabled at import level
+2025-04-19 05:59:59,229 - root - WARNING - LLM Gateway MCP components not available. WebSocket functionality will be limited.
+2025-04-19 05:59:59,230 - root - WARNING - LLM Gateway not available. Some functionality will be limited.
+2025-04-19 05:59:59,231 - root - WARNING - DSPy is not available. Some functionality will be limited. Error: No module named 'medical.ml.dspy.dspy_client'
+2025-04-19 05:59:59,233 - root - WARNING - BiomedLM is not available. Some functionality will be limited.
+2025-04-19 05:59:59,235 - api.services.llm.cl_peft_service - WARNING - Failed to import from medical.ml.cl_peft: Using mock classes instead
+2025-04-19 05:59:59,236 - api.websockets.mcp_manager - INFO - Started message queue cleanup task
+2025-04-19 05:59:59,236 - api.websockets.mcp_manager - INFO - Started heartbeat task
+2025-04-19 05:59:59,820 - root - WARNING - Anthropic SDK not found. AnthropicClient will be available but not functional. Install with 'pip install anthropic'
+2025-04-19 05:59:59,880 - datasets - INFO - PyTorch version 2.6.0 available.

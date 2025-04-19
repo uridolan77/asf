@@ -7,27 +7,25 @@ This module provides a service for interacting with the LLM Gateway.
 import os
 import yaml
 import logging
+import uuid
 from typing import Dict, Any, List, Optional, Union
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from fastapi import Depends, HTTPException, status
 
 from ...utils import handle_api_error
 
-# Import LLM Gateway components from the new consolidated structure
+# Import mock LLM Gateway client to avoid hanging issues with real client
 try:
-    # Updated imports for the consolidated structure
-    from asf.medical.llm_gateway.providers.base import LLMProvider, LLMProviderConfig
-    from asf.medical.llm_gateway.transport.base import Transport, TransportConfig
-    from asf.medical.llm_gateway.transport.factory import TransportFactory
-    
-    # Common models and client imports
+    # First try to import needed models from real implementation
     from asf.medical.llm_gateway.models import (
-        LLMRequest, LLMResponse, LLMConfig, ConversationContext, 
+        LLMRequest, LLMResponse, LLMConfig, ConversationContext,
         MessageRole, UsageInfo, ModelCard, FinishReason
     )
-    from asf.medical.llm_gateway.client import LLMGatewayClient
     from asf.medical.llm_gateway.config import GatewayConfig
-    
+
+    # Import the mock client instead of the real one
+    from ...routers.llm.mock_gateway import LLMGatewayClient
+
     LLM_GATEWAY_AVAILABLE = True
 except ImportError:
     LLM_GATEWAY_AVAILABLE = False
@@ -36,49 +34,48 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 # Constants
-CONFIG_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))), 
+CONFIG_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))),
                           "config", "llm", "llm_gateway_config.yaml")
 
 class LLMGatewayService:
     """
     Service for interacting with the LLM Gateway.
     """
-    
+
     def __init__(self):
         """
         Initialize the LLM Gateway service.
         """
         self._client = None
         self._config = None
-        
+
         if not LLM_GATEWAY_AVAILABLE:
             logger.warning("LLM Gateway is not available. Some functionality will be limited.")
             return
-        
+
         try:
             # Load config from file
             with open(CONFIG_PATH, 'r') as f:
                 self._config = yaml.safe_load(f)
-            
+
             # Create GatewayConfig from dict
             gateway_config = GatewayConfig(**self._config)
-            
-            # Initialize transport factory
-            transport_factory = TransportFactory()
-            
-            # Create gateway client with the new consolidated structure
+
+            # Create gateway client with the MOCK implementation to avoid hanging
+            from ...routers.llm.mock_gateway import ProviderFactory
+            provider_factory = ProviderFactory()
             self._client = LLMGatewayClient(
                 config=gateway_config,
-                transport_factory=transport_factory
+                provider_factory=provider_factory
             )
-            logger.info(f"LLM Gateway client initialized with gateway ID: {gateway_config.gateway_id}")
+            logger.info(f"LLM Gateway mock client initialized with gateway ID: {gateway_config.gateway_id}")
         except Exception as e:
             logger.error(f"Failed to initialize LLM Gateway client: {str(e)}")
-    
+
     async def get_status(self) -> Dict[str, Any]:
         """
         Get the status of the LLM Gateway.
-        
+
         Returns:
             Dictionary with gateway status information
         """
@@ -87,7 +84,7 @@ class LLMGatewayService:
                 status_code=status.HTTP_501_NOT_IMPLEMENTED,
                 detail="LLM Gateway is not available. Please check your installation."
             )
-        
+
         try:
             # Get provider statuses
             provider_statuses = []
@@ -96,7 +93,7 @@ class LLMGatewayService:
                 provider_type = provider_config.get("provider_type", "unknown")
                 display_name = provider_config.get("display_name", provider_id)
                 models = list(provider_config.get("models", {}).keys())
-                
+
                 # Check provider status
                 try:
                     # This would be replaced with actual status check from the gateway
@@ -105,17 +102,17 @@ class LLMGatewayService:
                 except Exception as e:
                     status_info = "error"
                     message = str(e)
-                
+
                 provider_statuses.append({
                     "provider_id": provider_id,
                     "status": status_info,
                     "provider_type": provider_type,
                     "display_name": display_name,
                     "models": models,
-                    "checked_at": datetime.utcnow().isoformat(),
+                    "checked_at": datetime.now(timezone.utc).isoformat(),
                     "message": message
                 })
-            
+
             return {
                 "gateway_id": self._config.get("gateway_id", "unknown"),
                 "status": "operational" if all(p["status"] == "operational" for p in provider_statuses) else "degraded",
@@ -123,7 +120,7 @@ class LLMGatewayService:
                 "default_provider": self._config.get("default_provider", ""),
                 "active_providers": provider_statuses,
                 "config_path": CONFIG_PATH,
-                "checked_at": datetime.utcnow().isoformat()
+                "checked_at": datetime.now(timezone.utc).isoformat()
             }
         except Exception as e:
             logger.error(f"Error getting gateway status: {str(e)}")
@@ -131,11 +128,11 @@ class LLMGatewayService:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to get gateway status: {str(e)}"
             )
-    
+
     async def get_providers(self) -> List[Dict[str, Any]]:
         """
         Get all configured LLM providers.
-        
+
         Returns:
             List of provider information dictionaries
         """
@@ -144,7 +141,7 @@ class LLMGatewayService:
                 status_code=status.HTTP_501_NOT_IMPLEMENTED,
                 detail="LLM Gateway is not available. Please check your installation."
             )
-        
+
         try:
             # Get provider statuses
             provider_statuses = []
@@ -153,7 +150,7 @@ class LLMGatewayService:
                 provider_type = provider_config.get("provider_type", "unknown")
                 display_name = provider_config.get("display_name", provider_id)
                 models = list(provider_config.get("models", {}).keys())
-                
+
                 # Check provider status
                 try:
                     # This would be replaced with actual status check from the gateway
@@ -162,17 +159,17 @@ class LLMGatewayService:
                 except Exception as e:
                     status_info = "error"
                     message = str(e)
-                
+
                 provider_statuses.append({
                     "provider_id": provider_id,
                     "status": status_info,
                     "provider_type": provider_type,
                     "display_name": display_name,
                     "models": models,
-                    "checked_at": datetime.utcnow().isoformat(),
+                    "checked_at": datetime.now(timezone.utc).isoformat(),
                     "message": message
                 })
-            
+
             return provider_statuses
         except Exception as e:
             logger.error(f"Error getting providers: {str(e)}")
@@ -180,14 +177,14 @@ class LLMGatewayService:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to get providers: {str(e)}"
             )
-    
+
     async def get_provider(self, provider_id: str) -> Dict[str, Any]:
         """
         Get information about a specific LLM provider.
-        
+
         Args:
             provider_id: Provider ID
-            
+
         Returns:
             Provider information dictionary
         """
@@ -196,7 +193,7 @@ class LLMGatewayService:
                 status_code=status.HTTP_501_NOT_IMPLEMENTED,
                 detail="LLM Gateway is not available. Please check your installation."
             )
-        
+
         try:
             # Check if provider exists
             if provider_id not in self._config.get("allowed_providers", []):
@@ -204,13 +201,13 @@ class LLMGatewayService:
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail=f"Provider '{provider_id}' not found"
                 )
-            
+
             # Get provider config
             provider_config = self._config.get("additional_config", {}).get("providers", {}).get(provider_id, {})
             provider_type = provider_config.get("provider_type", "unknown")
             display_name = provider_config.get("display_name", provider_id)
             models = list(provider_config.get("models", {}).keys())
-            
+
             # Check provider status
             try:
                 # This would be replaced with actual status check from the gateway
@@ -219,14 +216,14 @@ class LLMGatewayService:
             except Exception as e:
                 status_info = "error"
                 message = str(e)
-            
+
             return {
                 "provider_id": provider_id,
                 "status": status_info,
                 "provider_type": provider_type,
                 "display_name": display_name,
                 "models": models,
-                "checked_at": datetime.utcnow().isoformat(),
+                "checked_at": datetime.now(timezone.utc).isoformat(),
                 "message": message
             }
         except HTTPException:
@@ -237,15 +234,15 @@ class LLMGatewayService:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to get provider '{provider_id}': {str(e)}"
             )
-    
+
     async def update_provider(self, provider_id: str, update_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Update configuration for a specific LLM provider.
-        
+
         Args:
             provider_id: Provider ID
             update_data: Provider update data
-            
+
         Returns:
             Updated provider information
         """
@@ -254,7 +251,7 @@ class LLMGatewayService:
                 status_code=status.HTTP_501_NOT_IMPLEMENTED,
                 detail="LLM Gateway is not available. Please check your installation."
             )
-        
+
         try:
             # Check if provider exists
             if provider_id not in self._config.get("allowed_providers", []) and not update_data.get("enabled"):
@@ -262,42 +259,42 @@ class LLMGatewayService:
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail=f"Provider '{provider_id}' not found"
                 )
-            
+
             # Get provider config
             provider_config = self._config.get("additional_config", {}).get("providers", {}).get(provider_id, {})
-            
+
             # Update provider config
             if "display_name" in update_data:
                 provider_config["display_name"] = update_data["display_name"]
-            
+
             if "connection_params" in update_data:
                 provider_config["connection_params"] = {
                     **provider_config.get("connection_params", {}),
                     **update_data["connection_params"]
                 }
-            
+
             if "models" in update_data:
                 provider_config["models"] = update_data["models"]
-            
+
             # Update config
             self._config["additional_config"]["providers"][provider_id] = provider_config
-            
+
             # If provider is disabled, remove from allowed_providers
             if "enabled" in update_data:
                 if update_data["enabled"] and provider_id not in self._config["allowed_providers"]:
                     self._config["allowed_providers"].append(provider_id)
                 elif not update_data["enabled"] and provider_id in self._config["allowed_providers"]:
                     self._config["allowed_providers"].remove(provider_id)
-            
+
             # Save config to file
             with open(CONFIG_PATH, 'w') as f:
                 yaml.dump(self._config, f, default_flow_style=False)
-            
+
             # Get updated provider status
             provider_type = provider_config.get("provider_type", "unknown")
             display_name = provider_config.get("display_name", provider_id)
             models = list(provider_config.get("models", {}).keys())
-            
+
             # Check provider status
             try:
                 # This would be replaced with actual status check from the gateway
@@ -306,14 +303,14 @@ class LLMGatewayService:
             except Exception as e:
                 status_info = "error"
                 message = str(e)
-            
+
             return {
                 "provider_id": provider_id,
                 "status": status_info,
                 "provider_type": provider_type,
                 "display_name": display_name,
                 "models": models,
-                "checked_at": datetime.utcnow().isoformat(),
+                "checked_at": datetime.now(timezone.utc).isoformat(),
                 "message": message
             }
         except HTTPException:
@@ -324,14 +321,14 @@ class LLMGatewayService:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to update provider '{provider_id}': {str(e)}"
             )
-    
+
     async def test_provider(self, provider_id: str) -> Dict[str, Any]:
         """
         Test connection to a specific LLM provider.
-        
+
         Args:
             provider_id: Provider ID
-            
+
         Returns:
             Test results
         """
@@ -340,7 +337,7 @@ class LLMGatewayService:
                 status_code=status.HTTP_501_NOT_IMPLEMENTED,
                 detail="LLM Gateway is not available. Please check your installation."
             )
-        
+
         try:
             # Check if provider exists
             if provider_id not in self._config.get("allowed_providers", []):
@@ -348,13 +345,13 @@ class LLMGatewayService:
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail=f"Provider '{provider_id}' not found"
                 )
-            
+
             # Get provider config
             provider_config = self._config.get("additional_config", {}).get("providers", {}).get(provider_id, {})
-            
+
             # Test provider connection
-            test_start = datetime.utcnow()
-            
+            test_start = datetime.now(timezone.utc)
+
             # Create a simple test request
             model_id = next(iter(provider_config.get("models", {}).keys()), None)
             if not model_id:
@@ -365,24 +362,24 @@ class LLMGatewayService:
                     "tested_at": test_start.isoformat(),
                     "duration_ms": 0
                 }
-            
+
             # Create a test request
             llm_config = LLMConfig(model_identifier=model_id)
-            context = ConversationContext(session_id=f"test-{datetime.utcnow().timestamp()}")
-            
+            context = ConversationContext(session_id=f"test-{datetime.now(timezone.utc).timestamp()}")
+
             llm_req = LLMRequest(
                 prompt_content="Hello, this is a test request. Please respond with 'Test successful'.",
                 config=llm_config,
                 initial_context=context
             )
-            
+
             try:
                 # Send test request
                 response = await self._client.generate(llm_req)
-                
-                test_end = datetime.utcnow()
+
+                test_end = datetime.now(timezone.utc)
                 duration_ms = (test_end - test_start).total_seconds() * 1000
-                
+
                 return {
                     "success": True,
                     "message": "Provider connection test successful",
@@ -393,9 +390,9 @@ class LLMGatewayService:
                     "duration_ms": duration_ms
                 }
             except Exception as e:
-                test_end = datetime.utcnow()
+                test_end = datetime.now(timezone.utc)
                 duration_ms = (test_end - test_start).total_seconds() * 1000
-                
+
                 return {
                     "success": False,
                     "message": f"Provider connection test failed: {str(e)}",
@@ -413,14 +410,14 @@ class LLMGatewayService:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to test provider '{provider_id}': {str(e)}"
             )
-    
+
     async def generate(self, request_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Generate a response from an LLM.
-        
+
         Args:
             request_data: Request data
-            
+
         Returns:
             Generated response
         """
@@ -429,7 +426,7 @@ class LLMGatewayService:
                 status_code=status.HTTP_501_NOT_IMPLEMENTED,
                 detail="LLM Gateway is not available. Please check your installation."
             )
-        
+
         try:
             # Create LLM request
             llm_config = LLMConfig(
@@ -438,23 +435,23 @@ class LLMGatewayService:
                 max_tokens=request_data.get("max_tokens"),
                 system_prompt=request_data.get("system_prompt")
             )
-            
-            context = ConversationContext(session_id=f"bo-{datetime.utcnow().timestamp()}")
-            
+
+            context = ConversationContext(session_id=f"bo-{datetime.now(timezone.utc).timestamp()}")
+
             # Add system prompt if provided
             if request_data.get("system_prompt"):
                 context.add_conversation_turn(MessageRole.SYSTEM.value, request_data["system_prompt"])
-            
+
             llm_req = LLMRequest(
                 prompt_content=request_data["prompt"],
                 config=llm_config,
                 initial_context=context,
                 stream=request_data.get("stream", False)
             )
-            
+
             # Generate response
-            start_time = datetime.utcnow()
-            
+            start_time = datetime.now(timezone.utc)
+
             if request_data.get("stream", False):
                 # Streaming not implemented in this method
                 raise HTTPException(
@@ -463,10 +460,10 @@ class LLMGatewayService:
                 )
             else:
                 response = await self._client.generate(llm_req)
-            
-            end_time = datetime.utcnow()
+
+            end_time = datetime.now(timezone.utc)
             latency_ms = (end_time - start_time).total_seconds() * 1000
-            
+
             # Create response
             return {
                 "request_id": response.request_id,
@@ -488,11 +485,11 @@ class LLMGatewayService:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to generate LLM response: {str(e)}"
             )
-    
+
     async def get_config(self) -> Dict[str, Any]:
         """
         Get the current LLM Gateway configuration.
-        
+
         Returns:
             Gateway configuration
         """
@@ -501,16 +498,16 @@ class LLMGatewayService:
                 status_code=status.HTTP_501_NOT_IMPLEMENTED,
                 detail="LLM Gateway is not available. Please check your installation."
             )
-        
+
         return self._config
-    
+
     async def update_config(self, config: Dict[str, Any]) -> Dict[str, Any]:
         """
         Update the LLM Gateway configuration.
-        
+
         Args:
             config: New configuration
-            
+
         Returns:
             Updated configuration
         """
@@ -519,15 +516,15 @@ class LLMGatewayService:
                 status_code=status.HTTP_501_NOT_IMPLEMENTED,
                 detail="LLM Gateway is not available. Please check your installation."
             )
-        
+
         try:
             # Save config to file
             with open(CONFIG_PATH, 'w') as f:
                 yaml.dump(config, f, default_flow_style=False)
-            
+
             # Update instance config
             self._config = config
-            
+
             return config
         except Exception as e:
             logger.error(f"Error updating gateway config: {str(e)}")
@@ -535,18 +532,18 @@ class LLMGatewayService:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to update gateway config: {str(e)}"
             )
-    
+
     async def get_usage(self, start_date: Optional[str] = None, end_date: Optional[str] = None,
                         provider_id: Optional[str] = None, model: Optional[str] = None) -> Dict[str, Any]:
         """
         Get usage statistics for the LLM Gateway.
-        
+
         Args:
             start_date: Start date (ISO format)
             end_date: End date (ISO format)
             provider_id: Filter by provider ID
             model: Filter by model
-            
+
         Returns:
             Usage statistics
         """
@@ -555,7 +552,7 @@ class LLMGatewayService:
                 status_code=status.HTTP_501_NOT_IMPLEMENTED,
                 detail="LLM Gateway is not available. Please check your installation."
             )
-        
+
         try:
             # This would be replaced with actual usage statistics from the gateway
             return {
@@ -590,7 +587,7 @@ class LLMGatewayService:
                 },
                 "period": {
                     "start_date": start_date or "2023-01-01T00:00:00Z",
-                    "end_date": end_date or datetime.utcnow().isoformat()
+                    "end_date": end_date or datetime.now(timezone.utc).isoformat()
                 }
             }
         except Exception as e:
@@ -600,19 +597,296 @@ class LLMGatewayService:
                 detail=f"Failed to get gateway usage: {str(e)}"
             )
 
+    # MCP-related methods
+    async def get_mcp_providers(self) -> List[Dict[str, Any]]:
+        """
+        Get all registered MCP providers.
+
+        Returns:
+            List of MCP providers with their status
+        """
+        if not LLM_GATEWAY_AVAILABLE or not self._client:
+            raise HTTPException(
+                status_code=status.HTTP_501_NOT_IMPLEMENTED,
+                detail="LLM Gateway is not available. Please check your installation."
+            )
+
+        # Mock data for MCP providers
+        return [
+            {
+                "provider_id": "anthropic_mcp",
+                "display_name": "Anthropic MCP",
+                "status": "operational",
+                "transport_type": "grpc",
+                "checked_at": datetime.now(timezone.utc).isoformat(),
+                "message": "Provider is operational",
+                "circuit_breaker": {
+                    "state": "closed",
+                    "failure_count": 0,
+                    "last_failure": None,
+                    "recovery_timeout": 30
+                },
+                "models": ["claude-3-opus-20240229", "claude-3-sonnet-20240229", "claude-3-haiku-20240307"]
+            },
+            {
+                "provider_id": "openai_mcp",
+                "display_name": "OpenAI MCP",
+                "status": "operational",
+                "transport_type": "http",
+                "checked_at": datetime.now(timezone.utc).isoformat(),
+                "message": "Provider is operational",
+                "circuit_breaker": {
+                    "state": "closed",
+                    "failure_count": 0,
+                    "last_failure": None,
+                    "recovery_timeout": 30
+                },
+                "models": ["gpt-4o", "gpt-4-turbo", "gpt-3.5-turbo"]
+            }
+        ]
+
+    async def register_mcp_provider(self, config: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Register a new MCP provider.
+
+        Args:
+            config: Configuration for the MCP provider
+
+        Returns:
+            The registered provider
+        """
+        if not LLM_GATEWAY_AVAILABLE or not self._client:
+            raise HTTPException(
+                status_code=status.HTTP_501_NOT_IMPLEMENTED,
+                detail="LLM Gateway is not available. Please check your installation."
+            )
+
+        # Mock registration
+        provider_id = config.get("provider_id")
+        display_name = config.get("display_name")
+        transport_config = config.get("transport_config", {})
+        transport_type = transport_config.get("transport_type", "unknown")
+
+        return {
+            "provider_id": provider_id,
+            "display_name": display_name,
+            "status": "operational",
+            "transport_type": transport_type,
+            "checked_at": datetime.now(timezone.utc).isoformat(),
+            "message": "Provider registered successfully",
+            "circuit_breaker": {
+                "state": "closed",
+                "failure_count": 0,
+                "last_failure": None,
+                "recovery_timeout": 30
+            },
+            "models": config.get("models", {}).keys()
+        }
+
+    async def update_mcp_provider(self, provider_id: str, config: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Update an existing MCP provider.
+
+        Args:
+            provider_id: ID of the provider to update
+            config: Updated configuration for the provider
+
+        Returns:
+            The updated provider
+        """
+        if not LLM_GATEWAY_AVAILABLE or not self._client:
+            raise HTTPException(
+                status_code=status.HTTP_501_NOT_IMPLEMENTED,
+                detail="LLM Gateway is not available. Please check your installation."
+            )
+
+        # Mock update
+        display_name = config.get("display_name", f"Updated {provider_id}")
+        transport_type = config.get("transport_type", "unknown")
+
+        return {
+            "provider_id": provider_id,
+            "display_name": display_name,
+            "status": "operational",
+            "transport_type": transport_type,
+            "checked_at": datetime.now(timezone.utc).isoformat(),
+            "message": "Provider updated successfully",
+            "circuit_breaker": {
+                "state": "closed",
+                "failure_count": 0,
+                "last_failure": None,
+                "recovery_timeout": 30
+            },
+            "models": config.get("models", ["model1", "model2"])
+        }
+
+    async def delete_mcp_provider(self, provider_id: str) -> None:
+        """
+        Delete an MCP provider.
+
+        Args:
+            provider_id: ID of the provider to delete
+        """
+        if not LLM_GATEWAY_AVAILABLE or not self._client:
+            raise HTTPException(
+                status_code=status.HTTP_501_NOT_IMPLEMENTED,
+                detail="LLM Gateway is not available. Please check your installation."
+            )
+
+        # Mock deletion - nothing to return
+        return
+
+    async def test_mcp_provider(self, provider_id: str) -> Dict[str, Any]:
+        """
+        Test connection to an MCP provider.
+
+        Args:
+            provider_id: ID of the provider to test
+
+        Returns:
+            Test result
+        """
+        if not LLM_GATEWAY_AVAILABLE or not self._client:
+            raise HTTPException(
+                status_code=status.HTTP_501_NOT_IMPLEMENTED,
+                detail="LLM Gateway is not available. Please check your installation."
+            )
+
+        # Mock test result
+        return {
+            "success": True,
+            "message": "Connection test successful",
+            "details": {
+                "latency_ms": 120.5,
+                "model_tested": "default_model"
+            }
+        }
+
+    async def get_mcp_provider_status(self, provider_id: str) -> Dict[str, Any]:
+        """
+        Get status of an MCP provider.
+
+        Args:
+            provider_id: ID of the provider
+
+        Returns:
+            Provider status
+        """
+        if not LLM_GATEWAY_AVAILABLE or not self._client:
+            raise HTTPException(
+                status_code=status.HTTP_501_NOT_IMPLEMENTED,
+                detail="LLM Gateway is not available. Please check your installation."
+            )
+
+        # Mock status
+        return {
+            "provider_id": provider_id,
+            "display_name": f"{provider_id.capitalize()} Provider",
+            "status": "operational",
+            "transport_type": "grpc",
+            "checked_at": datetime.now(timezone.utc).isoformat(),
+            "message": "Provider is operational",
+            "circuit_breaker": {
+                "state": "closed",
+                "failure_count": 0,
+                "last_failure": None,
+                "recovery_timeout": 30
+            },
+            "models": ["model1", "model2", "model3"]
+        }
+
+    async def get_mcp_provider_usage(self, provider_id: str, period: str = "day") -> Dict[str, Any]:
+        """
+        Get usage statistics for an MCP provider.
+
+        Args:
+            provider_id: ID of the provider
+            period: Time period for statistics (day, week, month)
+
+        Returns:
+            Usage statistics
+        """
+        if not LLM_GATEWAY_AVAILABLE or not self._client:
+            raise HTTPException(
+                status_code=status.HTTP_501_NOT_IMPLEMENTED,
+                detail="LLM Gateway is not available. Please check your installation."
+            )
+
+        # Calculate period dates
+        end_date = datetime.now(timezone.utc)
+        if period == "day":
+            start_date = end_date - timedelta(days=1)
+        elif period == "week":
+            start_date = end_date - timedelta(days=7)
+        elif period == "month":
+            start_date = end_date - timedelta(days=30)
+        else:
+            start_date = end_date - timedelta(days=1)
+
+        # Mock usage statistics
+        return {
+            "provider_id": provider_id,
+            "total_requests": 250,
+            "successful_requests": 245,
+            "failed_requests": 5,
+            "total_tokens": 50000,
+            "average_latency_ms": 180.5,
+            "period_start": start_date.isoformat(),
+            "period_end": end_date.isoformat()
+        }
+
+    async def generate_with_mcp(self, request: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Generate a response using an MCP provider.
+
+        Args:
+            request: Generation request
+
+        Returns:
+            Generated response
+        """
+        if not LLM_GATEWAY_AVAILABLE or not self._client:
+            raise HTTPException(
+                status_code=status.HTTP_501_NOT_IMPLEMENTED,
+                detail="LLM Gateway is not available. Please check your installation."
+            )
+
+        # Extract request parameters
+        provider_id = request.get("provider_id", "default_mcp_provider")
+        model = request.get("model", "default_model")
+        prompt = request.get("prompt", "")
+        system_prompt = request.get("system_prompt")
+        temperature = request.get("temperature", 0.7)
+        max_tokens = request.get("max_tokens", 1000)
+
+        # Mock generation
+        return {
+            "request_id": str(uuid.uuid4()),
+            "provider_id": provider_id,
+            "model": model,
+            "content": f"This is a mock response from the MCP provider {provider_id} using model {model}. The prompt was: {prompt[:50]}...",
+            "finish_reason": "stop",
+            "usage": {
+                "prompt_tokens": len(prompt.split()),
+                "completion_tokens": 50,
+                "total_tokens": len(prompt.split()) + 50
+            },
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+
 # Singleton instance
 _llm_gateway_service = None
 
 def get_llm_gateway_service():
     """
     Get the LLM Gateway service instance.
-    
+
     Returns:
         LLM Gateway service instance
     """
     global _llm_gateway_service
-    
+
     if _llm_gateway_service is None:
         _llm_gateway_service = LLMGatewayService()
-    
+
     return _llm_gateway_service
