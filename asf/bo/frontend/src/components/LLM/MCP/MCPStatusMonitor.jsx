@@ -29,7 +29,7 @@ import {
   WifiOff as WifiOffIcon,
   Notifications as NotificationsIcon
 } from '@mui/icons-material';
-import { useQuery } from 'react-query';
+import { useQuery } from '@tanstack/react-query';
 
 import apiService from '../../../services/api';
 import { ContentLoader } from '../../UI/LoadingIndicators';
@@ -49,25 +49,35 @@ const MCPStatusMonitor = ({ providerId }) => {
     isError,
     error,
     refetch
-  } = useQuery(
-    ['mcpProviderStatus', providerId],
-    () => apiService.llm.getMCPProviderStatus(providerId),
-    {
-      enabled: !!providerId,
-      refetchInterval: 30000, // Refetch every 30 seconds
-      refetchOnWindowFocus: true,
-      onError: (err) => {
-        console.error(`Error fetching status for provider ${providerId}:`, err);
-      }
+  } = useQuery({
+    queryKey: ['mcpProviderStatus', providerId],
+    queryFn: () => apiService.llm.getMCPProviderStatus(providerId),
+    enabled: !!providerId,
+    refetchInterval: 30000, // Refetch every 30 seconds
+    refetchOnWindowFocus: true,
+    onError: (err) => {
+      console.error(`Error fetching status for provider ${providerId}:`, err);
     }
-  );
+  });
 
-  // Get real-time updates via WebSocket
+  // Get real-time updates via WebSocket with fallback
+  let wsHook;
+  try {
+    wsHook = useMCPWebSocket(providerId);
+  } catch (error) {
+    console.error('Error using WebSocket hook:', error);
+    wsHook = {
+      isConnected: false,
+      statusUpdates: [],
+      requestStatusUpdate: () => Promise.resolve(false)
+    };
+  }
+
   const {
     isConnected: wsConnected,
     statusUpdates,
     requestStatusUpdate
-  } = useMCPWebSocket(providerId);
+  } = wsHook;
 
   // Request status update when component mounts
   useEffect(() => {

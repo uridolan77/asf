@@ -42,7 +42,24 @@ import { useAuth } from '../../context/AuthContext';
 import { ContentLoader } from '../../components/UI/LoadingIndicators';
 import { FadeIn, StaggeredList } from '../../components/UI/Animations';
 import { useMCPProviders } from '../../hooks/useMCPProviders';
-import { useMCPInfo } from '../../hooks/useMCPInfo';
+// Import useMCPInfo with error handling
+import { useMCPInfo as useMCPInfoOriginal } from '../../hooks/useMCPInfo';
+
+// Wrap the hook with error handling
+const useMCPInfo = () => {
+  try {
+    return useMCPInfoOriginal();
+  } catch (error) {
+    console.error('Error using useMCPInfo hook:', error);
+    return {
+      mcpInfo: null,
+      isLoading: false,
+      isError: true,
+      error: error.message,
+      refetch: () => {}
+    };
+  }
+};
 import MCPProviderManagement from '../../components/LLM/MCP/MCPProviderManagement';
 import MCPStatusMonitor from '../../components/LLM/MCP/MCPStatusMonitor';
 import MCPUsageStats from '../../components/LLM/MCP/MCPUsageStats';
@@ -62,8 +79,8 @@ const MCPDashboard = () => {
   const [selectedProvider, setSelectedProvider] = useState(null);
   const [configDialogOpen, setConfigDialogOpen] = useState(false);
 
-  // Use MCP hooks
-  const { mcpInfo, isLoading: mcpInfoLoading } = useMCPInfo();
+  // Use MCP hooks with fallback
+  const { mcpInfo, isLoading: mcpInfoLoading, isError: mcpInfoError } = useMCPInfo();
   const {
     providers,
     isLoading: providersLoading,
@@ -73,11 +90,11 @@ const MCPDashboard = () => {
   } = useMCPProviders();
 
   // Filter active providers
-  const activeProviders = providers.filter(p =>
+  const activeProviders = Array.isArray(providers) ? providers.filter(p =>
     p.status === 'operational' ||
     p.status === 'available' ||
     p.status === 'connected'
-  );
+  ) : [];
 
   // Set selected provider if none is selected and active providers exist
   if (activeProviders.length > 0 && !selectedProvider) {
@@ -96,6 +113,14 @@ const MCPDashboard = () => {
 
   // Render provider cards
   const renderProviderCards = () => {
+    if (!Array.isArray(providers) || providers.length === 0) {
+      return (
+        <Alert severity="info">
+          No MCP providers found. Click "Add MCP Provider" to create one.
+        </Alert>
+      );
+    }
+
     return (
       <StaggeredList>
         <Grid container spacing={2}>
@@ -264,7 +289,13 @@ const MCPDashboard = () => {
           </Box>
         </Box>
 
-        {mcpInfo && (
+        {mcpInfoLoading ? (
+          <ContentLoader height={200} message="Loading MCP information..." />
+        ) : mcpInfoError ? (
+          <Alert severity="warning" sx={{ mb: 3 }}>
+            Unable to load MCP information. The service may be unavailable.
+          </Alert>
+        ) : mcpInfo ? (
           <Paper sx={{ p: 3, mb: 3 }}>
             <Typography variant="h6" gutterBottom>
               {mcpInfo.name} ({mcpInfo.version})
@@ -277,28 +308,28 @@ const MCPDashboard = () => {
               <Grid item xs={12} md={6}>
                 <Typography variant="subtitle1" gutterBottom>Features:</Typography>
                 <Box component="ul" sx={{ pl: 2 }}>
-                  {mcpInfo.features.map((feature, index) => (
+                  {mcpInfo?.features?.map((feature, index) => (
                     <Box component="li" key={index}>
                       <Typography>{feature}</Typography>
                     </Box>
-                  ))}
+                  )) || <Typography>No features available</Typography>}
                 </Box>
               </Grid>
 
               <Grid item xs={12} md={6}>
                 <Typography variant="subtitle1" gutterBottom>Transport Types:</Typography>
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                  {mcpInfo.transport_types.map((type, index) => (
+                  {mcpInfo?.transport_types?.map((type, index) => (
                     <Chip
                       key={index}
                       label={type}
                       icon={<CodeIcon />}
                       variant="outlined"
                     />
-                  ))}
+                  )) || <Typography>No transport types available</Typography>}
                 </Box>
 
-                {mcpInfo.documentation_url && (
+                {mcpInfo?.documentation_url && (
                   <Box sx={{ mt: 2 }}>
                     <Button
                       variant="text"
@@ -313,6 +344,10 @@ const MCPDashboard = () => {
               </Grid>
             </Grid>
           </Paper>
+        ) : (
+          <Alert severity="info" sx={{ mb: 3 }}>
+            No MCP information available.
+          </Alert>
         )}
 
         <Paper sx={{ mb: 3 }}>
@@ -349,7 +384,7 @@ const MCPDashboard = () => {
             {activeTab === 0 && (
               providersLoading ? (
                 <ContentLoader height={200} message="Loading MCP providers..." />
-              ) : providers.length > 0 ? (
+              ) : Array.isArray(providers) && providers.length > 0 ? (
                 renderProviderCards()
               ) : (
                 <Alert severity="info">
@@ -363,7 +398,7 @@ const MCPDashboard = () => {
           <Box role="tabpanel" hidden={activeTab !== 1} id="tabpanel-1" aria-labelledby="tab-1" sx={{ p: 3 }}>
             {activeTab === 1 && (
               <>
-                {providers.length > 0 ? (
+                {Array.isArray(providers) && providers.length > 0 ? (
                   <Box sx={{ mb: 3 }}>
                     <FormControl fullWidth sx={{ maxWidth: 300, mb: 3 }}>
                       <InputLabel id="provider-select-label">Select Provider</InputLabel>
@@ -373,7 +408,7 @@ const MCPDashboard = () => {
                         onChange={handleProviderChange}
                         label="Select Provider"
                       >
-                        {providers.map((provider) => (
+                        {Array.isArray(providers) && providers.map((provider) => (
                           <MenuItem key={provider.provider_id} value={provider.provider_id}>
                             {provider.display_name || provider.provider_id}
                           </MenuItem>

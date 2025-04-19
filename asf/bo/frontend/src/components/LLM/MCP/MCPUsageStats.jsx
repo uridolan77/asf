@@ -13,7 +13,8 @@ import {
   CircularProgress,
   Button,
   Alert,
-  Tooltip
+  Tooltip,
+  Badge
 } from '@mui/material';
 import {
   Refresh as RefreshIcon,
@@ -24,7 +25,7 @@ import {
   Wifi as WifiIcon,
   WifiOff as WifiOffIcon
 } from '@mui/icons-material';
-import { useQuery } from 'react-query';
+import { useQuery } from '@tanstack/react-query';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
   Legend, ResponsiveContainer, LineChart, Line, AreaChart, Area
@@ -52,25 +53,35 @@ const MCPUsageStats = ({ providerId }) => {
     isError,
     error,
     refetch
-  } = useQuery(
-    ['mcpProviderUsage', providerId, period],
-    () => apiService.llm.getMCPProviderUsage(providerId, period),
-    {
-      enabled: !!providerId,
-      refetchInterval: 60000, // Refetch every minute
-      refetchOnWindowFocus: true,
-      onError: (err) => {
-        console.error(`Error fetching usage stats for provider ${providerId}:`, err);
-      }
+  } = useQuery({
+    queryKey: ['mcpProviderUsage', providerId, period],
+    queryFn: () => apiService.llm.getMCPProviderUsage(providerId, period),
+    enabled: !!providerId,
+    refetchInterval: 60000, // Refetch every minute
+    refetchOnWindowFocus: true,
+    onError: (err) => {
+      console.error(`Error fetching usage stats for provider ${providerId}:`, err);
     }
-  );
+  });
 
-  // Get real-time updates via WebSocket
+  // Get real-time updates via WebSocket with fallback
+  let wsHook;
+  try {
+    wsHook = useMCPWebSocket(providerId);
+  } catch (error) {
+    console.error('Error using WebSocket hook:', error);
+    wsHook = {
+      isConnected: false,
+      metrics: null,
+      requestMetrics: () => Promise.resolve(false)
+    };
+  }
+
   const {
     isConnected: wsConnected,
     metrics,
     requestMetrics
-  } = useMCPWebSocket(providerId);
+  } = wsHook;
 
   // Request metrics update when component mounts
   useEffect(() => {
@@ -273,13 +284,13 @@ const MCPUsageStats = ({ providerId }) => {
             <ToggleButton value="month">Month</ToggleButton>
           </ToggleButtonGroup>
 
-          {wsConnected && (
-            <Tooltip title="Real-time updates active">
-              <Badge color="success" variant="dot">
-                <WifiIcon color="action" />
-              </Badge>
-            </Tooltip>
-          )}
+          <Tooltip title={wsConnected ? "Real-time updates active" : "Real-time updates inactive"}>
+            {wsConnected ? (
+              <WifiIcon color="success" />
+            ) : (
+              <WifiOffIcon color="disabled" />
+            )}
+          </Tooltip>
 
           <Button
             variant="outlined"
