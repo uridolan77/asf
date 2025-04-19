@@ -1,0 +1,41 @@
+# LLM Gateway Plugin Configuration
+
+# This file defines plugins that should be loaded into the LLM Gateway
+# Each plugin can be enabled/disabled and configured with custom settings
+
+plugins:
+  # Metrics plugin for tracking request/response statistics
+  - name: metrics_plugin
+    module: asf.medical.llm_gateway.plugins.metrics_plugin
+    class_name: MetricsPlugin
+    enabled: true
+    config:
+      detailed_logging: false
+      export_prometheus: true
+      
+  # Caching plugin for improved performance and reduced costs
+  - name: caching_plugin
+    module: asf.medical.llm_gateway.plugins.cache_plugin
+    class_name: CachingPlugin
+    enabled: true
+    config:
+      ttl_seconds: 3600  # 1 hour
+      max_cache_size: 1000
+      excluded_models:
+        - gpt-4-turbo-preview
+        - llama-3-70b-instruct
+      
+  # Example of a plugin loaded from an entry point (not yet implemented)
+  # - name: custom_plugin
+  #   entry_point: custom_llm_extension
+  #   enabled: false
+  #   config:
+  #     setting1: value1
+
+# Settings for the plugin system
+plugin_system:
+  auto_discovery: true
+  plugin_dirs:
+    - plugins
+    - custom_plugins
+  fail_on_error: false

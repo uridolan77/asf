@@ -1,6 +1,9 @@
-from typing import Dict, Any, Callable, List, Optional
+from typing import Dict, Any, Callable, List, Optional, Tuple
 import uuid
+import asyncio
 from pydantic import BaseModel
+
+from agentor.agents.tools import BaseTool, ToolResult
 
 
 class AgentInput(BaseModel):
@@ -23,6 +26,7 @@ class Agent:
         self.state = {}
         self.sensors = {}
         self.actions = {}
+        self.tools: Dict[str, BaseTool] = {}
 
     async def preprocess(self, input_data: AgentInput) -> AgentInput:
         """Preprocess the input data before running the agent.
@@ -67,6 +71,27 @@ class Agent:
             action_func: A function that takes the agent as input and performs an action
         """
         self.actions[name] = action_func
+
+    def register_tool(self, tool: BaseTool):
+        """Register a tool.
+
+        Args:
+            tool: The tool to register
+        """
+        self.tools[tool.name] = tool
+
+    async def execute_tools(self, tools_to_run: List[Tuple[BaseTool, Dict[str, Any]]]) -> List[ToolResult]:
+        """Execute multiple tools in parallel.
+
+        Args:
+            tools_to_run: A list of (tool, params) tuples to run
+
+        Returns:
+            A list of tool results
+        """
+        return await asyncio.gather(
+            *(tool.run(**params) for tool, params in tools_to_run)
+        )
 
     def perceive(self):
         """Collect data from all sensors.
