@@ -20,6 +20,20 @@ import heapq
 from asf.medical.llm_gateway.observability.metrics import MetricsService
 from asf.medical.llm_gateway.observability.prometheus import get_prometheus_exporter
 
+# Import event system
+from asf.medical.llm_gateway.events.event_bus import EventBus
+from asf.medical.llm_gateway.events.events import (
+    MCPSessionCreatedEvent,
+    MCPSessionReleasedEvent,
+    ErrorOccurredEvent
+)
+
+# Try to import the singleton event bus, with fallback to None
+try:
+    from asf.medical.llm_gateway.events import event_bus
+except ImportError:
+    event_bus = None
+
 logger = logging.getLogger(__name__)
 
 
@@ -313,6 +327,7 @@ class EnhancedSessionPool:
     - Performance monitoring for optimal selection
     - Model-specific session allocation
     - Warm-up and preemptive session creation
+    - Event-driven architecture for observability and notifications
     """
     
     def __init__(
@@ -323,7 +338,8 @@ class EnhancedSessionPool:
         ping_session_func: Optional[Callable[[Any], Awaitable[float]]] = None,
         config: Optional[SessionPoolConfig] = None,
         metrics_service: Optional[MetricsService] = None,
-        prometheus_exporter: Optional[Any] = None
+        prometheus_exporter: Optional[Any] = None,
+        event_bus: Optional[EventBus] = None
     ):
         """
         Initialize the enhanced session pool.
@@ -336,6 +352,7 @@ class EnhancedSessionPool:
             config: Pool configuration
             metrics_service: Metrics service
             prometheus_exporter: Prometheus exporter
+            event_bus: Event bus for publishing events
         """
         self.provider_id = provider_id
         self.create_session_func = create_session_func
@@ -344,6 +361,7 @@ class EnhancedSessionPool:
         self.config = config or SessionPoolConfig()
         self.metrics_service = metrics_service or MetricsService()
         self.prometheus = prometheus_exporter or get_prometheus_exporter()
+        self.event_bus = event_bus or globals().get('event_bus')
         
         # Session storage
         self.sessions: Dict[str, Session] = {}
@@ -502,6 +520,22 @@ class EnhancedSessionPool:
                 # Record failure
                 self.error_count += 1
                 session.record_failure(str(e))
+                
+                # Publish error event
+                if self.event_bus:
+                    error_event = ErrorOccurredEvent(
+                        request_id=None,
+                        error_type="session_operation_failed",
+                        error_message=f"Error during session operation: {str(e)}",
+                        provider_id=self.provider_id,
+                        model=model_id or "unknown",
+                        metadata={
+                            "session_id": session_id,
+                            "priority": priority.name
+                        }
+                    )
+                    self.event_bus.sync_publish(error_event)
+                
                 raise
             
         finally:
@@ -570,7 +604,8 @@ class EnhancedSessionPool:
                     await asyncio.wait_for(future, timeout=remaining_timeout)
                 except asyncio.TimeoutError:
                     # Remove waiter and re-raise
-                    self._session_waiters.remove(future)
+                    if future in self._session_waiters:
+                        self._session_waiters.remove(future)
                     raise
                 
                 # A session might be available now, loop and try again
@@ -699,6 +734,22 @@ class EnhancedSessionPool:
                 priority=priority.name
             )
             
+            # Publish session created event
+            if self.event_bus:
+                event = MCPSessionCreatedEvent(
+                    session_id=session_id,
+                    model=model_id or "unknown",
+                    session_params={
+                        "priority": priority.name,
+                        "tags": list(tags) if tags else [],
+                        "capabilities": list(capabilities) if capabilities else []
+                    },
+                    metadata={
+                        "provider_id": self.provider_id
+                    }
+                )
+                self.event_bus.sync_publish(event)
+            
             logger.info(f"Created new session {session_id} for {self.provider_id}")
             
             return session
@@ -711,6 +762,21 @@ class EnhancedSessionPool:
                 provider_id=self.provider_id,
                 error=type(e).__name__
             )
+            
+            # Publish error event
+            if self.event_bus:
+                error_event = ErrorOccurredEvent(
+                    request_id=None,
+                    error_type="session_creation_failed",
+                    error_message=f"Failed to create session: {str(e)}",
+                    provider_id=self.provider_id,
+                    model=model_id or "unknown",
+                    metadata={
+                        "session_id": session_id,
+                        "priority": priority.name
+                    }
+                )
+                self.event_bus.sync_publish(error_event)
             
             raise RuntimeError(f"Failed to create session: {str(e)}")
     
@@ -731,6 +797,9 @@ class EnhancedSessionPool:
             return
         
         try:
+            # Calculate session duration
+            session_duration_ms = (datetime.utcnow() - session.metadata.created_at).total_seconds() * 1000
+            
             # Close the connection
             await self.close_session_func(session.connection)
             
@@ -744,6 +813,21 @@ class EnhancedSessionPool:
                 reason="explicit_close"
             )
             
+            # Publish session released event
+            if self.event_bus:
+                event = MCPSessionReleasedEvent(
+                    session_id=session_id,
+                    model=session.metadata.model_id or "unknown",
+                    duration_ms=session_duration_ms,
+                    metadata={
+                        "provider_id": self.provider_id,
+                        "reason": "explicit_close",
+                        "success_rate": session.health.success_rate,
+                        "total_requests": session.performance.total_requests
+                    }
+                )
+                await self.event_bus.publish(event)
+            
             logger.info(f"Closed session {session_id} for {self.provider_id}")
         
         except Exception as e:
@@ -755,6 +839,20 @@ class EnhancedSessionPool:
                 session_id=session_id,
                 error=type(e).__name__
             )
+            
+            # Publish error event
+            if self.event_bus:
+                error_event = ErrorOccurredEvent(
+                    request_id=None,
+                    error_type="session_close_failed",
+                    error_message=f"Error closing session: {str(e)}",
+                    provider_id=self.provider_id,
+                    model=session.metadata.model_id or "unknown",
+                    metadata={
+                        "session_id": session_id
+                    }
+                )
+                self.event_bus.sync_publish(error_event)
         
         # Remove from pool
         self.sessions.pop(session_id, None)
@@ -863,6 +961,20 @@ class EnhancedSessionPool:
                 success=False,
                 error=type(e).__name__
             )
+            
+            # Publish error event
+            if self.event_bus:
+                error_event = ErrorOccurredEvent(
+                    request_id=None,
+                    error_type="session_health_check_failed",
+                    error_message=f"Health check failed: {str(e)}",
+                    provider_id=self.provider_id,
+                    model=session.metadata.model_id or "unknown",
+                    metadata={
+                        "session_id": session_id
+                    }
+                )
+                self.event_bus.sync_publish(error_event)
             
             logger.warning(f"Health check failed for session {session_id}: {str(e)}")
             

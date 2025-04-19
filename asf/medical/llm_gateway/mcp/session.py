@@ -5,12 +5,27 @@ This module provides a session abstraction for interacting with MCP servers.
 """
 
 import logging
+import time
 import uuid
 from typing import Dict, Any, List, Optional, AsyncGenerator, Union
 
 # Updated imports to use the consolidated transport layer
 from asf.medical.llm_gateway.transport.base import Transport, TransportError
 from .errors import McpError, McpTransportError
+
+# Import event system
+from asf.medical.llm_gateway.events.event_bus import EventBus
+from asf.medical.llm_gateway.events.events import (
+    MCPSessionCreatedEvent,
+    MCPSessionReleasedEvent,
+    ErrorOccurredEvent
+)
+
+# Try to import the singleton event bus, with fallback to None
+try:
+    from asf.medical.llm_gateway.events import event_bus
+except ImportError:
+    event_bus = None
 
 logger = logging.getLogger(__name__)
 
@@ -23,24 +38,64 @@ class MCPSession:
     and receiving responses, abstracting away the details of the transport layer.
     """
     
-    def __init__(self, transport: Transport):
+    def __init__(self, transport: Transport, event_bus: Optional[EventBus] = None):
         """
         Initialize the MCP session.
         
         Args:
             transport: Transport for communicating with the MCP server
+            event_bus: Optional event bus for publishing events
         """
         self.transport = transport
         self._valid = False
+        self.session_id = str(uuid.uuid4())
+        self.model = None
+        self.created_at = time.time()
+        self.event_bus = event_bus or globals().get('event_bus')
     
-    async def initialize(self) -> None:
-        """Initialize the session."""
+    async def initialize(self, model: Optional[str] = None, **kwargs) -> None:
+        """
+        Initialize the session.
+        
+        Args:
+            model: Optional model identifier
+            **kwargs: Additional initialization parameters
+        """
         try:
             await self.transport.initialize()
             self._valid = True
+            self.model = model
+            
+            # Publish session created event
+            if self.event_bus:
+                session_params = kwargs.copy()
+                if model:
+                    session_params['model'] = model
+                    
+                event = MCPSessionCreatedEvent(
+                    session_id=self.session_id,
+                    model=model or "unknown",
+                    session_params=session_params
+                )
+                
+                # Use sync_publish in case this is called from a synchronous context
+                self.event_bus.sync_publish(event)
+                
         except Exception as e:
             logger.error(f"Failed to initialize MCP session: {str(e)}")
             self._valid = False
+            
+            # Publish error event
+            if self.event_bus:
+                error_event = ErrorOccurredEvent(
+                    request_id=None,
+                    error_type="session_initialization_failed",
+                    error_message=f"Failed to initialize MCP session: {str(e)}",
+                    provider_id="mcp",
+                    model=model or "unknown"
+                )
+                self.event_bus.sync_publish(error_event)
+                
             raise McpTransportError(f"Failed to initialize MCP session: {str(e)}") from e
     
     def is_valid(self) -> bool:
@@ -79,6 +134,10 @@ class MCPSession:
         if not self.is_valid():
             raise McpError("Session is not initialized or has been closed")
         
+        # Update the model if it was provided during initialization
+        if not model and self.model:
+            model = self.model
+        
         # Prepare request
         request = {
             "messages": messages,
@@ -112,6 +171,19 @@ class MCPSession:
         except Exception as e:
             logger.error(f"Error creating message: {str(e)}")
             self._valid = False
+            
+            # Publish error event
+            if self.event_bus:
+                error_event = ErrorOccurredEvent(
+                    request_id=kwargs.get('request_id'),
+                    error_type="message_creation_failed",
+                    error_message=f"Error creating message: {str(e)}",
+                    provider_id="mcp",
+                    model=model,
+                    operation_type="create_message"
+                )
+                self.event_bus.sync_publish(error_event)
+                
             raise McpError(f"Error creating message: {str(e)}") from e
     
     async def stream_message(
@@ -145,6 +217,10 @@ class MCPSession:
         """
         if not self.is_valid():
             raise McpError("Session is not initialized or has been closed")
+        
+        # Update the model if it was provided during initialization
+        if not model and self.model:
+            model = self.model
         
         # Prepare request
         request = {
@@ -180,14 +256,53 @@ class MCPSession:
         except Exception as e:
             logger.error(f"Error streaming message: {str(e)}")
             self._valid = False
+            
+            # Publish error event
+            if self.event_bus:
+                error_event = ErrorOccurredEvent(
+                    request_id=kwargs.get('request_id'),
+                    error_type="message_streaming_failed",
+                    error_message=f"Error streaming message: {str(e)}",
+                    provider_id="mcp",
+                    model=model,
+                    operation_type="stream_message"
+                )
+                self.event_bus.sync_publish(error_event)
+                
             raise McpError(f"Error streaming message: {str(e)}") from e
     
     async def close(self) -> None:
         """Close the session and release resources."""
         try:
+            # Calculate session duration
+            session_duration_ms = (time.time() - self.created_at) * 1000
+            
+            # Close transport
             await self.transport.close()
-            logger.info("Closed MCP session")
+            logger.info(f"Closed MCP session: {self.session_id}")
+            
+            # Publish session released event
+            if self.event_bus and self._valid:
+                event = MCPSessionReleasedEvent(
+                    session_id=self.session_id,
+                    model=self.model or "unknown",
+                    duration_ms=session_duration_ms
+                )
+                await self.event_bus.publish(event)
+                
         except Exception as e:
             logger.error(f"Error closing MCP session: {str(e)}")
+            
+            # Publish error event
+            if self.event_bus:
+                error_event = ErrorOccurredEvent(
+                    request_id=None,
+                    error_type="session_close_failed",
+                    error_message=f"Error closing MCP session: {str(e)}",
+                    provider_id="mcp",
+                    model=self.model or "unknown"
+                )
+                self.event_bus.sync_publish(error_event)
+                
         finally:
             self._valid = False
