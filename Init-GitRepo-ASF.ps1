@@ -1,21 +1,19 @@
-# CONFIGURABLE SETTINGS
-$repoName = "asf"
-$repoDesc = "Autopoietic Semantic Fields Framework"
-$githubUser = "uridolan77"
-$licenseType = "MIT"
+# CONFIG
+$repoName    = "asf"
+$repoDesc    = ""
+$githubUser  = "uridolan77"
+$licenseType = "mit"  # use lowercase license codes: mit, apache-2.0, gpl-3.0
+$forcePush   = $true  # set to $false if you want to pull and merge instead
 
-# ASSUMES: GitHub repo already created at https://github.com/$githubUser/$repoName
-
-# STEP 1: Initialize Git
+# STEP 1: Init
 git init
 echo "# $repoName`n$repoDesc" > README.md
 
-# STEP 2: Create a common .gitignore (Node+Python+VSCode)
+# STEP 2: .gitignore
 @"
 # Python
 __pycache__/
 *.py[cod]
-*.egg-info/
 .env
 
 # Node
@@ -26,20 +24,32 @@ build/
 # VS Code
 .vscode/
 
-# General
+# System
 .DS_Store
 *.log
 "@ > .gitignore
 
-# STEP 3: Optional license
-Invoke-WebRequest "https://choosealicense.com/licenses/$licenseType/" `
-    -OutFile LICENSE.md -UseBasicParsing
+# STEP 3: LICENSE
+try {
+    Invoke-WebRequest "https://raw.githubusercontent.com/github/choosealicense.com/gh-pages/_licenses/$licenseType.txt" `
+        -OutFile LICENSE.md -UseBasicParsing
+} catch {
+    Write-Host "⚠️ Failed to download LICENSE. Check licenseType: $licenseType"
+}
 
-# STEP 4: Git basics
+# STEP 4: Git commit
 git add .
-git commit -m "Initial clean project setup"
+git commit -m "Initial commit"
 
-# STEP 5: Add remote + push
+# STEP 5: Link to GitHub
 git remote add origin "https://github.com/$githubUser/$repoName.git"
 git branch -M main
-git push -u origin main
+
+if ($forcePush) {
+    git push --force origin main
+    Write-Host "✅ Force-pushed to remote repo: https://github.com/$githubUser/$repoName"
+} else {
+    git pull origin main --allow-unrelated-histories
+    git push origin main
+    Write-Host "✅ Pulled & pushed to remote repo"
+}
