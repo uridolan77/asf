@@ -1,0 +1,62 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+env/
+ENV/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+logs/
+*.log
+
+# Local configuration
+*.local.yaml
+*.local.yml
+*.local.json
+*.local.env
+
+# Secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# API keys and secrets
+*api_key*
+*secret*
+*credential*
+*password*
+*token*
+
+# Specific to this project
+bo/backend/config/llm/llm_gateway_config.local.yaml
+medical/llm_gateway/test_with_db.py
+medical/scripts/test_openai_direct.py
+medical/llm_gateway/providers/__pycache__/

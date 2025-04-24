@@ -1,0 +1,58 @@
+# DSPy Configuration for BO
+
+# LLM Provider Configuration
+llm_provider: openai
+default_model: gpt-4-turbo-preview
+api_key_env_var: OPENAI_API_KEY
+azure_endpoint: null
+azure_deployment_name: null
+azure_api_version: 2023-05-15
+
+# Model Parameters
+max_tokens: 1024
+temperature: 0.2
+top_p: 0.95
+frequency_penalty: 0.0
+presence_penalty: 0.0
+
+# Caching Configuration
+cache_backend: disk
+cache_location: ./cache
+cache_ttl: 3600
+enable_cache: true
+
+# Optimization Configuration
+optimizer: teleprompter
+metric: medical_qa_accuracy
+num_trials: 10
+max_bootstrapping_iterations: 3
+max_examples: 50
+
+# Modules Configuration
+modules:
+  medical_rag:
+    k: 5
+    max_tokens: 1024
+    temperature: 0.2
+    
+  contradiction_detection:
+    threshold: 0.7
+    use_biomedlm: true
+    use_temporal: false
+    
+  evidence_extraction:
+    max_evidence_count: 3
+    min_confidence: 0.6
+    
+  medical_summarization:
+    max_tokens: 512
+    style: concise
+    
+  clinical_qa:
+    include_references: true
+    confidence_threshold: 0.8
+
+# Logging Configuration
+logging_level: INFO
+enable_audit_logging: true
+audit_log_path: ./logs/dspy_audit.log

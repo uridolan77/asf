@@ -1,0 +1,12 @@
+dspy-ai>=2.0.0
+fastapi>=0.95.0
+uvicorn>=0.22.0
+pydantic>=1.10.0,<2.0.0
+redis>=4.5.0
+mlflow>=2.3.0
+tenacity>=8.2.0
+httpx>=0.24.0
+pytest>=7.3.0
+pytest-asyncio>=0.21.0
+python-dotenv>=1.0.0
+diskcache>=5.6.0

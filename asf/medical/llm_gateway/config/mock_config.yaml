@@ -1,0 +1,29 @@
+# Mock LLM Gateway Configuration for Development/Testing
+
+gateway_id: "mock_gateway"
+default_provider: "mock_provider"
+allowed_providers:
+  - "mock_provider"
+preload_providers:
+  - "mock_provider"
+default_timeout_seconds: 60.0
+max_retries: 2
+retry_delay_seconds: 1.0
+caching_enabled: true
+cache_default_ttl_seconds: 3600
+default_compliance_mode: "audit"
+logging_level: "INFO"
+
+additional_config:
+  max_concurrent_batch_requests: 8
+  providers:
+    mock_provider:
+      provider_type: "mock"
+      display_name: "Mock Provider"
+      connection_params:
+        simulate_delay_ms: 200
+        mock_response_text: "This is a mock response from the LLM Gateway. The actual functionality requires proper configuration."
+      models:
+        gpt-3.5-turbo: {}
+        gpt-4: {}
+        gpt-4-turbo-preview: {}

@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Monitor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #333;
+            margin-top: 0;
+        }
+        .task-list {
+            margin-top: 20px;
+        }
+        .task-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+        }
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .task-title {
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .task-status {
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status-pending {
+            background-color: #f0ad4e;
+            color: white;
+        }
+        .status-running {
+            background-color: #5bc0de;
+            color: white;
+        }
+        .status-completed {
+            background-color: #5cb85c;
+            color: white;
+        }
+        .status-failed {
+            background-color: #d9534f;
+            color: white;
+        }
+        .status-cancelled {
+            background-color: #777;
+            color: white;
+        }
+        .status-retrying {
+            background-color: #9370db;
+            color: white;
+        }
+        .progress-bar {
+            height: 10px;
+            background-color: #eee;
+            border-radius: 5px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background-color: #5cb85c;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        .task-message {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+        .task-details {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #333;
+        }
+        .task-result {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f5f5f5;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            font-size: 12px;
+        }
+        .task-error {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f2dede;
+            border-radius: 4px;
+            color: #a94442;
+            font-family: monospace;
+            white-space: pre-wrap;
+            font-size: 12px;
+        }
+        .controls {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        button {
+            padding: 8px 15px;
+            background-color: #337ab7;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #286090;
+        }
+        .connection-status {
+            margin-bottom: 20px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .connected {
+            background-color: #dff0d8;
+            color: #3c763d;
+        }
+        .disconnected {
+            background-color: #f2dede;
+            color: #a94442;
+        }
+        .task-actions {
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
+        }
+        .cancel-btn {
+            background-color: #d9534f;
+        }
+        .cancel-btn:hover {
+            background-color: #c9302c;
+        }
+        .task-time {
+            font-size: 12px;
+            color: #777;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Task Monitor</h1>
+        
+        <div id="connection-status" class="connection-status disconnected">
+            WebSocket: Disconnected
+        </div>
+        
+        <div class="controls">
+            <button id="connect-btn">Connect</button>
+            <button id="disconnect-btn" disabled>Disconnect</button>
+            <button id="subscribe-all-btn" disabled>Subscribe to All Tasks</button>
+            <button id="unsubscribe-all-btn" disabled>Unsubscribe from All Tasks</button>
+        </div>
+        
+        <div class="task-list" id="task-list">
+            <div class="task-item">
+                <div class="task-header">
+                    <div class="task-title">No tasks yet</div>
+                    <div class="task-status status-pending">Waiting for tasks</div>
+                </div>
+                <div class="task-message">Connect to the WebSocket to see tasks</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Task storage
+        const tasks = {};
+        
+        // DOM elements
+        const connectBtn = document.getElementById('connect-btn');
+        const disconnectBtn = document.getElementById('disconnect-btn');
+        const subscribeAllBtn = document.getElementById('subscribe-all-btn');
+        const unsubscribeAllBtn = document.getElementById('unsubscribe-all-btn');
+        const connectionStatus = document.getElementById('connection-status');
+        const taskList = document.getElementById('task-list');
+        
+        // WebSocket connection
+        let socket = null;
+        
+        // Connect to WebSocket
+        function connect() {
+            // Get the current host
+            const host = window.location.host;
+            
+            // Create WebSocket connection
+            socket = new WebSocket(`ws://${host}/ws/tasks/public`);
+            
+            // Connection opened
+            socket.addEventListener('open', (event) => {
+                console.log('Connected to WebSocket');
+                connectionStatus.textContent = 'WebSocket: Connected';
+                connectionStatus.classList.remove('disconnected');
+                connectionStatus.classList.add('connected');
+                
+                connectBtn.disabled = true;
+                disconnectBtn.disabled = false;
+                subscribeAllBtn.disabled = false;
+                unsubscribeAllBtn.disabled = true;
+                
+                // Clear task list
+                taskList.innerHTML = '';
+            });
+            
+            // Listen for messages
+            socket.addEventListener('message', (event) => {
+                console.log('Message from server:', event.data);
+                
+                try {
+                    const message = JSON.parse(event.data);
+                    handleMessage(message);
+                } catch (error) {
+                    console.error('Error parsing message:', error);
+                }
+            });
+            
+            // Connection closed
+            socket.addEventListener('close', (event) => {
+                console.log('Disconnected from WebSocket');
+                connectionStatus.textContent = 'WebSocket: Disconnected';
+                connectionStatus.classList.remove('connected');
+                connectionStatus.classList.add('disconnected');
+                
+                connectBtn.disabled = false;
+                disconnectBtn.disabled = true;
+                subscribeAllBtn.disabled = true;
+                unsubscribeAllBtn.disabled = true;
+            });
+            
+            // Connection error
+            socket.addEventListener('error', (event) => {
+                console.error('WebSocket error:', event);
+                connectionStatus.textContent = 'WebSocket: Error';
+                connectionStatus.classList.remove('connected');
+                connectionStatus.classList.add('disconnected');
+            });
+        }
+        
+        // Disconnect from WebSocket
+        function disconnect() {
+            if (socket) {
+                socket.close();
+                socket = null;
+            }
+        }
+        
+        // Subscribe to all tasks
+        function subscribeToAllTasks() {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({
+                    type: 'subscribe'
+                }));
+                
+                subscribeAllBtn.disabled = true;
+                unsubscribeAllBtn.disabled = false;
+            }
+        }
+        
+        // Unsubscribe from all tasks
+        function unsubscribeFromAllTasks() {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({
+                    type: 'unsubscribe'
+                }));
+                
+                subscribeAllBtn.disabled = false;
+                unsubscribeAllBtn.disabled = true;
+            }
+        }
+        
+        // Handle incoming message
+        function handleMessage(message) {
+            if (message.type === 'task_update') {
+                updateTask(message);
+            } else if (message.type === 'subscription') {
+                handleSubscription(message);
+            } else if (message.type === 'error') {
+                console.error('Error from server:', message.message);
+            } else if (message.type === 'pong') {
+                console.log('Pong received');
+            }
+        }
+        
+        // Handle subscription message
+        function handleSubscription(message) {
+            console.log('Subscription update:', message);
+            
+            if (message.status === 'subscribed_all') {
+                subscribeAllBtn.disabled = true;
+                unsubscribeAllBtn.disabled = false;
+            } else if (message.status === 'unsubscribed_all') {
+                subscribeAllBtn.disabled = false;
+                unsubscribeAllBtn.disabled = true;
+            }
+        }
+        
+        // Update task
+        function updateTask(message) {
+            const taskId = message.task_id;
+            
+            // Create or update task
+            if (!tasks[taskId]) {
+                tasks[taskId] = {
+                    id: taskId,
+                    type: message.task_type,
+                    status: message.status,
+                    progress: message.progress || 0,
+                    message: message.message || '',
+                    result: null,
+                    error: null,
+                    created_at: new Date(),
+                    updated_at: new Date()
+                };
+                
+                // Create task element
+                createTaskElement(taskId);
+            } else {
+                // Update task
+                tasks[taskId].status = message.status || tasks[taskId].status;
+                tasks[taskId].progress = message.progress || tasks[taskId].progress;
+                tasks[taskId].message = message.message || tasks[taskId].message;
+                tasks[taskId].updated_at = new Date();
+                
+                // Handle specific event types
+                if (message.event_type === 'completed' && message.data && message.data.result) {
+                    tasks[taskId].result = message.data.result;
+                } else if (message.event_type === 'failed' && message.data && message.data.error) {
+                    tasks[taskId].error = message.data.error;
+                }
+            }
+            
+            // Update task element
+            updateTaskElement(taskId);
+        }
+        
+        // Create task element
+        function createTaskElement(taskId) {
+            const task = tasks[taskId];
+            
+            const taskElement = document.createElement('div');
+            taskElement.className = 'task-item';
+            taskElement.id = `task-${taskId}`;
+            
+            taskElement.innerHTML = `
+                <div class="task-header">
+                    <div class="task-title">${task.type}</div>
+                    <div class="task-status status-${task.status.toLowerCase()}">${task.status}</div>
+                </div>
+                <div class="task-details">Task ID: ${taskId}</div>
+                <div class="task-time">Created: ${formatDate(task.created_at)}</div>
+                <div class="task-message">${task.message || 'No message'}</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${task.progress}%"></div>
+                </div>
+                <div class="task-actions">
+                    <button class="cancel-btn" onclick="cancelTask('${taskId}')" ${task.status !== 'RUNNING' && task.status !== 'PENDING' ? 'disabled' : ''}>Cancel</button>
+                </div>
+                <div class="task-result" style="display: ${task.result ? 'block' : 'none'}">
+                    ${task.result ? JSON.stringify(task.result, null, 2) : ''}
+                </div>
+                <div class="task-error" style="display: ${task.error ? 'block' : 'none'}">
+                    ${task.error || ''}
+                </div>
+            `;
+            
+            // Add to task list
+            taskList.prepend(taskElement);
+        }
+        
+        // Update task element
+        function updateTaskElement(taskId) {
+            const task = tasks[taskId];
+            const taskElement = document.getElementById(`task-${taskId}`);
+            
+            if (!taskElement) {
+                createTaskElement(taskId);
+                return;
+            }
+            
+            // Update status
+            const statusElement = taskElement.querySelector('.task-status');
+            statusElement.className = `task-status status-${task.status.toLowerCase()}`;
+            statusElement.textContent = task.status;
+            
+            // Update message
+            const messageElement = taskElement.querySelector('.task-message');
+            messageElement.textContent = task.message || 'No message';
+            
+            // Update progress
+            const progressElement = taskElement.querySelector('.progress-fill');
+            progressElement.style.width = `${task.progress}%`;
+            
+            // Update time
+            const timeElement = taskElement.querySelector('.task-time');
+            timeElement.textContent = `Created: ${formatDate(task.created_at)} | Updated: ${formatDate(task.updated_at)}`;
+            
+            // Update cancel button
+            const cancelBtn = taskElement.querySelector('.cancel-btn');
+            cancelBtn.disabled = task.status !== 'RUNNING' && task.status !== 'PENDING';
+            
+            // Update result
+            const resultElement = taskElement.querySelector('.task-result');
+            if (task.result) {
+                resultElement.style.display = 'block';
+                resultElement.textContent = JSON.stringify(task.result, null, 2);
+            } else {
+                resultElement.style.display = 'none';
+            }
+            
+            // Update error
+            const errorElement = taskElement.querySelector('.task-error');
+            if (task.error) {
+                errorElement.style.display = 'block';
+                errorElement.textContent = task.error;
+            } else {
+                errorElement.style.display = 'none';
+            }
+        }
+        
+        // Cancel task
+        function cancelTask(taskId) {
+            // This would typically make an API call to cancel the task
+            console.log('Cancelling task:', taskId);
+            
+            // For demo purposes, we'll just update the UI
+            if (tasks[taskId]) {
+                tasks[taskId].status = 'CANCELLED';
+                tasks[taskId].message = 'Task cancelled by user';
+                updateTaskElement(taskId);
+            }
+        }
+        
+        // Format date
+        function formatDate(date) {
+            return new Date(date).toLocaleString();
+        }
+        
+        // Event listeners
+        connectBtn.addEventListener('click', connect);
+        disconnectBtn.addEventListener('click', disconnect);
+        subscribeAllBtn.addEventListener('click', subscribeToAllTasks);
+        unsubscribeAllBtn.addEventListener('click', unsubscribeFromAllTasks);
+        
+        // Send ping every 30 seconds to keep connection alive
+        setInterval(() => {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({
+                    type: 'ping'
+                }));
+            }
+        }, 30000);
+    </script>
+</body>
+</html>

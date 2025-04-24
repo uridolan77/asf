@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scientific Claim Visualizer | Medical Research Synthesizer</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
+    <!-- MUI CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mui/material@5.14.10/dist/mui-material.min.css">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        .header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .nav-links {
+            display: flex;
+            gap: 20px;
+        }
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+        }
+        .nav-links a:hover {
+            text-decoration: underline;
+        }
+        #root {
+            margin-top: 20px;
+        }
+        .footer {
+            background-color: #34495e;
+            color: white;
+            text-align: center;
+            padding: 16px;
+            margin-top: 40px;
+        }
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 300px;
+        }
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top-color: #3498db;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        .sample-text {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .sample-text h2 {
+            color: #2c3e50;
+            margin-top: 0;
+        }
+        .sample-text .button-container {
+            display: flex;
+            justify-content: flex-start;
+            margin-top: 20px;
+        }
+        .sample-text button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-right: 10px;
+        }
+        .sample-text button:hover {
+            background-color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Medical Research Synthesizer</h1>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/docs">API Docs</a>
+            <a href="/dashboard">Dashboard</a>
+        </div>
+    </div>
+
+    <div class="sample-text">
+        <h2>Scientific Claim Visualizer</h2>
+        <p>This tool extracts and visualizes scientific claims from medical text. You can use it to identify key assertions, evaluate evidence, and analyze claim types.</p>
+        <p>Below are some sample abstracts you can try, or paste your own medical text.</p>
+        
+        <div class="button-container">
+            <button onclick="loadSample('covid')">COVID-19 Sample</button>
+            <button onclick="loadSample('diabetes')">Diabetes Sample</button>
+            <button onclick="loadSample('oncology')">Oncology Sample</button>
+        </div>
+    </div>
+    
+    <div id="root">
+        <div class="loading">
+            <div class="loading-spinner"></div>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <p>© 2025 Medical Research Synthesizer - Scientific Claim Extraction and Visualization</p>
+    </div>
+
+    <!-- React, ReactDOM, and other dependencies -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- Babel for JSX support -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- MUI Components -->
+    <script src="https://cdn.jsdelivr.net/npm/@mui/material@5.14.10/dist/mui-material.min.js"></script>
+    <script src="https://unpkg.com/@emotion/react@11.11.1/dist/emotion-react.umd.min.js"></script>
+    <script src="https://unpkg.com/@emotion/styled@11.11.0/dist/emotion-styled.umd.min.js"></script>
+    <!-- This will be replaced with actual claim_visualizer.js in production -->
+    <script src="/static/claim_visualizer.js"></script>
+
+    <script>
+        const sampleTexts = {
+            covid: `Background: Remdesivir is an antiviral medicine with in vitro activity against SARS-CoV-2. We aimed to evaluate the clinical efficacy and safety of remdesivir in patients admitted to hospital with COVID-19.
+Methods: This randomised, double-blind, placebo-controlled, multicentre trial evaluated remdesivir in adult patients admitted to hospital with COVID-19. Eligible patients were randomly assigned (1:1) to receive either intravenous remdesivir (200 mg on day 1 followed by 100 mg once daily for 9 days) or placebo for up to 10 days. The primary endpoint was time to clinical improvement up to day 28.
+Results: 237 patients were enrolled and randomly assigned to either the remdesivir group (n=158) or the placebo group (n=79). Time to clinical improvement was not significantly different between groups (hazard ratio 1.23, 95% CI 0.87-1.75). Adverse events were reported in 102 (66%) of 155 patients in the remdesivir group and 50 (64%) of 78 in the placebo control group.
+Conclusion: Our trial found that remdesivir was not associated with statistically significant clinical benefits in adult patients admitted to hospital for severe COVID-19. However, we could not exclude clinically meaningful differences and larger studies are needed to confirm our findings.`,
+            
+            diabetes: `Background: Sodium-glucose cotransporter 2 (SGLT2) inhibitors may reduce the risk of kidney failure in patients with type 2 diabetes and chronic kidney disease, but evidence has been inconsistent.
+Methods: In this double-blind, randomized trial, we assigned patients with type 2 diabetes and albuminuric chronic kidney disease to receive dapagliflozin (10 mg once daily) or placebo. The primary outcome was a composite of a sustained decline in the estimated GFR of at least 50%, end-stage kidney disease, or death from renal or cardiovascular causes.
+Results: The trial was stopped early because of efficacy. At that time, the primary outcome had occurred in 197 of 2152 participants (9.2%) in the dapagliflozin group and 312 of 2152 participants (14.5%) in the placebo group (hazard ratio, 0.61; 95% confidence interval [CI], 0.51 to 0.72; P<0.001). The hazard ratio for the composite of a sustained decline in the estimated GFR of at least 50%, end-stage kidney disease, or death from renal causes was 0.56 (95% CI, 0.45 to 0.68; P<0.001).
+Conclusion: Among patients with type 2 diabetes and kidney disease, the risk of a composite of a sustained decline in the estimated GFR of at least 50%, end-stage kidney disease, or death from renal or cardiovascular causes was significantly lower with dapagliflozin than with placebo.`,
+            
+            oncology: `Background: Immune checkpoint inhibitors have improved outcomes in patients with various cancers, but their efficacy in pancreatic ductal adenocarcinoma remains controversial.
+Methods: We conducted a randomized, double-blind, phase 2 trial evaluating pembrolizumab plus chemotherapy versus chemotherapy alone in patients with previously untreated metastatic pancreatic cancer. The primary endpoint was overall survival.
+Results: A total of 180 patients underwent randomization. Median overall survival was 7.8 months in the pembrolizumab group and 7.4 months in the placebo group (hazard ratio for death, 0.92; 95% CI, 0.68 to 1.25; P=0.58). Median progression-free survival was 4.1 months in the pembrolizumab group and 3.9 months in the placebo group (hazard ratio for disease progression or death, 0.89; 95% CI, 0.67 to 1.18; P=0.42). The objective response rate was 14.3% in the pembrolizumab group and 12.1% in the placebo group.
+Conclusion: The addition of pembrolizumab to chemotherapy did not significantly improve overall survival in patients with previously untreated metastatic pancreatic cancer. These findings suggest that single-agent immune checkpoint inhibition may not be effective in unselected patients with pancreatic cancer.`
+        };
+
+        function loadSample(type) {
+            // Here we'd typically communicate with the claim_visualizer component
+            // Since we're using a simplified approach, we'll just alert for now
+            alert(`Sample ${type} text loaded! In the full implementation, this would populate the claim visualizer.`);
+            
+            // In the real implementation, we'd have code like:
+            // window.loadTextIntoVisualizer(sampleTexts[type]);
+        }
+
+        // This would connect to our React component in production
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                // Replace loading spinner with a message if the component doesn't load
+                const rootElement = document.getElementById('root');
+                rootElement.innerHTML = `
+                    <div style="text-align: center; padding: 40px;">
+                        <h2>Claim Visualizer Component</h2>
+                        <p>In the complete implementation, the interactive claim extraction and visualization component would be loaded here.</p>
+                    </div>
+                `;
+            }, 2000);
+        });
+    </script>
+</body>
+</html>

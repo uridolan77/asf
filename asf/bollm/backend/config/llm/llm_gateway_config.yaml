@@ -1,0 +1,56 @@
+additional_config:
+  max_concurrent_batch_requests: 8
+  providers:
+    anthropic_claude3:
+      connection_params:
+        api_key_env_var: ANTHROPIC_API_KEY
+      display_name: Anthropic Claude 3
+      models:
+        claude-3-haiku-20240307: {}
+        claude-3-opus-20240229: {}
+        claude-3-sonnet-20240229: {}
+      provider_type: anthropic
+    biomedlm_local:
+      connection_params:
+        model_path: ${BIOMEDLM_MODEL_PATH}
+        use_gpu: true
+      display_name: BioMedLM (Local)
+      models:
+        biomedlm-2-7b: {}
+      provider_type: biomedlm
+    openai_gpt4_default:
+      connection_params:
+        # IMPORTANT: Do not store API keys directly in this file!
+        # Use one of the following methods instead:
+
+        # Option 1: Secret reference (recommended for production)
+        api_key_secret: llm:openai_api_key
+
+        # Option 2: Direct API key (less secure but works for development)
+        # api_key: PLACEHOLDER_API_KEY  # Commented out for security
+
+        # Option 3: Environment variable (for flexibility)
+        api_key_env_var: OPENAI_API_KEY
+
+        base_url: ''
+      display_name: OpenAI GPT-4
+      models:
+        gpt-3.5-turbo: {}
+        gpt-4: {}
+        gpt-4-turbo-preview: {}
+      provider_type: openai
+allowed_providers:
+- openai_gpt4_default
+- anthropic_claude3
+- biomedlm_local
+cache_default_ttl_seconds: 3600
+caching_enabled: true
+default_compliance_mode: strict
+default_provider: openai_gpt4_default
+default_timeout_seconds: 60.0
+gateway_id: bo_gateway
+logging_level: INFO
+max_retries: 2
+preload_providers:
+- openai_gpt4_default
+retry_delay_seconds: 1.0

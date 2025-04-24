@@ -1,0 +1,87 @@
+gateway_id: default_gateway
+default_provider: openai_gpt4
+max_retries: 3
+retry_delay_seconds: 1.0
+default_timeout_seconds: 60
+
+# Caching configuration
+caching_enabled: true
+cache_default_ttl_seconds: 3600
+cache_similarity_threshold: 0.92
+cache_max_entries: 10000
+
+# Cache persistence configuration
+cache_persistence:
+  type: disk
+  cache_dir: ~/.llm_gateway/cache  # Defaults to ~/.llm_gateway/cache if not specified
+  use_pickle: false                # Whether to use pickle for serialization (faster but less portable)
+
+# Cache embeddings configuration
+cache_embeddings:
+  type: default                    # Options: default, openai, local
+  # For OpenAI embeddings, uncomment and configure:
+  # type: openai
+  # model: text-embedding-3-small
+  # api_key: ${OPENAI_API_KEY}     # Uses environment variable if not specified
+  
+  # For local embeddings, uncomment and configure:
+  # type: local
+  # model_name: all-MiniLM-L6-v2   # Sentence transformers model
+
+# Providers configuration
+providers:
+  openai_gpt4:
+    provider_type: openai
+    display_name: OpenAI GPT-4
+    connection_params:
+      api_key_env_var: OPENAI_API_KEY
+    models:
+      gpt-4:
+        display_name: GPT-4
+        context_window: 8192
+        max_tokens: 4000
+      gpt-4-turbo:
+        display_name: GPT-4 Turbo
+        context_window: 128000
+        max_tokens: 4000
+      gpt-3.5-turbo:
+        display_name: GPT-3.5 Turbo
+        context_window: 16385
+        max_tokens: 4000
+
+  anthropic_claude:
+    provider_type: anthropic
+    display_name: Anthropic Claude
+    connection_params:
+      api_key_env_var: ANTHROPIC_API_KEY
+    models:
+      claude-3-opus:
+        display_name: Claude-3 Opus
+        context_window: 200000
+        max_tokens: 4000
+      claude-3-sonnet:
+        display_name: Claude-3 Sonnet
+        context_window: 180000
+        max_tokens: 4000
+      claude-3-haiku:
+        display_name: Claude-3 Haiku
+        context_window: 150000
+        max_tokens: 4000
+
+  mcp_local:
+    provider_type: mcp
+    display_name: Local MCP
+    connection_params:
+      transport_type: stdio
+      enable_streaming: true
+      timeout_seconds: 60
+      max_retries: 3
+      stdio_config:
+        command: npx
+        args: ["@anthropic/mcp-starter", "--no-color"]
+        env: {}
+    models:
+      claude-3-haiku:
+        display_name: Claude-3 Haiku (MCP)
+        context_window: 150000
+        max_tokens: 4000
